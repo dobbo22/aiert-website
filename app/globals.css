@@ -1,0 +1,172 @@
+@import "tailwindcss";
+
+@theme {
+  --color-deep-space: #0B0F1A;
+  --color-charcoal: #121828;
+  --color-steel: #1A2238;
+  --color-slate: #2D3748;
+  --color-cloud: #E2E8F0;
+  --color-mist: #94A3B8;
+  --color-gold: #FBBF24;
+  --color-gold-glow: #FCD34D;
+  --color-teal: #2DD4BF;
+  --color-sq-green: #10B981;
+  --color-sq-blue: #3B82F6;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #0B0F1A;
+  color: #E2E8F0;
+}
+
+/* ── Layout ─────────────────────────────────────────── */
+
+.hero-gradient {
+  background: linear-gradient(135deg, #0B0F1A 0%, #0d1520 50%, #0B0F1A 100%);
+}
+
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(45, 55, 72, 0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(45, 55, 72, 0.15) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+.section-dark {
+  background: rgba(18, 24, 40, 0.4);
+}
+
+/* ── Typography ─────────────────────────────────────── */
+
+.gold-text {
+  background: linear-gradient(135deg, #FBBF24, #F59E0B);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.teal-text {
+  background: linear-gradient(135deg, #2DD4BF, #06B6D4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Nav ─────────────────────────────────────────────── */
+
+.nav-glass {
+  background: rgba(11, 15, 26, 0.9);
+  border-bottom: 1px solid rgba(45, 55, 72, 0.4);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+
+.nav-logo-icon {
+  background: linear-gradient(135deg, #FBBF24, #F59E0B);
+  color: #0B0F1A;
+}
+
+/* ── Cards ───────────────────────────────────────────── */
+
+.card-glass {
+  background: rgba(18, 24, 40, 0.85);
+  border: 1px solid rgba(45, 55, 72, 0.5);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.card-gold-accent {
+  background: rgba(18, 24, 40, 0.85);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.card-teal-accent {
+  background: rgba(18, 24, 40, 0.85);
+  border: 1px solid rgba(45, 212, 191, 0.25);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+/* ── Badges ──────────────────────────────────────────── */
+
+.badge-live {
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  color: #FBBF24;
+}
+
+.badge-gold {
+  background: rgba(251, 191, 36, 0.15);
+  color: #FBBF24;
+}
+
+.badge-teal {
+  background: rgba(45, 212, 191, 0.15);
+  color: #2DD4BF;
+}
+
+/* ── Stat items inside cards ─────────────────────────── */
+
+.stat-gold {
+  background: rgba(251, 191, 36, 0.06);
+  border: 1px solid rgba(251, 191, 36, 0.15);
+}
+
+.stat-teal {
+  background: rgba(45, 212, 191, 0.06);
+  border: 1px solid rgba(45, 212, 191, 0.15);
+}
+
+/* ── Glows ───────────────────────────────────────────── */
+
+.glow-gold {
+  box-shadow: 0 0 40px rgba(251, 191, 36, 0.12);
+}
+
+.glow-teal {
+  box-shadow: 0 0 40px rgba(45, 212, 191, 0.12);
+}
+
+/* ── Buttons ─────────────────────────────────────────── */
+
+.btn-gold {
+  background: linear-gradient(135deg, #FBBF24, #F59E0B);
+  color: #0B0F1A;
+  font-weight: 700;
+  transition: all 0.2s;
+}
+
+.btn-gold:hover {
+  background: linear-gradient(135deg, #FCD34D, #FBBF24);
+  box-shadow: 0 4px 20px rgba(251, 191, 36, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-outline {
+  border: 1px solid rgba(251, 191, 36, 0.5);
+  color: #FBBF24;
+  background: transparent;
+  transition: all 0.2s;
+}
+
+.btn-outline:hover {
+  border-color: #FBBF24;
+  background: rgba(251, 191, 36, 0.08);
+}
+
+/* ── Footer ──────────────────────────────────────────── */
+
+.footer-wrap {
+  border-top: 1px solid rgba(45, 55, 72, 0.4);
+  background: #0B0F1A;
+}
+
+.footer-divider {
+  border-top: 1px solid rgba(45, 55, 72, 0.3);
+}
