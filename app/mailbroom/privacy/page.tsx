@@ -149,8 +149,8 @@ export default function MailBroomPrivacyPage() {
             {s.contact && (
               <p className="text-mist leading-relaxed">
                 For privacy-related questions, contact AIERT Ltd at{" "}
-                <a href="mailto:privacy@aiert.co.uk" className="text-gold underline hover:text-gold/80 transition-colors">
-                  privacy@aiert.co.uk
+                <a href="mailto:aiert@btinternet.com" className="text-gold underline hover:text-gold/80 transition-colors">
+                  aiert@btinternet.com
                 </a>
               </p>
             )}
