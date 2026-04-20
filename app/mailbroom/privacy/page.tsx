@@ -27,10 +27,11 @@ const sections = [
     icon: "⚙️",
     title: "How MailBroom Works",
     list: [
-      "IMAP connection — MailBroom connects directly from your device to your own mail server (Gmail, Outlook, iCloud, or any IMAP server). No email data passes through our servers.",
-      "AI classification — Email classification uses an on-device Naive Bayes model. The model learns from your corrections and is stored locally. It is never uploaded or shared.",
-      "Credentials — Your email password is stored exclusively in the iOS Keychain using Apple's secure storage APIs. It is never stored in plain text or transmitted to any party other than your own mail server.",
-      "Unsubscribe requests — When you use Smart Unsubscribe, MailBroom sends an opt-out request directly from your device to the mailing list's unsubscribe URL (as specified in the email's List-Unsubscribe header). No data passes through our servers.",
+      "IMAP connection — MailBroom connects directly from your device to your own mail server (Gmail, Outlook, iCloud, or any IMAP server) over an encrypted TLS connection. No email data passes through our servers.",
+      "AI classification — Email classification uses a 5-layer on-device pipeline: (1) sender memory for instant recognition, (2) a Naive Bayes model, (3) local rules based on sender address and subject patterns, (4) a personalised on-device model trained on your own inbox using Apple's CreateML framework (iOS 16+), and (5) Apple Intelligence (iOS 26+) for ambiguous cases. Every layer runs entirely on your device. Training data and model weights are stored locally and never uploaded or shared.",
+      "Personalised learning — The CreateML model continuously improves from your corrections. When you reclassify an email, the example is added to your on-device training set and the model retrains silently in the background. No labelled data leaves your device.",
+      "Credentials — Your email password and OAuth tokens are stored exclusively in the iOS Keychain using Apple's secure storage APIs, protected by hardware encryption and inaccessible while the device is locked. They are never stored in plain text or transmitted to any party other than your own mail server.",
+      "Unsubscribe requests — When you use Smart Unsubscribe, MailBroom sends an opt-out request directly from your device to the mailing list's unsubscribe URL (as specified in the email's List-Unsubscribe header) over HTTPS only. No data passes through our servers.",
     ],
   },
   {
@@ -99,7 +100,7 @@ export default function MailBroomPrivacyPage() {
           Privacy Policy
         </h1>
         <p className="text-mist text-base">
-          Last updated: 18 April 2026 &nbsp;·&nbsp; AIERT Ltd
+          Last updated: 20 April 2026 &nbsp;·&nbsp; AIERT Ltd
         </p>
         <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal/10 border border-teal/20 text-teal text-sm font-medium">
           <span>📵</span> Your emails never leave your device
