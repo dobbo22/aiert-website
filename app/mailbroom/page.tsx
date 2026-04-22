@@ -238,12 +238,11 @@ export default function MailBroomPage() {
               ))}
             </ul>
           </div>
-          {/* help.png shows all features including Smart Organise */}
           <div className="flex justify-center md:order-1">
             <div className="relative">
               <div className="absolute -inset-10 rounded-full blur-3xl opacity-20 bg-teal" />
               <div className="rounded-[2.8rem] border-2 border-teal/25 shadow-[0_0_40px_rgba(45,212,191,0.1)]">
-                <PhoneFrame src="/mailbroom/help.png" alt="MailBroom help screen listing all features: Smart Clean, Smart Delete, Smart Unsubscribe, Smart Organise" />
+                <PhoneFrame src="/mailbroom/smart-organise.png" alt="Smart Organise screen showing folder creation and sender filing options" />
               </div>
             </div>
           </div>
@@ -275,21 +274,11 @@ export default function MailBroomPage() {
             </ul>
           </div>
           <div className="flex justify-center">
-            <div className="card-glass rounded-3xl p-10 flex flex-col gap-3 w-full max-w-xs">
-              <p className="text-xs font-semibold uppercase tracking-widest text-sq-blue mb-2">In Action</p>
-              {[
-                { name: "Groupon", status: "Sent", color: "text-sq-green" },
-                { name: "Hotels.com", status: "Sending…", color: "text-gold" },
-                { name: "LinkedIn", status: "Queued", color: "text-mist" },
-                { name: "eBay", status: "Queued", color: "text-mist" },
-                { name: "Booking.com", status: "Queued", color: "text-mist" },
-              ].map((s) => (
-                <div key={s.name} className="flex justify-between items-center bg-steel/40 rounded-xl px-4 py-3">
-                  <span className="text-sm text-cloud">{s.name}</span>
-                  <span className={`text-xs font-semibold ${s.color}`}>{s.status}</span>
-                </div>
-              ))}
-              <p className="text-xs text-mist text-center pt-2">2 of 5 requests sent</p>
+            <div className="relative">
+              <div className="absolute -inset-10 rounded-full blur-3xl opacity-20 bg-sq-blue" />
+              <div className="rounded-[2.8rem] border-2 border-sq-blue/25 shadow-[0_0_40px_rgba(59,130,246,0.1)]">
+                <PhoneFrame src="/mailbroom/smart-unsubscribe.png" alt="Smart Unsubscribe screen showing unsubscribe requests being sent to multiple senders" />
+              </div>
             </div>
           </div>
         </div>
@@ -320,22 +309,11 @@ export default function MailBroomPage() {
             </ul>
           </div>
           <div className="flex justify-center md:order-1">
-            <div className="card-glass rounded-3xl p-10 flex flex-col gap-3 w-full max-w-xs">
-              <p className="text-xs font-semibold uppercase tracking-widest text-sq-green mb-2">Safe Senders</p>
-              {[
-                { name: "Google", emails: 14 },
-                { name: "Amandha Fernando", emails: 3 },
-                { name: "Times Business", emails: 66 },
-                { name: "FreeAgent", emails: 22 },
-              ].map((s) => (
-                <div key={s.name} className="flex justify-between items-center bg-steel/40 rounded-xl px-4 py-3">
-                  <div>
-                    <div className="text-sm text-cloud">{s.name}</div>
-                    <div className="text-xs text-mist">{s.emails} emails · Safe</div>
-                  </div>
-                  <span className="text-sq-green text-lg">🛡️</span>
-                </div>
-              ))}
+            <div className="relative">
+              <div className="absolute -inset-10 rounded-full blur-3xl opacity-20 bg-sq-green" />
+              <div className="rounded-[2.8rem] border-2 border-sq-green/25 shadow-[0_0_40px_rgba(34,197,94,0.1)]">
+                <PhoneFrame src="/mailbroom/safe-senders.png" alt="Safe Senders screen showing trusted senders list with shield icons" />
+              </div>
             </div>
           </div>
         </div>
@@ -377,64 +355,88 @@ export default function MailBroomPage() {
           <h2 className="text-4xl font-black text-cloud">Free to start · Pro to go unlimited</h2>
           <p className="text-mist mt-4 max-w-xl mx-auto">
             Start for free — scan and classify up to 500 emails with no sign-up required.
-            Upgrade to Pro for unlimited scanning and all power features.
+            Upgrade to Pro for unlimited scanning and all power features. All plans include a 7-day free trial.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto mb-12">
-          {/* Free */}
-          <div className="card-glass rounded-3xl p-8">
-            <div className="text-sm font-semibold text-mist uppercase tracking-widest mb-4">Free</div>
-            <div className="text-4xl font-black text-cloud mb-1">£0</div>
-            <div className="text-sm text-mist mb-6">Forever free</div>
-            <ul className="space-y-3 text-sm text-mist">
-              {freeVsPro.map((row) =>
-                row.free !== false ? (
-                  <li key={row.feature} className="flex items-center gap-3">
-                    <span className="text-sq-green">✓</span>
-                    <span>{row.feature}{typeof row.free === "string" ? `: ${row.free}` : ""}</span>
-                  </li>
-                ) : (
-                  <li key={row.feature} className="flex items-center gap-3 opacity-40">
-                    <span>✗</span>
-                    <span>{row.feature}</span>
-                  </li>
-                )
-              )}
-            </ul>
-          </div>
-
-          {/* Pro */}
-          <div className="card-gold-accent rounded-3xl p-8 glow-gold">
-            <div className="badge-gold inline-block px-3 py-1 rounded-full text-xs font-semibold mb-4">
-              ★ Pro
-            </div>
-            <div className="text-4xl font-black gold-text mb-1">
-              £1.99<span className="text-lg text-mist font-normal">/mo</span>
-            </div>
-            <div className="text-sm text-mist mb-6">or £14.99/year · cancel anytime</div>
-            <ul className="space-y-3 text-sm text-mist">
-              {freeVsPro.map((row) => (
-                <li key={row.feature} className="flex items-center gap-3">
-                  <span className="text-gold">✓</span>
-                  <span>{row.feature}{typeof row.pro === "string" ? `: ${row.pro}` : ""}</span>
-                </li>
+        {/* Free vs Pro feature table */}
+        <div className="card-glass rounded-3xl overflow-hidden max-w-3xl mx-auto mb-12">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-white/10">
+                <th className="text-left px-6 py-4 text-mist font-semibold">Feature</th>
+                <th className="px-6 py-4 text-mist font-semibold text-center">Free</th>
+                <th className="px-6 py-4 text-gold font-semibold text-center">Pro</th>
+              </tr>
+            </thead>
+            <tbody>
+              {freeVsPro.map((row, i) => (
+                <tr key={row.feature} className={i % 2 === 0 ? "bg-white/[0.02]" : ""}>
+                  <td className="px-6 py-3 text-mist">{row.feature}</td>
+                  <td className="px-6 py-3 text-center">
+                    {row.free === false
+                      ? <span className="text-white/25">✗</span>
+                      : <span className="text-sq-green">{typeof row.free === "string" ? row.free : "✓"}</span>
+                    }
+                  </td>
+                  <td className="px-6 py-3 text-center">
+                    <span className="text-gold">{typeof row.pro === "string" ? row.pro : "✓"}</span>
+                  </td>
+                </tr>
               ))}
-            </ul>
-            <a
-              href="https://apps.apple.com/gb/app/mailbroom"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-gold mt-8 px-6 py-3 rounded-full text-sm inline-block w-full text-center"
-            >
-              Start Free → Upgrade in App
-            </a>
+            </tbody>
+          </table>
+        </div>
+
+        {/* Tier pricing table */}
+        <div className="max-w-4xl mx-auto mb-10">
+          <h3 className="text-center text-xl font-bold text-cloud mb-2">Choose your plan</h3>
+          <p className="text-center text-sm text-mist mb-8">All Pro plans include every feature above · 7-day free trial (1 account) · cancel anytime</p>
+          <div className="card-glass rounded-3xl overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="text-left px-6 py-4 text-mist font-semibold">Email accounts</th>
+                  <th className="px-6 py-4 text-mist font-semibold text-center">Monthly</th>
+                  <th className="px-6 py-4 text-gold font-semibold text-center">
+                    Yearly <span className="text-xs font-normal text-sq-green ml-1">Save ~37%</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { label: "Up to 3 accounts", monthly: "£1.99", yearly: "£14.99" },
+                  { label: "Up to 10 accounts", monthly: "£3.99", yearly: "£29.99" },
+                  { label: "Up to 20 accounts", monthly: "£5.99", yearly: "£44.99" },
+                  { label: "Up to 50 accounts", monthly: "£8.99", yearly: "£69.99" },
+                ].map((tier, i) => (
+                  <tr key={tier.label} className={i % 2 === 0 ? "bg-white/[0.02]" : ""}>
+                    <td className="px-6 py-4 text-cloud font-medium">{tier.label}</td>
+                    <td className="px-6 py-4 text-center text-mist">{tier.monthly}<span className="text-xs text-mist/60">/mo</span></td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="text-gold font-semibold">{tier.yearly}</span>
+                      <span className="text-xs text-mist/60">/yr</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <p className="text-center text-xs text-mist">
-          Subscriptions managed by Apple. Cancel anytime in iPhone Settings → Subscriptions.
-        </p>
+        <div className="text-center">
+          <a
+            href="https://apps.apple.com/gb/app/mailbroom"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-gold px-8 py-4 rounded-full text-base inline-flex items-center gap-2"
+          >
+            <span>🍎</span> Start 7-Day Free Trial
+          </a>
+          <p className="mt-4 text-xs text-mist">
+            Subscriptions managed by Apple · Cancel anytime in iPhone Settings → Subscriptions
+          </p>
+        </div>
       </section>
 
       {/* ── COMPATIBILITY ──────────────────────────────── */}
