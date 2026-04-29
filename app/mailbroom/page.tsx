@@ -359,8 +359,10 @@ export default function MailBroomPage() {
           <p className="text-xs font-semibold uppercase tracking-widest mb-4 text-gold">Pricing</p>
           <h2 className="text-4xl font-black text-cloud">Free to start · Pro to go unlimited</h2>
           <p className="text-mist mt-4 max-w-xl mx-auto">
-            Start for free — scan and classify up to 500 emails with no sign-up required.
-            Upgrade to Pro for unlimited scanning and all power features. All plans include a 7-day free trial.
+            <strong>Free:</strong> Scan and classify up to 500 emails, 1 account, core features only.<br />
+            <strong>Trial:</strong> Scan up to 2,500 emails total across all accounts during the trial period. All Pro features unlocked, including Smart Delete, Smart Organise, rules, and multi-account support (up to 3 accounts).<br />
+            <strong>Pro:</strong> Unlimited scanning, unlimited use of all features, and up to 3 accounts (higher tiers available).<br /><br />
+            <em>When you start your trial, you can scan up to 2,500 emails and add up to 3 accounts. All Pro features are available during the trial, so you can experience everything MailBroom offers. If you set up Smart Organise rules during the trial, those rules will pause if you don’t subscribe after the trial ends. After the trial, you revert to the free tier (500 emails, 1 account) unless you subscribe.</em>
           </p>
         </div>
 

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \"from PIL import Image, ImageFilter; print\\('ok'\\)\")",
+      "Bash(python3 -c ' *)",
+      "Bash(git commit *)"
+    ]
+  }
+}
