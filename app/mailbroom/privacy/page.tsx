@@ -32,7 +32,13 @@ const sections = [
       "Personalised learning — The CreateML model continuously improves from your corrections. When you reclassify an email, the example is added to your on-device training set and the model retrains silently in the background. No labelled data leaves your device.",
       "Credentials — Your email password and OAuth tokens are stored exclusively in the iOS Keychain using Apple's secure storage APIs, protected by hardware encryption and inaccessible while the device is locked. They are never stored in plain text or transmitted to any party other than your own mail server.",
       "Unsubscribe requests — When you use Smart Unsubscribe, MailBroom sends an opt-out request directly from your device to the mailing list's unsubscribe URL (as specified in the email's List-Unsubscribe header) over HTTPS only. No data passes through our servers.",
+      "Unsubscribe log — A record of each unsubscribe attempt (sender address, method used, and outcome) is stored locally on your device with full file-system encryption. It is never transmitted anywhere and can be cleared at any time from Settings → Unsubscribe Log.",
     ],
+  },
+  {
+    icon: "🧠",
+    title: "On-Device AI",
+    body: "MailBroom includes an on-device AI model that learns from your inbox over time. It trains entirely on your device using your own email data — no email content, training data, or model weights are ever sent to any server. The model is stored in your app's private local storage and is permanently deleted if you reset scan history or uninstall the app.",
   },
   {
     icon: "💳",
@@ -100,7 +106,7 @@ export default function MailBroomPrivacyPage() {
           Privacy Policy
         </h1>
         <p className="text-mist text-base">
-          Last updated: 20 April 2026 &nbsp;·&nbsp; AIERT Ltd
+          Last updated: 30 April 2026 &nbsp;·&nbsp; AIERT Ltd
         </p>
         <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal/10 border border-teal/20 text-teal text-sm font-medium">
           <span>📵</span> Your emails never leave your device

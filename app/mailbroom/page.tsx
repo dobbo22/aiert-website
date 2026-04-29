@@ -30,7 +30,8 @@ const freeVsPro = [
   { feature: "Bulk delete (2+ emails)", free: false, pro: true },
   { feature: "Smart Delete", free: false, pro: true },
   { feature: "Smart Unsubscribe", free: false, pro: true },
-  { feature: "Smart Organise", free: false, pro: true },
+  { feature: "Smart Organise & folder rules", free: false, pro: true },
+  { feature: "Server-side rules (Gmail / Outlook)", free: false, pro: true },
   { feature: "Background sync", free: "Limited", pro: "Full" },
   { feature: "Safe senders", free: "5", pro: "Unlimited" },
 ];
@@ -222,14 +223,18 @@ export default function MailBroomPage() {
             <h2 className="text-3xl font-black text-cloud mb-4">Smart Organise</h2>
             <p className="text-mist leading-relaxed mb-6">
               Create named folders on your own mail server and file emails by sender.
-              Folders sync back to Gmail, Outlook, iCloud and any IMAP server.
+              Set rules once — MailBroom files future emails automatically, even pushing them
+              to Gmail filters and Outlook server rules so emails are sorted the moment they arrive.
             </p>
             <ul className="space-y-3">
               {[
                 "Create colour-coded server folders",
                 "Search by sender, address, or keyword",
                 "Stage emails by date range, then apply in bulk",
-                "Folders persist across sessions",
+                "Auto-rules: create rules from a move with one tap",
+                "Filter rules by read status — Any, Read, or Unread",
+                "Gmail & Outlook: rules pushed to the server instantly",
+                "iCloud & IMAP: rules applied automatically on every scan",
               ].map((b) => (
                 <li key={b} className="flex items-start gap-3 text-sm text-mist">
                   <span className="mt-0.5 flex-shrink-0 text-teal">✓</span>

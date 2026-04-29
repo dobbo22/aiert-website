@@ -4,26 +4,27 @@ export default function Home() {
 
       {/* ── NAV ───────────────────────────────────────────── */}
       <nav className="nav-glass sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="nav-logo-icon w-9 h-9 rounded-lg flex items-center justify-center font-black text-sm">
+        <div className="max-w-6xl mx-auto px-8 py-5 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="nav-logo-icon w-11 h-11 rounded-lg flex items-center justify-center font-black text-base">
               AI
             </div>
-            <span className="font-bold text-xl tracking-tight text-cloud">
-              AIERT<span className="text-xs font-normal ml-1 text-mist">Ltd</span>
+            <span className="font-bold text-2xl tracking-tight text-cloud">
+              AIERT<span className="text-sm font-normal ml-1 text-mist">Ltd</span>
             </span>
           </div>
-          <div className="hidden md:flex items-center gap-8 text-sm text-mist">
-            <a href="#about" className="hover:text-white transition-colors">About</a>
-            <a href="#products" className="hover:text-white transition-colors">Products</a>
-            <a href="#technology" className="hover:text-white transition-colors">Technology</a>
-            <a href="#contact" className="hover:text-white transition-colors">Contact</a>
+          <div className="hidden md:flex items-center gap-10 text-base text-mist">
+            <a href="#about" className="hover:text-white transition-colors font-medium">About</a>
+            <a href="#products" className="hover:text-white transition-colors font-medium">Products</a>
+            <a href="/mailbroom" className="hover:text-white transition-colors font-medium">MailBroom</a>
+            <a href="#technology" className="hover:text-white transition-colors font-medium">Technology</a>
+            <a href="#contact" className="hover:text-white transition-colors font-medium">Contact</a>
           </div>
           <a
             href="https://sharequest.co.uk"
             target="_blank"
             rel="noopener noreferrer"
-            className="btn-gold px-5 py-2 rounded-full text-sm hidden md:block"
+            className="btn-gold px-6 py-3 rounded-full text-base hidden md:block"
           >
             Visit ShareQuest
           </a>
@@ -84,7 +85,7 @@ export default function Home() {
             <p className="text-xs font-semibold uppercase tracking-widest mb-4 text-gold">About AIERT Ltd</p>
             <h2 className="text-4xl font-black leading-tight mb-6 text-cloud">
               Building the future of<br />
-              <span className="teal-text">intelligent investing</span>
+              <span className="teal-text">intelligent investing &amp; gaming</span>
             </h2>
             <p className="mb-4 text-mist leading-relaxed">
               AIERT Ltd (AI Enhanced Research &amp; Technology) is a London-based technology company focused on
@@ -137,7 +138,7 @@ export default function Home() {
                 </p>
                 <ul className="space-y-3 mb-8">
                   {[
-                    "Live FTSE 100 & 250 stock prices",
+                    "Live UK stock market prices",
                     "AI-powered AIERT Index stock scoring",
                     "Weekly, monthly & annual competitions",
                     "Real cash prizes for top performers",
@@ -160,7 +161,7 @@ export default function Home() {
               </div>
               <div className="flex flex-col gap-4">
                 {[
-                  { label: "Asset Universe", value: "FTSE 100 & 250" },
+                  { label: "Asset Universe", value: "UK Listed Equities" },
                   { label: "Competition Types", value: "Weekly · Monthly · Annual" },
                   { label: "Platform", value: "Web + iOS + Android" },
                   { label: "Analysis Engine", value: "AIERT AI Index" },
@@ -168,6 +169,56 @@ export default function Home() {
                   <div key={stat.label} className="stat-gold rounded-xl px-5 py-4">
                     <div className="text-xs mb-1 text-mist">{stat.label}</div>
                     <div className="font-semibold text-gold">{stat.value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* MailBroom */}
+          <div className="card-green-accent rounded-3xl p-8 md:p-12 mb-8">
+            <div className="grid md:grid-cols-2 gap-10 items-center">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-6 bg-sq-green/15 text-sq-green">
+                  📱 iOS App
+                </div>
+                <h3 className="text-3xl font-black mb-4 text-cloud">MailBroom</h3>
+                <p className="mb-6 text-mist leading-relaxed">
+                  AI-powered email cleaner for iPhone. Connect any IMAP account and MailBroom will
+                  classify, bulk-delete, unsubscribe, and organise your inbox — 100% privately on
+                  your device. No server. No account. Just a clean inbox.
+                </p>
+                <ul className="space-y-3 mb-8">
+                  {[
+                    "AI classifies every email: Junk, Newsletter, or Keep",
+                    "Bulk delete thousands of emails in seconds",
+                    "Smart Unsubscribe via RFC 8058",
+                    "Smart Organise — server-side IMAP folders",
+                    "Your emails never leave your phone",
+                  ].map((f) => (
+                    <li key={f} className="flex items-center gap-3 text-sm text-mist">
+                      <span className="text-sq-green">✓</span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <a
+                  href="/mailbroom"
+                  className="btn-green inline-block px-7 py-3 rounded-full text-sm"
+                >
+                  Learn More →
+                </a>
+              </div>
+              <div className="flex flex-col gap-4">
+                {[
+                  { label: "Works With", value: "Gmail · Outlook · iCloud · Any IMAP" },
+                  { label: "Privacy", value: "100% On-Device · No Server" },
+                  { label: "Platform", value: "iOS 17.0+" },
+                  { label: "Price", value: "Free · Pro from £1.99/mo" },
+                ].map((stat) => (
+                  <div key={stat.label} className="stat-green rounded-xl px-5 py-4">
+                    <div className="text-xs mb-1 text-mist">{stat.label}</div>
+                    <div className="font-semibold text-sq-green">{stat.value}</div>
                   </div>
                 ))}
               </div>
@@ -204,7 +255,7 @@ export default function Home() {
               <div className="flex flex-col gap-4">
                 {[
                   { label: "Model Type", value: "Multi-Factor AI" },
-                  { label: "Coverage", value: "FTSE 100 & 250 Stocks" },
+                  { label: "Coverage", value: "UK Listed Stocks" },
                   { label: "Output", value: "0–100 Composite Score" },
                   { label: "Refresh Rate", value: "Real-time" },
                 ].map((stat) => (
@@ -252,10 +303,11 @@ export default function Home() {
           </div>
           <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
             {[
-              { icon: "✉️", title: "General Enquiries", detail: "info@aiert.co.uk", href: "mailto:info@aiert.co.uk", isExternal: false },
-              { icon: "🏢", title: "Registered Address", detail: "England & Wales\nCompany No. 16253779", href: null, isExternal: false },
+              { icon: "✉️", title: "General Enquiries", detail: "aiert@btinternet.com", href: "mailto:aiert@btinternet.com", isExternal: false },
+              { icon: "🏢", title: "Registered Address", detail: "8 Clarendon Gardens\nLondon W9 1AY\nEngland & Wales · Co. No. 16253779", href: null, isExternal: false },
               { icon: "🌐", title: "ShareQuest Platform", detail: "sharequest.co.uk", href: "https://sharequest.co.uk", isExternal: true },
-              { icon: "🤝", title: "Business Development", detail: "partnerships@aiert.co.uk", href: "mailto:partnerships@aiert.co.uk", isExternal: false },
+              { icon: "📞", title: "Phone", detail: "Available on request\nEmail us to arrange a call", href: null, isExternal: false },
+              { icon: "🤝", title: "Business Development", detail: "admin@sharequest.co.uk", href: "mailto:admin@sharequest.co.uk", isExternal: false },
             ].map((item) => (
               <div key={item.title} className="card-glass rounded-2xl p-6">
                 <div className="text-3xl mb-3">{item.icon}</div>
