@@ -303,11 +303,11 @@ export default function Home() {
           </div>
           <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
             {[
-              { icon: "✉️", title: "General Enquiries", detail: "aiert@btinternet.com", href: "mailto:aiert@btinternet.com", isExternal: false },
+              { icon: "✉️", title: "General Enquiries", detail: "enquiries@aiert.co.uk", href: "mailto:enquiries@aiert.co.uk", isExternal: false },
               { icon: "🏢", title: "Registered Address", detail: "8 Clarendon Gardens\nLondon W9 1AY\nEngland & Wales · Co. No. 16253779", href: null, isExternal: false },
               { icon: "🌐", title: "ShareQuest Platform", detail: "sharequest.co.uk", href: "https://sharequest.co.uk", isExternal: true },
               { icon: "📞", title: "Phone", detail: "Available on request\nEmail us to arrange a call", href: null, isExternal: false },
-              { icon: "🤝", title: "Business Development", detail: "admin@sharequest.co.uk", href: "mailto:admin@sharequest.co.uk", isExternal: false },
+              { icon: "🤝", title: "Business Development", detail: "admin@aiert.co.uk", href: "mailto:admin@aiert.co.uk", isExternal: false },
             ].map((item) => (
               <div key={item.title} className="card-glass rounded-2xl p-6">
                 <div className="text-3xl mb-3">{item.icon}</div>

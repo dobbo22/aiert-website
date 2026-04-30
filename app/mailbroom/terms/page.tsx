@@ -169,8 +169,8 @@ export default function MailBroomTermsPage() {
             {s.contact && (
               <p className="text-mist leading-relaxed">
                 For questions about these terms, contact AIERT Ltd at{" "}
-                <a href="mailto:aiert@btinternet.com" className="text-gold underline hover:text-gold/80 transition-colors">
-                  aiert@btinternet.com
+                <a href="mailto:enquiries@aiert.co.uk" className="text-gold underline hover:text-gold/80 transition-colors">
+                  enquiries@aiert.co.uk
                 </a>
               </p>
             )}
