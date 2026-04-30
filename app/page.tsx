@@ -214,7 +214,7 @@ export default function Home() {
                   { label: "Works With", value: "Gmail · Outlook · iCloud · Any IMAP" },
                   { label: "Privacy", value: "100% On-Device · No Server" },
                   { label: "Platform", value: "iOS 17.0+" },
-                  { label: "Price", value: "Free · Pro from £1.99/mo" },
+                  { label: "Price", value: "7-day trial · Pro from £1.99/mo" },
                 ].map((stat) => (
                   <div key={stat.label} className="stat-green rounded-xl px-5 py-4">
                     <div className="text-xs mb-1 text-mist">{stat.label}</div>

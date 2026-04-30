@@ -4,7 +4,7 @@ import Image from "next/image";
 export const metadata: Metadata = {
   title: "MailBroom – AI Email Cleaner for iPhone | AIERT Ltd",
   description:
-    "MailBroom connects to any IMAP inbox and uses AI to classify, bulk-delete, unsubscribe, and organise your emails — 100% privately on your device. Free on iOS.",
+    "MailBroom connects to any IMAP inbox and uses AI to classify, bulk-delete, unsubscribe, and organise your emails — 100% privately on your device. Start with a 7-day free trial.",
   keywords: ["MailBroom", "email cleaner", "inbox cleaner", "unsubscribe", "bulk delete", "IMAP", "iOS", "AI", "AIERT"],
   metadataBase: new URL("https://aiert.co.uk"),
   openGraph: {
@@ -110,7 +110,7 @@ export default function MailBroomPage() {
                 rel="noopener noreferrer"
                 className="btn-gold px-8 py-4 rounded-full text-base inline-flex items-center gap-2 justify-center"
               >
-                <span>🍎</span> Download on App Store
+                <span>🍎</span> Start 7-Day Free Trial
               </a>
               <a href="#features" className="btn-outline px-8 py-4 rounded-full text-base inline-block text-center">
                 See Features
@@ -121,7 +121,7 @@ export default function MailBroomPage() {
               {[
                 { value: "100%", label: "Private" },
                 { value: "IMAP", label: "Universal" },
-                { value: "Free", label: "To Start" },
+                { value: "7 Days", label: "Free Trial" },
               ].map((s) => (
                 <div key={s.label}>
                   <div className="text-2xl font-black gold-text">{s.value}</div>
@@ -357,12 +357,10 @@ export default function MailBroomPage() {
       <section id="pricing" className="max-w-6xl mx-auto px-6 py-24">
         <div className="text-center mb-14">
           <p className="text-xs font-semibold uppercase tracking-widest mb-4 text-gold">Pricing</p>
-          <h2 className="text-4xl font-black text-cloud">Free to start · Pro to go unlimited</h2>
-          <p className="text-mist mt-4 max-w-xl mx-auto">
-            <strong>Free:</strong> Scan and classify up to 500 emails, 1 account, core features only.<br />
-            <strong>Trial:</strong> Scan up to 2,500 emails total across all accounts during the trial period. All Pro features unlocked, including Smart Delete, Smart Organise, rules, and multi-account support (up to 3 accounts).<br />
-            <strong>Pro:</strong> Unlimited scanning, unlimited use of all features, and up to 3 accounts (higher tiers available).<br /><br />
-            <em>When you start your trial, you can scan up to 2,500 emails and add up to 3 accounts. All Pro features are available during the trial, so you can experience everything MailBroom offers. If you set up Smart Organise rules during the trial, those rules will pause if you don’t subscribe after the trial ends. After the trial, you revert to the free tier (500 emails, 1 account) unless you subscribe.</em>
+          <h2 className="text-4xl font-black text-cloud">7-day free trial · then from £1.99/mo</h2>
+          <p className="text-mist mt-4 max-w-2xl mx-auto leading-relaxed">
+            Start with a <strong className="text-cloud">7-day free trial</strong> — every Pro feature unlocked, scan up to 2,500 emails, add up to 3 accounts. No charge until the trial ends.
+            After the trial, subscribe to keep Pro or drop back to the free tier (500 emails, 1 account, core features only).
           </p>
         </div>
 
@@ -398,7 +396,7 @@ export default function MailBroomPage() {
         {/* Tier pricing table */}
         <div className="max-w-4xl mx-auto mb-10">
           <h3 className="text-center text-xl font-bold text-cloud mb-2">Choose your plan</h3>
-          <p className="text-center text-sm text-mist mb-8">All Pro plans include every feature above · 7-day free trial (1 account) · cancel anytime</p>
+          <p className="text-center text-sm text-mist mb-8">All Pro plans include every feature above · 7-day free trial · cancel anytime</p>
           <div className="card-glass rounded-3xl overflow-hidden">
             <table className="w-full text-sm">
               <thead>
@@ -477,7 +475,7 @@ export default function MailBroomPage() {
           <span className="gold-text">your inbox?</span>
         </h2>
         <p className="text-lg text-mist mb-10 max-w-xl mx-auto">
-          Free to download. No account required. Your emails stay on your phone.
+          7-day free trial. No account required. Your emails never leave your phone.
         </p>
         <a
           href="https://apps.apple.com/gb/app/mailbroom"
@@ -485,9 +483,9 @@ export default function MailBroomPage() {
           rel="noopener noreferrer"
           className="btn-gold px-10 py-5 rounded-full text-lg inline-flex items-center gap-3"
         >
-          <span>🍎</span> Download MailBroom Free
+          <span>🍎</span> Start 7-Day Free Trial
         </a>
-        <p className="mt-4 text-sm text-mist">iOS 17.0+ · iPhone · Free with optional Pro upgrade</p>
+        <p className="mt-4 text-sm text-mist">iOS 17.0+ · iPhone · Free tier available after trial · cancel anytime</p>
       </section>
 
       {/* ── FOOTER ─────────────────────────────────────── */}
