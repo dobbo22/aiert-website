@@ -134,7 +134,7 @@ export default function MailBroomPage() {
           </div>
 
           <div className="flex justify-center">
-            <PhoneFrame src="/mailbroom/dashboard.png" alt="MailBroom dashboard showing 2,943 emails classified as Junk, Lists, and Keep" />
+            <PhoneFrame src="/mailbroom/dashboard.png" alt="MailBroom dashboard showing 2,943 emails classified as Review, Lists, and Keep" />
           </div>
         </div>
       </section>
@@ -158,7 +158,7 @@ export default function MailBroomPage() {
                 step: "02",
                 icon: "🤖",
                 title: "AI scans & classifies",
-                desc: "MailBroom downloads your emails and classifies each one as Junk, Lists, or Keep using on-device AI. The first 1,000 emails load before you see the UI.",
+                desc: "MailBroom downloads your emails and classifies each one as Review, Lists, or Keep using on-device AI. The first 1,000 emails load before you see the UI.",
               },
               {
                 step: "03",
@@ -189,7 +189,7 @@ export default function MailBroomPage() {
             </div>
             <h2 className="text-3xl font-black text-cloud mb-4">Smart Delete</h2>
             <p className="text-mist leading-relaxed mb-6">
-              Groups junk and newsletter emails by sender. Risk scoring warns you before deleting
+              Groups Review and newsletter emails by sender. Risk scoring warns you before deleting
               receipts or order confirmations. Bulk-delete thousands of emails in seconds with one tap.
             </p>
             <ul className="space-y-3">
