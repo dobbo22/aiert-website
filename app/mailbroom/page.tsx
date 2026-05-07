@@ -27,13 +27,15 @@ const freeVsPro = [
   { feature: "View & read emails", free: true, pro: true },
   { feature: "Scan limit", free: "1,000 emails", pro: "Unlimited" },
   { feature: "Bulk delete", free: "Up to 50", pro: "Unlimited" },
+  { feature: "Needs Reply detection", free: true, pro: true },
+  { feature: "Draft Reply (Apple Intelligence)", free: true, pro: true },
+  { feature: "Mute sender · Keep Newest · Activity Log", free: true, pro: true },
   { feature: "Smart Delete", free: false, pro: true },
   { feature: "Smart Unsubscribe", free: false, pro: true },
   { feature: "Smart Organise & folder rules", free: false, pro: true },
   { feature: "Server-side rules (Gmail / Outlook)", free: false, pro: true },
   { feature: "Background sync", free: "Limited", pro: "Full" },
   { feature: "Safe senders", free: true, pro: true },
-  { feature: "Mute sender, Keep Newest, Activity Log", free: true, pro: true },
 ];
 
 function PhoneFrame({ src, alt }: { src: string; alt: string }) {
@@ -318,6 +320,46 @@ export default function MailBroomPage() {
               <div className="absolute -inset-10 rounded-full blur-3xl opacity-20 bg-sq-green" />
               <div className="rounded-[2.8rem] border-2 border-sq-green/25 shadow-[0_0_40px_rgba(34,197,94,0.1)]">
                 <PhoneFrame src="/mailbroom/safe-senders.png" alt="Safe Senders screen showing trusted senders list with shield icons" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Draft Reply with Apple Intelligence */}
+        <div className="grid md:grid-cols-2 gap-14 items-center">
+          <div className="md:order-2">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl text-2xl mb-6 bg-blue-500/10 text-blue-400">
+              ✍️
+            </div>
+            <h2 className="text-3xl font-black text-cloud mb-4">Draft Reply with Apple Intelligence</h2>
+            <p className="text-mist leading-relaxed mb-6">
+              MailBroom detects emails that need a reply — unread messages, requests with phrases like
+              "let me know" or "please confirm", and emails you&apos;ve read but never responded to. Tap
+              "Draft a Reply" and Apple Intelligence writes a suggested response on-device. Completely
+              private — no internet, no API key, no data leaves your phone.
+            </p>
+            <ul className="space-y-3">
+              {[
+                "Needs Reply tab surfaces unanswered emails automatically",
+                "Apple Intelligence drafts a reply on-device (iOS 26+)",
+                "Edit the draft before sending — MailBroom never sends on your behalf",
+                "Opens Mail app with To, Subject and body pre-filled",
+                "Falls back to a smart template on older devices",
+              ].map((b) => (
+                <li key={b} className="flex items-start gap-3 text-sm text-mist">
+                  <span className="mt-0.5 flex-shrink-0 text-blue-400">✓</span>
+                  {b}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="flex justify-center md:order-1">
+            <div className="relative">
+              <div className="absolute -inset-10 rounded-full blur-3xl opacity-20 bg-blue-500" />
+              <div className="card-glass rounded-3xl p-10 text-center max-w-xs">
+                <div className="text-6xl mb-4">✍️</div>
+                <div className="text-cloud font-bold mb-2">On-device · Private</div>
+                <div className="text-mist text-sm">Apple Intelligence drafts your reply without sending anything to the cloud</div>
               </div>
             </div>
           </div>
