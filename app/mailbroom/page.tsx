@@ -28,7 +28,7 @@ const freeVsPro = [
   { feature: "Scan limit", free: "1,000 emails", pro: "Unlimited" },
   { feature: "Bulk delete", free: "Up to 50", pro: "Unlimited" },
   { feature: "Needs Reply detection", free: true, pro: true },
-  { feature: "Draft Reply (Apple Intelligence)", free: true, pro: true },
+  { feature: "Draft Reply (Apple Intelligence)", free: "1 per day", pro: "Unlimited" },
   { feature: "Mute sender · Keep Newest · Activity Log", free: true, pro: true },
   { feature: "Smart Delete", free: false, pro: true },
   { feature: "Smart Unsubscribe", free: false, pro: true },
@@ -345,6 +345,7 @@ export default function MailBroomPage() {
                 "Edit the draft before sending — MailBroom never sends on your behalf",
                 "Opens Mail app with To, Subject and body pre-filled",
                 "Falls back to a smart template on older devices",
+                "Free: 1 draft per day · Pro: unlimited",
               ].map((b) => (
                 <li key={b} className="flex items-start gap-3 text-sm text-mist">
                   <span className="mt-0.5 flex-shrink-0 text-blue-400">✓</span>
