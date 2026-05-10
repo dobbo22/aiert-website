@@ -4,8 +4,8 @@ import Image from "next/image";
 export const metadata: Metadata = {
   title: "MailBroom – AI Email Cleaner for iPhone | AIERT Ltd",
   description:
-    "MailBroom connects to any IMAP inbox and uses AI to classify, bulk-delete, unsubscribe, and organise your emails — 100% privately on your device. Start with a 14-day free trial.",
-  keywords: ["MailBroom", "email cleaner", "inbox cleaner", "unsubscribe", "bulk delete", "IMAP", "iOS", "AI", "AIERT"],
+    "MailBroom connects to any IMAP inbox and uses AI to classify, bulk-delete, unsubscribe, and organise your emails — 100% privately on your device. Smart Triage clears 10,000 emails in minutes. Start with a 14-day free trial.",
+  keywords: ["MailBroom", "email cleaner", "inbox cleaner", "unsubscribe", "bulk delete", "IMAP", "iOS", "AI", "AIERT", "smart triage", "inbox zero"],
   metadataBase: new URL("https://aiert.co.uk"),
   openGraph: {
     title: "MailBroom – AI Email Cleaner for iPhone",
@@ -30,6 +30,7 @@ const freeVsPro = [
   { feature: "Needs Reply detection", free: true, pro: true },
   { feature: "Draft Reply (Apple Intelligence)", free: "1 per day", pro: "Unlimited" },
   { feature: "Mute sender · Keep Newest · Activity Log", free: true, pro: true },
+  { feature: "Smart Triage (guided inbox clearing)", free: false, pro: true },
   { feature: "Smart Delete", free: false, pro: true },
   { feature: "Smart Unsubscribe", free: false, pro: true },
   { feature: "Smart Organise & folder rules", free: false, pro: true },
@@ -103,7 +104,8 @@ export default function MailBroomPage() {
             <p className="text-lg text-mist leading-relaxed mb-8 max-w-lg">
               MailBroom connects to any IMAP email account and uses AI to classify,
               bulk-delete, unsubscribe, and organise your emails — 100% privately on your device.
-              Your emails never leave your phone.
+              Smart Triage guides you through a large inbox one sender at a time,
+              clearing thousands of emails in minutes. Your emails never leave your phone.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <a
@@ -158,13 +160,13 @@ export default function MailBroomPage() {
                 step: "02",
                 icon: "🤖",
                 title: "AI scans & classifies",
-                desc: "MailBroom downloads your emails and classifies each one as Review, Lists, or Keep using on-device AI. The first 1,000 emails load before you see the UI.",
+                desc: "MailBroom analyses your senders, ranks them by volume, and classifies every email as Review, Lists, or Keep — entirely on-device. For large inboxes, Smart Triage launches automatically.",
               },
               {
                 step: "03",
-                icon: "🧹",
-                title: "Bulk clean in seconds",
-                desc: "Delete thousands of emails, unsubscribe from mailing lists, and file the rest into organised folders — all in a few taps.",
+                icon: "⚡",
+                title: "Triage, delete & organise",
+                desc: "Smart Triage presents your highest-volume senders one at a time — delete, keep, unsubscribe or organise with a single tap. Clear 10,000 emails in minutes.",
               },
             ].map((item) => (
               <div key={item.step} className="card-glass rounded-2xl p-8">
@@ -180,6 +182,55 @@ export default function MailBroomPage() {
 
       {/* ── FEATURES ───────────────────────────────────── */}
       <section id="features" className="max-w-6xl mx-auto px-6 py-24 space-y-24">
+
+        {/* Smart Triage */}
+        <div className="grid md:grid-cols-2 gap-14 items-center">
+          <div className="md:order-2">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl text-2xl mb-6 bg-blue-500/10 text-blue-400">
+              ⚡
+            </div>
+            <div className="badge-live inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium mb-4">
+              <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse inline-block" />
+              New feature
+            </div>
+            <h2 className="text-3xl font-black text-cloud mb-4">Smart Triage</h2>
+            <p className="text-mist leading-relaxed mb-6">
+              The fastest way to conquer a large inbox. MailBroom ranks your senders by volume —
+              newsletters, retailers, and notifications first — then guides you through them one
+              at a time. One decision clears thousands of emails instantly.
+            </p>
+            <ul className="space-y-3">
+              {[
+                "Automatically launches after scanning a large inbox",
+                "Shows 3 recent emails per sender — tap to read the full email",
+                "On-device AI flags emails that may need saving before you delete",
+                "Delete All · Keep · Unsubscribe · Keep 30 Days · Organise",
+                "Progress saved — exit and resume any time",
+                "Every decision trains the AI for smarter future scans",
+              ].map((b) => (
+                <li key={b} className="flex items-start gap-3 text-sm text-mist">
+                  <span className="mt-0.5 flex-shrink-0 text-blue-400">✓</span>
+                  {b}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="flex justify-center md:order-1">
+            <div className="relative">
+              <div className="absolute -inset-10 rounded-full blur-3xl opacity-20 bg-blue-500" />
+              <div className="card-glass rounded-3xl p-10 text-center max-w-xs">
+                <div className="text-6xl mb-4">⚡</div>
+                <div className="text-cloud font-bold text-xl mb-2">10,000 emails</div>
+                <div className="text-mist text-sm mb-4">cleared in minutes, not hours</div>
+                <div className="space-y-2">
+                  {["Delete All", "Keep All", "Unsub + Delete", "Keep 30 Days", "Organise"].map((action) => (
+                    <div key={action} className="bg-white/5 rounded-lg px-4 py-2 text-sm text-cloud font-medium">{action}</div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Smart Delete */}
         <div className="grid md:grid-cols-2 gap-14 items-center">
@@ -528,7 +579,7 @@ export default function MailBroomPage() {
         >
           <span>🍎</span> Start 14-Day Free Trial
         </a>
-        <p className="mt-4 text-sm text-mist">iOS 17.0+ · iPhone · No credit card needed · Free tier available after trial · cancel anytime</p>
+        <p className="mt-4 text-sm text-mist">iOS 17.0+ · iPhone & iPad · No credit card needed · Free tier available after trial · cancel anytime</p>
       </section>
 
       {/* ── FOOTER ─────────────────────────────────────── */}
@@ -548,7 +599,8 @@ export default function MailBroomPage() {
               <a href="/" className="hover:text-white transition-colors">AIERT Home</a>
               <a href="https://sharequest.co.uk" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">ShareQuest</a>
               <a href="/#contact" className="hover:text-white transition-colors">Contact</a>
-              <a href="https://sharequest.co.uk/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Privacy</a>
+              <a href="/mailbroom/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
+              <a href="/mailbroom/terms" className="hover:text-white transition-colors">Terms of Use</a>
             </div>
           </div>
           <div className="footer-divider mt-8 pt-8 text-center text-xs text-mist">
