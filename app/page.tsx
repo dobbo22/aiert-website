@@ -190,7 +190,7 @@ export default function Home() {
                 </p>
                 <ul className="space-y-3 mb-8">
                   {[
-                    "AI classifies every email: Junk, Newsletter, or Keep",
+                    "AI classifies every email: Junk, Lists, or Keep",
                     "Bulk delete thousands of emails in seconds",
                     "Smart Unsubscribe via RFC 8058",
                     "Smart Organise — server-side IMAP folders",
@@ -214,7 +214,7 @@ export default function Home() {
                   { label: "Works With", value: "Gmail · Outlook · iCloud · Any IMAP" },
                   { label: "Privacy", value: "100% On-Device · No Server" },
                   { label: "Platform", value: "iOS 17.0+" },
-                  { label: "Price", value: "7-day trial · Pro from £1.99/mo" },
+                  { label: "Price", value: "Try before you buy · Free actions before upgrade" },
                 ].map((stat) => (
                   <div key={stat.label} className="stat-green rounded-xl px-5 py-4">
                     <div className="text-xs mb-1 text-mist">{stat.label}</div>
