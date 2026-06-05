@@ -613,15 +613,15 @@ export default function MailBroomPage() {
       <section id="pricing" className="max-w-6xl mx-auto px-6 py-24">
         <div className="text-center mb-14">
           <p className="text-xs font-semibold uppercase tracking-widest mb-4 text-gold">Pricing</p>
-          <h2 className="text-4xl font-black text-cloud">Free to try · 99p for unlimited · Cancel anytime</h2>
+          <h2 className="text-4xl font-black text-cloud">Free to try · 99p intro offer · Cancel anytime</h2>
           <p className="text-mist mt-4 max-w-2xl mx-auto leading-relaxed">
             No credit card required. No trial expiry. When you upgrade, your subscription renews monthly until you cancel in iPhone Settings – cancel anytime, no questions asked.
             <br /><br />
             <strong className="text-cloud">Get 5 free storage cleanups and 5 free sweeps.</strong> Use them or save them for later – they never expire.
             <br /><br />
-            Love MailBroom? Upgrade to Pro for just <strong className="text-gold">99p/month</strong> to unlock unlimited cleanups, sweeps, and every feature. Cancel anytime in your iPhone Settings.
+            Love MailBroom? Upgrade to Pro for just <strong className="text-gold">99p for your first month</strong>, then <strong className="text-gold">£1.99/month</strong> to unlock unlimited cleanups, sweeps, and every feature. Cancel anytime in your iPhone Settings.
             <br /><br />
-            <span className="text-sm text-gold font-semibold">That's less than a coffee, and your emails never leave your phone.</span>
+            <span className="text-sm text-gold font-semibold">Even at £1.99/month, that beats Clean Email (£7.99) by a country mile. Your emails never leave your phone.</span>
           </p>
           <div className="mt-8 p-6 bg-white/[0.05] rounded-2xl border border-white/10 max-w-2xl mx-auto">
             <p className="text-mist italic text-sm">
@@ -757,7 +757,7 @@ export default function MailBroomPage() {
               {[
                 { feature: "Free tier", mailbroom: "5 cleanups + 5 sweeps", clean: "1,000 emails", spark: "Very limited" },
                 { feature: "Free trial (requires card)", mailbroom: "No", clean: "Yes (14 days)", spark: "Yes (7 days)" },
-                { feature: "Pro monthly price", mailbroom: "99p", clean: "~£7.99", spark: "~£4.99¹" },
+                { feature: "Pro monthly price", mailbroom: "99p intro² · £1.99/mo", clean: "~£7.99", spark: "~£4.99¹" },
                 { feature: "Cancel anytime", mailbroom: "✓", clean: "✓", spark: "✓" },
                 { feature: "On-device AI (private)", mailbroom: "✓", clean: "✗", spark: "✗" },
                 { feature: "Bulk delete by sender", mailbroom: "✓", clean: "✓", spark: "✗" },
@@ -774,8 +774,9 @@ export default function MailBroomPage() {
               ))}
             </tbody>
           </table>
-          <div className="px-6 py-3 bg-white/[0.02] border-t border-white/10 text-xs text-mist">
-            ¹ Spark Mail requires annual payment of £59.99 upfront – no monthly option.
+          <div className="px-6 py-3 bg-white/[0.02] border-t border-white/10 text-xs text-mist space-y-1">
+            <div>¹ Spark Mail requires annual payment of £59.99 upfront – no monthly option.</div>
+            <div>² First month intro offer at 99p, then £1.99/month. Even at regular price, MailBroom costs 75% less than Clean Email.</div>
           </div>
         </div>
 
@@ -790,8 +791,8 @@ export default function MailBroomPage() {
             </div>
             <div className="card-glass rounded-2xl p-8">
               <div className="text-3xl mb-4">☕</div>
-              <h4 className="font-bold text-cloud mb-3">If you like it, it's 99p.</h4>
-              <p className="text-sm text-mist">That's less than a coffee. Less than any competitor. Cancel next month if you don't need it anymore.</p>
+              <h4 className="font-bold text-cloud mb-3">Try Pro for 99p. Then £1.99/month.</h4>
+              <p className="text-sm text-mist">First month is just 99p. Then £1.99/month – less than a third of the competition. Cancel anytime if you don't need it.</p>
             </div>
             <div className="card-glass rounded-2xl p-8">
               <div className="text-3xl mb-4">🔒</div>
@@ -816,7 +817,7 @@ export default function MailBroomPage() {
                 author: "Sarah K.",
               },
               {
-                quote: "I was paying Clean Email £8/month. MailBroom does the same thing for 99p – and my emails never hit a cloud server.",
+                quote: "I was paying Clean Email £8/month. MailBroom does the same thing for £1.99 – and my emails never hit a cloud server. That's 75% cheaper.",
                 author: "David R.",
               },
               {
