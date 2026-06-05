@@ -613,13 +613,15 @@ export default function MailBroomPage() {
       <section id="pricing" className="max-w-6xl mx-auto px-6 py-24">
         <div className="text-center mb-14">
           <p className="text-xs font-semibold uppercase tracking-widest mb-4 text-gold">Pricing</p>
-          <h2 className="text-4xl font-black text-cloud">Try before you buy · Pro plans in the App Store</h2>
+          <h2 className="text-4xl font-black text-cloud">Free to try · 99p for unlimited · Cancel anytime</h2>
           <p className="text-mist mt-4 max-w-2xl mx-auto leading-relaxed">
-            Try MailBroom before you buy with <strong className="text-cloud">free actions included</strong>: 5 sweeps, 3 Needs Reply scans, 1 mass delete, 5 unsubscribes, and 1 organise rule.
+            No credit card required. No hidden fees. No "trial expiry" surprise.
             <br /><br />
-            When your free actions are used up, you can upgrade to Pro to unlock unlimited actions and support up to 50 accounts, with monthly or yearly plans shown in the App Store.
+            <strong className="text-cloud">Get 5 free storage cleanups and 5 free sweeps.</strong> Use them or save them for later – they never expire.
             <br /><br />
-            <span className="text-sm text-gold font-semibold">Pro's Smart Triage is specifically designed for mailboxes over 20,000 emails</span> – the point where Outlook and Gmail start to slow down.
+            Love MailBroom? Upgrade to Pro for just <strong className="text-gold">99p/month</strong> to unlock unlimited cleanups, sweeps, and every feature. Cancel anytime in your iPhone Settings.
+            <br /><br />
+            <span className="text-sm text-gold font-semibold">That's less than a coffee, and your emails never leave your phone.</span>
           </p>
           <div className="mt-8 p-6 bg-white/[0.05] rounded-2xl border border-white/10 max-w-2xl mx-auto">
             <p className="text-mist italic text-sm">
@@ -627,6 +629,34 @@ export default function MailBroomPage() {
             </p>
             <p className="text-mist text-xs mt-3">— MailBroom Beta Tester</p>
           </div>
+        </div>
+
+        {/* What does cleanup and sweep mean */}
+        <div className="max-w-3xl mx-auto mb-12 p-8 bg-white/[0.05] rounded-2xl border border-white/10">
+          <h3 className="text-lg font-bold text-cloud mb-6">What counts as a "cleanup" or "sweep"?</h3>
+          <div className="grid md:grid-cols-2 gap-8">
+            <div>
+              <div className="flex items-start gap-3 mb-3">
+                <div className="text-2xl">🗑️</div>
+                <div>
+                  <h4 className="font-semibold text-cloud">Storage Cleanup</h4>
+                  <p className="text-sm text-mist mt-1">One bulk delete or archive action of up to 500 emails. For example: delete all emails from one sender, or archive everything older than 90 days.</p>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div className="flex items-start gap-3 mb-3">
+                <div className="text-2xl">🌬️</div>
+                <div>
+                  <h4 className="font-semibold text-cloud">Sweep</h4>
+                  <p className="text-sm text-mist mt-1">Clear all emails from one sender using Smart Triage. Choose delete, keep 30 days, unsubscribe + delete, or any combination.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p className="text-xs text-mist mt-6 border-t border-white/10 pt-6">
+            Free tier: 5 of each. No time limit. Use them today, next week, or never – they never expire.
+          </p>
         </div>
 
         {/* Free vs Pro feature table */}
