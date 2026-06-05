@@ -615,7 +615,7 @@ export default function MailBroomPage() {
           <p className="text-xs font-semibold uppercase tracking-widest mb-4 text-gold">Pricing</p>
           <h2 className="text-4xl font-black text-cloud">Free to try · 99p for unlimited · Cancel anytime</h2>
           <p className="text-mist mt-4 max-w-2xl mx-auto leading-relaxed">
-            No credit card required. No hidden fees. No "trial expiry" surprise.
+            No credit card required. No trial expiry. When you upgrade, your subscription renews monthly until you cancel in iPhone Settings – cancel anytime, no questions asked.
             <br /><br />
             <strong className="text-cloud">Get 5 free storage cleanups and 5 free sweeps.</strong> Use them or save them for later – they never expire.
             <br /><br />
