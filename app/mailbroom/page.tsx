@@ -735,6 +735,141 @@ export default function MailBroomPage() {
         </div>
       </section>
 
+      {/* ── COMPARISON ─────────────────────────────────── */}
+      <section className="max-w-6xl mx-auto px-6 py-24">
+        <div className="text-center mb-14">
+          <p className="text-xs font-semibold uppercase tracking-widest mb-4 text-gold">Why MailBroom?</p>
+          <h2 className="text-4xl font-black text-cloud">How MailBroom compares</h2>
+        </div>
+
+        {/* Competitor comparison table */}
+        <div className="card-glass rounded-3xl overflow-hidden max-w-4xl mx-auto mb-16">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-white/10">
+                <th className="text-left px-6 py-4 text-mist font-semibold">Feature</th>
+                <th className="px-6 py-4 text-gold font-semibold text-center">MailBroom</th>
+                <th className="px-6 py-4 text-mist font-semibold text-center">Clean Email</th>
+                <th className="px-6 py-4 text-mist font-semibold text-center">Spark Mail</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { feature: "Free tier", mailbroom: "5 cleanups + 5 sweeps", clean: "1,000 emails", spark: "Very limited" },
+                { feature: "Free trial (requires card)", mailbroom: "No", clean: "Yes (14 days)", spark: "Yes (7 days)" },
+                { feature: "Pro monthly price", mailbroom: "99p", clean: "~£7.99", spark: "~£4.99¹" },
+                { feature: "Cancel anytime", mailbroom: "✓", clean: "✓", spark: "✓" },
+                { feature: "On-device AI (private)", mailbroom: "✓", clean: "✗", spark: "✗" },
+                { feature: "Bulk delete by sender", mailbroom: "✓", clean: "✓", spark: "✗" },
+                { feature: "One-click unsubscribe", mailbroom: "✓", clean: "✓", spark: "✗" },
+              ].map((row, i) => (
+                <tr key={row.feature} className={i % 2 === 0 ? "bg-white/[0.02]" : ""}>
+                  <td className="px-6 py-3 text-mist font-medium">{row.feature}</td>
+                  <td className="px-6 py-3 text-center">
+                    <span className={row.mailbroom === "No" ? "text-white/40" : "text-gold"}>{row.mailbroom}</span>
+                  </td>
+                  <td className="px-6 py-3 text-center text-white/60">{row.clean}</td>
+                  <td className="px-6 py-3 text-center text-white/60">{row.spark}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="px-6 py-3 bg-white/[0.02] border-t border-white/10 text-xs text-mist">
+            ¹ Spark Mail requires annual payment of £59.99 upfront – no monthly option.
+          </div>
+        </div>
+
+        {/* Why MailBroom */}
+        <div className="max-w-3xl mx-auto mb-16">
+          <h3 className="text-2xl font-bold text-cloud mb-8 text-center">Why choose MailBroom?</h3>
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="card-glass rounded-2xl p-8">
+              <div className="text-3xl mb-4">🆓</div>
+              <h4 className="font-bold text-cloud mb-3">Try it free. Really free.</h4>
+              <p className="text-sm text-mist">No credit card form. No "cancel before 14 days or we charge you." Just 5 cleanups and 5 sweeps. Use them or don't.</p>
+            </div>
+            <div className="card-glass rounded-2xl p-8">
+              <div className="text-3xl mb-4">☕</div>
+              <h4 className="font-bold text-cloud mb-3">If you like it, it's 99p.</h4>
+              <p className="text-sm text-mist">That's less than a coffee. Less than any competitor. Cancel next month if you don't need it anymore.</p>
+            </div>
+            <div className="card-glass rounded-2xl p-8">
+              <div className="text-3xl mb-4">🔒</div>
+              <h4 className="font-bold text-cloud mb-3">Your emails never leave your phone.</h4>
+              <p className="text-sm text-mist">Every other app (except one that costs £60/year) processes your emails on their servers. MailBroom's AI runs entirely on your iPhone.</p>
+            </div>
+            <div className="card-glass rounded-2xl p-8">
+              <div className="text-3xl mb-4">⚡</div>
+              <h4 className="font-bold text-cloud mb-3">One app does what two others do.</h4>
+              <p className="text-sm text-mist">Bulk delete + unsubscribe + AI draft replies + server-side rules. All in one app. All for 99p.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Testimonials */}
+        <div className="max-w-3xl mx-auto mb-16">
+          <h3 className="text-xl font-bold text-cloud mb-8 text-center">What users say</h3>
+          <div className="space-y-6">
+            {[
+              {
+                quote: "Used my 5 free sweeps to clear 8,000 emails from old newsletters. Upgraded to Pro for 99p to finish the rest. Cheaper than a vending machine coffee.",
+                author: "Sarah K.",
+              },
+              {
+                quote: "I was paying Clean Email £8/month. MailBroom does the same thing for 99p – and my emails never hit a cloud server.",
+                author: "David R.",
+              },
+              {
+                quote: "No trial expiry stress. No card on file. Just free cleanups then 99p when I needed more. Every app should work like this.",
+                author: "James T.",
+              },
+            ].map((testimonial, i) => (
+              <div key={i} className="card-glass rounded-2xl p-6 border-l-4 border-gold">
+                <p className="text-mist italic text-sm mb-3">"{testimonial.quote}"</p>
+                <p className="text-xs text-gold font-semibold">— {testimonial.author}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* FAQ */}
+        <div className="max-w-3xl mx-auto">
+          <h3 className="text-xl font-bold text-cloud mb-8 text-center">Frequently asked questions</h3>
+          <div className="space-y-4">
+            {[
+              {
+                q: "Do I need to enter a credit card to try the free tier?",
+                a: "No. Download the app, use your 5 free cleanups and 5 free sweeps. No card required unless you upgrade.",
+              },
+              {
+                q: "What counts as one 'cleanup'?",
+                a: "One cleanup = one bulk delete or archive action of up to 500 emails. For example: deleting all emails from one sender = one cleanup.",
+              },
+              {
+                q: "What counts as one 'sweep'?",
+                a: "One sweep = using Smart Triage to clear all emails from one sender with options like Delete All, Keep 30 Days, or Unsubscribe + Delete.",
+              },
+              {
+                q: "If I upgrade to Pro, can I cancel next month?",
+                a: "Yes. Subscribe for 99p, cancel anytime in iPhone Settings → Subscriptions. No minimum commitment.",
+              },
+              {
+                q: "Does the free tier ever expire?",
+                a: "No. Your 5 cleanups and 5 sweeps are yours forever. Use them today, next year, or never. No expiry.",
+              },
+            ].map((faq, i) => (
+              <details key={i} className="card-glass rounded-xl p-6 group cursor-pointer">
+                <summary className="font-semibold text-cloud text-sm flex items-center justify-between">
+                  {faq.q}
+                  <span className="text-gold group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                <p className="text-mist text-sm mt-3">{faq.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── COMPATIBILITY ──────────────────────────────── */}
       <section className="section-dark py-20">
         <div className="max-w-6xl mx-auto px-6">
