@@ -435,13 +435,15 @@ export default function MailBroomPage() {
                   <div className="space-y-2">
                     <div className="text-mist text-xs font-semibold">Retail (18 senders)</div>
                     <div className="flex flex-wrap gap-1.5">
-                      <span className="text-xs px-2 py-1 rounded-lg bg-orange-500/20 text-orange-300">Keep 30d: 18</span>
+                      <span className="text-xs px-2 py-1 rounded-lg bg-orange-500/20 text-orange-300">Keep 30d: 10</span>
+                      <span className="text-xs px-2 py-1 rounded-lg bg-blue-500/20 text-blue-300">Archive: 8</span>
                     </div>
                   </div>
                   <div className="space-y-2">
                     <div className="text-mist text-xs font-semibold">High-Volume (12 senders)</div>
                     <div className="flex flex-wrap gap-1.5">
-                      <span className="text-xs px-2 py-1 rounded-lg bg-green-500/20 text-green-300">Keep: 12</span>
+                      <span className="text-xs px-2 py-1 rounded-lg bg-green-500/20 text-green-300">Keep: 7</span>
+                      <span className="text-xs px-2 py-1 rounded-lg bg-orange-500/20 text-orange-300">Keep 30d: 5</span>
                     </div>
                   </div>
                 </div>
