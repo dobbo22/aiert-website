@@ -139,7 +139,7 @@ export default function MailBroomPage() {
           </div>
 
           <div className="flex justify-center">
-            <PhoneFrame src="/mailbroom/dashboard.png" alt="MailBroom dashboard showing 2,943 emails classified as Junk, Lists, and Keep" />
+            <PhoneFrame src="/mailbroom/dashboard-new.png" alt="MailBroom dashboard showing inbox health metrics, storage stats, and email cleanup progress" />
           </div>
         </div>
       </section>
@@ -223,26 +223,46 @@ export default function MailBroomPage() {
           <div className="flex justify-center md:order-1">
             <div className="relative">
               <div className="absolute -inset-10 rounded-full blur-3xl opacity-20 bg-cyan-500" />
-              <div className="card-glass rounded-3xl p-6 max-w-xs w-full">
-                <div className="text-cloud font-bold text-sm mb-4 text-center">Colour-coded sender cards</div>
-                <div className="space-y-3">
-                  {[
-                    { label: "High Volume sender", badge: "Newsletter", action: "Delete All", headerColor: "bg-red-600", btnColor: "bg-red-500" },
-                    { label: "Newsletter sender", badge: "Newsletter", action: "Unsubscribe", headerColor: "bg-orange-500", btnColor: "bg-orange-500" },
-                    { label: "Retail sender", badge: "Retail", action: "Keep 30 Days", headerColor: "bg-blue-500", btnColor: "bg-blue-500" },
-                  ].map(({ label, action, headerColor, btnColor }) => (
-                    <div key={label} className="rounded-xl overflow-hidden">
-                      <div className={`${headerColor} px-3 py-2`}>
-                        <div className="text-white text-xs font-semibold">{label}</div>
-                      </div>
-                      <div className="bg-white/5 px-3 py-2 flex items-center justify-between">
-                        <span className="text-mist text-xs">Suggested →</span>
-                        <span className={`text-xs font-bold text-white px-2 py-1 rounded-lg ${btnColor} ring-2 ring-white/60`}>{action}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="text-center text-mist text-xs mt-4">10,000 emails cleared in minutes</div>
+              <div className="rounded-[2.8rem] border-2 border-cyan-500/25 shadow-[0_0_40px_rgba(6,182,212,0.1)]">
+                <PhoneFrame src="/mailbroom/sweep-mode.png" alt="Sweep Mode showing sender card with action options: Archive All, Unsubscribe, Keep All, Keep 30 Days, Organise, Delete All, Block, and Skip" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Storage Cleanup */}
+        <div className="grid md:grid-cols-2 gap-14 items-center">
+          <div className="md:order-2">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl text-2xl mb-6 bg-orange-500/10 text-orange-400">
+              📦
+            </div>
+            <h2 className="text-3xl font-black text-cloud mb-4">Storage Cleanup</h2>
+            <p className="text-mist leading-relaxed mb-6">
+              Free up space by archiving and deleting old emails. MailBroom scans your inbox and groups messages by age,
+              from emails 10+ years old to messages from the last year. Preview cleanup opportunities with AI risk scoring
+              for important emails like receipts and confirmations.
+            </p>
+            <ul className="space-y-3">
+              {[
+                "Browse emails grouped by age: 10+ years, 5-10 years, 3-5 years, and 1-3 years",
+                "AI identifies high-confidence cleanup candidates with green confidence badges",
+                "Risk warnings for receipts, invoices, and order confirmations",
+                "Bulk actions by sender — select multiple senders to clean in one action",
+                "Preview what you'll clean before committing",
+                "Works offline — deletions queue and sync when reconnected",
+              ].map((b) => (
+                <li key={b} className="flex items-start gap-3 text-sm text-mist">
+                  <span className="mt-0.5 flex-shrink-0 text-orange-400">✓</span>
+                  {b}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="flex justify-center md:order-1">
+            <div className="relative">
+              <div className="absolute -inset-10 rounded-full blur-3xl opacity-20 bg-orange-500" />
+              <div className="rounded-[2.8rem] border-2 border-orange-500/25 shadow-[0_0_40px_rgba(249,115,22,0.1)]">
+                <PhoneFrame src="/mailbroom/storage-cleanup.png" alt="Storage Cleanup scanning interface showing 7,866 emails found grouped by age: 10+ Years (11,407), 5-10 Years (138,732), 3-5 Years (84,273), 1-3 Years (74,347)" />
               </div>
             </div>
           </div>
@@ -440,15 +460,16 @@ export default function MailBroomPage() {
             <h2 className="text-3xl font-black text-cloud mb-4">Power Search</h2>
             <p className="text-mist leading-relaxed mb-6">
               Search your entire inbox by sender, keyword, date range, or folder. Bulk-select
-              results and delete or organise thousands of matching emails in one action.
+              results and execute actions on hundreds of emails at once — delete, archive, organise,
+              unsubscribe, or flag in one tap.
             </p>
             <ul className="space-y-3">
               {[
-                "Search by sender address, name, or keyword",
-                "Filter by date range, folder, read/unread, and attachment",
-                "Results grouped by sender for easy review",
-                "Bulk-select all results or pick individual emails",
-                "Delete or move to folder in one tap",
+                "Search by sender address, name, or keyword across all folders",
+                "Advanced filters: date range, read/unread, attachments",
+                "Bulk-select all results or individual emails",
+                "One-click bulk actions: Organise, Unsubscribe, Archive, Delete, Flag",
+                "See how many emails match your search before acting",
                 "Works across all your IMAP folders, not just inbox",
               ].map((b) => (
                 <li key={b} className="flex items-start gap-3 text-sm text-mist">
@@ -462,42 +483,7 @@ export default function MailBroomPage() {
             <div className="relative">
               <div className="absolute -inset-10 rounded-full blur-3xl opacity-20 bg-purple-500" />
               <div className="rounded-[2.8rem] border-2 border-purple-500/25 shadow-[0_0_40px_rgba(168,85,247,0.1)]">
-                <PhoneFrame src="/mailbroom/power-search.png" alt="Power Search screen showing search results grouped by sender with bulk action options" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Safe Senders */}
-        <div className="grid md:grid-cols-2 gap-14 items-center">
-          <div className="md:order-2">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl text-2xl mb-6 bg-sq-green/10 text-sq-green">
-              🛡️
-            </div>
-            <h2 className="text-3xl font-black text-cloud mb-4">Safe Senders</h2>
-            <p className="text-mist leading-relaxed mb-6">
-              One tap marks any sender as trusted — reclassifying all their emails to Keep and
-              flagging them as not-junk on your mail server.
-            </p>
-            <ul className="space-y-3">
-              {[
-                "Works across Gmail, Outlook, iCloud, Dovecot",
-                "Fires IMAP flag commands on the server",
-                "Free on all tiers — no limits",
-                "Instant reclassification on device",
-              ].map((b) => (
-                <li key={b} className="flex items-start gap-3 text-sm text-mist">
-                  <span className="mt-0.5 flex-shrink-0 text-sq-green">✓</span>
-                  {b}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="flex justify-center md:order-1">
-            <div className="relative">
-              <div className="absolute -inset-10 rounded-full blur-3xl opacity-20 bg-sq-green" />
-              <div className="rounded-[2.8rem] border-2 border-sq-green/25 shadow-[0_0_40px_rgba(34,197,94,0.1)]">
-                <PhoneFrame src="/mailbroom/safe-senders.png" alt="Safe Senders screen showing trusted senders list with shield icons" />
+                <PhoneFrame src="/mailbroom/power-search.png" alt="Power Search showing 849 emails from 'pucci' sender with bulk action options including Organise, Unsubscribe, Flag, Archive, and Delete" />
               </div>
             </div>
           </div>
