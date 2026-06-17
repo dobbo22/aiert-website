@@ -201,7 +201,7 @@ export default function MailBroomPage() {
               The fastest way to conquer a large inbox. MailBroom ranks your senders by volume —
               newsletters, retailers, and notifications first — then guides you through them one
               at a time. Colour-coded cards suggest the right action so you barely have to think.
-              Free users get 5 sessions/month; Pro users get unlimited.
+              Free users get 5 sessions total (one-time allowance, never expires); Pro users get unlimited.
             </p>
             <ul className="space-y-3">
               {[
@@ -224,7 +224,7 @@ export default function MailBroomPage() {
             <div className="relative">
               <div className="absolute -inset-10 rounded-full blur-3xl opacity-20 bg-cyan-500" />
               <div className="rounded-[2.8rem] border-2 border-cyan-500/25 shadow-[0_0_40px_rgba(6,182,212,0.1)]">
-                <PhoneFrame src="/mailbroom/sweep-mode.png" alt="Sweep Mode showing sender card with action options: Archive All, Unsubscribe, Keep All, Keep 30 Days, Organise, Delete All, Block, and Skip" />
+                <PhoneFrame src="/mailbroom/sweep-mode.png" alt="Sweep Mode showing sender card with action options: Delete, Unsubscribe, Keep (with Keep Options), and Organise" />
               </div>
             </div>
           </div>
@@ -238,18 +238,19 @@ export default function MailBroomPage() {
             </div>
             <h2 className="text-3xl font-black text-cloud mb-4">Storage Cleanup</h2>
             <p className="text-mist leading-relaxed mb-6">
-              Free up space by archiving and deleting old emails. MailBroom scans your inbox and groups messages by age,
-              from emails 10+ years old to messages from the last year. Preview cleanup opportunities with AI risk scoring
-              for important emails like receipts and confirmations.
+              Free up space by deleting old, large emails in bulk. MailBroom groups senders by how much storage they use —
+              browse by age bracket or by email domain to bulk-clean an entire organisation at once.
+              D / U / K badges on every sender let you mark Delete, Unsubscribe, or Keep in seconds.
             </p>
             <ul className="space-y-3">
               {[
-                "Browse emails grouped by age: 10+ years, 5-10 years, 3-5 years, and 1-3 years",
-                "AI identifies high-confidence cleanup candidates with green confidence badges",
-                "Risk warnings for receipts, invoices, and order confirmations",
-                "Bulk actions by sender — select multiple senders to clean in one action",
-                "Preview what you'll clean before committing",
-                "Works offline — deletions queue and sync when reconnected",
+                "By Age view: browse senders grouped into brackets — 10+ years, 5–10 years, 3–5 years, 1–3 years",
+                "By Domain view: group all senders from the same domain (e.g. @amazon.co.uk) and clean them together",
+                "Tap any sender to expand inline — see their recent emails, then open a full email view",
+                "D / U / K action badges — Delete, Unsubscribe, or Keep per sender",
+                "AI risk badges — green (safe to delete), orange (check first), grey (review)",
+                "Fast bulk delete using atomic IMAP MOVE — hundreds of emails cleared in seconds",
+                "Auto-reconnects if the mail server drops the connection mid-session",
               ].map((b) => (
                 <li key={b} className="flex items-start gap-3 text-sm text-mist">
                   <span className="mt-0.5 flex-shrink-0 text-orange-400">✓</span>
@@ -393,21 +394,21 @@ export default function MailBroomPage() {
             <h2 className="text-3xl font-black text-cloud mb-4">Smart Sweep Grouped Mode</h2>
             <p className="text-mist leading-relaxed mb-6">
               Group senders by category, choose a different action for each sender, then execute them all
-              in bulk. AI suggests the safest action based on sender type — Keep 30 Days for newsletters,
-              Archive for promotions. Takes priority over individual sweeps in Pro mode.
+              in bulk. AI suggests the safest action based on sender type — Keep (with date options) for newsletters,
+              Delete for high-volume junk. Takes priority over individual sweeps in Pro mode.
             </p>
             <ul className="space-y-3">
               {[
                 "Filter by category: Newsletters, Retail, or Promotional",
                 "Optional filters: unread only, older than 90 days",
                 "Senders organised by category with email counts visible",
-                "5 action options per sender: Keep, Keep 30 Days, Archive, Unsubscribe, Quick Apply",
+                "4 action options per sender: Keep (with Keep Options), Delete, Unsubscribe, Quick Apply",
                 "AI pre-selects safest action based on sender classification",
                 "Colour-coded action pills for instant visual feedback",
                 "Bulk Apply button to execute all selected actions at once",
                 "Real-time progress tracking during bulk execution",
-                "Delete never available at group level — delete requires individual Sweep Mode",
-                "Unsubscribe automatically archives emails (cleanup + opt-out in one step)",
+                "Delete available at group level for high-volume senders",
+                "Unsubscribe sends the opt-out request and deletes emails in one step",
                 "Bulk actions pause individual sender sweep, then resume after completion",
                 "Perfect for large inboxes — process 60+ senders in minutes instead of hours",
               ].map((b) => (
@@ -462,7 +463,7 @@ export default function MailBroomPage() {
             <h2 className="text-3xl font-black text-cloud mb-4">Power Search</h2>
             <p className="text-mist leading-relaxed mb-6">
               Search your entire inbox by sender, keyword, date range, or folder. Bulk-select
-              results and execute actions on hundreds of emails at once — delete, archive, organise,
+              results and execute actions on hundreds of emails at once — delete, organise,
               unsubscribe, or flag in one tap.
             </p>
             <ul className="space-y-3">
@@ -605,7 +606,7 @@ export default function MailBroomPage() {
           <p className="text-mist mt-4 max-w-2xl mx-auto leading-relaxed">
             No credit card required. No trial expiry. When you upgrade, your subscription renews monthly until you cancel in iPhone Settings – cancel anytime, no questions asked.
             <br /><br />
-            <strong className="text-cloud">Get 5 free storage cleanups and 5 free sweeps.</strong> Use them or save them for later – they never expire.
+            <strong className="text-cloud">Free tier includes: 5 Sweep sessions · 1 mass delete · 5 unsubscribes · 3 AI replies · 1 organise rule.</strong> One-time allowance — never expires.
             <br /><br />
             Love MailBroom? Upgrade to Pro for just <strong className="text-gold">99p for your first month</strong>, then <strong className="text-gold">£1.99/month</strong> to unlock unlimited cleanups, sweeps, and every feature. Cancel anytime in your iPhone Settings.
             <br /><br />
@@ -628,7 +629,7 @@ export default function MailBroomPage() {
                 <div className="text-2xl">🗑️</div>
                 <div>
                   <h4 className="font-semibold text-cloud">Storage Cleanup</h4>
-                  <p className="text-sm text-mist mt-1">One bulk delete or archive action of up to 500 emails. For example: delete all emails from one sender, or archive everything older than 90 days.</p>
+                  <p className="text-sm text-mist mt-1">One bulk action (Delete, Unsubscribe, or Keep) on a sender or domain. For example: delete all emails from one sender, or unsubscribe + delete all senders from a domain.</p>
                 </div>
               </div>
             </div>
@@ -643,7 +644,7 @@ export default function MailBroomPage() {
             </div>
           </div>
           <p className="text-xs text-mist mt-6 border-t border-white/10 pt-6">
-            Free tier: 5 of each. No time limit. Use them today, next week, or never – they never expire.
+            Free tier: 5 sweeps · 1 mass delete · 5 unsubscribes · 3 AI replies · 1 organise rule. No time limit — they never expire.
           </p>
         </div>
 
@@ -743,7 +744,7 @@ export default function MailBroomPage() {
             </thead>
             <tbody>
               {[
-                { feature: "Free tier", mailbroom: "5 cleanups + 5 sweeps", clean: "1,000 emails", spark: "Very limited" },
+                { feature: "Free tier", mailbroom: "5 sweeps · 1 mass delete · 5 unsubs · 3 AI replies", clean: "1,000 emails", spark: "Very limited" },
                 { feature: "Free trial (requires card)", mailbroom: "No", clean: "Yes (14 days)", spark: "Yes (7 days)" },
                 { feature: "Pro monthly price", mailbroom: "99p intro² · £1.99/mo", clean: "~£7.99", spark: "~£4.99¹" },
                 { feature: "Cancel anytime", mailbroom: "✓", clean: "✓", spark: "✓" },
@@ -775,7 +776,7 @@ export default function MailBroomPage() {
             <div className="card-glass rounded-2xl p-8">
               <div className="text-3xl mb-4">🆓</div>
               <h4 className="font-bold text-cloud mb-3">Try it free. Really free.</h4>
-              <p className="text-sm text-mist">No credit card form. No "cancel before 14 days or we charge you." Just 5 cleanups and 5 sweeps. Use them or don't.</p>
+              <p className="text-sm text-mist">No credit card form. No "cancel before 14 days or we charge you." 5 sweeps, 5 unsubscribes, 1 mass delete, 3 AI replies — use them or don't. They never expire.</p>
             </div>
             <div className="card-glass rounded-2xl p-8">
               <div className="text-3xl mb-4">☕</div>
@@ -828,11 +829,11 @@ export default function MailBroomPage() {
             {[
               {
                 q: "Do I need to enter a credit card to try the free tier?",
-                a: "No. Download the app, use your 5 free cleanups and 5 free sweeps. No card required unless you upgrade.",
+                a: "No. Download the app and use your free allowance: 5 sweeps, 1 mass delete, 5 unsubscribes, 3 AI replies, 1 organise rule. No card required unless you upgrade.",
               },
               {
                 q: "What counts as one 'cleanup'?",
-                a: "One cleanup = one bulk delete or archive action of up to 500 emails. For example: deleting all emails from one sender = one cleanup.",
+                a: "One cleanup = one bulk action (Delete, Unsubscribe, or Keep) executed via Storage Cleanup. For example: deleting all emails from one sender = one cleanup. The By Domain view lets you act on all senders in a domain at once.",
               },
               {
                 q: "What counts as one 'sweep'?",
@@ -844,7 +845,7 @@ export default function MailBroomPage() {
               },
               {
                 q: "Does the free tier ever expire?",
-                a: "No. Your 5 cleanups and 5 sweeps are yours forever. Use them today, next year, or never. No expiry.",
+                a: "No. Your free allowance (5 sweeps, 1 mass delete, 5 unsubscribes, etc.) is yours forever. Use them today, next year, or never. No expiry.",
               },
             ].map((faq, i) => (
               <details key={i} className="card-glass rounded-xl p-6 group cursor-pointer">
