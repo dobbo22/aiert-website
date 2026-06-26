@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
 
   if (status === "accepted") {
     try {
-      await sendGuestConfirmation({ name, email: guestEmail });
+      await sendGuestConfirmation({ name, email: guestEmail, menuChoices: sanitizedMenuChoices });
     } catch (err) {
       console.error("Failed to send guest confirmation email:", err);
     }

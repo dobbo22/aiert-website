@@ -82,10 +82,30 @@ function detailRow(label: string, value: string) {
 export async function sendGuestConfirmation({
   name,
   email,
+  menuChoices,
 }: {
   name: string;
   email: string;
+  menuChoices?: MenuChoice[] | null;
 }) {
+  const choicesMade = menuChoices?.filter((m) => m.choice) ?? [];
+  const choiceLabel: Record<string, string> = { meat: "Meat", fish: "Fish", vegetarian: "Vegetarian" };
+
+  const menuChoicesHtml = choicesMade.length
+    ? `
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="text-align:left;margin-bottom:8px;">
+        ${choicesMade
+          .map((m) =>
+            detailRow(
+              m.name,
+              `${choiceLabel[m.choice] ?? m.choice}${m.notes ? `<br /><span style="font-size:12px;color:#c7cdd6;">${m.notes}</span>` : ""}`
+            )
+          )
+          .join("")}
+      </table>
+    `
+    : "";
+
   const html = `
   <body style="margin:0;padding:0;background:#0a0907;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0a0907;padding:32px 16px;">
@@ -123,8 +143,12 @@ export async function sendGuestConfirmation({
                   ${detailRow("Dress Code", "Men: Black Tie<br />Ladies: Evening/Cocktail Dress")}
                 </table>
 
+                ${menuChoicesHtml}
+
                 <p style="margin:0 0 24px;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:14px;color:#c7cdd6;">
-                  A menu (Meat / Fish / Vegetarian) will be sent for you to choose closer to the day.
+                  ${choicesMade.length
+                    ? "Thanks for letting us know your menu preference — a full menu will be sent for you to confirm closer to the day."
+                    : "A menu (Meat / Fish / Vegetarian) will be sent for you to choose closer to the day."}
                 </p>
 
                 <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 24px;">
