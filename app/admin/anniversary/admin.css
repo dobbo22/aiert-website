@@ -196,16 +196,6 @@
   border-color: #cbd5e1;
 }
 
-.seat-warning {
-  border-color: #fbbf24;
-  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.4);
-}
-
-.seat-progress {
-  color: #fbbf24;
-  font-weight: 700;
-}
-
 .seat-popover-label {
   font-size: 0.7rem;
   color: #94a3b8;

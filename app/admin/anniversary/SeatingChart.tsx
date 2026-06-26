@@ -16,31 +16,41 @@ type Invitee = {
   guestCount: number;
 };
 
+type Individual = {
+  code: string;
+  label: string;
+};
+
 type Props = {
   seats: Seat[];
   invitees: Invitee[];
 };
+
+function buildIndividuals(invitees: Invitee[]): Individual[] {
+  return invitees.flatMap((inv) => {
+    if (inv.guestCount > 1) {
+      const [a, b] = splitCoupleName(inv.name);
+      return [
+        { code: inv.code, label: a },
+        { code: inv.code, label: b },
+      ];
+    }
+    return [{ code: inv.code, label: inv.name }];
+  });
+}
 
 export default function SeatingChart({ seats: initialSeats, invitees }: Props) {
   const [seats, setSeats] = useState(initialSeats);
   const [activeSeat, setActiveSeat] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const individuals = buildIndividuals(invitees);
+
   const seatById = (id: number) => seats.find((s) => s.seat_id === id);
-  const nameForCode = (code: string | null) =>
-    code ? invitees.find((i) => i.code === code)?.name ?? code : null;
 
-  const seatedCounts: Record<string, number> = {};
-  for (const s of seats) {
-    if (s.invitee_code) seatedCounts[s.invitee_code] = (seatedCounts[s.invitee_code] ?? 0) + 1;
-  }
-
-  function findNextEmptySeat(excludeId: number, side: Seat["side"]): number | null {
-    const sameSide = seats.filter((s) => s.side === side && s.invitee_code === null && s.seat_id !== excludeId);
-    if (sameSide.length) return sameSide[0].seat_id;
-    const any = seats.filter((s) => s.invitee_code === null && s.seat_id !== excludeId);
-    return any.length ? any[0].seat_id : null;
-  }
+  const assignedKeys = new Set(
+    seats.filter((s) => s.invitee_code && s.guest_label).map((s) => `${s.invitee_code}|${s.guest_label}`)
+  );
 
   async function assign(seatId: number, code: string | null, guestLabel: string | null) {
     setSaving(true);
@@ -61,34 +71,20 @@ export default function SeatingChart({ seats: initialSeats, invitees }: Props) {
 
   function renderSeat(id: number) {
     const seat = seatById(id);
-    const label = seat?.guest_label || nameForCode(seat?.invitee_code ?? null);
+    const label = seat?.guest_label;
     const isActive = activeSeat === id;
-    const invitee = seat?.invitee_code ? invitees.find((i) => i.code === seat.invitee_code) : undefined;
-    const seatedCount = seat?.invitee_code ? seatedCounts[seat.invitee_code] ?? 0 : 0;
-    const isUnderSeated = !!invitee && invitee.guestCount > 1 && seatedCount < invitee.guestCount;
 
     return (
       <div className="seat-wrap" key={id}>
         <button
           type="button"
-          className={`seat-disc ${label ? "seat-filled" : ""} ${isUnderSeated ? "seat-warning" : ""}`}
+          className={`seat-disc ${label ? "seat-filled" : ""}`}
           onClick={() => setActiveSeat(isActive ? null : id)}
-          title={
-            label
-              ? `${label}${invitee && invitee.guestCount > 1 ? ` (${seatedCount}/${invitee.guestCount} seated)` : ""}`
-              : `Seat ${id}`
-          }
+          title={label ?? `Seat ${id}`}
         >
           {label ? initials(label) : id}
         </button>
-        {label && (
-          <span className="seat-name">
-            {label}
-            {invitee && invitee.guestCount > 1 && (
-              <span className="seat-progress"> {seatedCount}/{invitee.guestCount}</span>
-            )}
-          </span>
-        )}
+        {label && <span className="seat-name">{label}</span>}
 
         {isActive && (
           <div className="seat-popover">
@@ -98,46 +94,35 @@ export default function SeatingChart({ seats: initialSeats, invitees }: Props) {
             <select
               id={`seat-select-${id}`}
               aria-label="Assign guest to this seat"
-              defaultValue=""
+              value=""
               onChange={(e) => {
-                const code = e.target.value;
-                if (!code) return;
-                const inv = invitees.find((i) => i.code === code);
-                if (!inv) return;
+                const idx = Number(e.target.value);
+                if (Number.isNaN(idx)) return;
+                const person = individuals[idx];
+                if (!person) return;
 
-                if (inv.guestCount > 1) {
-                  const [first, second] = splitCoupleName(inv.name);
-                  const alreadySeated = seatedCounts[code] ?? 0;
-                  assign(id, code, alreadySeated === 0 ? first : second);
-
-                  if (alreadySeated === 0) {
-                    const nextSeatId = findNextEmptySeat(id, seat?.side ?? "top");
-                    if (nextSeatId) assign(nextSeatId, code, second);
-                  }
-                } else {
-                  assign(id, code, inv.name);
-                }
+                const existingSeat = seats.find(
+                  (s) => s.invitee_code === person.code && s.guest_label === person.label && s.seat_id !== id
+                );
+                if (existingSeat) assign(existingSeat.seat_id, null, null);
+                assign(id, person.code, person.label);
               }}
             >
               <option value="" disabled>
                 Assign guest…
               </option>
-              {invitees.map((inv) => (
-                <option key={inv.code} value={inv.code}>
-                  {inv.name}
-                  {inv.guestCount > 1 ? ` (${inv.guestCount} guests)` : ""}
-                </option>
-              ))}
+              {individuals.map((person, idx) => {
+                const key = `${person.code}|${person.label}`;
+                const isCurrentSeat = seat?.invitee_code === person.code && seat?.guest_label === person.label;
+                const seatedElsewhere = assignedKeys.has(key) && !isCurrentSeat;
+                return (
+                  <option key={`${key}-${idx}`} value={idx}>
+                    {person.label}
+                    {seatedElsewhere ? " (seated)" : ""}
+                  </option>
+                );
+              })}
             </select>
-            {label && (
-              <input
-                type="text"
-                className="seat-label-input"
-                placeholder="Custom label (e.g. first name)"
-                defaultValue={seat?.guest_label ?? ""}
-                onBlur={(e) => assign(id, seat?.invitee_code ?? null, e.target.value || null)}
-              />
-            )}
             <button type="button" className="seat-clear" onClick={() => assign(id, null, null)}>
               Clear seat
             </button>
