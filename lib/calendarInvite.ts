@@ -13,6 +13,7 @@ export function buildAnniversaryIcs(): string {
     "VERSION:2.0",
     "PRODID:-//Martin & Karen Dobson//Anniversary Invite//EN",
     "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
     "BEGIN:VEVENT",
     `UID:anniversary-dobson-2026@aiert.co.uk`,
     `DTSTAMP:${now}`,
@@ -21,9 +22,23 @@ export function buildAnniversaryIcs(): string {
     "SUMMARY:Martin & Karen's 25th Wedding Anniversary Dinner",
     "DESCRIPTION:Black Tie dinner celebrating Martin & Karen's 25th Wedding Anniversary.",
     "LOCATION:River Room, One Whitehall Place, London SW1A 2EJ",
+    "STATUS:CONFIRMED",
     "END:VEVENT",
     "END:VCALENDAR",
   ].join("\r\n");
 }
 
 export const VENUE_MAP_URL = "https://maps.app.goo.gl/ZRLAxXVy1z1ZkV5a6";
+
+export const ICS_DOWNLOAD_URL = "https://aiert.co.uk/api/calendar";
+
+export function buildGoogleCalendarUrl(): string {
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: "Martin & Karen's 25th Wedding Anniversary Dinner",
+    dates: "20260830T170000Z/20260830T220000Z",
+    details: "Black Tie dinner celebrating Martin & Karen's 25th Wedding Anniversary.",
+    location: "River Room, One Whitehall Place, London SW1A 2EJ",
+  });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}

@@ -1,19 +1,12 @@
-import nodemailer from "nodemailer";
-import { buildAnniversaryIcs, VENUE_MAP_URL } from "./calendarInvite";
+import { Resend } from "resend";
+import { ICS_DOWNLOAD_URL, VENUE_MAP_URL, buildGoogleCalendarUrl } from "./calendarInvite";
+import { firstNamesOnly } from "./names";
 
-const NOTIFY_TO = "mcjdobson@btopenworld.com, mrskarendobson@btopenworld.com";
+const NOTIFY_TO = ["mcjdobson@btopenworld.com", "mrskarendobson@btopenworld.com"];
+const FROM = process.env.EMAIL_FROM || "Martin & Karen <martin@aiert.co.uk>";
 
-function transporter() {
-  const port = Number(process.env.SMTP_PORT) || 587;
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "mail.btinternet.com",
-    port,
-    secure: port === 465,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
+function resend() {
+  return new Resend(process.env.RESEND_API_KEY);
 }
 
 export async function sendRsvpNotification({
@@ -42,15 +35,19 @@ export async function sendRsvpNotification({
       ${status === "accepted" ? `<p><strong>Guests:</strong> ${guestCount}</p>` : ""}
       ${dietaryNotes ? `<p><strong>Dietary notes:</strong> ${dietaryNotes}</p>` : ""}
       ${message ? `<p><strong>Message:</strong> ${message}</p>` : ""}
+      <p style="margin-top: 24px;">
+        <a href="https://aiert.co.uk/admin/anniversary" style="color:#92400e;">View all RSVPs in the admin dashboard →</a>
+      </p>
     </div>
   `;
 
-  await transporter().sendMail({
-    from: process.env.SMTP_SENDER || process.env.SMTP_USER,
+  const { error } = await resend().emails.send({
+    from: FROM,
     to: NOTIFY_TO,
     subject,
     html,
   });
+  if (error) throw new Error(`Resend error: ${JSON.stringify(error)}`);
 }
 
 function detailRow(label: string, value: string) {
@@ -97,8 +94,8 @@ export async function sendGuestConfirmation({
                 <div style="width:60px;height:1px;background:rgba(199,205,214,0.5);margin:0 auto 24px;"></div>
 
                 <p style="margin:0 0 28px;font-family:Georgia,'Times New Roman',serif;font-size:17px;line-height:1.7;color:#f5f6f8;">
-                  Dear ${name},<br />
-                  we can&rsquo;t wait to celebrate Martin &amp; Karen&rsquo;s<br />
+                  Dear ${firstNamesOnly(name)},<br />
+                  we can&rsquo;t wait to celebrate our<br />
                   <em style="font-weight:bold;">25th Wedding Anniversary</em><br />
                   with you!
                 </p>
@@ -110,13 +107,31 @@ export async function sendGuestConfirmation({
                   ${detailRow("Dress Code", "Men: Black Tie<br />Ladies: Evening/Cocktail Dress")}
                 </table>
 
-                <p style="margin:0 0 20px;font-family:Georgia,'Times New Roman',serif;font-size:15px;color:#f5f6f8;">
-                  A calendar invite for the evening is attached.
-                </p>
+                <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 24px;">
+                  <tr>
+                    <td style="padding:0 6px;">
+                      <a href="${buildGoogleCalendarUrl()}" style="display:inline-block;padding:10px 18px;border:1px solid rgba(199,205,214,0.4);color:#ffffff;font-family:Georgia,'Times New Roman',serif;font-size:13px;text-decoration:none;border-radius:3px;">
+                        Add to Google Calendar
+                      </a>
+                    </td>
+                    <td style="padding:0 6px;">
+                      <a href="${ICS_DOWNLOAD_URL}" style="display:inline-block;padding:10px 18px;border:1px solid rgba(199,205,214,0.4);color:#ffffff;font-family:Georgia,'Times New Roman',serif;font-size:13px;text-decoration:none;border-radius:3px;">
+                        Download .ics (Outlook/Apple)
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <img
+                  src="https://aiert.co.uk/venue-staircase.png"
+                  width="420"
+                  alt="The River Room, One Whitehall Place"
+                  style="display:block;width:100%;max-width:420px;height:auto;border:1px solid rgba(199,205,214,0.35);border-radius:3px;margin:0 auto 20px;"
+                />
 
                 <a href="${VENUE_MAP_URL}" style="display:inline-block;">
                   <img
-                    src="https://staticmap.openstreetmap.de/staticmap.php?center=51.5072,-0.1246&zoom=16&size=420x200&maptype=mapnik&markers=51.5072,-0.1246,red-pushpin"
+                    src="https://aiert.co.uk/venue-map.png"
                     width="420"
                     height="200"
                     alt="Map to River Room, One Whitehall Place, London SW1A 2EJ"
@@ -143,14 +158,11 @@ export async function sendGuestConfirmation({
   </body>
   `;
 
-  await transporter().sendMail({
-    from: process.env.SMTP_SENDER || process.env.SMTP_USER,
+  const { error } = await resend().emails.send({
+    from: FROM,
     to: email,
     subject: "You're confirmed — Martin & Karen's 25th Anniversary Dinner",
     html,
-    icalEvent: {
-      filename: "anniversary-dinner.ics",
-      content: buildAnniversaryIcs(),
-    },
   });
+  if (error) throw new Error(`Resend error: ${JSON.stringify(error)}`);
 }
