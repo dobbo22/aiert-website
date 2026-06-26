@@ -20,11 +20,11 @@ const greatVibes = Great_Vibes({
 });
 
 export const metadata: Metadata = {
-  title: "You're Invited",
+  title: "Tap to View Your Invitation",
   description: "Martin & Karen Dobson's 25th Wedding Anniversary Dinner",
   robots: { index: false, follow: false },
   openGraph: {
-    title: "You're Invited",
+    title: "Tap to View Your Invitation",
     description: "Martin & Karen Dobson's 25th Wedding Anniversary Dinner",
     url: "https://aiert.co.uk/invite",
     siteName: "Martin & Karen's 25th Anniversary",
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "You're Invited",
+    title: "Tap to View Your Invitation",
     description: "Martin & Karen Dobson's 25th Wedding Anniversary Dinner",
     images: ["/anniversary-og.jpg"],
   },
