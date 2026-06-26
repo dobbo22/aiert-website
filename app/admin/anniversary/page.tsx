@@ -3,33 +3,23 @@ import sql from "@/lib/db";
 import { isValidAdminSession, COOKIE_NAME } from "@/lib/adminAuth";
 import LoginForm from "./LoginForm";
 import SeatingChart from "./SeatingChart";
-import SendInviteButton from "./SendInviteButton";
 import SendAllButton from "./SendAllButton";
-import EmailEditor from "./EmailEditor";
-import PhoneEditor from "./PhoneEditor";
-import WhatsAppToggle from "./WhatsAppToggle";
 import LogoutButton from "./LogoutButton";
+import InviteeRow from "./InviteeRow";
 import { guestCountForName } from "@/lib/guestCount";
-import { guestFirstNames } from "@/lib/names";
 import "./admin.css";
 
 const SITE_URL = process.env.SITE_URL || "https://aiert.co.uk";
 
-function parsePhones(phone: string | null): string[] {
-  if (!phone) return [];
-  return phone
-    .split(",")
-    .map((p) => p.trim())
-    .filter(Boolean);
-}
-
-function buildWhatsAppShareUrl(recipientName: string, fullName: string, code: string, phone: string): string {
-  const inviteUrl = `${SITE_URL}/invite/${code}`;
-  const message = `Hi ${recipientName} — you're invited to Martin & Karen's 25th Wedding Anniversary Dinner! ${inviteUrl}`;
-  const digits = phone.replace(/[^\d]/g, "");
-  return digits
-    ? `https://wa.me/${digits}?text=${encodeURIComponent(message)}`
-    : `https://wa.me/?text=${encodeURIComponent(message)}`;
+function needsWhatsAppFollowUp(i: {
+  invite_sent_at: string | null;
+  invite_opened_at: string | null;
+  view_count: number;
+  rsvp_status: string | null;
+}): boolean {
+  if (!i.invite_sent_at || i.invite_opened_at || i.view_count > 0 || i.rsvp_status) return false;
+  const hoursSinceSent = (Date.now() - new Date(i.invite_sent_at).getTime()) / (1000 * 60 * 60);
+  return hoursSinceSent >= 48;
 }
 
 export const metadata = {
@@ -155,77 +145,26 @@ export default async function AdminAnniversaryPage() {
         </thead>
         <tbody>
           {invitees.map((i) => (
-            <tr key={i.code}>
-              <td>{i.name}</td>
-              <td className="admin-code">{i.code}</td>
-              <td>
-                <SendInviteButton code={i.code} hasEmail={!!i.guest_email} />
-              </td>
-              <td>
-                <div className={`admin-whatsapp-cell ${i.invite_sent_at ? "admin-whatsapp-ghosted" : ""}`}>
-                  {(() => {
-                    const phones = parsePhones(i.phone_number);
-                    const names = guestFirstNames(i.name);
-                    if (phones.length === 0) {
-                      return (
-                        <a
-                          href={buildWhatsAppShareUrl(names[0] ?? i.name, i.name, i.code, "")}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="admin-whatsapp-share"
-                        >
-                          Share via WhatsApp
-                        </a>
-                      );
-                    }
-                    return phones.map((phone, idx) => (
-                      <a
-                        key={idx}
-                        href={buildWhatsAppShareUrl(names[idx] ?? names[0] ?? i.name, i.name, i.code, phone)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="admin-whatsapp-share"
-                      >
-                        {phones.length > 1 ? `WhatsApp ${names[idx] ?? `#${idx + 1}`}` : "Share via WhatsApp"}
-                      </a>
-                    ));
-                  })()}
-                  <WhatsAppToggle code={i.code} initialSent={i.whatsapp_sent} />
-                </div>
-              </td>
-              <td>{i.invite_sent_at ? new Date(i.invite_sent_at).toLocaleString("en-GB") : "—"}</td>
-              <td>
-                {i.invite_opened_at
-                  ? `${new Date(i.invite_opened_at).toLocaleString("en-GB")} (${i.invite_open_count}x)`
-                  : "—"}
-              </td>
-              <td>{i.view_count}</td>
-              <td>{i.last_viewed_at ? new Date(i.last_viewed_at).toLocaleString("en-GB") : "—"}</td>
-              <td>
-                {i.rsvp_status === "accepted" && "✅ Accepted"}
-                {i.rsvp_status === "declined" && "❌ Declined"}
-                {!i.rsvp_status && "—"}
-              </td>
-              <td>
-                <EmailEditor code={i.code} initialEmail={i.guest_email} />
-              </td>
-              <td>
-                <PhoneEditor code={i.code} initialPhone={i.phone_number} />
-              </td>
-              <td>{i.guest_count ?? "—"}</td>
-              <td>{i.dietary_notes || "—"}</td>
-              <td>
-                {i.menu_choices && i.menu_choices.length
-                  ? i.menu_choices.map((m, idx) => (
-                      <div key={idx}>
-                        {m.name}: {m.choice || "—"}
-                        {m.notes ? ` (${m.notes})` : ""}
-                      </div>
-                    ))
-                  : "—"}
-              </td>
-              <td>{i.message || "—"}</td>
-            </tr>
+            <InviteeRow
+              key={i.code}
+              code={i.code}
+              name={i.name}
+              viewCount={i.view_count}
+              lastViewedAt={i.last_viewed_at}
+              rsvpStatus={i.rsvp_status}
+              guestCount={i.guest_count}
+              dietaryNotes={i.dietary_notes}
+              menuChoices={i.menu_choices}
+              message={i.message}
+              initialEmail={i.guest_email}
+              initialPhone={i.phone_number}
+              inviteSentAt={i.invite_sent_at}
+              inviteOpenedAt={i.invite_opened_at}
+              inviteOpenCount={i.invite_open_count}
+              whatsappSent={i.whatsapp_sent}
+              siteUrl={SITE_URL}
+              needsFollowUp={needsWhatsAppFollowUp(i)}
+            />
           ))}
         </tbody>
       </table>

@@ -5,9 +5,10 @@ import { useState } from "react";
 type Props = {
   code: string;
   initialPhone: string | null;
+  onSaved?: (phone: string) => void;
 };
 
-export default function PhoneEditor({ code, initialPhone }: Props) {
+export default function PhoneEditor({ code, initialPhone, onSaved }: Props) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(initialPhone ?? "");
   const [saved, setSaved] = useState(initialPhone ?? "");
@@ -24,6 +25,7 @@ export default function PhoneEditor({ code, initialPhone }: Props) {
       if (!res.ok) throw new Error("Failed");
       setSaved(value.trim());
       setEditing(false);
+      onSaved?.(value.trim());
     } finally {
       setSaving(false);
     }

@@ -191,6 +191,17 @@
   font-style: italic;
 }
 
+.admin-followup-badge {
+  display: inline-block;
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid rgba(251, 191, 36, 0.5);
+  color: #fbbf24;
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
 .admin-whatsapp-share {
   background: rgba(37, 211, 102, 0.15);
   border: 1px solid rgba(37, 211, 102, 0.5);

@@ -288,3 +288,39 @@ export async function sendInviteEmail({
   });
   if (error) throw new Error(`Resend error: ${JSON.stringify(error)}`);
 }
+
+export async function sendWhatsAppFollowUpDigest({
+  guests,
+}: {
+  guests: { name: string; code: string; sentAt: string }[];
+}) {
+  const baseUrl = process.env.SITE_URL || "https://aiert.co.uk";
+
+  const rowsHtml = guests
+    .map(
+      (g) =>
+        `<li><strong>${g.name}</strong> — sent ${new Date(g.sentAt).toLocaleDateString(
+          "en-GB"
+        )}, still unread. <a href="${baseUrl}/admin/anniversary">Send via WhatsApp →</a></li>`
+    )
+    .join("");
+
+  const html = `
+    <div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto;">
+      <h2 style="color: #92400e;">📱 WhatsApp follow-up suggested</h2>
+      <p>The following guests haven't opened or viewed their invite email after 48+ hours:</p>
+      <ul>${rowsHtml}</ul>
+      <p style="margin-top: 24px;">
+        <a href="${baseUrl}/admin/anniversary" style="color:#92400e;">Open the admin dashboard →</a>
+      </p>
+    </div>
+  `;
+
+  const { error } = await resend().emails.send({
+    from: FROM,
+    to: NOTIFY_TO,
+    subject: `📱 ${guests.length} guest${guests.length > 1 ? "s" : ""} need a WhatsApp follow-up`,
+    html,
+  });
+  if (error) throw new Error(`Resend error: ${JSON.stringify(error)}`);
+}
