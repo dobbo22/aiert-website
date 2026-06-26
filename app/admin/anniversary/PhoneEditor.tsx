@@ -4,35 +4,26 @@ import { useState } from "react";
 
 type Props = {
   code: string;
-  initialEmail: string | null;
-  onSaved?: (email: string) => void;
+  initialPhone: string | null;
 };
 
-export default function EmailEditor({ code, initialEmail, onSaved }: Props) {
+export default function PhoneEditor({ code, initialPhone }: Props) {
   const [editing, setEditing] = useState(false);
-  const [value, setValue] = useState(initialEmail ?? "");
-  const [saved, setSaved] = useState(initialEmail ?? "");
+  const [value, setValue] = useState(initialPhone ?? "");
+  const [saved, setSaved] = useState(initialPhone ?? "");
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   async function handleSave() {
     setSaving(true);
-    setError(null);
     try {
-      const res = await fetch("/api/admin/update-email", {
+      const res = await fetch("/api/admin/update-phone", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, email: value.trim() }),
+        body: JSON.stringify({ code, phone: value.trim() }),
       });
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        throw new Error(data?.error || `Failed (${res.status})`);
-      }
+      if (!res.ok) throw new Error("Failed");
       setSaved(value.trim());
       setEditing(false);
-      onSaved?.(value.trim());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save");
     } finally {
       setSaving(false);
     }
@@ -41,7 +32,7 @@ export default function EmailEditor({ code, initialEmail, onSaved }: Props) {
   if (!editing) {
     return (
       <button type="button" className="admin-email-display" onClick={() => setEditing(true)}>
-        {saved || "Add email"}
+        {saved || "Add number"}
       </button>
     );
   }
@@ -49,17 +40,16 @@ export default function EmailEditor({ code, initialEmail, onSaved }: Props) {
   return (
     <div className="admin-email-edit">
       <input
-        type="email"
+        type="tel"
         className="admin-email-input"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder="guest@example.com"
+        placeholder="+44 7700 900000"
         autoFocus
       />
       <button type="button" className="admin-email-save" onClick={handleSave} disabled={saving}>
         {saving ? "…" : "Save"}
       </button>
-      {error && <span className="admin-email-error">{error}</span>}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import SeatingChart from "./SeatingChart";
 import SendInviteButton from "./SendInviteButton";
 import SendAllButton from "./SendAllButton";
 import EmailEditor from "./EmailEditor";
+import PhoneEditor from "./PhoneEditor";
 import WhatsAppToggle from "./WhatsAppToggle";
 import { guestCountForName } from "@/lib/guestCount";
 import { firstNamesOnly } from "@/lib/names";
@@ -13,10 +14,13 @@ import "./admin.css";
 
 const SITE_URL = process.env.SITE_URL || "https://aiert.co.uk";
 
-function buildWhatsAppShareUrl(name: string, code: string): string {
+function buildWhatsAppShareUrl(name: string, code: string, phone: string | null): string {
   const inviteUrl = `${SITE_URL}/invite/${code}`;
   const message = `Hi ${firstNamesOnly(name)} — you're invited to Martin & Karen's 25th Wedding Anniversary Dinner! ${inviteUrl}`;
-  return `https://wa.me/?text=${encodeURIComponent(message)}`;
+  const digits = phone ? phone.replace(/[^\d]/g, "") : "";
+  return digits
+    ? `https://wa.me/${digits}?text=${encodeURIComponent(message)}`
+    : `https://wa.me/?text=${encodeURIComponent(message)}`;
 }
 
 export const metadata = {
@@ -49,6 +53,7 @@ type Row = {
   invite_opened_at: string | null;
   invite_open_count: number;
   whatsapp_sent: boolean;
+  phone_number: string | null;
 };
 
 type SeatRow = {
@@ -69,7 +74,7 @@ export default async function AdminAnniversaryPage() {
   const invitees = (await sql`
     SELECT code, name, view_count, first_viewed_at, last_viewed_at,
            rsvp_status, guest_count, dietary_notes, message, responded_at, guest_email, menu_choices,
-           invite_sent_at, invite_opened_at, invite_open_count, whatsapp_sent
+           invite_sent_at, invite_opened_at, invite_open_count, whatsapp_sent, phone_number
     FROM anniversary_invitees
     ORDER BY name ASC
   `) as Row[];
@@ -131,6 +136,7 @@ export default async function AdminAnniversaryPage() {
             <th>Last Viewed</th>
             <th>RSVP</th>
             <th>Email</th>
+            <th>Phone</th>
             <th>Guests</th>
             <th>Dietary</th>
             <th>Menu</th>
@@ -148,7 +154,7 @@ export default async function AdminAnniversaryPage() {
               <td>
                 <div className="admin-whatsapp-cell">
                   <a
-                    href={buildWhatsAppShareUrl(i.name, i.code)}
+                    href={buildWhatsAppShareUrl(i.name, i.code, i.phone_number)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="admin-whatsapp-share"
@@ -173,6 +179,9 @@ export default async function AdminAnniversaryPage() {
               </td>
               <td>
                 <EmailEditor code={i.code} initialEmail={i.guest_email} />
+              </td>
+              <td>
+                <PhoneEditor code={i.code} initialPhone={i.phone_number} />
               </td>
               <td>{i.guest_count ?? "—"}</td>
               <td>{i.dietary_notes || "—"}</td>

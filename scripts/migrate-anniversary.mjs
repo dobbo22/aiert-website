@@ -31,7 +31,8 @@ await sql`
     ADD COLUMN IF NOT EXISTS invite_sent_at TIMESTAMPTZ,
     ADD COLUMN IF NOT EXISTS invite_opened_at TIMESTAMPTZ,
     ADD COLUMN IF NOT EXISTS invite_open_count INTEGER NOT NULL DEFAULT 0,
-    ADD COLUMN IF NOT EXISTS whatsapp_sent BOOLEAN NOT NULL DEFAULT false
+    ADD COLUMN IF NOT EXISTS whatsapp_sent BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN IF NOT EXISTS phone_number TEXT
 `;
 
 await sql`
