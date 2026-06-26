@@ -13,6 +13,12 @@ export const metadata = {
 
 export const dynamic = "force-dynamic";
 
+type MenuChoice = {
+  name: string;
+  choice: "" | "meat" | "fish" | "vegetarian";
+  notes: string;
+};
+
 type Row = {
   code: string;
   name: string;
@@ -25,6 +31,7 @@ type Row = {
   message: string | null;
   responded_at: string | null;
   guest_email: string | null;
+  menu_choices: MenuChoice[] | null;
 };
 
 type SeatRow = {
@@ -44,7 +51,7 @@ export default async function AdminAnniversaryPage() {
 
   const invitees = (await sql`
     SELECT code, name, view_count, first_viewed_at, last_viewed_at,
-           rsvp_status, guest_count, dietary_notes, message, responded_at, guest_email
+           rsvp_status, guest_count, dietary_notes, message, responded_at, guest_email, menu_choices
     FROM anniversary_invitees
     ORDER BY name ASC
   `) as Row[];
@@ -99,6 +106,7 @@ export default async function AdminAnniversaryPage() {
             <th>Email</th>
             <th>Guests</th>
             <th>Dietary</th>
+            <th>Menu</th>
             <th>Message</th>
           </tr>
         </thead>
@@ -117,6 +125,16 @@ export default async function AdminAnniversaryPage() {
               <td>{i.guest_email || "—"}</td>
               <td>{i.guest_count ?? "—"}</td>
               <td>{i.dietary_notes || "—"}</td>
+              <td>
+                {i.menu_choices && i.menu_choices.length
+                  ? i.menu_choices.map((m, idx) => (
+                      <div key={idx}>
+                        {m.name}: {m.choice || "—"}
+                        {m.notes ? ` (${m.notes})` : ""}
+                      </div>
+                    ))
+                  : "—"}
+              </td>
               <td>{i.message || "—"}</td>
             </tr>
           ))}

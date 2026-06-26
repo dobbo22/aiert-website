@@ -9,18 +9,26 @@ function resend() {
   return new Resend(process.env.RESEND_API_KEY);
 }
 
+type MenuChoice = {
+  name: string;
+  choice: "" | "meat" | "fish" | "vegetarian";
+  notes: string;
+};
+
 export async function sendRsvpNotification({
   name,
   status,
   guestCount,
   dietaryNotes,
   message,
+  menuChoices,
 }: {
   name: string;
   status: "accepted" | "declined";
   guestCount: number;
   dietaryNotes: string;
   message: string;
+  menuChoices?: MenuChoice[] | null;
 }) {
   const isAre = guestCount > 1 ? "are" : "is";
   const subject =
@@ -28,12 +36,20 @@ export async function sendRsvpNotification({
       ? `🎉 RSVP: ${name} ${isAre} coming!`
       : `RSVP: ${name} can't make it`;
 
+  const menuHtml =
+    menuChoices && menuChoices.length
+      ? `<p><strong>Menu preference:</strong><br />${menuChoices
+          .map((m) => `${m.name}: ${m.choice || "—"}${m.notes ? ` (${m.notes})` : ""}`)
+          .join("<br />")}</p>`
+      : "";
+
   const html = `
     <div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto;">
       <h2 style="color: #92400e;">${status === "accepted" ? "Accepted ✅" : "Declined"}</h2>
       <p><strong>${name}</strong> has ${status === "accepted" ? "accepted" : "declined"} the invitation to your 25th anniversary dinner.</p>
       ${status === "accepted" ? `<p><strong>Guests:</strong> ${guestCount}</p>` : ""}
       ${dietaryNotes ? `<p><strong>Dietary notes:</strong> ${dietaryNotes}</p>` : ""}
+      ${menuHtml}
       ${message ? `<p><strong>Message:</strong> ${message}</p>` : ""}
       <p style="margin-top: 24px;">
         <a href="https://aiert.co.uk/admin/anniversary" style="color:#92400e;">View all RSVPs in the admin dashboard →</a>

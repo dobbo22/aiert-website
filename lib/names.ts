@@ -10,6 +10,13 @@ export function firstNamesOnly(name: string): string {
   return firstWord(name);
 }
 
+export function guestFirstNames(name: string): string[] {
+  if (name.includes("&")) {
+    return name.split("&").map((part) => firstWord(part));
+  }
+  return [firstWord(name)];
+}
+
 export function splitCoupleName(name: string): [string, string] {
   const [leftRaw, rightRaw] = name.split("&").map((part) => part.trim());
   const leftWords = leftRaw.split(/\s+/);

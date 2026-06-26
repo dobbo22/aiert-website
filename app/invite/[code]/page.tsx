@@ -4,6 +4,13 @@ import "../anniversary.css";
 import ViewTracker from "./ViewTracker";
 import RsvpForm from "./RsvpForm";
 import { guestCountForName } from "@/lib/guestCount";
+import { guestFirstNames } from "@/lib/names";
+
+type MenuChoice = {
+  name: string;
+  choice: "" | "meat" | "fish" | "vegetarian";
+  notes: string;
+};
 
 type Invitee = {
   code: string;
@@ -13,11 +20,12 @@ type Invitee = {
   dietary_notes: string | null;
   message: string | null;
   guest_email: string | null;
+  menu_choices: MenuChoice[] | null;
 };
 
 async function getInvitee(code: string): Promise<Invitee | null> {
   const rows = await sql`
-    SELECT code, name, rsvp_status, guest_count, dietary_notes, message, guest_email
+    SELECT code, name, rsvp_status, guest_count, dietary_notes, message, guest_email, menu_choices
     FROM anniversary_invitees
     WHERE code = ${code}
   `;
@@ -104,10 +112,11 @@ export default async function InvitePage({
         <RsvpForm
           code={code}
           guestCount={guestCountForName(invitee.name)}
+          guestNames={guestFirstNames(invitee.name)}
           initialStatus={invitee.rsvp_status}
-          initialDietaryNotes={invitee.dietary_notes}
           initialMessage={invitee.message}
           initialEmail={invitee.guest_email}
+          initialMenuChoices={invitee.menu_choices}
         />
       </div>
     </div>

@@ -7,7 +7,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { code, status, email, dietaryNotes, message } = body;
+  const { code, status, email, dietaryNotes, message, menuChoices } = body;
 
   if (typeof code !== "string" || !code) {
     return NextResponse.json({ error: "Invalid code" }, { status: 400 });
@@ -31,6 +31,16 @@ export async function POST(req: NextRequest) {
   const notes = typeof dietaryNotes === "string" ? dietaryNotes.slice(0, 1000) : "";
   const msg = typeof message === "string" ? message.slice(0, 1000) : "";
 
+  const ALLOWED_CHOICES = ["", "meat", "fish", "vegetarian"];
+  const sanitizedMenuChoices =
+    status === "accepted" && Array.isArray(menuChoices)
+      ? menuChoices.slice(0, 10).map((m) => ({
+          name: typeof m?.name === "string" ? m.name.slice(0, 100) : "",
+          choice: ALLOWED_CHOICES.includes(m?.choice) ? m.choice : "",
+          notes: typeof m?.notes === "string" ? m.notes.slice(0, 300) : "",
+        }))
+      : null;
+
   await sql`
     UPDATE anniversary_invitees
     SET
@@ -39,6 +49,7 @@ export async function POST(req: NextRequest) {
       guest_email = ${guestEmail || null},
       dietary_notes = ${notes},
       message = ${msg},
+      menu_choices = ${sanitizedMenuChoices ? JSON.stringify(sanitizedMenuChoices) : null},
       responded_at = now()
     WHERE code = ${code}
   `;
@@ -50,6 +61,7 @@ export async function POST(req: NextRequest) {
       guestCount: guests ?? 0,
       dietaryNotes: notes,
       message: msg,
+      menuChoices: sanitizedMenuChoices,
     });
   } catch (err) {
     console.error("Failed to send RSVP notification email:", err);

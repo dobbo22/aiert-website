@@ -2,30 +2,46 @@
 
 import { useState } from "react";
 
+type MenuChoice = {
+  name: string;
+  choice: "" | "meat" | "fish" | "vegetarian";
+  notes: string;
+};
+
 type Props = {
   code: string;
   guestCount: number;
+  guestNames: string[];
   initialStatus: "accepted" | "declined" | null;
-  initialDietaryNotes: string | null;
   initialMessage: string | null;
   initialEmail: string | null;
+  initialMenuChoices: MenuChoice[] | null;
 };
 
 export default function RsvpForm({
   code,
   guestCount,
+  guestNames,
   initialStatus,
-  initialDietaryNotes,
   initialMessage,
   initialEmail,
+  initialMenuChoices,
 }: Props) {
   const [status, setStatus] = useState<"accepted" | "declined" | null>(initialStatus);
   const [email, setEmail] = useState(initialEmail ?? "");
-  const [dietaryNotes, setDietaryNotes] = useState(initialDietaryNotes ?? "");
   const [message, setMessage] = useState(initialMessage ?? "");
+  const [menuChoices, setMenuChoices] = useState<MenuChoice[]>(
+    initialMenuChoices ?? guestNames.map((n) => ({ name: n, choice: "", notes: "" }))
+  );
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(initialStatus !== null);
   const [error, setError] = useState<string | null>(null);
+
+  function updateMenuChoice(index: number, field: "choice" | "notes", value: string) {
+    setMenuChoices((prev) =>
+      prev.map((m, i) => (i === index ? { ...m, [field]: value } : m))
+    );
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -43,7 +59,13 @@ export default function RsvpForm({
       const res = await fetch("/api/rsvp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, status, email, dietaryNotes, message }),
+        body: JSON.stringify({
+          code,
+          status,
+          email,
+          message,
+          menuChoices: status === "accepted" ? menuChoices : null,
+        }),
       });
       if (!res.ok) throw new Error("Failed to submit");
       setSubmitted(true);
@@ -110,19 +132,36 @@ export default function RsvpForm({
             required
           />
 
-          <label className="anniv-label" htmlFor="dietaryNotes">
-            Dietary requirements{guestCount > 1 ? " (for both of you)" : ""}
-          </label>
-          <textarea
-            id="dietaryNotes"
-            className="anniv-textarea"
-            value={dietaryNotes}
-            onChange={(e) => setDietaryNotes(e.target.value)}
-            placeholder="Allergies, vegetarian, vegan, etc."
-          />
           <p className="anniv-note">
-            A menu (Meat / Fish / Vegetarian) will be sent for you to choose closer to the day.
+            A full menu will be sent for you to choose from closer to the day — for
+            now, just give us a rough idea of preference below.
           </p>
+
+          {menuChoices.map((m, i) => (
+            <div className="anniv-menu-row" key={i}>
+              <label className="anniv-label" htmlFor={`menu-choice-${i}`}>
+                {m.name}&rsquo;s menu preference
+              </label>
+              <select
+                id={`menu-choice-${i}`}
+                className="anniv-input"
+                value={m.choice}
+                onChange={(e) => updateMenuChoice(i, "choice", e.target.value)}
+              >
+                <option value="">Select…</option>
+                <option value="meat">Meat</option>
+                <option value="fish">Fish</option>
+                <option value="vegetarian">Vegetarian</option>
+              </select>
+              <input
+                type="text"
+                className="anniv-input anniv-menu-notes"
+                placeholder="Any specifics (allergies, etc.)"
+                value={m.notes}
+                onChange={(e) => updateMenuChoice(i, "notes", e.target.value)}
+              />
+            </div>
+          ))}
         </>
       )}
 

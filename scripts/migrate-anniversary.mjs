@@ -23,6 +23,10 @@ await sql`
 `;
 
 await sql`
+  ALTER TABLE anniversary_invitees ADD COLUMN IF NOT EXISTS menu_choices JSONB
+`;
+
+await sql`
   CREATE TABLE IF NOT EXISTS anniversary_seats (
     seat_id INTEGER PRIMARY KEY,
     side TEXT NOT NULL,
@@ -32,4 +36,5 @@ await sql`
 `;
 
 console.log("anniversary_invitees table ready");
+console.log("anniversary_invitees.menu_choices column ready");
 console.log("anniversary_seats table ready");
