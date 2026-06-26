@@ -5,6 +5,8 @@ import LoginForm from "./LoginForm";
 import SeatingChart from "./SeatingChart";
 import SendInviteButton from "./SendInviteButton";
 import SendAllButton from "./SendAllButton";
+import EmailEditor from "./EmailEditor";
+import WhatsAppToggle from "./WhatsAppToggle";
 import { guestCountForName } from "@/lib/guestCount";
 import "./admin.css";
 
@@ -37,6 +39,7 @@ type Row = {
   invite_sent_at: string | null;
   invite_opened_at: string | null;
   invite_open_count: number;
+  whatsapp_sent: boolean;
 };
 
 type SeatRow = {
@@ -57,7 +60,7 @@ export default async function AdminAnniversaryPage() {
   const invitees = (await sql`
     SELECT code, name, view_count, first_viewed_at, last_viewed_at,
            rsvp_status, guest_count, dietary_notes, message, responded_at, guest_email, menu_choices,
-           invite_sent_at, invite_opened_at, invite_open_count
+           invite_sent_at, invite_opened_at, invite_open_count, whatsapp_sent
     FROM anniversary_invitees
     ORDER BY name ASC
   `) as Row[];
@@ -112,6 +115,7 @@ export default async function AdminAnniversaryPage() {
             <th>Name</th>
             <th>Code</th>
             <th>Invite</th>
+            <th>WhatsApp</th>
             <th>Sent</th>
             <th>Opened</th>
             <th>Views</th>
@@ -132,6 +136,9 @@ export default async function AdminAnniversaryPage() {
               <td>
                 <SendInviteButton code={i.code} hasEmail={!!i.guest_email} />
               </td>
+              <td>
+                <WhatsAppToggle code={i.code} initialSent={i.whatsapp_sent} />
+              </td>
               <td>{i.invite_sent_at ? new Date(i.invite_sent_at).toLocaleString("en-GB") : "—"}</td>
               <td>
                 {i.invite_opened_at
@@ -145,7 +152,9 @@ export default async function AdminAnniversaryPage() {
                 {i.rsvp_status === "declined" && "❌ Declined"}
                 {!i.rsvp_status && "—"}
               </td>
-              <td>{i.guest_email || "—"}</td>
+              <td>
+                <EmailEditor code={i.code} initialEmail={i.guest_email} />
+              </td>
               <td>{i.guest_count ?? "—"}</td>
               <td>{i.dietary_notes || "—"}</td>
               <td>
