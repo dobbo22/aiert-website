@@ -5,9 +5,11 @@ import { useState } from "react";
 type Props = {
   code: string;
   hasEmail: boolean;
+  alreadySent: boolean;
+  accepted: boolean;
 };
 
-export default function SendInviteButton({ code, hasEmail }: Props) {
+export default function SendInviteButton({ code, hasEmail, alreadySent, accepted }: Props) {
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
   async function handleSend() {
@@ -29,8 +31,20 @@ export default function SendInviteButton({ code, hasEmail }: Props) {
     return <span className="admin-invite-disabled">No email</span>;
   }
 
-  if (state === "sent") {
-    return <span className="admin-invite-sent">Sent ✓</span>;
+  if (accepted) {
+    return (
+      <button type="button" className="admin-invite-btn admin-invite-ghosted" onClick={handleSend}>
+        {state === "sending" ? "Sending…" : "Accepted ✓"}
+      </button>
+    );
+  }
+
+  if (state === "sent" || (alreadySent && state === "idle")) {
+    return (
+      <button type="button" className="admin-invite-btn admin-invite-ghosted" onClick={handleSend}>
+        Sent ✓
+      </button>
+    );
   }
 
   return (

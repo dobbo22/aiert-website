@@ -41,10 +41,18 @@ function parsePhones(phone: string | null): string[] {
     .filter(Boolean);
 }
 
+function normalizePhoneForWhatsApp(phone: string): string {
+  let digits = phone.replace(/[^\d]/g, "");
+  if (digits.startsWith("0")) {
+    digits = "44" + digits.slice(1); // assume UK local format
+  }
+  return digits;
+}
+
 function buildWhatsAppShareUrl(recipientName: string, code: string, phone: string, siteUrl: string): string {
   const inviteUrl = `${siteUrl}/invite/${code}`;
   const message = `Hi ${recipientName} — you're invited to Martin & Karen's 25th Wedding Anniversary Dinner! ${inviteUrl}`;
-  const digits = phone.replace(/[^\d]/g, "");
+  const digits = normalizePhoneForWhatsApp(phone);
   return digits
     ? `https://wa.me/${digits}?text=${encodeURIComponent(message)}`
     : `https://wa.me/?text=${encodeURIComponent(message)}`;
@@ -81,7 +89,12 @@ export default function InviteeRow({
       <td>{name}</td>
       <td className="admin-code">{code}</td>
       <td>
-        <SendInviteButton code={code} hasEmail={!!email} />
+        <SendInviteButton
+          code={code}
+          hasEmail={!!email}
+          alreadySent={!!inviteSentAt}
+          accepted={rsvpStatus === "accepted"}
+        />
       </td>
       <td>
         <div className={`admin-whatsapp-cell ${ghosted ? "admin-whatsapp-ghosted" : ""}`}>

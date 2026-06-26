@@ -143,6 +143,11 @@
   font-weight: 600;
 }
 
+.admin-invite-ghosted {
+  opacity: 0.5;
+  color: #34d399;
+}
+
 .admin-invite-disabled {
   color: #64748b;
   font-size: 0.78rem;
