@@ -162,7 +162,7 @@ export default async function AdminAnniversaryPage() {
                 <SendInviteButton code={i.code} hasEmail={!!i.guest_email} />
               </td>
               <td>
-                <div className="admin-whatsapp-cell">
+                <div className={`admin-whatsapp-cell ${i.invite_sent_at ? "admin-whatsapp-ghosted" : ""}`}>
                   {(() => {
                     const phones = parsePhones(i.phone_number);
                     const names = guestFirstNames(i.name);

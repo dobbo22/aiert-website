@@ -180,6 +180,17 @@
   align-items: flex-start;
 }
 
+.admin-whatsapp-ghosted {
+  opacity: 0.45;
+}
+
+.admin-whatsapp-ghosted::before {
+  content: "Email already sent";
+  font-size: 0.68rem;
+  color: #64748b;
+  font-style: italic;
+}
+
 .admin-whatsapp-share {
   background: rgba(37, 211, 102, 0.15);
   border: 1px solid rgba(37, 211, 102, 0.5);
