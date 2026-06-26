@@ -28,13 +28,9 @@ export default function SendInviteButton({ code, hasEmail, alreadySent, accepted
     }
   }
 
-  if (!hasEmail) {
-    return <span className="admin-invite-disabled">No email</span>;
-  }
-
   if (accepted) {
     return (
-      <button type="button" className="admin-invite-btn admin-invite-ghosted" onClick={handleSend}>
+      <button type="button" className="admin-invite-btn admin-invite-ghosted" onClick={handleSend} disabled={!hasEmail}>
         {state === "sending" ? "Sending…" : "Accepted ✓"}
       </button>
     );
@@ -42,7 +38,7 @@ export default function SendInviteButton({ code, hasEmail, alreadySent, accepted
 
   if (state === "sent" || (alreadySent && state === "idle")) {
     return (
-      <button type="button" className="admin-invite-btn admin-invite-ghosted" onClick={handleSend}>
+      <button type="button" className="admin-invite-btn admin-invite-ghosted" onClick={handleSend} disabled={!hasEmail}>
         Sent ✓
       </button>
     );
@@ -50,10 +46,14 @@ export default function SendInviteButton({ code, hasEmail, alreadySent, accepted
 
   if (whatsappConfirmed && state === "idle") {
     return (
-      <button type="button" className="admin-invite-btn admin-invite-ghosted" onClick={handleSend}>
+      <button type="button" className="admin-invite-btn admin-invite-ghosted" onClick={handleSend} disabled={!hasEmail}>
         Sent via WhatsApp
       </button>
     );
+  }
+
+  if (!hasEmail) {
+    return <span className="admin-invite-disabled">No email</span>;
   }
 
   return (
