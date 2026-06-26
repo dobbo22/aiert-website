@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
 import { COOKIE_NAME } from "@/lib/adminAuth";
 
 export async function POST() {
-  const res = NextResponse.json({ ok: true });
-  res.cookies.set(COOKIE_NAME, "", { path: "/", maxAge: 0 });
-  res.cookies.set(COOKIE_NAME, "", { path: "/admin/anniversary", maxAge: 0 });
-  return res;
+  const headers = new Headers();
+  headers.append("Set-Cookie", `${COOKIE_NAME}=; Path=/; Max-Age=0`);
+  headers.append("Set-Cookie", `${COOKIE_NAME}=; Path=/admin/anniversary; Max-Age=0`);
+  headers.set("Content-Type", "application/json");
+  return new Response(JSON.stringify({ ok: true }), { headers });
 }
