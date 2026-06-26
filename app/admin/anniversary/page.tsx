@@ -35,6 +35,8 @@ export default async function AdminAnniversaryPage() {
     ORDER BY name ASC
   `) as Row[];
 
+  const acceptedCount = invitees.filter((i) => i.rsvp_status === "accepted").length;
+  const declinedCount = invitees.filter((i) => i.rsvp_status === "declined").length;
   const totalGuests = invitees
     .filter((i) => i.rsvp_status === "accepted")
     .reduce((sum, i) => sum + (i.guest_count ?? 0), 0);
@@ -42,10 +44,24 @@ export default async function AdminAnniversaryPage() {
   return (
     <div className="admin-page">
       <h1 className="admin-title">Anniversary Invitees</h1>
-      <p className="admin-summary">
-        {invitees.length} invited · {invitees.filter((i) => i.rsvp_status === "accepted").length} accepted ·{" "}
-        {invitees.filter((i) => i.rsvp_status === "declined").length} declined · {totalGuests} guests total
-      </p>
+      <div className="admin-stats">
+        <div className="admin-stat">
+          <span className="admin-stat-value">{invitees.length}</span>
+          <span className="admin-stat-label">Invited</span>
+        </div>
+        <div className="admin-stat">
+          <span className="admin-stat-value">{acceptedCount}</span>
+          <span className="admin-stat-label">Accepted</span>
+        </div>
+        <div className="admin-stat">
+          <span className="admin-stat-value">{declinedCount}</span>
+          <span className="admin-stat-label">Declined</span>
+        </div>
+        <div className="admin-stat">
+          <span className="admin-stat-value">{totalGuests}</span>
+          <span className="admin-stat-label">Guests Attending</span>
+        </div>
+      </div>
       <table className="admin-table">
         <thead>
           <tr>
