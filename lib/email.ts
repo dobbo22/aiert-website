@@ -107,6 +107,10 @@ export async function sendGuestConfirmation({
                   ${detailRow("Dress Code", "Men: Black Tie<br />Ladies: Evening/Cocktail Dress")}
                 </table>
 
+                <p style="margin:0 0 24px;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:14px;color:#c7cdd6;">
+                  A menu (Meat / Fish / Vegetarian) will be sent for you to choose closer to the day.
+                </p>
+
                 <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 24px;">
                   <tr>
                     <td style="padding:0 6px;">

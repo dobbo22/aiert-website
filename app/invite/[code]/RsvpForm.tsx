@@ -120,6 +120,9 @@ export default function RsvpForm({
             onChange={(e) => setDietaryNotes(e.target.value)}
             placeholder="Allergies, vegetarian, vegan, etc."
           />
+          <p className="anniv-note">
+            A menu (Meat / Fish / Vegetarian) will be sent for you to choose closer to the day.
+          </p>
         </>
       )}
 

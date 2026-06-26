@@ -170,6 +170,14 @@
   min-height: 70px;
 }
 
+.anniv-note {
+  font-size: 0.85rem;
+  font-style: italic;
+  font-weight: 600;
+  color: #c7cdd6;
+  margin: 0.5rem 0 0;
+}
+
 .anniv-choice-row {
   display: flex;
   gap: 0.75rem;
