@@ -102,6 +102,62 @@
   color: #94a3b8;
 }
 
+.admin-invite-btn {
+  background: rgba(148, 163, 184, 0.15);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  color: #e2e8f0;
+  border-radius: 4px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.admin-invite-btn:hover {
+  background: rgba(148, 163, 184, 0.3);
+}
+
+.admin-invite-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.admin-invite-sent {
+  color: #34d399;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.admin-invite-disabled {
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.admin-sendall-btn {
+  background: linear-gradient(135deg, #cbd5e1, #64748b);
+  color: #0b0f1a;
+  border: none;
+  border-radius: 6px;
+  padding: 0.6rem 1.1rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+}
+
+.admin-sendall-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-sendall-done {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  color: #34d399;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
 .seating-section {
   margin-top: 2.5rem;
 }

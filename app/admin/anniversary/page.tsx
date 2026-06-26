@@ -3,6 +3,8 @@ import sql from "@/lib/db";
 import { isValidAdminSession, COOKIE_NAME } from "@/lib/adminAuth";
 import LoginForm from "./LoginForm";
 import SeatingChart from "./SeatingChart";
+import SendInviteButton from "./SendInviteButton";
+import SendAllButton from "./SendAllButton";
 import { guestCountForName } from "@/lib/guestCount";
 import "./admin.css";
 
@@ -32,6 +34,9 @@ type Row = {
   responded_at: string | null;
   guest_email: string | null;
   menu_choices: MenuChoice[] | null;
+  invite_sent_at: string | null;
+  invite_opened_at: string | null;
+  invite_open_count: number;
 };
 
 type SeatRow = {
@@ -51,7 +56,8 @@ export default async function AdminAnniversaryPage() {
 
   const invitees = (await sql`
     SELECT code, name, view_count, first_viewed_at, last_viewed_at,
-           rsvp_status, guest_count, dietary_notes, message, responded_at, guest_email, menu_choices
+           rsvp_status, guest_count, dietary_notes, message, responded_at, guest_email, menu_choices,
+           invite_sent_at, invite_opened_at, invite_open_count
     FROM anniversary_invitees
     ORDER BY name ASC
   `) as Row[];
@@ -77,6 +83,11 @@ export default async function AdminAnniversaryPage() {
           Updated {new Date().toLocaleString("en-GB")}
         </p>
       </div>
+      <SendAllButton
+        recipients={invitees
+          .filter((i) => i.guest_email && !i.invite_sent_at)
+          .map((i) => ({ code: i.code, name: i.name }))}
+      />
       <div className="admin-stats">
         <div className="admin-stat">
           <span className="admin-stat-value">{totalInvited}</span>
@@ -100,6 +111,9 @@ export default async function AdminAnniversaryPage() {
           <tr>
             <th>Name</th>
             <th>Code</th>
+            <th>Invite</th>
+            <th>Sent</th>
+            <th>Opened</th>
             <th>Views</th>
             <th>Last Viewed</th>
             <th>RSVP</th>
@@ -115,6 +129,15 @@ export default async function AdminAnniversaryPage() {
             <tr key={i.code}>
               <td>{i.name}</td>
               <td className="admin-code">{i.code}</td>
+              <td>
+                <SendInviteButton code={i.code} hasEmail={!!i.guest_email} />
+              </td>
+              <td>{i.invite_sent_at ? new Date(i.invite_sent_at).toLocaleString("en-GB") : "—"}</td>
+              <td>
+                {i.invite_opened_at
+                  ? `${new Date(i.invite_opened_at).toLocaleString("en-GB")} (${i.invite_open_count}x)`
+                  : "—"}
+              </td>
               <td>{i.view_count}</td>
               <td>{i.last_viewed_at ? new Date(i.last_viewed_at).toLocaleString("en-GB") : "—"}</td>
               <td>

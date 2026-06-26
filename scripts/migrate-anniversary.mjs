@@ -27,6 +27,13 @@ await sql`
 `;
 
 await sql`
+  ALTER TABLE anniversary_invitees
+    ADD COLUMN IF NOT EXISTS invite_sent_at TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS invite_opened_at TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS invite_open_count INTEGER NOT NULL DEFAULT 0
+`;
+
+await sql`
   CREATE TABLE IF NOT EXISTS anniversary_seats (
     seat_id INTEGER PRIMARY KEY,
     side TEXT NOT NULL,
@@ -37,4 +44,5 @@ await sql`
 
 console.log("anniversary_invitees table ready");
 console.log("anniversary_invitees.menu_choices column ready");
+console.log("anniversary_invitees invite open-tracking columns ready");
 console.log("anniversary_seats table ready");
