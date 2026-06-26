@@ -4,11 +4,11 @@ import { useState } from "react";
 
 type Props = {
   code: string;
-  initialSent: boolean;
+  sent: boolean;
+  onChange: (sent: boolean) => void;
 };
 
-export default function WhatsAppToggle({ code, initialSent }: Props) {
-  const [sent, setSent] = useState(initialSent);
+export default function WhatsAppToggle({ code, sent, onChange }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(false);
 
@@ -16,7 +16,7 @@ export default function WhatsAppToggle({ code, initialSent }: Props) {
     const next = !sent;
     setSaving(true);
     setError(false);
-    setSent(next);
+    onChange(next);
     try {
       const res = await fetch("/api/admin/toggle-whatsapp", {
         method: "POST",
@@ -25,7 +25,7 @@ export default function WhatsAppToggle({ code, initialSent }: Props) {
       });
       if (!res.ok) throw new Error("Failed");
     } catch {
-      setSent(!next);
+      onChange(!next);
       setError(true);
     } finally {
       setSaving(false);

@@ -7,9 +7,10 @@ type Props = {
   hasEmail: boolean;
   alreadySent: boolean;
   accepted: boolean;
+  whatsappConfirmed: boolean;
 };
 
-export default function SendInviteButton({ code, hasEmail, alreadySent, accepted }: Props) {
+export default function SendInviteButton({ code, hasEmail, alreadySent, accepted, whatsappConfirmed }: Props) {
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
   async function handleSend() {
@@ -43,6 +44,14 @@ export default function SendInviteButton({ code, hasEmail, alreadySent, accepted
     return (
       <button type="button" className="admin-invite-btn admin-invite-ghosted" onClick={handleSend}>
         Sent ✓
+      </button>
+    );
+  }
+
+  if (whatsappConfirmed && state === "idle") {
+    return (
+      <button type="button" className="admin-invite-btn admin-invite-ghosted" onClick={handleSend}>
+        Sent via WhatsApp
       </button>
     );
   }

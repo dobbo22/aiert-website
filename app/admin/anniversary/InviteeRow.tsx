@@ -79,6 +79,7 @@ export default function InviteeRow({
 }: Props) {
   const [email, setEmail] = useState(initialEmail);
   const [phone, setPhone] = useState(initialPhone);
+  const [whatsappConfirmed, setWhatsappConfirmed] = useState(whatsappSent);
 
   const phones = parsePhones(phone);
   const names = guestFirstNames(name);
@@ -94,6 +95,7 @@ export default function InviteeRow({
           hasEmail={!!email}
           alreadySent={!!inviteSentAt}
           accepted={rsvpStatus === "accepted"}
+          whatsappConfirmed={whatsappConfirmed}
         />
       </td>
       <td>
@@ -121,7 +123,7 @@ export default function InviteeRow({
               </a>
             ))
           )}
-          <WhatsAppToggle code={code} initialSent={whatsappSent} />
+          <WhatsAppToggle code={code} sent={whatsappConfirmed} onChange={setWhatsappConfirmed} />
         </div>
       </td>
       <td>{inviteSentAt ? new Date(inviteSentAt).toLocaleString("en-GB") : "—"}</td>
