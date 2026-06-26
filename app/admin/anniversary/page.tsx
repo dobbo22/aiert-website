@@ -104,7 +104,13 @@ export default async function AdminAnniversaryPage() {
       </div>
       <SendAllButton
         recipients={invitees
-          .filter((i) => i.guest_email && !i.invite_sent_at)
+          .filter(
+            (i) =>
+              i.guest_email &&
+              !i.invite_sent_at &&
+              i.rsvp_status !== "accepted" &&
+              !i.whatsapp_sent
+          )
           .map((i) => ({ code: i.code, name: i.name }))}
       />
       <div className="admin-stats">
