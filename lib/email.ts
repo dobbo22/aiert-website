@@ -255,14 +255,7 @@ export async function sendInviteEmail({
                   they warmly invite you to join them for dinner.
                 </p>
 
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="text-align:left;margin-bottom:28px;">
-                  ${detailRow("Date", "Sunday, 30th August 2026")}
-                  ${detailRow("Time", "6:00pm")}
-                  ${detailRow("Venue", "River Room, One Whitehall Place,<br />London SW1A 2EJ")}
-                  ${detailRow("Dress Code", "Men: Black Tie<br />Ladies: Evening/Cocktail Dress")}
-                </table>
-
-                <a href="${inviteUrl}" style="display:inline-block;padding:14px 28px;background-color:#f2f4f6;border:1px solid #f2f4f6;color:#14110c;font-weight:700;font-family:Georgia,'Times New Roman',serif;font-size:15px;text-decoration:none;border-radius:3px;letter-spacing:0.03em;">
+                <a href="${inviteUrl}" style="display:inline-block;margin-bottom:28px;padding:14px 28px;background-color:#f2f4f6;border:1px solid #f2f4f6;color:#14110c;font-weight:700;font-family:Georgia,'Times New Roman',serif;font-size:15px;text-decoration:none;border-radius:3px;letter-spacing:0.03em;">
                   View Invitation &amp; RSVP &rarr;
                 </a>
 
