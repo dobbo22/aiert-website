@@ -262,9 +262,13 @@ export async function sendInviteEmail({
                   ${detailRow("Dress Code", "Men: Black Tie<br />Ladies: Evening/Cocktail Dress")}
                 </table>
 
-                <a href="${inviteUrl}" style="display:inline-block;padding:14px 28px;background:linear-gradient(135deg,#f2f4f6,#8d94a0);color:#14110c;font-weight:700;font-family:Georgia,'Times New Roman',serif;font-size:15px;text-decoration:none;border-radius:3px;letter-spacing:0.03em;">
-                  View Invitation &amp; RSVP
+                <a href="${inviteUrl}" style="display:inline-block;padding:14px 28px;background-color:#f2f4f6;border:1px solid #f2f4f6;color:#14110c;font-weight:700;font-family:Georgia,'Times New Roman',serif;font-size:15px;text-decoration:none;border-radius:3px;letter-spacing:0.03em;">
+                  View Invitation &amp; RSVP &rarr;
                 </a>
+
+                <p style="margin:16px 0 0;font-family:Georgia,'Times New Roman',serif;font-size:12px;color:#8d94a0;word-break:break-all;">
+                  Or copy this link: <a href="${inviteUrl}" style="color:#c7cdd6;text-decoration:underline;">${inviteUrl}</a>
+                </p>
 
                 <p style="margin:28px 0 0;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:14px;color:#c7cdd6;">
                   We look forward to celebrating with you.
