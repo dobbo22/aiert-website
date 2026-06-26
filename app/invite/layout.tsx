@@ -21,7 +21,22 @@ const greatVibes = Great_Vibes({
 
 export const metadata: Metadata = {
   title: "You're Invited",
+  description: "Martin & Karen Dobson's 25th Wedding Anniversary Dinner",
   robots: { index: false, follow: false },
+  openGraph: {
+    title: "You're Invited",
+    description: "Martin & Karen Dobson's 25th Wedding Anniversary Dinner",
+    url: "https://aiert.co.uk/invite",
+    siteName: "Martin & Karen's 25th Anniversary",
+    images: ["/anniversary-framed.png"],
+    locale: "en_GB",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "You're Invited",
+    description: "Martin & Karen Dobson's 25th Wedding Anniversary Dinner",
+  },
 };
 
 export default function InviteLayout({ children }: { children: React.ReactNode }) {
