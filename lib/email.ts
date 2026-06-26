@@ -250,7 +250,7 @@ export async function sendInviteEmail({
 
                 <p style="margin:0 0 28px;font-family:Georgia,'Times New Roman',serif;font-size:17px;line-height:1.7;color:#f5f6f8;">
                   Dear ${firstNamesOnly(name)},<br />
-                  as they celebrate their<br />
+                  as Martin &amp; Karen celebrate their<br />
                   <em style="font-weight:bold;">25th Wedding Anniversary</em><br />
                   they warmly invite you to join them for dinner.
                 </p>
