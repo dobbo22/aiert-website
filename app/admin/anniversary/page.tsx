@@ -6,6 +6,7 @@ import SeatingChart from "./SeatingChart";
 import SendAllButton from "./SendAllButton";
 import LogoutButton from "./LogoutButton";
 import InviteeRow from "./InviteeRow";
+import AutoRefresh from "./AutoRefresh";
 import { guestCountForName } from "@/lib/guestCount";
 import "./admin.css";
 
@@ -93,10 +94,11 @@ export default async function AdminAnniversaryPage() {
 
   return (
     <div className="admin-page">
+      <AutoRefresh intervalSeconds={30} />
       <div className="admin-header">
         <h1 className="admin-title">Anniversary Invitees</h1>
         <p className="admin-updated">
-          Updated {new Date().toLocaleString("en-GB")}
+          Updated {new Date().toLocaleString("en-GB")} · auto-refreshes every 30s
         </p>
         <LogoutButton />
       </div>
