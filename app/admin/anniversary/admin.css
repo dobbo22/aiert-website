@@ -1,0 +1,39 @@
+.admin-page {
+  padding: 2rem;
+  font-family: sans-serif;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.admin-title {
+  margin-bottom: 0.25rem;
+}
+
+.admin-summary {
+  margin-bottom: 1.5rem;
+  color: #555;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.admin-table thead tr {
+  text-align: left;
+  border-bottom: 2px solid #ccc;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 0.5rem;
+}
+
+.admin-table tbody tr {
+  border-bottom: 1px solid #eee;
+}
+
+.admin-code {
+  font-family: monospace;
+}
