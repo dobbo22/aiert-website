@@ -8,6 +8,7 @@ import SendAllButton from "./SendAllButton";
 import EmailEditor from "./EmailEditor";
 import PhoneEditor from "./PhoneEditor";
 import WhatsAppToggle from "./WhatsAppToggle";
+import LogoutButton from "./LogoutButton";
 import { guestCountForName } from "@/lib/guestCount";
 import { firstNamesOnly } from "@/lib/names";
 import "./admin.css";
@@ -99,6 +100,7 @@ export default async function AdminAnniversaryPage() {
         <p className="admin-updated">
           Updated {new Date().toLocaleString("en-GB")}
         </p>
+        <LogoutButton />
       </div>
       <SendAllButton
         recipients={invitees
