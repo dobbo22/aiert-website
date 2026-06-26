@@ -3,6 +3,7 @@ import sql from "@/lib/db";
 import { isValidAdminSession, COOKIE_NAME } from "@/lib/adminAuth";
 import LoginForm from "./LoginForm";
 import SeatingChart from "./SeatingChart";
+import { guestCountForName } from "@/lib/guestCount";
 import "./admin.css";
 
 export const metadata = {
@@ -123,7 +124,11 @@ export default async function AdminAnniversaryPage() {
 
       <SeatingChart
         seats={seats}
-        invitees={invitees.map((i) => ({ code: i.code, name: i.name }))}
+        invitees={invitees.map((i) => ({
+          code: i.code,
+          name: i.name,
+          guestCount: guestCountForName(i.name),
+        }))}
       />
     </div>
   );

@@ -12,6 +12,7 @@ type Seat = {
 type Invitee = {
   code: string;
   name: string;
+  guestCount: number;
 };
 
 type Props = {
@@ -27,6 +28,11 @@ export default function SeatingChart({ seats: initialSeats, invitees }: Props) {
   const seatById = (id: number) => seats.find((s) => s.seat_id === id);
   const nameForCode = (code: string | null) =>
     code ? invitees.find((i) => i.code === code)?.name ?? code : null;
+
+  const seatedCounts: Record<string, number> = {};
+  for (const s of seats) {
+    if (s.invitee_code) seatedCounts[s.invitee_code] = (seatedCounts[s.invitee_code] ?? 0) + 1;
+  }
 
   async function assign(seatId: number, code: string | null, guestLabel: string | null) {
     setSaving(true);
@@ -49,22 +55,41 @@ export default function SeatingChart({ seats: initialSeats, invitees }: Props) {
     const seat = seatById(id);
     const label = seat?.guest_label || nameForCode(seat?.invitee_code ?? null);
     const isActive = activeSeat === id;
+    const invitee = seat?.invitee_code ? invitees.find((i) => i.code === seat.invitee_code) : undefined;
+    const seatedCount = seat?.invitee_code ? seatedCounts[seat.invitee_code] ?? 0 : 0;
+    const isUnderSeated = !!invitee && invitee.guestCount > 1 && seatedCount < invitee.guestCount;
 
     return (
       <div className="seat-wrap" key={id}>
         <button
           type="button"
-          className={`seat-disc ${label ? "seat-filled" : ""}`}
+          className={`seat-disc ${label ? "seat-filled" : ""} ${isUnderSeated ? "seat-warning" : ""}`}
           onClick={() => setActiveSeat(isActive ? null : id)}
-          title={label ?? `Seat ${id}`}
+          title={
+            label
+              ? `${label}${invitee && invitee.guestCount > 1 ? ` (${seatedCount}/${invitee.guestCount} seated)` : ""}`
+              : `Seat ${id}`
+          }
         >
           {label ? initials(label) : id}
         </button>
-        {label && <span className="seat-name">{label}</span>}
+        {label && (
+          <span className="seat-name">
+            {label}
+            {invitee && invitee.guestCount > 1 && (
+              <span className="seat-progress"> {seatedCount}/{invitee.guestCount}</span>
+            )}
+          </span>
+        )}
 
         {isActive && (
           <div className="seat-popover">
+            <label htmlFor={`seat-select-${id}`} className="seat-popover-label">
+              Assign guest
+            </label>
             <select
+              id={`seat-select-${id}`}
+              aria-label="Assign guest to this seat"
               defaultValue=""
               onChange={(e) => {
                 const code = e.target.value;
@@ -79,6 +104,7 @@ export default function SeatingChart({ seats: initialSeats, invitees }: Props) {
               {invitees.map((inv) => (
                 <option key={inv.code} value={inv.code}>
                   {inv.name}
+                  {inv.guestCount > 1 ? ` (${inv.guestCount} guests)` : ""}
                 </option>
               ))}
             </select>
