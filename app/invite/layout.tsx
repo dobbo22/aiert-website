@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     description: "Martin & Karen Dobson's 25th Wedding Anniversary Dinner",
     url: "https://aiert.co.uk/invite",
     siteName: "Martin & Karen's 25th Anniversary",
-    images: ["/anniversary-framed.png"],
+    images: [{ url: "/anniversary-og.jpg", width: 1200, height: 669 }],
     locale: "en_GB",
     type: "website",
   },
@@ -36,6 +36,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "You're Invited",
     description: "Martin & Karen Dobson's 25th Wedding Anniversary Dinner",
+    images: ["/anniversary-og.jpg"],
   },
 };
 
