@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { splitCoupleName } from "@/lib/names";
 
 type Seat = {
   seat_id: number;
@@ -32,6 +33,13 @@ export default function SeatingChart({ seats: initialSeats, invitees }: Props) {
   const seatedCounts: Record<string, number> = {};
   for (const s of seats) {
     if (s.invitee_code) seatedCounts[s.invitee_code] = (seatedCounts[s.invitee_code] ?? 0) + 1;
+  }
+
+  function findNextEmptySeat(excludeId: number, side: Seat["side"]): number | null {
+    const sameSide = seats.filter((s) => s.side === side && s.invitee_code === null && s.seat_id !== excludeId);
+    if (sameSide.length) return sameSide[0].seat_id;
+    const any = seats.filter((s) => s.invitee_code === null && s.seat_id !== excludeId);
+    return any.length ? any[0].seat_id : null;
   }
 
   async function assign(seatId: number, code: string | null, guestLabel: string | null) {
@@ -94,8 +102,21 @@ export default function SeatingChart({ seats: initialSeats, invitees }: Props) {
               onChange={(e) => {
                 const code = e.target.value;
                 if (!code) return;
-                const name = invitees.find((i) => i.code === code)?.name ?? "";
-                assign(id, code, name);
+                const inv = invitees.find((i) => i.code === code);
+                if (!inv) return;
+
+                if (inv.guestCount > 1) {
+                  const [first, second] = splitCoupleName(inv.name);
+                  const alreadySeated = seatedCounts[code] ?? 0;
+                  assign(id, code, alreadySeated === 0 ? first : second);
+
+                  if (alreadySeated === 0) {
+                    const nextSeatId = findNextEmptySeat(id, seat?.side ?? "top");
+                    if (nextSeatId) assign(nextSeatId, code, second);
+                  }
+                } else {
+                  assign(id, code, inv.name);
+                }
               }}
             >
               <option value="" disabled>

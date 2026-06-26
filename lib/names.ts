@@ -9,3 +9,11 @@ export function firstNamesOnly(name: string): string {
   }
   return firstWord(name);
 }
+
+export function splitCoupleName(name: string): [string, string] {
+  const [leftRaw, rightRaw] = name.split("&").map((part) => part.trim());
+  const leftWords = leftRaw.split(/\s+/);
+  const rightWords = rightRaw.split(/\s+/);
+  const left = leftWords.length > 1 ? leftRaw : `${leftRaw} ${rightWords[rightWords.length - 1]}`;
+  return [left, rightRaw];
+}
