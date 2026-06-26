@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     httpOnly: true,
     secure: true,
     sameSite: "lax",
-    path: "/admin/anniversary",
+    path: "/",
     maxAge: 60 * 60 * 24 * 30,
   });
   return res;
