@@ -60,6 +60,7 @@ export default async function AdminAnniversaryPage() {
   const totalGuests = invitees
     .filter((i) => i.rsvp_status === "accepted")
     .reduce((sum, i) => sum + (i.guest_count ?? 0), 0);
+  const totalInvited = invitees.reduce((sum, i) => sum + guestCountForName(i.name), 0);
 
   return (
     <div className="admin-page">
@@ -71,7 +72,7 @@ export default async function AdminAnniversaryPage() {
       </div>
       <div className="admin-stats">
         <div className="admin-stat">
-          <span className="admin-stat-value">{invitees.length}</span>
+          <span className="admin-stat-value">{totalInvited}</span>
           <span className="admin-stat-label">Invited</span>
         </div>
         <div className="admin-stat">
