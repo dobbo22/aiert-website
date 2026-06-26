@@ -4,7 +4,12 @@ import { isValidAdminSession, COOKIE_NAME } from "@/lib/adminAuth";
 import LoginForm from "./LoginForm";
 import "./admin.css";
 
-export const metadata = { robots: { index: false, follow: false } };
+export const metadata = {
+  title: "Anniversary RSVPs — Admin",
+  robots: { index: false, follow: false },
+};
+
+export const dynamic = "force-dynamic";
 
 type Row = {
   code: string;
@@ -43,7 +48,12 @@ export default async function AdminAnniversaryPage() {
 
   return (
     <div className="admin-page">
-      <h1 className="admin-title">Anniversary Invitees</h1>
+      <div className="admin-header">
+        <h1 className="admin-title">Anniversary Invitees</h1>
+        <p className="admin-updated">
+          Updated {new Date().toLocaleString("en-GB")}
+        </p>
+      </div>
       <div className="admin-stats">
         <div className="admin-stat">
           <span className="admin-stat-value">{invitees.length}</span>
