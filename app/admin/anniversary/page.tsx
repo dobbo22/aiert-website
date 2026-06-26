@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import sql from "@/lib/db";
 import { isValidAdminSession, COOKIE_NAME } from "@/lib/adminAuth";
 import LoginForm from "./LoginForm";
+import SeatingChart from "./SeatingChart";
 import "./admin.css";
 
 export const metadata = {
@@ -25,6 +26,13 @@ type Row = {
   guest_email: string | null;
 };
 
+type SeatRow = {
+  seat_id: number;
+  side: "top" | "left" | "right";
+  invitee_code: string | null;
+  guest_label: string | null;
+};
+
 export default async function AdminAnniversaryPage() {
   const cookieStore = await cookies();
   const session = cookieStore.get(COOKIE_NAME)?.value;
@@ -39,6 +47,12 @@ export default async function AdminAnniversaryPage() {
     FROM anniversary_invitees
     ORDER BY name ASC
   `) as Row[];
+
+  const seats = (await sql`
+    SELECT seat_id, side, invitee_code, guest_label
+    FROM anniversary_seats
+    ORDER BY seat_id ASC
+  `) as SeatRow[];
 
   const acceptedCount = invitees.filter((i) => i.rsvp_status === "accepted").length;
   const declinedCount = invitees.filter((i) => i.rsvp_status === "declined").length;
@@ -106,6 +120,11 @@ export default async function AdminAnniversaryPage() {
           ))}
         </tbody>
       </table>
+
+      <SeatingChart
+        seats={seats}
+        invitees={invitees.map((i) => ({ code: i.code, name: i.name }))}
+      />
     </div>
   );
 }

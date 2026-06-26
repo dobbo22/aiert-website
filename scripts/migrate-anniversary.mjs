@@ -22,4 +22,14 @@ await sql`
   )
 `;
 
+await sql`
+  CREATE TABLE IF NOT EXISTS anniversary_seats (
+    seat_id INTEGER PRIMARY KEY,
+    side TEXT NOT NULL,
+    invitee_code TEXT REFERENCES anniversary_invitees(code) ON DELETE SET NULL,
+    guest_label TEXT
+  )
+`;
+
 console.log("anniversary_invitees table ready");
+console.log("anniversary_seats table ready");
