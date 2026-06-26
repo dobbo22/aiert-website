@@ -10,15 +10,23 @@ import PhoneEditor from "./PhoneEditor";
 import WhatsAppToggle from "./WhatsAppToggle";
 import LogoutButton from "./LogoutButton";
 import { guestCountForName } from "@/lib/guestCount";
-import { firstNamesOnly } from "@/lib/names";
+import { guestFirstNames } from "@/lib/names";
 import "./admin.css";
 
 const SITE_URL = process.env.SITE_URL || "https://aiert.co.uk";
 
-function buildWhatsAppShareUrl(name: string, code: string, phone: string | null): string {
+function parsePhones(phone: string | null): string[] {
+  if (!phone) return [];
+  return phone
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
+}
+
+function buildWhatsAppShareUrl(recipientName: string, fullName: string, code: string, phone: string): string {
   const inviteUrl = `${SITE_URL}/invite/${code}`;
-  const message = `Hi ${firstNamesOnly(name)} — you're invited to Martin & Karen's 25th Wedding Anniversary Dinner! ${inviteUrl}`;
-  const digits = phone ? phone.replace(/[^\d]/g, "") : "";
+  const message = `Hi ${recipientName} — you're invited to Martin & Karen's 25th Wedding Anniversary Dinner! ${inviteUrl}`;
+  const digits = phone.replace(/[^\d]/g, "");
   return digits
     ? `https://wa.me/${digits}?text=${encodeURIComponent(message)}`
     : `https://wa.me/?text=${encodeURIComponent(message)}`;
@@ -155,14 +163,33 @@ export default async function AdminAnniversaryPage() {
               </td>
               <td>
                 <div className="admin-whatsapp-cell">
-                  <a
-                    href={buildWhatsAppShareUrl(i.name, i.code, i.phone_number)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="admin-whatsapp-share"
-                  >
-                    Share via WhatsApp
-                  </a>
+                  {(() => {
+                    const phones = parsePhones(i.phone_number);
+                    const names = guestFirstNames(i.name);
+                    if (phones.length === 0) {
+                      return (
+                        <a
+                          href={buildWhatsAppShareUrl(names[0] ?? i.name, i.name, i.code, "")}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="admin-whatsapp-share"
+                        >
+                          Share via WhatsApp
+                        </a>
+                      );
+                    }
+                    return phones.map((phone, idx) => (
+                      <a
+                        key={idx}
+                        href={buildWhatsAppShareUrl(names[idx] ?? names[0] ?? i.name, i.name, i.code, phone)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="admin-whatsapp-share"
+                      >
+                        {phones.length > 1 ? `WhatsApp ${names[idx] ?? `#${idx + 1}`}` : "Share via WhatsApp"}
+                      </a>
+                    ));
+                  })()}
                   <WhatsAppToggle code={i.code} initialSent={i.whatsapp_sent} />
                 </div>
               </td>

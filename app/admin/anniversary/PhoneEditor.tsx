@@ -44,7 +44,7 @@ export default function PhoneEditor({ code, initialPhone }: Props) {
         className="admin-email-input"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder="+44 7700 900000"
+        placeholder="+44 7700 900000 (comma-separate for couples)"
         autoFocus
       />
       <button type="button" className="admin-email-save" onClick={handleSave} disabled={saving}>
