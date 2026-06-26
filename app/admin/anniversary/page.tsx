@@ -8,7 +8,16 @@ import SendAllButton from "./SendAllButton";
 import EmailEditor from "./EmailEditor";
 import WhatsAppToggle from "./WhatsAppToggle";
 import { guestCountForName } from "@/lib/guestCount";
+import { firstNamesOnly } from "@/lib/names";
 import "./admin.css";
+
+const SITE_URL = process.env.SITE_URL || "https://aiert.co.uk";
+
+function buildWhatsAppShareUrl(name: string, code: string): string {
+  const inviteUrl = `${SITE_URL}/invite/${code}`;
+  const message = `Hi ${firstNamesOnly(name)} — you're invited to Martin & Karen's 25th Wedding Anniversary Dinner! ${inviteUrl}`;
+  return `https://wa.me/?text=${encodeURIComponent(message)}`;
+}
 
 export const metadata = {
   title: "Anniversary RSVPs — Admin",
@@ -137,7 +146,17 @@ export default async function AdminAnniversaryPage() {
                 <SendInviteButton code={i.code} hasEmail={!!i.guest_email} />
               </td>
               <td>
-                <WhatsAppToggle code={i.code} initialSent={i.whatsapp_sent} />
+                <div className="admin-whatsapp-cell">
+                  <a
+                    href={buildWhatsAppShareUrl(i.name, i.code)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="admin-whatsapp-share"
+                  >
+                    Share via WhatsApp
+                  </a>
+                  <WhatsAppToggle code={i.code} initialSent={i.whatsapp_sent} />
+                </div>
               </td>
               <td>{i.invite_sent_at ? new Date(i.invite_sent_at).toLocaleString("en-GB") : "—"}</td>
               <td>

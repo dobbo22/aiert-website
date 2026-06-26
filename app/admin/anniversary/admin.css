@@ -158,6 +158,29 @@
   font-weight: 600;
 }
 
+.admin-whatsapp-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: flex-start;
+}
+
+.admin-whatsapp-share {
+  background: rgba(37, 211, 102, 0.15);
+  border: 1px solid rgba(37, 211, 102, 0.5);
+  color: #25d366;
+  border-radius: 4px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.admin-whatsapp-share:hover {
+  background: rgba(37, 211, 102, 0.25);
+}
+
 .admin-whatsapp-btn {
   background: rgba(148, 163, 184, 0.15);
   border: 1px solid rgba(148, 163, 184, 0.4);
