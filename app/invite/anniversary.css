@@ -1,0 +1,248 @@
+.anniv-page {
+  min-height: 100vh;
+  background: radial-gradient(circle at 50% 0%, #2a2118 0%, #14110c 60%, #0a0907 100%);
+  color: #ffffff;
+  font-family: var(--font-cormorant), serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.25rem;
+}
+
+.anniv-card {
+  max-width: 1200px;
+  width: 100%;
+  border: 1px solid rgba(199, 205, 214, 0.35);
+  background: rgba(20, 17, 12, 0.55);
+  border-radius: 4px;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  box-shadow: 0 0 60px rgba(199, 205, 214, 0.08);
+}
+
+.anniv-photo-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.anniv-photo {
+  width: 100%;
+  max-width: 1100px;
+  height: auto;
+  display: block;
+}
+
+.anniv-eyebrow {
+  font-family: var(--font-cormorant), serif;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  color: #f2f4f6;
+  margin-bottom: 1rem;
+}
+
+.anniv-title {
+  font-family: var(--font-script), cursive;
+  font-weight: 400;
+  font-size: 4.2rem;
+  line-height: 1.2;
+  color: #eef0f3;
+  margin-bottom: 0.5rem;
+}
+
+.anniv-intro {
+  margin-bottom: 1.75rem;
+}
+
+.anniv-intro .anniv-sub {
+  margin-bottom: 0.6rem;
+}
+
+.anniv-intro .anniv-body {
+  margin-bottom: 0;
+}
+
+.anniv-sub {
+  font-family: var(--font-cormorant), serif;
+  font-style: italic;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  font-size: 1.25rem;
+  color: #f2f4f6;
+  margin-bottom: 1.75rem;
+}
+
+.anniv-divider {
+  width: 64px;
+  height: 1px;
+  background: rgba(199, 205, 214, 0.5);
+  margin: 0 auto 1.75rem;
+}
+
+.anniv-body {
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.7;
+  color: #f5f6f8;
+  margin-bottom: 2rem;
+}
+
+.anniv-occasion {
+  font-family: var(--font-playfair), serif;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-size: 1.4rem;
+  color: #ffffff;
+}
+
+.anniv-guest-name {
+  font-family: var(--font-script), cursive;
+  font-size: 2.6rem;
+  font-weight: 400;
+  color: #ffffff;
+}
+
+.anniv-details {
+  display: grid;
+  gap: 0.85rem;
+  margin: 0 auto 2rem;
+  max-width: 560px;
+  text-align: left;
+}
+
+.anniv-detail-row {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(199, 205, 214, 0.15);
+  padding-bottom: 0.5rem;
+  font-size: 1.02rem;
+}
+
+.anniv-detail-label {
+  color: #f2f4f6;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  align-self: center;
+}
+
+.anniv-detail-value {
+  color: #ffffff;
+  font-weight: 600;
+  text-align: right;
+}
+
+.anniv-form {
+  text-align: left;
+  margin-top: 1rem;
+}
+
+.anniv-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #f2f4f6;
+  margin-bottom: 0.4rem;
+  margin-top: 1.1rem;
+}
+
+.anniv-input,
+.anniv-textarea {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(199, 205, 214, 0.35);
+  border-radius: 3px;
+  padding: 0.6rem 0.75rem;
+  color: #eef0f3;
+  font-family: var(--font-cormorant), serif;
+  font-size: 1.05rem;
+}
+
+.anniv-textarea {
+  resize: vertical;
+  min-height: 70px;
+}
+
+.anniv-choice-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.1rem;
+}
+
+.anniv-choice-btn {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  border-radius: 3px;
+  border: 1px solid rgba(199, 205, 214, 0.4);
+  background: transparent;
+  font-weight: 600;
+  color: #ffffff;
+  font-family: var(--font-cormorant), serif;
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.anniv-choice-btn.active-accept {
+  background: linear-gradient(135deg, #f2f4f6, #8d94a0);
+  color: #14110c;
+  border-color: #f2f4f6;
+  font-weight: 600;
+}
+
+.anniv-choice-btn.active-decline {
+  background: rgba(199, 205, 214, 0.15);
+  border-color: #f2f4f6;
+}
+
+.anniv-submit-btn {
+  width: 100%;
+  margin-top: 1.5rem;
+  padding: 0.85rem;
+  border-radius: 3px;
+  border: none;
+  background: linear-gradient(135deg, #f2f4f6, #8d94a0);
+  color: #14110c;
+  font-weight: 700;
+  font-family: var(--font-cormorant), serif;
+  font-size: 1.05rem;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.anniv-submit-btn:hover {
+  filter: brightness(1.08);
+}
+
+.anniv-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.anniv-status {
+  margin-top: 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #f2f4f6;
+}
+
+.anniv-update-btn {
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.anniv-confirmed {
+  margin-top: 1.75rem;
+  border-top: 1px solid rgba(199, 205, 214, 0.2);
+  padding-top: 1.25rem;
+  color: #f5f6f8;
+}
