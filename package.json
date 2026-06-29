@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "migrate:anniversary": "node scripts/migrate-anniversary.mjs",
+    "migrate:mailbroom-reviewers": "node scripts/migrate-mailbroom-reviewers.mjs",
     "add-invitee": "node scripts/add-invitee.mjs"
   },
   "dependencies": {
