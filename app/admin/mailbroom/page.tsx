@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import sql from "@/lib/db";
+import mailbroomSql from "@/lib/mailbroomDb";
 import { isValidAdminSession, COOKIE_NAME } from "@/lib/mailbroomAdminAuth";
 import LoginForm from "./LoginForm";
 import LogoutButton from "./LogoutButton";
@@ -35,6 +36,16 @@ export default async function AdminMailBroomReviewersPage() {
     ORDER BY created_at DESC
   `) as Row[];
 
+  // Check which reviewers have signed up to the web app
+  const reviewerEmails = reviewers.map((r) => r.email.toLowerCase());
+  const signedUpRows = reviewerEmails.length
+    ? (await mailbroomSql`
+        SELECT lower(email) as email FROM "User"
+        WHERE lower(email) = ANY(${reviewerEmails})
+      `) as { email: string }[]
+    : [];
+  const signedUpSet = new Set(signedUpRows.map((r) => r.email));
+
   return (
     <div className="admin-page">
       <div className="admin-header">
@@ -60,12 +71,13 @@ export default async function AdminMailBroomReviewersPage() {
             <th>Email</th>
             <th>Note</th>
             <th>Added</th>
+            <th>Web app</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
           {reviewers.map((r) => (
-            <ReviewerRow key={r.id} id={r.id} email={r.email} label={r.label} createdAt={r.created_at} />
+            <ReviewerRow key={r.id} id={r.id} email={r.email} label={r.label} createdAt={r.created_at} signedUp={signedUpSet.has(r.email.toLowerCase())} />
           ))}
           {reviewers.length === 0 && (
             <tr>

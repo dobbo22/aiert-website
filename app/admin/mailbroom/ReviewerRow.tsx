@@ -8,9 +8,10 @@ type Props = {
   email: string;
   label: string | null;
   createdAt: string;
+  signedUp: boolean;
 };
 
-export default function ReviewerRow({ id, email, label, createdAt }: Props) {
+export default function ReviewerRow({ id, email, label, createdAt, signedUp }: Props) {
   const router = useRouter();
   const [removing, setRemoving] = useState(false);
 
@@ -30,6 +31,9 @@ export default function ReviewerRow({ id, email, label, createdAt }: Props) {
       <td>{email}</td>
       <td>{label || "—"}</td>
       <td>{new Date(createdAt).toLocaleDateString("en-GB")}</td>
+      <td style={{ textAlign: "center", fontSize: "1.1rem" }}>
+        {signedUp ? "✅" : "—"}
+      </td>
       <td>
         <button type="button" className="admin-invite-btn" onClick={handleRemove} disabled={removing}>
           {removing ? "Removing…" : "Remove"}
