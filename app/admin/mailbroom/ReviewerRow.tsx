@@ -31,7 +31,7 @@ export default function ReviewerRow({ id, email, label, createdAt, signedUp }: P
       <td>{email}</td>
       <td>{label || "—"}</td>
       <td>{new Date(createdAt).toLocaleDateString("en-GB")}</td>
-      <td style={{ textAlign: "center", fontSize: "1.1rem" }}>
+      <td className="admin-signed-up-cell">
         {signedUp ? "✅" : "—"}
       </td>
       <td>

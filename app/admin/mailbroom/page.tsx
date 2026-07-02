@@ -56,7 +56,7 @@ export default async function AdminMailBroomReviewersPage() {
         <LogoutButton />
       </div>
 
-      <p style={{ color: "#94a3b8", fontSize: "0.85rem", maxWidth: 640, marginBottom: "1.5rem" }}>
+      <p className="admin-mailbroom-note">
         Anyone added here gets full Pro access in the live MailBroom app, free, as soon as
         they connect that exact email address — no payment, no app update needed. Only a
         SHA-256 hash of each email is ever published publicly; the plaintext addresses below
@@ -77,11 +77,18 @@ export default async function AdminMailBroomReviewersPage() {
         </thead>
         <tbody>
           {reviewers.map((r) => (
-            <ReviewerRow key={r.id} id={r.id} email={r.email} label={r.label} createdAt={r.created_at} signedUp={signedUpSet.has(r.email.toLowerCase())} />
+            <ReviewerRow
+              key={r.id}
+              id={r.id}
+              email={r.email}
+              label={r.label}
+              createdAt={r.created_at}
+              signedUp={signedUpSet.has(r.email.toLowerCase())}
+            />
           ))}
           {reviewers.length === 0 && (
             <tr>
-              <td colSpan={4} style={{ color: "#64748b", textAlign: "center", padding: "1.5rem" }}>
+              <td colSpan={5} className="admin-empty-cell">
                 No reviewers added yet.
               </td>
             </tr>
