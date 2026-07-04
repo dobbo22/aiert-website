@@ -41,16 +41,19 @@ function formatBytes(bytes: number): string {
 
 interface RankedCompany {
   companyName: string;
+  domain: string;
   bytes: number;
 }
 
 // Only opted-in companies are ever returned — see the publicLeaderboardOptIn
-// toggle on the company's own /billing page in mailbroom-web. No domain, no
-// per-employee data, ever exposed here.
+// toggle on the company's own Admin page in mailbroom-web. No per-employee
+// data is ever exposed here. Domain is used only to fetch a favicon (via
+// Google's public favicon service below) — never printed as text — for a
+// company that has already agreed to publish its name publicly.
 async function getCompanyLeaderboard(): Promise<RankedCompany[]> {
   try {
     const rows = (await mailbroomSql`
-      SELECT o."companyName" AS "companyName", COALESCE(SUM(ue.bytes), 0) AS bytes
+      SELECT o."companyName" AS "companyName", o.domain AS domain, COALESCE(SUM(ue.bytes), 0) AS bytes
       FROM "Organization" o
       JOIN "OrgMember" om ON om."organizationId" = o.id
       JOIN "UsageEvent" ue ON ue."userId" = om."userId" AND ue.action IN ('sweep_delete', 'sweep_unsubscribe')
@@ -58,8 +61,8 @@ async function getCompanyLeaderboard(): Promise<RankedCompany[]> {
       GROUP BY o.id
       ORDER BY bytes DESC
       LIMIT 20
-    `) as { companyName: string; bytes: string }[];
-    return rows.map((r) => ({ companyName: r.companyName, bytes: Number(r.bytes) }));
+    `) as { companyName: string; domain: string; bytes: string }[];
+    return rows.map((r) => ({ companyName: r.companyName, domain: r.domain, bytes: Number(r.bytes) }));
   } catch {
     return [];
   }
@@ -122,6 +125,14 @@ export default async function MailBroomLeaderboardPage() {
               return (
                 <div key={c.companyName} className="flex items-center gap-4 px-6 py-4">
                   <div className="w-6 text-center text-sm font-bold text-mist shrink-0">{i + 1}</div>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(c.domain)}&sz=64`}
+                    alt=""
+                    width={28}
+                    height={28}
+                    className="rounded-md shrink-0 bg-white/10"
+                  />
                   <div className="text-2xl shrink-0">{tier.badge}</div>
                   <div className="flex-1 min-w-0">
                     <p className="text-cloud font-semibold truncate">{c.companyName}</p>

@@ -54,7 +54,7 @@ const sections = [
   {
     icon: "🌱",
     title: "Public Leaderboard (Opt-In Only)",
-    body: "Your organisation's admin can optionally opt in to a public leaderboard on this site showing your company name alongside your aggregate CO₂/storage savings. This is off by default, requires an explicit admin action to enable, and never exposes individual employee data — only your organisation's own name and aggregate totals, and only if you choose to turn it on.",
+    body: "Your organisation's admin can optionally opt in to a public leaderboard on this site showing your company name and icon (fetched from a public favicon service using your company domain) alongside your aggregate CO₂/storage savings. This is off by default, requires an explicit admin action to enable, and never exposes individual employee data — only your organisation's own name, icon, and aggregate totals, and only if you choose to turn it on.",
   },
   {
     icon: "👶",
