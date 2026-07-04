@@ -111,6 +111,11 @@ export default function MailBroomPrivacyPage() {
         <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal/10 border border-teal/20 text-teal text-sm font-medium">
           <span>📵</span> Your emails never leave your device
         </div>
+        <p className="text-mist text-sm mt-4">
+          Looking for MailBroom for Business (the web app for Microsoft 365)? See its{" "}
+          <a href="/mailbroom/webapp/privacy" className="text-gold hover:underline">separate privacy policy</a> —
+          it works differently and this page doesn&apos;t apply to it.
+        </p>
       </section>
 
       {/* ── PRIVACY HIGHLIGHTS ──────────────────────────── */}

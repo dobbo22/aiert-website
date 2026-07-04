@@ -533,8 +533,8 @@ export default async function MailBroomWebAppPage() {
               <a href="/mailbroom/leaderboard" className="hover:text-white transition-colors">Leaderboard</a>
               <a href="/" className="hover:text-white transition-colors">AIERT Home</a>
               <a href="/#contact" className="hover:text-white transition-colors">Contact</a>
-              <a href="/mailbroom/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
-              <a href="/mailbroom/terms" className="hover:text-white transition-colors">Terms of Use</a>
+              <a href="/mailbroom/webapp/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
+              <a href="/mailbroom/webapp/terms" className="hover:text-white transition-colors">Terms of Use</a>
             </div>
           </div>
           <div className="footer-divider mt-8 pt-8 text-center text-xs text-mist">
