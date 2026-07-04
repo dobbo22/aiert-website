@@ -125,14 +125,16 @@ export default async function MailBroomLeaderboardPage() {
               return (
                 <div key={c.companyName} className="flex items-center gap-4 px-6 py-4">
                   <div className="w-6 text-center text-sm font-bold text-mist shrink-0">{i + 1}</div>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(c.domain)}&sz=64`}
-                    alt=""
-                    width={28}
-                    height={28}
-                    className="rounded-md shrink-0 bg-white/10"
-                  />
+                  <div className="w-9 h-9 rounded-lg bg-white shrink-0 flex items-center justify-center overflow-hidden shadow-sm">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(c.domain)}&sz=64`}
+                      alt=""
+                      width={36}
+                      height={36}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
                   <div className="text-2xl shrink-0">{tier.badge}</div>
                   <div className="flex-1 min-w-0">
                     <p className="text-cloud font-semibold truncate">{c.companyName}</p>
