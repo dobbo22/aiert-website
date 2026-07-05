@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import RoiCalculator from "./RoiCalculator";
 
 export const metadata: Metadata = {
   title: "The Business Case for MailBroom for Business | AIERT Ltd",
@@ -106,48 +107,18 @@ export default function MailBroomRoiPage() {
         </div>
       </section>
 
-      {/* ── WORKED EXAMPLE ─────────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-6 py-20">
+      {/* ── CALCULATOR ─────────────────────────────────────── */}
+      <section className="max-w-4xl mx-auto px-6 py-20">
         <div className="text-center mb-12">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-4 text-teal">Worked example</p>
-          <h2 className="text-4xl font-black text-cloud">A 50-seat company, illustrated</h2>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-4 text-teal">Calculate it yourself</p>
+          <h2 className="text-4xl font-black text-cloud">What would this mean for you?</h2>
           <p className="text-mist mt-4 max-w-2xl mx-auto leading-relaxed">
-            Illustrative only — your own numbers depend on mailbox age, industry, and how long
-            clutter has been left to accumulate. Use this as a shape for the calculation, not a quote.
+            Enter your own headcount and average mailbox size to see the effect of cutting mailbox
+            size in half — a typical result once clutter is cleared out.
           </p>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm card-glass rounded-2xl overflow-hidden min-w-[560px]">
-            <thead>
-              <tr className="border-b border-white/10">
-                <th className="text-left px-6 py-4 text-mist font-semibold">Assumption</th>
-                <th className="px-6 py-4 text-mist font-semibold text-right">Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                ["Employees", "50"],
-                ["Mailboxes running over their included 100 GB", "20 GB average excess, ~half the company"],
-                ["Extra storage cost, at ~£0.16/GB/month", "25 mailboxes × 20 GB × £0.16 ≈ £80/month"],
-                ["MailBroom for Business plan (26–50 seats)", "£200/month"],
-              ].map((row) => (
-                <tr key={row[0]} className="border-b border-white/5 last:border-0">
-                  <td className="px-6 py-4 text-cloud font-medium">{row[0]}</td>
-                  <td className="px-6 py-4 text-right text-mist font-mono">{row[1]}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <p className="text-center text-sm text-mist mt-8 max-w-2xl mx-auto leading-relaxed">
-          On storage overage alone, a company already paying for extra mailbox storage may be
-          spending close to what a MailBroom plan costs — before counting the IT time spent
-          fielding quota tickets, or what gets recovered once genuinely unnecessary mail is cleared
-          rather than paid to keep. The larger the estate, the more that gap tends to widen, since
-          storage overage scales roughly linearly with headcount while a MailBroom plan is banded.
-        </p>
+        <RoiCalculator />
       </section>
 
       {/* ── IT TIME ────────────────────────────────────────── */}
