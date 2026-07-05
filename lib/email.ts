@@ -286,6 +286,15 @@ export async function sendInviteEmail({
   if (error) throw new Error(`Resend error: ${JSON.stringify(error)}`);
 }
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export async function sendMailBroomTrialRequest({
   contactName,
   workEmail,
@@ -299,15 +308,27 @@ export async function sendMailBroomTrialRequest({
   userCount: string;
   notes: string;
 }) {
+  const approveUrl = `https://app.mailbroom.app/admin/trials/approve?${new URLSearchParams({
+    email: workEmail,
+    company: companyName,
+    ...(userCount ? { employees: userCount } : {}),
+    ...(notes ? { notes } : {}),
+  }).toString()}`;
+
   const html = `
     <div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto;">
       <h2 style="color: #92400e;">🧪 MailBroom for Business — trial request</h2>
-      <p><strong>${contactName}</strong> at <strong>${companyName}</strong> requested a free IT assessment.</p>
-      <p><strong>Work email:</strong> ${workEmail}</p>
-      <p><strong>Approx. users:</strong> ${userCount}</p>
-      ${notes ? `<p><strong>Notes:</strong> ${notes}</p>` : ""}
+      <p><strong>${escapeHtml(contactName)}</strong> at <strong>${escapeHtml(companyName)}</strong> requested a free IT assessment.</p>
+      <p><strong>Work email:</strong> ${escapeHtml(workEmail)}</p>
+      <p><strong>Approx. employees:</strong> ${escapeHtml(userCount)}</p>
+      ${notes ? `<p><strong>Notes:</strong> ${escapeHtml(notes)}</p>` : ""}
       <p style="margin-top: 24px;">
-        Grant access from <a href="https://app.mailbroom.app/admin/trials/new" style="color:#92400e;">app.mailbroom.app/admin/trials/new</a>.
+        <a href="${approveUrl}" style="display:inline-block;padding:12px 20px;background:#92400e;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;">
+          Review &amp; approve trial →
+        </a>
+      </p>
+      <p style="margin-top: 12px; font-size: 12px; color: #78716c;">
+        Opens a one-click approval screen in the staff admin — you'll still need to be signed in as AIERT staff.
       </p>
     </div>
   `;
