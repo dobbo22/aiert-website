@@ -286,6 +286,42 @@ export async function sendInviteEmail({
   if (error) throw new Error(`Resend error: ${JSON.stringify(error)}`);
 }
 
+export async function sendMailBroomTrialRequest({
+  contactName,
+  workEmail,
+  companyName,
+  userCount,
+  notes,
+}: {
+  contactName: string;
+  workEmail: string;
+  companyName: string;
+  userCount: string;
+  notes: string;
+}) {
+  const html = `
+    <div style="font-family: Georgia, serif; max-width: 480px; margin: 0 auto;">
+      <h2 style="color: #92400e;">🧪 MailBroom for Business — trial request</h2>
+      <p><strong>${contactName}</strong> at <strong>${companyName}</strong> requested a free IT assessment.</p>
+      <p><strong>Work email:</strong> ${workEmail}</p>
+      <p><strong>Approx. users:</strong> ${userCount}</p>
+      ${notes ? `<p><strong>Notes:</strong> ${notes}</p>` : ""}
+      <p style="margin-top: 24px;">
+        Grant access from <a href="https://app.mailbroom.app/admin/trials/new" style="color:#92400e;">app.mailbroom.app/admin/trials/new</a>.
+      </p>
+    </div>
+  `;
+
+  const { error } = await resend().emails.send({
+    from: FROM,
+    to: NOTIFY_TO,
+    replyTo: workEmail,
+    subject: `🧪 Trial request: ${companyName}`,
+    html,
+  });
+  if (error) throw new Error(`Resend error: ${JSON.stringify(error)}`);
+}
+
 export async function sendWhatsAppFollowUpDigest({
   guests,
 }: {

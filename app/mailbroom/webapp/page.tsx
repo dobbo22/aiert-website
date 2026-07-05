@@ -70,17 +70,17 @@ export default async function MailBroomWebAppPage() {
             </span>
           </a>
           <div className="hidden md:flex items-center gap-10 text-base text-mist">
-            <a href="/mailbroom" className="hover:text-white transition-colors font-medium">MailBroom for iOS</a>
+            <a href="/mailbroom/webapp/roi" className="hover:text-white transition-colors font-medium">Business Case</a>
             <a href="#pricing" className="hover:text-white transition-colors font-medium">Pricing</a>
             <a href="/mailbroom/leaderboard" className="hover:text-white transition-colors font-medium">Leaderboard</a>
             <a href="#faq" className="hover:text-white transition-colors font-medium">FAQ</a>
             <a href="/#contact" className="hover:text-white transition-colors font-medium">Contact</a>
           </div>
           <a
-            href="https://app.mailbroom.app"
+            href="/mailbroom/webapp/trial"
             className="btn-gold px-6 py-3 rounded-full text-base hidden md:block"
           >
-            Sign in
+            Start a Trial
           </a>
         </div>
       </nav>
@@ -158,6 +158,48 @@ export default async function MailBroomWebAppPage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ── PROBLEM ─────────────────────────────────────── */}
+      <section className="max-w-6xl mx-auto px-6 pb-20">
+        <div className="text-center mb-12">
+          <p className="text-xs font-semibold uppercase tracking-widest mb-4 text-gold">The problem</p>
+          <h2 className="text-4xl font-black text-cloud">Three things your inbox is quietly costing you</h2>
+        </div>
+        <div className="grid md:grid-cols-3 gap-6">
+          {[
+            {
+              icon: "💰",
+              title: "Storage costs are rising",
+              desc: "Microsoft charges by the gigabyte once a mailbox outgrows its plan — and archive storage past 1.5 TB is billed the same way. Every year of unswept newsletters and old attachments is a recurring line item, not a one-off.",
+              href: "/mailbroom/webapp/storage-costs",
+              linkLabel: "See the real cost of email storage",
+            },
+            {
+              icon: "🎫",
+              title: "IT time goes to quota tickets",
+              desc: "\"My mailbox is full\" is one of the most common helpdesk tickets in any Microsoft 365 estate — and the fix is almost always the same manual cleanup, repeated per employee, every few months.",
+              href: "/mailbroom/webapp/roi",
+              linkLabel: "See the ROI case",
+            },
+            {
+              icon: "🛡️",
+              title: "Compliance can't be an afterthought",
+              desc: "Whatever tool clears out a mailbox has to respect the holds and retention policies already in place — not work around them. That has to be true by design, not by policy memo.",
+              href: "/mailbroom/webapp/roi#compliance",
+              linkLabel: "Read how holds are respected",
+            },
+          ].map((item) => (
+            <div key={item.title} className="card-glass rounded-2xl p-8 flex flex-col">
+              <div className="text-3xl mb-4">{item.icon}</div>
+              <h3 className="text-lg font-bold text-cloud mb-3">{item.title}</h3>
+              <p className="text-sm text-mist leading-relaxed mb-5 flex-1">{item.desc}</p>
+              <a href={item.href} className="text-sm text-gold font-semibold hover:underline">
+                {item.linkLabel} →
+              </a>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -504,14 +546,22 @@ export default async function MailBroomWebAppPage() {
           <span className="gold-text">your company&apos;s inboxes?</span>
         </h2>
         <p className="text-lg text-mist mb-10 max-w-xl mx-auto">
-          Sign in with your Microsoft work account, pick a plan, and every teammate on your domain is covered.
+          Start with a free 30-day IT assessment — no card, no commitment — or sign in directly if your company already has a plan.
         </p>
-        <a
-          href="https://app.mailbroom.app"
-          className="btn-gold px-10 py-5 rounded-full text-lg inline-flex items-center gap-3"
-        >
-          <span>🏢</span> Sign in with Microsoft
-        </a>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <a
+            href="/mailbroom/webapp/trial"
+            className="btn-gold px-10 py-5 rounded-full text-lg inline-flex items-center gap-3 justify-center"
+          >
+            <span>🧪</span> Start Your Free IT Assessment
+          </a>
+          <a
+            href="https://app.mailbroom.app"
+            className="btn-outline px-10 py-5 rounded-full text-lg inline-flex items-center gap-3 justify-center"
+          >
+            <span>🏢</span> Sign in with Microsoft
+          </a>
+        </div>
         <p className="mt-4 text-sm text-mist">Microsoft 365 &amp; Exchange Online · No install · Licensed per company domain</p>
       </section>
 
@@ -529,6 +579,9 @@ export default async function MailBroomWebAppPage() {
               </div>
             </div>
             <div className="flex gap-6 text-sm text-mist flex-wrap justify-center">
+              <a href="/mailbroom/webapp/roi" className="hover:text-white transition-colors">Business Case</a>
+              <a href="/mailbroom/webapp/storage-costs" className="hover:text-white transition-colors">Storage Costs</a>
+              <a href="/mailbroom/webapp/trial" className="hover:text-white transition-colors">Free IT Assessment</a>
               <a href="/mailbroom" className="hover:text-white transition-colors">MailBroom for iOS</a>
               <a href="/mailbroom/leaderboard" className="hover:text-white transition-colors">Leaderboard</a>
               <a href="/" className="hover:text-white transition-colors">AIERT Home</a>
