@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import mailbroomSql from "@/lib/mailbroomDb";
+import { BANDS, detectCurrency, formatAmount } from "@/lib/currency";
 
 // Refresh the aggregate impact stat at most once an hour rather than
 // querying the DB on every page load.
@@ -26,14 +27,6 @@ export const metadata: Metadata = {
   },
 };
 
-const bands = [
-  { seats: "1–5 seats", price: "£25", period: "/mo" },
-  { seats: "6–10 seats", price: "£45", period: "/mo" },
-  { seats: "11–25 seats", price: "£105", period: "/mo" },
-  { seats: "26–50 seats", price: "£200", period: "/mo" },
-  { seats: "51–100 seats", price: "£350", period: "/mo" },
-];
-
 // Pure aggregate across all web-app users — no per-org or per-user
 // attribution ever leaves the database. Same cross-database read pattern
 // already used in app/admin/mailbroom/page.tsx to check reviewer signups.
@@ -55,6 +48,7 @@ async function getImpactStats() {
 
 export default async function MailBroomWebAppPage() {
   const impact = await getImpactStats();
+  const currency = await detectCurrency();
   return (
     <div className="min-h-screen hero-gradient grid-bg">
 
@@ -433,11 +427,11 @@ export default async function MailBroomWebAppPage() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto mb-8">
-          {bands.map((band) => (
-            <div key={band.seats} className="card-glass rounded-2xl p-6 text-center">
-              <div className="text-cloud font-bold mb-2">{band.seats}</div>
-              <div className="text-3xl font-black gold-text">{band.price}</div>
-              <div className="text-mist text-xs">{band.period}</div>
+          {BANDS.map((band) => (
+            <div key={band.key} className="card-glass rounded-2xl p-6 text-center">
+              <div className="text-cloud font-bold mb-2">{band.label}</div>
+              <div className="text-3xl font-black gold-text">{formatAmount(currency, band.amounts[currency])}</div>
+              <div className="text-mist text-xs">/mo</div>
             </div>
           ))}
           <div className="card-glass rounded-2xl p-6 text-center border-2 border-gold/25">
@@ -446,6 +440,9 @@ export default async function MailBroomWebAppPage() {
             <div className="text-mist text-xs">Custom invoicing available</div>
           </div>
         </div>
+        <p className="text-center text-xs text-mist -mt-4 mb-8">
+          Prices shown in {currency.toUpperCase()} based on your location — you can always sign in and check the exact price before subscribing.
+        </p>
 
         <div className="text-center">
           <a
