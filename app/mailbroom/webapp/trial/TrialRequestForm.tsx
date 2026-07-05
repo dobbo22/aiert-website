@@ -91,7 +91,7 @@ export default function TrialRequestForm() {
       </div>
       <div>
         <label htmlFor="userCount" className="block text-xs font-semibold uppercase tracking-widest text-mist mb-2">
-          Approx. number of users
+          Approx. number of employees
         </label>
         <input
           id="userCount"
