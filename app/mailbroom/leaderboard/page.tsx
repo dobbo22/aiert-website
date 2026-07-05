@@ -153,7 +153,8 @@ export default async function MailBroomLeaderboardPage() {
         <p className="text-center text-xs text-mist mt-10">
           Want your company here? Opt in from the{" "}
           <a href="https://app.mailbroom.app/billing" className="text-gold hover:underline">Billing page</a>{" "}
-          in MailBroom for Business.
+          in MailBroom for Business — once you have, you can also embed your own badge on your
+          company&apos;s website, straight from the same page.
         </p>
       </section>
 

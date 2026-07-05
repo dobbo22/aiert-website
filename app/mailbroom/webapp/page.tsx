@@ -412,6 +412,12 @@ export default async function MailBroomWebAppPage() {
               <p className="text-xs text-mist mt-4">Across all MailBroom for Business customers</p>
             </div>
           )}
+
+          <p className="text-center text-sm text-mist mt-14 max-w-xl mx-auto leading-relaxed">
+            Opt in from your Billing page and your company can appear on the public{" "}
+            <a href="/mailbroom/leaderboard" className="text-gold hover:underline">company leaderboard</a>{" "}
+            — and embed your own CO₂ &amp; storage badge directly on your own website, updated automatically.
+          </p>
         </div>
       </section>
 
