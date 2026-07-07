@@ -185,6 +185,7 @@ export default function MailBroomBusinessPrivacyPage() {
             <div className="flex gap-6 text-sm text-mist flex-wrap justify-center">
               <a href="/mailbroom/webapp" className="hover:text-white transition-colors">MailBroom for Business</a>
               <a href="/mailbroom" className="hover:text-white transition-colors">MailBroom for iOS</a>
+              <a href="/mailbroom/webapp/sso" className="hover:text-white transition-colors">SSO &amp; Permissions</a>
               <a href="/mailbroom/webapp/terms" className="hover:text-white transition-colors">Terms of Use</a>
               <a href="/#contact" className="hover:text-white transition-colors">Contact</a>
             </div>
