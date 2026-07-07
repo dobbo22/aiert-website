@@ -192,8 +192,8 @@ export default function MailBroomSsoPage() {
             {s.contact && (
               <p className="text-mist leading-relaxed">
                 Email AIERT Ltd at{" "}
-                <a href="mailto:admin@aiert.co.uk" className="text-gold underline hover:text-gold/80 transition-colors">
-                  admin@aiert.co.uk
+                <a href="mailto:support@aiert.co.uk" className="text-gold underline hover:text-gold/80 transition-colors">
+                  support@aiert.co.uk
                 </a>
                 {" "}— this is our named engineering and support contact for SSO onboarding and integration queries.
               </p>

@@ -114,10 +114,10 @@ export default function MailBroomSupportPage() {
               Email AIERT Ltd directly and we'll get back to you.
             </p>
             <a
-              href="mailto:admin@aiert.co.uk"
+              href="mailto:support@aiert.co.uk"
               className="btn-gold px-8 py-4 rounded-full text-base inline-block"
             >
-              admin@aiert.co.uk
+              support@aiert.co.uk
             </a>
           </div>
         </div>

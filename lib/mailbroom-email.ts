@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 
 const MAILBROOM_NOTIFY_TO = ["mcjdobson@btopenworld.com", "Martin@aiert.co.uk"];
-const MAILBROOM_FROM = process.env.MAILBROOM_EMAIL_FROM || "MailBroom for Business <admin@aiert.co.uk>";
+const MAILBROOM_FROM = process.env.MAILBROOM_EMAIL_FROM || "MailBroom for Business <mailbroom@aiert.co.uk>";
 export type TrialRequestType = "trial" | "demo";
 
 function resend() {

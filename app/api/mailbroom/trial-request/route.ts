@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     await sendMailBroomTrialRequest({ contactName: name, workEmail: email, companyName: company, userCount: users, notes: note, requestType: type });
   } catch (err) {
     console.error("Failed to send trial request email:", err);
-    return NextResponse.json({ error: "Failed to submit — please try again or email admin@aiert.co.uk directly." }, { status: 502 });
+    return NextResponse.json({ error: "Failed to submit — please try again or email mailbroom@aiert.co.uk directly." }, { status: 502 });
   }
 
   return NextResponse.json({ ok: true });
