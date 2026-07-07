@@ -219,6 +219,7 @@ export default function MailBroomSsoPage() {
               <a href="/mailbroom/webapp" className="hover:text-white transition-colors">MailBroom for Business</a>
               <a href="/mailbroom/webapp/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
               <a href="/mailbroom/webapp/terms" className="hover:text-white transition-colors">Terms of Use</a>
+              <a href="/mailbroom/webapp/support" className="hover:text-white transition-colors">Support</a>
               <a href="/#contact" className="hover:text-white transition-colors">Contact</a>
             </div>
           </div>
