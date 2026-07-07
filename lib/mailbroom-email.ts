@@ -67,12 +67,24 @@ export async function sendMailBroomTrialRequest({
     </div>
   `;
 
+  const text = [
+    isDemo
+      ? `${contactName} at ${companyName} would like a live demo before starting a trial.`
+      : `${contactName} at ${companyName} requested a free IT assessment.`,
+    `Work email: ${workEmail}`,
+    `Approx. employees: ${userCount}`,
+    notes ? `Notes: ${notes}` : null,
+    isDemo ? `Reply directly to this email to arrange a time.` : null,
+    `Review & approve: ${approveUrl}`,
+  ].filter(Boolean).join("\n");
+
   const { error } = await resend().emails.send({
     from: MAILBROOM_FROM,
     to: MAILBROOM_NOTIFY_TO,
     replyTo: workEmail,
     subject: isDemo ? `📞 Demo request: ${companyName}` : `🧪 Trial request: ${companyName}`,
     html,
+    text,
   });
   if (error) throw new Error(`Resend error: ${JSON.stringify(error)}`);
 }
