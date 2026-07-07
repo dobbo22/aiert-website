@@ -35,7 +35,7 @@ export default function Home() {
       <section className="max-w-6xl mx-auto px-6 pt-24 pb-20 text-center">
         <div className="badge-live inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium mb-8">
           <span className="w-2 h-2 rounded-full bg-gold animate-pulse inline-block" />
-          Registered in England &amp; Wales · Company No. 16253779
+          Registered in England &amp; Wales · Company No. 16587000
         </div>
 
         <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-tight mb-6">
@@ -304,7 +304,7 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
             {[
               { icon: "✉️", title: "General Enquiries", detail: "enquiries@aiert.co.uk", href: "mailto:enquiries@aiert.co.uk", isExternal: false },
-              { icon: "🏢", title: "Registered Address", detail: "8 Clarendon Gardens\nLondon W9 1AY\nEngland & Wales · Co. No. 16253779", href: null, isExternal: false },
+              { icon: "🏢", title: "Registered Address", detail: "8 Clarendon Gardens\nLondon W9 1AY\nEngland & Wales · Co. No. 16587000", href: null, isExternal: false },
               { icon: "🌐", title: "ShareQuest Platform", detail: "sharequest.co.uk", href: "https://sharequest.co.uk", isExternal: true },
               { icon: "📞", title: "Phone", detail: "Available on request\nEmail us to arrange a call", href: null, isExternal: false },
               { icon: "🤝", title: "Business Development", detail: "admin@aiert.co.uk", href: "mailto:admin@aiert.co.uk", isExternal: false },
@@ -340,7 +340,7 @@ export default function Home() {
               </div>
               <div>
                 <div className="font-bold text-cloud">AIERT Ltd</div>
-                <div className="text-xs text-mist">Registered in England &amp; Wales · No. 16253779</div>
+                <div className="text-xs text-mist">Registered in England &amp; Wales · No. 16587000</div>
               </div>
             </div>
             <div className="flex gap-6 text-sm text-mist">

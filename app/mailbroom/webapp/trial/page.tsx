@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import TrialRequestForm from "./TrialRequestForm";
 
 export const metadata: Metadata = {
@@ -69,7 +70,9 @@ export default function TrialRequestPage() {
             </ul>
           </div>
 
-          <TrialRequestForm />
+          <Suspense fallback={<div className="card-glass rounded-3xl p-8 md:p-10 h-96" />}>
+            <TrialRequestForm />
+          </Suspense>
         </div>
       </section>
 
@@ -83,7 +86,7 @@ export default function TrialRequestPage() {
               </div>
               <div>
                 <div className="font-bold text-cloud">AIERT Ltd</div>
-                <div className="text-xs text-mist">Registered in England &amp; Wales · No. 16253779</div>
+                <div className="text-xs text-mist">Registered in England &amp; Wales · No. 16587000</div>
               </div>
             </div>
             <div className="flex gap-6 text-sm text-mist flex-wrap justify-center">

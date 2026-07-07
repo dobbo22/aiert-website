@@ -9,13 +9,14 @@ const CONSUMER_DOMAINS = new Set([
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { contactName, workEmail, companyName, userCount, notes } = body;
+  const { contactName, workEmail, companyName, userCount, notes, requestType } = body;
 
   const name = typeof contactName === "string" ? contactName.trim().slice(0, 200) : "";
   const email = typeof workEmail === "string" ? workEmail.trim().slice(0, 320) : "";
   const company = typeof companyName === "string" ? companyName.trim().slice(0, 200) : "";
   const users = typeof userCount === "string" ? userCount.trim().slice(0, 50) : "";
   const note = typeof notes === "string" ? notes.trim().slice(0, 1000) : "";
+  const type = requestType === "demo" ? "demo" : "trial";
 
   if (!name || !company) {
     return NextResponse.json({ error: "Name and company are required" }, { status: 400 });
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    await sendMailBroomTrialRequest({ contactName: name, workEmail: email, companyName: company, userCount: users, notes: note });
+    await sendMailBroomTrialRequest({ contactName: name, workEmail: email, companyName: company, userCount: users, notes: note, requestType: type });
   } catch (err) {
     console.error("Failed to send trial request email:", err);
     return NextResponse.json({ error: "Failed to submit — please try again or email admin@aiert.co.uk directly." }, { status: 502 });

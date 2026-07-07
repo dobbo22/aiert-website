@@ -1,8 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+
+type RequestType = "trial" | "demo";
 
 export default function TrialRequestForm() {
+  const searchParams = useSearchParams();
+  const initialType: RequestType = searchParams.get("intent") === "demo" ? "demo" : "trial";
+
+  const [requestType, setRequestType] = useState<RequestType>(initialType);
   const [contactName, setContactName] = useState("");
   const [workEmail, setWorkEmail] = useState("");
   const [companyName, setCompanyName] = useState("");
@@ -20,7 +27,7 @@ export default function TrialRequestForm() {
       const res = await fetch("/api/mailbroom/trial-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contactName, workEmail, companyName, userCount, notes }),
+        body: JSON.stringify({ contactName, workEmail, companyName, userCount, notes, requestType }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
@@ -38,8 +45,17 @@ export default function TrialRequestForm() {
         <div className="text-5xl mb-4">✅</div>
         <h3 className="text-xl font-bold text-cloud mb-2">Request received</h3>
         <p className="text-mist text-sm">
-          We&apos;ll be in touch at <strong className="text-cloud">{workEmail}</strong> to set up your
-          30-day assessment — usually within one business day.
+          {requestType === "demo" ? (
+            <>
+              Martin will reach out at <strong className="text-cloud">{workEmail}</strong> to find a time —
+              usually within one business day.
+            </>
+          ) : (
+            <>
+              We&apos;ll be in touch at <strong className="text-cloud">{workEmail}</strong> to set up your
+              30-day assessment — usually within one business day.
+            </>
+          )}
         </p>
       </div>
     );
@@ -47,6 +63,35 @@ export default function TrialRequestForm() {
 
   return (
     <form onSubmit={handleSubmit} className="card-glass rounded-3xl p-8 md:p-10 flex flex-col gap-5">
+      <div>
+        <span className="block text-xs font-semibold uppercase tracking-widest text-mist mb-2">
+          What would you like?
+        </span>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setRequestType("trial")}
+            className={`rounded-xl px-4 py-3 text-sm font-semibold border transition-colors ${
+              requestType === "trial"
+                ? "bg-gold text-slate-900 border-gold"
+                : "bg-white/5 text-cloud border-white/10 hover:border-white/30"
+            }`}
+          >
+            Start a self-serve trial
+          </button>
+          <button
+            type="button"
+            onClick={() => setRequestType("demo")}
+            className={`rounded-xl px-4 py-3 text-sm font-semibold border transition-colors ${
+              requestType === "demo"
+                ? "bg-gold text-slate-900 border-gold"
+                : "bg-white/5 text-cloud border-white/10 hover:border-white/30"
+            }`}
+          >
+            Talk to Martin first
+          </button>
+        </div>
+      </div>
       <div>
         <label htmlFor="contactName" className="block text-xs font-semibold uppercase tracking-widest text-mist mb-2">
           Your name
@@ -112,7 +157,7 @@ export default function TrialRequestForm() {
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-cloud placeholder:text-mist/50 focus:outline-none focus:border-gold/60 resize-none"
-          placeholder="What you're hoping to evaluate, timeline, etc."
+          placeholder={requestType === "demo" ? "Best times for a call, timezone, etc." : "What you're hoping to evaluate, timeline, etc."}
         />
       </div>
 
@@ -127,10 +172,12 @@ export default function TrialRequestForm() {
         disabled={submitting}
         className="btn-gold px-8 py-4 rounded-full text-base font-bold disabled:opacity-50"
       >
-        {submitting ? "Sending…" : "Request Your Free Assessment"}
+        {submitting ? "Sending…" : requestType === "demo" ? "Request a Call with Martin" : "Request Your Free Assessment"}
       </button>
       <p className="text-xs text-mist text-center">
-        No card required. We&apos;ll email you to set up access — usually within one business day.
+        {requestType === "demo"
+          ? "No card required. Martin will reach out directly to find a time."
+          : "No card required. We'll email you to set up access — usually within one business day."}
       </p>
     </form>
   );

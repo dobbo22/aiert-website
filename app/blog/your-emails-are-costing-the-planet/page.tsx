@@ -215,7 +215,7 @@ export default function ArticlePage() {
               </div>
               <div>
                 <div className="font-bold text-cloud">AIERT Ltd</div>
-                <div className="text-xs text-mist">Registered in England &amp; Wales · No. 16253779</div>
+                <div className="text-xs text-mist">Registered in England &amp; Wales · No. 16587000</div>
               </div>
             </div>
             <div className="flex gap-6 text-sm text-mist flex-wrap justify-center">
