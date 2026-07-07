@@ -592,6 +592,7 @@ export default async function MailBroomWebAppPage() {
               <a href="/mailbroom/webapp/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
               <a href="/mailbroom/webapp/terms" className="hover:text-white transition-colors">Terms of Use</a>
               <a href="/mailbroom/webapp/sso" className="hover:text-white transition-colors">SSO &amp; Permissions</a>
+              <a href="/mailbroom/webapp/security" className="hover:text-white transition-colors">Security &amp; Access</a>
               <a href="/mailbroom/webapp/support" className="hover:text-white transition-colors">Support</a>
             </div>
           </div>
