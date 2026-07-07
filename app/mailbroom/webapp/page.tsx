@@ -27,6 +27,17 @@ export const metadata: Metadata = {
   },
 };
 
+function MicrosoftIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 21 21" fill="none" className="shrink-0">
+      <rect x="1" y="1" width="9" height="9" fill="#f25022" />
+      <rect x="11" y="1" width="9" height="9" fill="#7fba00" />
+      <rect x="1" y="11" width="9" height="9" fill="#00a4ef" />
+      <rect x="11" y="11" width="9" height="9" fill="#ffb900" />
+    </svg>
+  );
+}
+
 // Pure aggregate across all web-app users — no per-org or per-user
 // attribution ever leaves the database. Same cross-database read pattern
 // already used in app/admin/mailbroom/page.tsx to check reviewer signups.
@@ -103,7 +114,7 @@ export default async function MailBroomWebAppPage() {
                 href="https://app.mailbroom.app/sign-in"
                 className="btn-gold px-8 py-4 rounded-full text-base inline-flex items-center gap-2 justify-center"
               >
-                <span>🏢</span> Sign in with Microsoft
+                <MicrosoftIcon /> Sign in with Microsoft
               </a>
               <a href="#pricing" className="btn-outline px-8 py-4 rounded-full text-base inline-block text-center">
                 See Pricing
@@ -562,7 +573,7 @@ export default async function MailBroomWebAppPage() {
             href="https://app.mailbroom.app/sign-in"
             className="btn-outline px-10 py-5 rounded-full text-lg inline-flex items-center gap-3 justify-center"
           >
-            <span>🏢</span> Sign in with Microsoft
+            <MicrosoftIcon /> Sign in with Microsoft
           </a>
         </div>
         <p className="mt-4 text-sm text-mist">Microsoft 365 &amp; Exchange Online · No install · Licensed per company domain</p>
