@@ -4,6 +4,7 @@ import { firstNamesOnly } from "./names";
 
 const NOTIFY_TO = ["mcjdobson@btopenworld.com", "mrskarendobson@btopenworld.com"];
 const FROM = process.env.EMAIL_FROM || "Martin & Karen <martin@aiert.co.uk>";
+const MAILBROOM_FROM = process.env.MAILBROOM_EMAIL_FROM || "MailBroom for Business <admin@aiert.co.uk>";
 
 function resend() {
   return new Resend(process.env.RESEND_API_KEY);
@@ -334,7 +335,7 @@ export async function sendMailBroomTrialRequest({
   `;
 
   const { error } = await resend().emails.send({
-    from: FROM,
+    from: MAILBROOM_FROM,
     to: NOTIFY_TO,
     replyTo: workEmail,
     subject: `🧪 Trial request: ${companyName}`,
