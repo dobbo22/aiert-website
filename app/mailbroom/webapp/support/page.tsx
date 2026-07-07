@@ -65,7 +65,7 @@ export default function MailBroomSupportPage() {
             <a href="/mailbroom/webapp/privacy" className="hover:text-white transition-colors font-medium">Privacy</a>
           </div>
           <a
-            href="https://app.mailbroom.app"
+            href="https://app.mailbroom.app/sign-in"
             className="btn-gold px-6 py-3 rounded-full text-base hidden md:block"
           >
             Sign in

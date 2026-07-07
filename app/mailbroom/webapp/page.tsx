@@ -100,7 +100,7 @@ export default async function MailBroomWebAppPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <a
-                href="https://app.mailbroom.app"
+                href="https://app.mailbroom.app/sign-in"
                 className="btn-gold px-8 py-4 rounded-full text-base inline-flex items-center gap-2 justify-center"
               >
                 <span>🏢</span> Sign in with Microsoft
@@ -446,7 +446,7 @@ export default async function MailBroomWebAppPage() {
 
         <div className="text-center">
           <a
-            href="https://app.mailbroom.app"
+            href="https://app.mailbroom.app/sign-in"
             className="btn-gold px-8 py-4 rounded-full text-base inline-flex items-center gap-2"
           >
             <span>🏢</span> Start with a plan
@@ -559,7 +559,7 @@ export default async function MailBroomWebAppPage() {
             <span>🧪</span> Start Your Free IT Assessment
           </a>
           <a
-            href="https://app.mailbroom.app"
+            href="https://app.mailbroom.app/sign-in"
             className="btn-outline px-10 py-5 rounded-full text-lg inline-flex items-center gap-3 justify-center"
           >
             <span>🏢</span> Sign in with Microsoft

@@ -87,7 +87,7 @@ export default async function MailBroomLeaderboardPage() {
             <a href="/mailbroom/webapp" className="hover:text-white transition-colors font-medium">MailBroom for Business</a>
             <a href="/mailbroom" className="hover:text-white transition-colors font-medium">MailBroom for iOS</a>
           </div>
-          <a href="https://app.mailbroom.app" className="btn-gold px-6 py-3 rounded-full text-base hidden md:block">
+          <a href="https://app.mailbroom.app/sign-in" className="btn-gold px-6 py-3 rounded-full text-base hidden md:block">
             Sign in
           </a>
         </div>
