@@ -28,15 +28,16 @@ function currentTier(grams: number) {
 }
 
 function formatGrams(g: number): string {
-  if (g >= 1_000_000) return `${(g / 1_000_000).toFixed(1)} t`;
-  if (g >= 1_000) return `${(g / 1_000).toFixed(1)} kg`;
-  return `${g.toFixed(g >= 1 ? 0 : 1)} g`;
+  if (g >= 1_000_000) return `${(g / 1_000_000).toFixed(2)} t`;
+  if (g >= 1_000) return `${(g / 1_000).toFixed(2)} kg`;
+  return `${g.toFixed(2)} g`;
 }
 
 function formatBytes(bytes: number): string {
+  if (bytes >= 1_000_000_000_000) return `${(bytes / 1_000_000_000_000).toFixed(2)} TB`;
   if (bytes >= 1_000_000_000) return `${(bytes / 1_000_000_000).toFixed(2)} GB`;
-  if (bytes >= 1_000_000) return `${(bytes / 1_000_000).toFixed(1)} MB`;
-  return `${(bytes / 1_000).toFixed(1)} KB`;
+  if (bytes >= 1_000_000) return `${(bytes / 1_000_000).toFixed(2)} MB`;
+  return `${(bytes / 1_000).toFixed(2)} KB`;
 }
 
 interface RankedCompany {
