@@ -604,6 +604,7 @@ export default async function MailBroomWebAppPage() {
               <a href="/mailbroom/webapp/roi" className="hover:text-white transition-colors">Business Case</a>
               <a href="/mailbroom/webapp/storage-costs" className="hover:text-white transition-colors">Storage Costs</a>
               <a href="/mailbroom/webapp/trial" className="hover:text-white transition-colors">Free IT Assessment</a>
+              <a href="/mailbroom/webapp/affiliates" className="hover:text-white transition-colors">Referral &amp; Affiliate</a>
               <a href="/mailbroom" className="hover:text-white transition-colors">MailBroom for iOS</a>
               <a href="/mailbroom/leaderboard" className="hover:text-white transition-colors">Leaderboard</a>
               <a href="/mailbroom/webapp" className="hover:text-white transition-colors">MailBroom for Business</a>
