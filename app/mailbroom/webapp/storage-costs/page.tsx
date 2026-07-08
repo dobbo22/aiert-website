@@ -23,7 +23,7 @@ export default function StorageCostsPage() {
       {/* ── NAV ─────────────────────────────────────────── */}
       <nav className="nav-glass sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-8 py-5 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-4">
+          <a href="/mailbroom/webapp" className="flex items-center gap-4">
             <div className="nav-logo-icon w-11 h-11 rounded-lg flex items-center justify-center font-black text-base">
               AI
             </div>
