@@ -27,11 +27,13 @@ const CARBON_OFFSET_GBP_PER_TONNE = 15;
 // gross hourly wage (excludes employer on-costs like NI/pension, so this is
 // a conservative floor, not a "fully loaded" cost). Source 9.
 const MEDIAN_HOURLY_WAGE_GBP = 19.67;
-// Average email size including attachments — commonly cited ~75KB for the
-// message body; this errs conservative by not inflating for attachments,
-// since attachment-heavy mail is the minority of volume. Source 10.
-const AVG_EMAIL_SIZE_KB = 75;
-const EMAILS_PER_GB = (1024 * 1024) / AVG_EMAIL_SIZE_KB;
+// Emails-per-GB ratio, measured from a real MailBroom account rather than a
+// generic "average email size" web statistic — the latter (commonly ~75KB,
+// message body only) badly overcounts at real mailbox scale, where storage
+// is dominated by attachments, not message text: it implies hundreds of
+// thousands of emails per employee for a mailbox cut of just a few tens of
+// GB, which is not credible. Source 10.
+const EMAILS_PER_GB = 2300;
 // Matches the per-deleted-email time assumption already used on MailBroom's
 // own Dashboard (app/(app)/dashboard/page.tsx's Time Saved tile).
 const SECONDS_SAVED_PER_EMAIL = 8;
@@ -56,7 +58,7 @@ function formatGBP(n: number): string {
 
 export default function RoiCalculator() {
   const [employees, setEmployees] = useState(50);
-  const [avgMailboxGB, setAvgMailboxGB] = useState(150);
+  const [avgMailboxGB, setAvgMailboxGB] = useState(5);
 
   const result = useMemo(() => {
     const emp = Math.max(0, employees);
@@ -265,7 +267,7 @@ export default function RoiCalculator() {
         much of a mailbox&apos;s excess above Microsoft&apos;s documented performance
         threshold<sup>6</sup> was actually removed) — not a published statistic itself. Employee
         time saved assumes {SECONDS_SAVED_PER_EMAIL}s per email cleared (the same rate used on
-        MailBroom&apos;s own Dashboard) and an average email size of {AVG_EMAIL_SIZE_KB}KB<sup>10</sup>,
+        MailBroom&apos;s own Dashboard) and {EMAILS_PER_GB.toLocaleString("en-GB")} emails per GB<sup>10</sup>,
         valued at the ONS median UK full-time hourly wage<sup>9</sup>. Everything here is
         illustrative, not a quote.
       </p>

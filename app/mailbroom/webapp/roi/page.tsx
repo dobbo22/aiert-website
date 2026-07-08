@@ -195,7 +195,7 @@ export default function MailBroomRoiPage() {
           <li>HDI (Help Desk Institute) 2025–2026 service desk benchmarking — average cost per IT support ticket $15.56 (range $2.93–$49.69), converted to GBP.</li>
           <li>2026 voluntary carbon market pricing for standard nature-based offset credits, €8–30/tonne CO₂e range — converted to GBP at the range&apos;s mid-point.</li>
           <li>Office for National Statistics, Annual Survey of Hours and Earnings, April 2025 — UK median gross full-time hourly wage of £19.67. Excludes employer on-costs (NI, pension), so this is a conservative floor rather than a fully-loaded cost.</li>
-          <li>Average email message size of ~75KB (text/HTML body), a commonly-cited industry figure; does not inflate for attachments, so this also errs conservative.</li>
+          <li>~2,300 emails per GB, measured from a real MailBroom account rather than a generic message-size average — the latter is typically quoted for message bodies only (~75KB) and badly overcounts at real mailbox scale once attachments, which dominate mailbox storage, are accounted for.</li>
         </ol>
       </section>
 
