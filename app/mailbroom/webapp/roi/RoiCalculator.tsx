@@ -102,10 +102,21 @@ export default function RoiCalculator() {
     // its own regardless.
     const hasRecurringNetGain = netMonthly !== null && netMonthly > 0;
 
+    // Year one is different from "every month after": the employee-hours
+    // value is real but one-off (clearing today's backlog), so it only
+    // belongs in a year-1 comparison, spread against a full year of
+    // subscription cost — not folded into the ongoing monthly figure above,
+    // which would overstate every subsequent year.
+    const annualPlanCost = plan.price !== null ? plan.price * 12 : null;
+    const annualRecurringGain = (overageCostSaved + itTimeSavedGBPPerMonth) * 12;
+    const netYearOne = annualPlanCost !== null ? annualRecurringGain + hoursSavedValueGBP - annualPlanCost : null;
+    const hasYearOneGain = netYearOne !== null && netYearOne > 0;
+
     return {
       storageFreedGB, co2SavedKg, co2OffsetValueGBP, overageCostSaved,
       itTimeSavedGBPPerMonth, hoursSaved, hoursSavedValueGBP,
       noOverageEitherWay, plan, netMonthly, hasRecurringNetGain,
+      annualPlanCost, netYearOne, hasYearOneGain,
     };
   }, [employees, avgMailboxGB]);
 
@@ -164,6 +175,13 @@ export default function RoiCalculator() {
           </div>
         </div>
       </div>
+      <p className="text-center text-xs text-mist -mt-4 mb-8 max-w-xl mx-auto leading-relaxed">
+        That&apos;s the one-off effort of clearing the backlog itself — it doesn&apos;t count the
+        ongoing time back every time someone actually needs to find an email afterwards. Searching
+        a mailbox with a few hundred relevant messages left in it is faster than searching one
+        still carrying years of newsletters and notifications, every single time it happens — not
+        priced above, since there&apos;s no reliable published rate for it, but real all the same.
+      </p>
 
       <p className="text-center text-xs font-semibold uppercase tracking-widest text-mist mb-4">Recurring, every month after</p>
       <div className="grid sm:grid-cols-2 gap-6 mb-8">
@@ -202,6 +220,21 @@ export default function RoiCalculator() {
               +{formatGBP(Math.round(result.netMonthly!))}/month
             </strong>
             {" "}— before counting the one-off hours and CO₂ value above, or compliance risk.
+          </p>
+        </div>
+      ) : result.hasYearOneGain ? (
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center">
+          <p className="text-sm text-mist leading-relaxed">
+            A MailBroom for Business plan at this headcount is{" "}
+            <strong className="text-cloud">{result.plan.label}</strong> —{" "}
+            <strong className="text-cloud">{formatGBP(result.plan.price!)}/month</strong>
+            {" "}(<strong className="text-cloud">{formatGBP(result.annualPlanCost!)}/year</strong>). The
+            recurring monthly figures alone don&apos;t cover that, but the one-off hours your
+            team gets back from clearing today&apos;s backlog do: set against a full year&apos;s
+            subscription, year one nets{" "}
+            <strong className="text-gold">+{formatGBP(Math.round(result.netYearOne!))}</strong>
+            {" "}— before counting CO₂ value or compliance risk. From year two on, without a new
+            backlog to clear, that comparison rests on the recurring figures alone.
           </p>
         </div>
       ) : (
