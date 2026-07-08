@@ -123,10 +123,10 @@ export default async function MailBroomWebAppPage() {
 
             <a
               href="/mailbroom/webapp/roi"
-              className="inline-flex items-center gap-2 mt-6 text-sm font-semibold text-gold hover:text-gold/80 transition-colors"
+              className="btn-gold mt-6 inline-flex flex-col items-center gap-1 px-8 py-4 rounded-2xl text-center w-full sm:w-auto"
             >
-              📊 See how much you could save with MailBroom
-              <span aria-hidden="true">→</span>
+              <span className="text-base font-black">📊 See how much you could save with MailBroom →</span>
+              <span className="text-xs font-bold">e.g. 50 employees at 5GB average mailbox: +£10,167 net value in year one</span>
             </a>
 
             <div className="flex gap-8 mt-10">
