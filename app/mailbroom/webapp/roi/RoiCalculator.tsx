@@ -209,32 +209,36 @@ export default function RoiCalculator() {
         </div>
       )}
 
-      {result.hasRecurringNetGain ? (
+      {result.hasYearOneGain ? (
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center">
           <p className="text-sm text-mist leading-relaxed">
             A MailBroom for Business plan at this headcount is{" "}
             <strong className="text-cloud">{result.plan.label}</strong>
-            {" "}— <strong className="text-cloud">{formatGBP(result.plan.price!)}/month</strong>. Combining storage
-            overage avoided and IT time saved alone puts the net monthly effect at{" "}
-            <strong className="text-gold">
-              +{formatGBP(Math.round(result.netMonthly!))}/month
-            </strong>
-            {" "}— before counting the one-off hours and CO₂ value above, or compliance risk.
-          </p>
-        </div>
-      ) : result.hasYearOneGain ? (
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center">
-          <p className="text-sm text-mist leading-relaxed">
-            A MailBroom for Business plan at this headcount is{" "}
-            <strong className="text-cloud">{result.plan.label}</strong> —{" "}
-            <strong className="text-cloud">{formatGBP(result.plan.price!)}/month</strong>
-            {" "}(<strong className="text-cloud">{formatGBP(result.annualPlanCost!)}/year</strong>). The
-            recurring monthly figures alone don&apos;t cover that, but the one-off hours your
-            team gets back from clearing today&apos;s backlog do: set against a full year&apos;s
-            subscription, year one nets{" "}
+            {" "}— <strong className="text-cloud">{formatGBP(result.plan.price!)}/month</strong>
+            {" "}(<strong className="text-cloud">{formatGBP(result.annualPlanCost!)}/year</strong>).
+            {result.hasRecurringNetGain ? (
+              <>
+                {" "}Storage overage avoided and IT time saved alone already cover that, at{" "}
+                <strong className="text-cloud">+{formatGBP(Math.round(result.netMonthly!))}/month</strong>.
+                Add the one-off hours your team gets back from clearing today&apos;s backlog and
+                year one nets{" "}
+              </>
+            ) : (
+              <>
+                {" "}The recurring monthly figures alone don&apos;t cover that, but the one-off
+                hours your team gets back from clearing today&apos;s backlog do — combined, year
+                one nets{" "}
+              </>
+            )}
             <strong className="text-gold">+{formatGBP(Math.round(result.netYearOne!))}</strong>
             {" "}— before counting CO₂ value or compliance risk. From year two on, without a new
-            backlog to clear, that comparison rests on the recurring figures alone.
+            backlog to clear, that comparison rests on the recurring figures alone
+            {result.hasRecurringNetGain ? (
+              <>
+                {" "}— still{" "}
+                <strong className="text-cloud">+{formatGBP(Math.round(result.netMonthly! * 12))}/year</strong>.
+              </>
+            ) : "."}
           </p>
         </div>
       ) : (
