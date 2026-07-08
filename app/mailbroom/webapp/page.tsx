@@ -121,6 +121,14 @@ export default async function MailBroomWebAppPage() {
               </a>
             </div>
 
+            <a
+              href="/mailbroom/webapp/roi"
+              className="inline-flex items-center gap-2 mt-6 text-sm font-semibold text-gold hover:text-gold/80 transition-colors"
+            >
+              📊 See how much you could save with MailBroom
+              <span aria-hidden="true">→</span>
+            </a>
+
             <div className="flex gap-8 mt-10">
               {[
                 { value: "No install", label: "Runs in the browser" },
