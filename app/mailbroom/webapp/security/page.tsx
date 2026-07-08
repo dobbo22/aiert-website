@@ -21,6 +21,7 @@ const sections = [
       "Access to these secrets is limited to authorised engineering personnel with access to the hosting account.",
       "Secrets are rotated immediately if compromise is ever suspected, and reviewed periodically as part of ordinary engineering hygiene.",
       "Database credentials are scoped to a dedicated managed PostgreSQL provider (Neon), connected over TLS, with credentials held only as environment variables — not embedded in application code.",
+      "Data at rest in that database is encrypted by the provider (AES-256), independently of anything MailBroom's own application code does — Neon is SOC 2 Type II compliant and manages encryption keys via AWS KMS/Azure Key Vault with restricted, logged access.",
     ],
   },
   {
