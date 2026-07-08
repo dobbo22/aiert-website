@@ -152,6 +152,9 @@ export default function RoiCalculator() {
             onChange={(e) => setAvgMailboxGB(Number(e.target.value))}
             className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-cloud text-lg font-bold focus:outline-none focus:border-gold/60"
           />
+          <p className="text-xs text-cloud mt-2">
+            Find your real average in Microsoft 365 admin center → Reports → Mailbox usage.
+          </p>
         </div>
       </div>
 
