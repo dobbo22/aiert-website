@@ -194,6 +194,8 @@ export default function MailBroomRoiPage() {
           <li>Microsoft Learn, &ldquo;Outlook performance issues when you have a large PST or OST file&rdquo; — describes short pauses appearing around 10GB and increasing in frequency from 25GB, independent of your mailbox&apos;s storage quota.</li>
           <li>HDI (Help Desk Institute) 2025–2026 service desk benchmarking — average cost per IT support ticket $15.56 (range $2.93–$49.69), converted to GBP.</li>
           <li>2026 voluntary carbon market pricing for standard nature-based offset credits, €8–30/tonne CO₂e range — converted to GBP at the range&apos;s mid-point.</li>
+          <li>Office for National Statistics, Annual Survey of Hours and Earnings, April 2025 — UK median gross full-time hourly wage of £19.67. Excludes employer on-costs (NI, pension), so this is a conservative floor rather than a fully-loaded cost.</li>
+          <li>Average email message size of ~75KB (text/HTML body), a commonly-cited industry figure; does not inflate for attachments, so this also errs conservative.</li>
         </ol>
       </section>
 

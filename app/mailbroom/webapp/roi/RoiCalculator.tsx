@@ -15,12 +15,26 @@ const PERFORMANCE_THRESHOLD_GB = 10;
 // converted to GBP. Source 7.
 const IT_TICKET_COST_GBP = 12;
 // Estimate, not a published statistic: one avoidable "Outlook's slow / I can't
-// find an email" ticket per employee per year once their mailbox is brought
-// back under the performance threshold. Deliberately conservative.
-const TICKETS_PER_FIXED_MAILBOX_PER_YEAR = 1;
+// find an email" ticket per employee per year, scaled by how much of a
+// mailbox's excess above the performance threshold was actually removed —
+// e.g. cutting a mailbox from 50GB to 25GB (excess 40GB → 15GB) counts as
+// ~63% of a ticket avoided, not zero just because it's still above 10GB.
+const TICKETS_PER_OVER_THRESHOLD_EMPLOYEE_PER_YEAR = 1;
 // Mid-point of 2026 voluntary carbon market pricing for standard nature-based
 // offsets (€8–30/tonne range), converted to GBP. Source 8.
 const CARBON_OFFSET_GBP_PER_TONNE = 15;
+// ONS Annual Survey of Hours and Earnings, April 2025 — UK median full-time
+// gross hourly wage (excludes employer on-costs like NI/pension, so this is
+// a conservative floor, not a "fully loaded" cost). Source 9.
+const MEDIAN_HOURLY_WAGE_GBP = 19.67;
+// Average email size including attachments — commonly cited ~75KB for the
+// message body; this errs conservative by not inflating for attachments,
+// since attachment-heavy mail is the minority of volume. Source 10.
+const AVG_EMAIL_SIZE_KB = 75;
+const EMAILS_PER_GB = (1024 * 1024) / AVG_EMAIL_SIZE_KB;
+// Matches the per-deleted-email time assumption already used on MailBroom's
+// own Dashboard (app/(app)/dashboard/page.tsx's Time Saved tile).
+const SECONDS_SAVED_PER_EMAIL = 8;
 
 const BANDS = [
   { max: 5, label: "1–5 seats", price: 25 },
@@ -60,13 +74,20 @@ export default function RoiCalculator() {
     const co2SavedKg = storageFreedGB * CO2_KG_PER_GB;
     const co2OffsetValueGBP = (co2SavedKg / 1000) * CARBON_OFFSET_GBP_PER_TONNE;
 
-    // Only counts a mailbox as "fixed" if cleanup actually brings it back under
-    // the performance threshold — a mailbox that's still slow after a 50% cut
-    // isn't counted, so this stays conservative rather than assuming partial
-    // relief is worth a full ticket avoided.
-    const employeesFixed = avg > PERFORMANCE_THRESHOLD_GB && reducedAvg <= PERFORMANCE_THRESHOLD_GB ? emp : 0;
-    const itTimeSavedGBPPerYear = employeesFixed * TICKETS_PER_FIXED_MAILBOX_PER_YEAR * IT_TICKET_COST_GBP;
+    // Proportional to how much of the excess-above-threshold was removed, not
+    // a binary "did it cross below 10GB" — see the constant's comment above.
+    const perfExcessBefore = Math.max(0, avg - PERFORMANCE_THRESHOLD_GB);
+    const perfExcessAfter = Math.max(0, reducedAvg - PERFORMANCE_THRESHOLD_GB);
+    const perfReliefRatio = perfExcessBefore > 0 ? (perfExcessBefore - perfExcessAfter) / perfExcessBefore : 0;
+    const itTimeSavedGBPPerYear = emp * TICKETS_PER_OVER_THRESHOLD_EMPLOYEE_PER_YEAR * IT_TICKET_COST_GBP * perfReliefRatio;
     const itTimeSavedGBPPerMonth = itTimeSavedGBPPerYear / 12;
+
+    // Employee's own time saved not manually triaging/deleting — one-off value
+    // of clearing the existing backlog, not a recurring monthly figure (you
+    // don't re-clear the same backlog every month).
+    const emailsFreed = storageFreedGB * EMAILS_PER_GB;
+    const hoursSaved = (emailsFreed * SECONDS_SAVED_PER_EMAIL) / 3600;
+    const hoursSavedValueGBP = hoursSaved * MEDIAN_HOURLY_WAGE_GBP;
 
     // True only when cleanup brought every mailbox back under quota with room
     // to spare — i.e. there's truly no overage story left, not just "small."
@@ -74,10 +95,17 @@ export default function RoiCalculator() {
 
     const plan = planFor(emp);
     const netMonthly = plan.price !== null ? overageCostSaved + itTimeSavedGBPPerMonth - plan.price : null;
+    // Only worth a highlighted "here's the number" callout when the recurring
+    // monthly benefits alone cover the plan cost — a hard sell on a negative
+    // number that's mostly "no overage to avoid here" isn't persuasive, it's
+    // just discouraging. The one-off hours/CO2 value above still stands on
+    // its own regardless.
+    const hasRecurringNetGain = netMonthly !== null && netMonthly > 0;
 
     return {
       storageFreedGB, co2SavedKg, co2OffsetValueGBP, overageCostSaved,
-      employeesFixed, itTimeSavedGBPPerMonth, noOverageEitherWay, plan, netMonthly,
+      itTimeSavedGBPPerMonth, hoursSaved, hoursSavedValueGBP,
+      noOverageEitherWay, plan, netMonthly, hasRecurringNetGain,
     };
   }, [employees, avgMailboxGB]);
 
@@ -119,7 +147,8 @@ export default function RoiCalculator() {
         newsletters, notifications, and old attachments are cleared out.
       </p>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <p className="text-center text-xs font-semibold uppercase tracking-widest text-mist mb-4">One-off, from clearing today&apos;s backlog</p>
+      <div className="grid sm:grid-cols-3 gap-6 mb-8">
         <div className="text-center">
           <div className="text-3xl font-black gold-text">{Math.round(result.storageFreedGB).toLocaleString("en-GB")} GB</div>
           <div className="text-xs text-mist mt-1">storage freed</div>
@@ -129,14 +158,22 @@ export default function RoiCalculator() {
           <div className="text-xs text-mist mt-1">CO₂ saved · ~{formatGBP(Math.round(result.co2OffsetValueGBP))} in offsets<sup>8</sup></div>
         </div>
         <div className="text-center">
+          <div className="text-3xl font-black gold-text">{Math.round(result.hoursSaved).toLocaleString("en-GB")} hrs</div>
+          <div className="text-xs text-mist mt-1">
+            employee time saved · ~{formatGBP(Math.round(result.hoursSavedValueGBP))} at median UK wage<sup>9</sup>
+          </div>
+        </div>
+      </div>
+
+      <p className="text-center text-xs font-semibold uppercase tracking-widest text-mist mb-4">Recurring, every month after</p>
+      <div className="grid sm:grid-cols-2 gap-6 mb-8">
+        <div className="text-center">
           <div className="text-3xl font-black gold-text">{formatGBP(result.overageCostSaved)}/mo</div>
           <div className="text-xs text-mist mt-1">storage overage avoided</div>
         </div>
         <div className="text-center">
           <div className="text-3xl font-black gold-text">{formatGBP(Math.round(result.itTimeSavedGBPPerMonth))}/mo</div>
-          <div className="text-xs text-mist mt-1">
-            IT time saved{result.employeesFixed > 0 ? ` · ${result.employeesFixed} mailboxes fixed` : ""}
-          </div>
+          <div className="text-xs text-mist mt-1">IT time saved</div>
         </div>
       </div>
 
@@ -147,37 +184,55 @@ export default function RoiCalculator() {
             quota already — so there&apos;s no overage fee to avoid here. That&apos;s not the
             same as &ldquo;nothing to gain&rdquo;: Outlook itself starts showing sync pauses
             around 10GB regardless of your storage quota<sup>6</sup>, which is why the IT-time
-            figure above still counts for real once a mailbox crosses that line — and cleanup
-            still buys headroom before these mailboxes grow into the next quota ceiling.
+            figure above still counts for real, and the hours and CO₂ figures above hold
+            regardless of quota — plus cleanup still buys headroom before these mailboxes grow
+            into the next quota ceiling.
           </p>
         </div>
       )}
 
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center">
-        <p className="text-sm text-mist leading-relaxed">
-          A MailBroom for Business plan at this headcount is{" "}
-          <strong className="text-cloud">{result.plan.label}</strong>
-          {result.plan.price !== null ? (
-            <>
-              {" "}— <strong className="text-cloud">{formatGBP(result.plan.price)}/month</strong>. Combining storage
-              overage avoided and IT time saved puts the net monthly effect at{" "}
-              <strong className={result.netMonthly !== null && result.netMonthly >= 0 ? "text-gold" : "text-cloud"}>
-                {result.netMonthly !== null ? `${result.netMonthly >= 0 ? "+" : ""}${formatGBP(Math.round(result.netMonthly))}/month` : "—"}
-              </strong>
-              {" "}— before counting compliance risk or the CO₂ offset value above.
-            </>
-          ) : (
-            <> — contact sales for pricing at this scale.</>
-          )}
-        </p>
-      </div>
+      {result.hasRecurringNetGain ? (
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center">
+          <p className="text-sm text-mist leading-relaxed">
+            A MailBroom for Business plan at this headcount is{" "}
+            <strong className="text-cloud">{result.plan.label}</strong>
+            {" "}— <strong className="text-cloud">{formatGBP(result.plan.price!)}/month</strong>. Combining storage
+            overage avoided and IT time saved alone puts the net monthly effect at{" "}
+            <strong className="text-gold">
+              +{formatGBP(Math.round(result.netMonthly!))}/month
+            </strong>
+            {" "}— before counting the one-off hours and CO₂ value above, or compliance risk.
+          </p>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center">
+          <p className="text-sm text-mist leading-relaxed">
+            {result.plan.price !== null ? (
+              <>
+                A MailBroom for Business plan at this headcount is{" "}
+                <strong className="text-cloud">{result.plan.label}</strong> —{" "}
+                <strong className="text-cloud">{formatGBP(result.plan.price)}/month</strong>. At
+                this mailbox size, the recurring monthly figures above don&apos;t cover that on
+                their own — the case here is the one-off hours and CO₂ value above, plus keeping
+                ahead of the next quota ceiling as mailboxes keep growing.
+              </>
+            ) : (
+              <>Contact sales for pricing at this scale.</>
+            )}
+          </p>
+        </div>
+      )}
 
       <p className="text-center text-xs text-mist mt-6 max-w-2xl mx-auto leading-relaxed">
         Storage freed, CO₂, and overage figures are calculated directly from the sourced rates
         above. IT time saved uses a published average ticket cost<sup>7</sup> applied to a
-        conservative, clearly-labelled assumption (one avoidable ticket per mailbox brought back
-        under Microsoft&apos;s documented performance threshold<sup>6</sup>, per year) — not a
-        published statistic itself. Everything here is illustrative, not a quote.
+        conservative, clearly-labelled assumption (one avoidable ticket per year, scaled by how
+        much of a mailbox&apos;s excess above Microsoft&apos;s documented performance
+        threshold<sup>6</sup> was actually removed) — not a published statistic itself. Employee
+        time saved assumes {SECONDS_SAVED_PER_EMAIL}s per email cleared (the same rate used on
+        MailBroom&apos;s own Dashboard) and an average email size of {AVG_EMAIL_SIZE_KB}KB<sup>10</sup>,
+        valued at the ONS median UK full-time hourly wage<sup>9</sup>. Everything here is
+        illustrative, not a quote.
       </p>
     </div>
   );
