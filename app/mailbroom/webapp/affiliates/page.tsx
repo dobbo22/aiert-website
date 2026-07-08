@@ -27,7 +27,7 @@ const tracks = [
     icon: "💼",
     title: "Affiliate",
     who: "For IT consultants, MSPs, and Microsoft partners who work with multiple client companies",
-    reward: "20% cash commission on the referred company's first 3 months of subscription payments, paid after the third payment clears.",
+    reward: "30% cash commission on the referred company's subscription payments for their first 12 months, paid monthly as each payment clears.",
     cta: "Apply below — a good fit is anyone who already recommends Microsoft 365 tooling to their clients.",
   },
 ];
@@ -38,8 +38,8 @@ const faqs = [
     a: "You get a promotion code (e.g. \"YOURNAME10\"), not a tracking link. The company you refer enters it directly on MailBroom's own Stripe checkout page when they subscribe — there's a native \"Add promotion code\" field there. No cookies, no browser tracking, no risk of losing attribution because someone clicked your link on one device and subscribed from another.",
   },
   {
-    q: "What if the company I refer cancels quickly?",
-    a: "Affiliate commission is paid out after the third payment clears, specifically so payouts reflect real, retained customers rather than immediate cancellations.",
+    q: "What if the company I refer cancels early?",
+    a: "Commission is paid monthly as each payment actually clears, up to a maximum of 12 months per referred company — so if they cancel after 3 months, you're paid for those 3 months, not all 12.",
   },
   {
     q: "Does this apply to every seat band?",
