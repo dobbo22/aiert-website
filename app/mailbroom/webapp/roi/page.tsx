@@ -191,6 +191,9 @@ export default function MailBroomRoiPage() {
           <li>Exchange Online Archiving add-on ($4/user/month) for auto-expanding archive up to 1.5 TB on Business Basic/Standard; included on Business Premium, E3, and E5. Storage beyond 1.5 TB billed at $0.25/GB/month as a consumption-based feature — Microsoft Learn, &ldquo;Learn about auto-expanding archiving.&rdquo;</li>
           <li>Microsoft Learn, &ldquo;Recoverable Items folder in Exchange Online&rdquo; — describes the Deletions and Purges subfolder lifecycle for deleted mailbox items.</li>
           <li>Microsoft Learn, &ldquo;Place a mailbox on Litigation Hold&rdquo; — describes preservation of Purges-subfolder items for the hold duration, including indefinite holds.</li>
+          <li>Microsoft Learn, &ldquo;Outlook performance issues when you have a large PST or OST file&rdquo; — describes short pauses appearing around 10GB and increasing in frequency from 25GB, independent of your mailbox&apos;s storage quota.</li>
+          <li>HDI (Help Desk Institute) 2025–2026 service desk benchmarking — average cost per IT support ticket $15.56 (range $2.93–$49.69), converted to GBP.</li>
+          <li>2026 voluntary carbon market pricing for standard nature-based offset credits, €8–30/tonne CO₂e range — converted to GBP at the range&apos;s mid-point.</li>
         </ol>
       </section>
 
