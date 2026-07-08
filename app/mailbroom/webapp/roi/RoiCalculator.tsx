@@ -198,18 +198,6 @@ export default function RoiCalculator() {
         priced above, since there&apos;s no reliable published rate for it, but real all the same.
       </p>
 
-      <p className="text-center text-xs font-semibold uppercase tracking-widest text-cloud mb-3">Recurring, every month after</p>
-      <div className="flex items-center justify-center gap-8 mb-8 text-sm">
-        <div className="text-center">
-          <span className="font-bold text-cloud">{formatGBP(result.overageCostSaved)}/mo</span>
-          <span className="text-cloud"> storage overage avoided</span>
-        </div>
-        <div className="text-center">
-          <span className="font-bold text-cloud">{formatGBP(Math.round(result.itTimeSavedGBPPerMonth))}/mo</span>
-          <span className="text-cloud"> IT time saved</span>
-        </div>
-      </div>
-
       {result.noOverageEitherWay && (
         <div className="rounded-2xl border border-gold/20 bg-gold/5 p-5 text-center mb-6">
           <p className="text-sm text-cloud leading-relaxed">
@@ -224,56 +212,51 @@ export default function RoiCalculator() {
         </div>
       )}
 
-      {result.hasYearOneGain ? (
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center">
-          <p className="text-sm text-cloud leading-relaxed">
-            A MailBroom for Business plan at this headcount is{" "}
-            <strong className="text-cloud">{result.plan.label}</strong>
-            {" "}— <strong className="text-cloud">{formatGBP(result.plan.price!)}/month</strong>
-            {" "}(<strong className="text-cloud">{formatGBP(result.annualPlanCost!)}/year</strong>).
-            {result.hasRecurringNetGain ? (
+      <p className="text-center text-xs font-semibold uppercase tracking-widest text-cloud mb-4">{result.plan.label} plan</p>
+      {result.plan.price !== null ? (
+        <>
+          <div className="grid sm:grid-cols-2 gap-6 mb-4">
+            <div className="text-center">
+              <div className="text-3xl font-black text-cloud">{formatGBP(result.plan.price)}/mo</div>
+              <div className="text-xs text-cloud mt-1">{formatGBP(result.annualPlanCost!)}/year subscription</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-black gold-text">
+                {result.hasYearOneGain ? `+${formatGBP(Math.round(result.netYearOne!))}` : formatGBP(Math.round(Math.abs(result.netYearOne!)))}
+              </div>
+              <div className="text-xs text-cloud mt-1">
+                {result.hasYearOneGain ? "net value in year one" : "short of covering year one"}
+              </div>
+            </div>
+          </div>
+          <p className="text-center text-sm text-cloud mb-8 max-w-2xl mx-auto leading-relaxed">
+            {result.hasYearOneGain ? (
               <>
-                {" "}Storage overage avoided and IT time saved alone already cover that, at{" "}
-                <strong className="text-cloud">+{formatGBP(Math.round(result.netMonthly!))}/month</strong>.
-                Add the one-off hours your team gets back from clearing today&apos;s backlog and
-                year one nets{" "}
+                {result.hasRecurringNetGain
+                  ? <>Storage overage avoided and IT time saved alone already cover the subscription, at <strong className="text-cloud">+{formatGBP(Math.round(result.netMonthly!))}/month</strong>. </>
+                  : <>The recurring monthly figures alone don&apos;t cover the subscription, but the one-off hours your team gets back from clearing today&apos;s backlog do. </>
+                }
+                Before counting CO₂ value or compliance risk. From year two on, without a new
+                backlog to clear, that comparison rests on the recurring figures alone
+                {result.hasRecurringNetGain ? <> — still <strong className="text-cloud">+{formatGBP(Math.round(result.netMonthly! * 12))}/year</strong>.</> : "."}
               </>
             ) : (
-              <>
-                {" "}The recurring monthly figures alone don&apos;t cover that, but the one-off
-                hours your team gets back from clearing today&apos;s backlog do — combined, year
-                one nets{" "}
-              </>
+              <>At this mailbox size, neither the recurring monthly figures nor the one-off hours
+              value fully cover the subscription in year one — the case here is the storage,
+              CO₂, and hours value shown above, plus keeping ahead of the next quota ceiling as
+              mailboxes keep growing.</>
             )}
-            <strong className="text-gold">+{formatGBP(Math.round(result.netYearOne!))}</strong>
-            {" "}— before counting CO₂ value or compliance risk. From year two on, without a new
-            backlog to clear, that comparison rests on the recurring figures alone
-            {result.hasRecurringNetGain ? (
-              <>
-                {" "}— still{" "}
-                <strong className="text-cloud">+{formatGBP(Math.round(result.netMonthly! * 12))}/year</strong>.
-              </>
-            ) : "."}
           </p>
-        </div>
+        </>
       ) : (
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center">
-          <p className="text-sm text-cloud leading-relaxed">
-            {result.plan.price !== null ? (
-              <>
-                A MailBroom for Business plan at this headcount is{" "}
-                <strong className="text-cloud">{result.plan.label}</strong> —{" "}
-                <strong className="text-cloud">{formatGBP(result.plan.price)}/month</strong>. At
-                this mailbox size, the recurring monthly figures above don&apos;t cover that on
-                their own — the case here is the one-off hours and CO₂ value above, plus keeping
-                ahead of the next quota ceiling as mailboxes keep growing.
-              </>
-            ) : (
-              <>Contact sales for pricing at this scale.</>
-            )}
-          </p>
-        </div>
+        <p className="text-center text-sm text-cloud mb-8">Contact sales for pricing at this scale.</p>
       )}
+
+      <p className="text-center text-xs text-cloud max-w-2xl mx-auto leading-relaxed">
+        Recurring every month after: <strong className="text-cloud">{formatGBP(result.overageCostSaved)}/mo</strong>{" "}
+        storage overage avoided, <strong className="text-cloud">{formatGBP(Math.round(result.itTimeSavedGBPPerMonth))}/mo</strong>{" "}
+        IT time saved.
+      </p>
 
       <p className="text-center text-xs text-cloud mt-6 max-w-2xl mx-auto leading-relaxed">
         Storage freed, CO₂, and overage figures are calculated directly from the sourced rates
