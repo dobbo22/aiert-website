@@ -49,10 +49,10 @@ export default function MailBroomSecurityPage() {
               AI
             </div>
             <span className="font-bold text-2xl tracking-tight text-cloud">
-              AIERT<span className="text-sm font-normal ml-1 text-mist">Ltd</span>
+              AIERT<span className="text-sm font-normal ml-1 text-cloud">Ltd</span>
             </span>
           </a>
-          <div className="hidden md:flex items-center gap-10 text-base text-mist">
+          <div className="hidden md:flex items-center gap-10 text-base text-cloud">
             <a href="/mailbroom/webapp" className="hover:text-white transition-colors font-medium">MailBroom for Business</a>
             <a href="/mailbroom/webapp/sso" className="hover:text-white transition-colors font-medium">SSO &amp; Permissions</a>
             <a href="/mailbroom/webapp/privacy" className="hover:text-white transition-colors font-medium">Privacy</a>
@@ -72,7 +72,7 @@ export default function MailBroomSecurityPage() {
         <h1 className="text-4xl md:text-5xl font-black tracking-tight text-cloud mb-4">
           Security &amp; Access Control
         </h1>
-        <p className="text-mist text-base">
+        <p className="text-cloud text-base">
           MailBroom for Business &nbsp;·&nbsp; Last updated: 8 July 2026 &nbsp;·&nbsp; AIERT Ltd
         </p>
       </section>
@@ -105,12 +105,12 @@ export default function MailBroomSecurityPage() {
               <h2 className="text-xl font-bold text-cloud">{s.title}</h2>
             </div>
             {s.body && (
-              <p className="text-mist leading-relaxed">{s.body}</p>
+              <p className="text-cloud leading-relaxed">{s.body}</p>
             )}
             {s.list && (
               <ul className="space-y-3 mt-2">
                 {s.list.map((item) => (
-                  <li key={item} className="flex items-start gap-3 text-sm text-mist">
+                  <li key={item} className="flex items-start gap-3 text-sm text-cloud">
                     <span className="mt-0.5 flex-shrink-0 text-teal">✓</span>
                     <span>{item}</span>
                   </li>
@@ -123,7 +123,7 @@ export default function MailBroomSecurityPage() {
               </a>
             )}
             {s.contact && (
-              <p className="text-mist leading-relaxed">
+              <p className="text-cloud leading-relaxed">
                 Email AIERT Ltd at{" "}
                 <a href="mailto:support@aiert.co.uk" className="text-gold underline hover:text-gold/80 transition-colors">
                   support@aiert.co.uk
@@ -144,17 +144,17 @@ export default function MailBroomSecurityPage() {
               </div>
               <div>
                 <div className="font-bold text-cloud">AIERT Ltd</div>
-                <div className="text-xs text-mist">Registered in England &amp; Wales · No. 16587000</div>
+                <div className="text-xs text-cloud">Registered in England &amp; Wales · No. 16587000</div>
               </div>
             </div>
-            <div className="flex gap-6 text-sm text-mist flex-wrap justify-center">
+            <div className="flex gap-6 text-sm text-cloud flex-wrap justify-center">
               <a href="/mailbroom/webapp" className="hover:text-white transition-colors">MailBroom for Business</a>
               <a href="/mailbroom/webapp/sso" className="hover:text-white transition-colors">SSO &amp; Permissions</a>
               <a href="/mailbroom/webapp/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
               <a href="/mailbroom/webapp/support" className="hover:text-white transition-colors">Support</a>
             </div>
           </div>
-          <div className="footer-divider mt-8 pt-8 text-center text-xs text-mist">
+          <div className="footer-divider mt-8 pt-8 text-center text-xs text-cloud">
             © {new Date().getFullYear()} AIERT Ltd. MailBroom is a product of AIERT Ltd.
           </div>
         </div>

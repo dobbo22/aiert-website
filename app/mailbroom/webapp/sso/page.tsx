@@ -91,10 +91,10 @@ export default function MailBroomSsoPage() {
               AI
             </div>
             <span className="font-bold text-2xl tracking-tight text-cloud">
-              AIERT<span className="text-sm font-normal ml-1 text-mist">Ltd</span>
+              AIERT<span className="text-sm font-normal ml-1 text-cloud">Ltd</span>
             </span>
           </a>
-          <div className="hidden md:flex items-center gap-10 text-base text-mist">
+          <div className="hidden md:flex items-center gap-10 text-base text-cloud">
             <a href="/mailbroom/webapp" className="hover:text-white transition-colors font-medium">MailBroom for Business</a>
             <a href="/mailbroom/webapp/privacy" className="hover:text-white transition-colors font-medium">Privacy</a>
             <a href="/#contact" className="hover:text-white transition-colors font-medium">Contact</a>
@@ -114,7 +114,7 @@ export default function MailBroomSsoPage() {
         <h1 className="text-4xl md:text-5xl font-black tracking-tight text-cloud mb-4">
           Single Sign-On &amp; Permissions
         </h1>
-        <p className="text-mist text-base">
+        <p className="text-cloud text-base">
           MailBroom for Business &nbsp;·&nbsp; Last updated: 8 July 2026 &nbsp;·&nbsp; AIERT Ltd
         </p>
         <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal/10 border border-teal/20 text-teal text-sm font-medium">
@@ -150,12 +150,12 @@ export default function MailBroomSsoPage() {
               <h2 className="text-xl font-bold text-cloud">{s.title}</h2>
             </div>
             {s.body && (
-              <p className="text-mist leading-relaxed">{s.body}</p>
+              <p className="text-cloud leading-relaxed">{s.body}</p>
             )}
             {s.list && (
               <ul className="space-y-3 mt-2">
                 {s.list.map((item) => (
-                  <li key={item} className="flex items-start gap-3 text-sm text-mist">
+                  <li key={item} className="flex items-start gap-3 text-sm text-cloud">
                     <span className="mt-0.5 flex-shrink-0 text-teal">✓</span>
                     <span>{item}</span>
                   </li>
@@ -167,17 +167,17 @@ export default function MailBroomSsoPage() {
                 <table className="w-full text-sm mt-2">
                   <thead>
                     <tr className="border-b border-white/10 text-left">
-                      <th className="px-2 py-2 text-mist font-semibold">Scope</th>
-                      <th className="px-2 py-2 text-mist font-semibold">Type</th>
-                      <th className="px-2 py-2 text-mist font-semibold">Why it's needed</th>
+                      <th className="px-2 py-2 text-cloud font-semibold">Scope</th>
+                      <th className="px-2 py-2 text-cloud font-semibold">Type</th>
+                      <th className="px-2 py-2 text-cloud font-semibold">Why it's needed</th>
                     </tr>
                   </thead>
                   <tbody>
                     {permissions.map((p) => (
                       <tr key={p.scope} className="border-b border-white/5 align-top">
                         <td className="px-2 py-3 font-mono text-xs text-gold whitespace-nowrap">{p.scope}</td>
-                        <td className="px-2 py-3 text-xs text-mist whitespace-nowrap">{p.kind}</td>
-                        <td className="px-2 py-3 text-mist">{p.why}</td>
+                        <td className="px-2 py-3 text-xs text-cloud whitespace-nowrap">{p.kind}</td>
+                        <td className="px-2 py-3 text-cloud">{p.why}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -190,7 +190,7 @@ export default function MailBroomSsoPage() {
               </a>
             )}
             {s.contact && (
-              <p className="text-mist leading-relaxed">
+              <p className="text-cloud leading-relaxed">
                 Email AIERT Ltd at{" "}
                 <a href="mailto:support@aiert.co.uk" className="text-gold underline hover:text-gold/80 transition-colors">
                   support@aiert.co.uk
@@ -212,10 +212,10 @@ export default function MailBroomSsoPage() {
               </div>
               <div>
                 <div className="font-bold text-cloud">AIERT Ltd</div>
-                <div className="text-xs text-mist">Registered in England &amp; Wales · No. 16587000</div>
+                <div className="text-xs text-cloud">Registered in England &amp; Wales · No. 16587000</div>
               </div>
             </div>
-            <div className="flex gap-6 text-sm text-mist flex-wrap justify-center">
+            <div className="flex gap-6 text-sm text-cloud flex-wrap justify-center">
               <a href="/mailbroom/webapp" className="hover:text-white transition-colors">MailBroom for Business</a>
               <a href="/mailbroom/webapp/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
               <a href="/mailbroom/webapp/terms" className="hover:text-white transition-colors">Terms of Use</a>
@@ -224,7 +224,7 @@ export default function MailBroomSsoPage() {
               <a href="/#contact" className="hover:text-white transition-colors">Contact</a>
             </div>
           </div>
-          <div className="footer-divider mt-8 pt-8 text-center text-xs text-mist">
+          <div className="footer-divider mt-8 pt-8 text-center text-xs text-cloud">
             © {new Date().getFullYear()} AIERT Ltd. MailBroom is a product of AIERT Ltd.
           </div>
         </div>

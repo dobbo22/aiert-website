@@ -44,7 +44,7 @@ export default function TrialRequestForm() {
       <div className="card-teal-accent rounded-3xl p-10 text-center glow-teal">
         <div className="text-5xl mb-4">✅</div>
         <h3 className="text-xl font-bold text-cloud mb-2">Request received</h3>
-        <p className="text-mist text-sm">
+        <p className="text-cloud text-sm">
           {requestType === "demo" ? (
             <>
               Martin will reach out at <strong className="text-cloud">{workEmail}</strong> to find a time —
@@ -64,7 +64,7 @@ export default function TrialRequestForm() {
   return (
     <form onSubmit={handleSubmit} className="card-glass rounded-3xl p-8 md:p-10 flex flex-col gap-5">
       <div>
-        <span className="block text-xs font-semibold uppercase tracking-widest text-mist mb-2">
+        <span className="block text-xs font-semibold uppercase tracking-widest text-cloud mb-2">
           What would you like?
         </span>
         <div className="grid grid-cols-2 gap-2">
@@ -93,7 +93,7 @@ export default function TrialRequestForm() {
         </div>
       </div>
       <div>
-        <label htmlFor="contactName" className="block text-xs font-semibold uppercase tracking-widest text-mist mb-2">
+        <label htmlFor="contactName" className="block text-xs font-semibold uppercase tracking-widest text-cloud mb-2">
           Your name
         </label>
         <input
@@ -102,12 +102,12 @@ export default function TrialRequestForm() {
           required
           value={contactName}
           onChange={(e) => setContactName(e.target.value)}
-          className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-cloud placeholder:text-mist/50 focus:outline-none focus:border-gold/60"
+          className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-cloud placeholder:text-cloud/50 focus:outline-none focus:border-gold/60"
           placeholder="Jane Smith"
         />
       </div>
       <div>
-        <label htmlFor="workEmail" className="block text-xs font-semibold uppercase tracking-widest text-mist mb-2">
+        <label htmlFor="workEmail" className="block text-xs font-semibold uppercase tracking-widest text-cloud mb-2">
           Work email
         </label>
         <input
@@ -116,12 +116,12 @@ export default function TrialRequestForm() {
           required
           value={workEmail}
           onChange={(e) => setWorkEmail(e.target.value)}
-          className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-cloud placeholder:text-mist/50 focus:outline-none focus:border-gold/60"
+          className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-cloud placeholder:text-cloud/50 focus:outline-none focus:border-gold/60"
           placeholder="jane@yourcompany.com"
         />
       </div>
       <div>
-        <label htmlFor="companyName" className="block text-xs font-semibold uppercase tracking-widest text-mist mb-2">
+        <label htmlFor="companyName" className="block text-xs font-semibold uppercase tracking-widest text-cloud mb-2">
           Company name
         </label>
         <input
@@ -130,12 +130,12 @@ export default function TrialRequestForm() {
           required
           value={companyName}
           onChange={(e) => setCompanyName(e.target.value)}
-          className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-cloud placeholder:text-mist/50 focus:outline-none focus:border-gold/60"
+          className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-cloud placeholder:text-cloud/50 focus:outline-none focus:border-gold/60"
           placeholder="Your Company Ltd"
         />
       </div>
       <div>
-        <label htmlFor="userCount" className="block text-xs font-semibold uppercase tracking-widest text-mist mb-2">
+        <label htmlFor="userCount" className="block text-xs font-semibold uppercase tracking-widest text-cloud mb-2">
           Approx. number of employees
         </label>
         <input
@@ -143,12 +143,12 @@ export default function TrialRequestForm() {
           type="text"
           value={userCount}
           onChange={(e) => setUserCount(e.target.value)}
-          className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-cloud placeholder:text-mist/50 focus:outline-none focus:border-gold/60"
+          className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-cloud placeholder:text-cloud/50 focus:outline-none focus:border-gold/60"
           placeholder="e.g. 35"
         />
       </div>
       <div>
-        <label htmlFor="notes" className="block text-xs font-semibold uppercase tracking-widest text-mist mb-2">
+        <label htmlFor="notes" className="block text-xs font-semibold uppercase tracking-widest text-cloud mb-2">
           Anything else? (optional)
         </label>
         <textarea
@@ -156,7 +156,7 @@ export default function TrialRequestForm() {
           rows={3}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-cloud placeholder:text-mist/50 focus:outline-none focus:border-gold/60 resize-none"
+          className="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-cloud placeholder:text-cloud/50 focus:outline-none focus:border-gold/60 resize-none"
           placeholder={requestType === "demo" ? "Best times for a call, timezone, etc." : "What you're hoping to evaluate, timeline, etc."}
         />
       </div>
@@ -174,7 +174,7 @@ export default function TrialRequestForm() {
       >
         {submitting ? "Sending…" : requestType === "demo" ? "Request a Call with Martin" : "Request Your Free Assessment"}
       </button>
-      <p className="text-xs text-mist text-center">
+      <p className="text-xs text-cloud text-center">
         {requestType === "demo"
           ? "No card required. Martin will reach out directly to find a time."
           : "No card required. We'll email you to set up access — usually within one business day."}

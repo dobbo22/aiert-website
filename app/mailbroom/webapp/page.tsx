@@ -71,10 +71,11 @@ export default async function MailBroomWebAppPage() {
               AI
             </div>
             <span className="font-bold text-2xl tracking-tight text-cloud">
-              AIERT<span className="text-sm font-normal ml-1 text-mist">Ltd</span>
+              AIERT<span className="text-sm font-normal ml-1 text-cloud">Ltd</span>
             </span>
           </a>
-          <div className="hidden md:flex items-center gap-10 text-base text-mist">
+          <div className="hidden md:flex items-center gap-10 text-base text-cloud">
+            <a href="/mailbroom/webapp/guide" className="hover:text-white transition-colors font-medium">Guide</a>
             <a href="/mailbroom/webapp/roi" className="hover:text-white transition-colors font-medium">Business Case</a>
             <a href="#pricing" className="hover:text-white transition-colors font-medium">Pricing</a>
             <a href="/mailbroom/leaderboard" className="hover:text-white transition-colors font-medium">Leaderboard</a>
@@ -103,7 +104,7 @@ export default async function MailBroomWebAppPage() {
               <br />
               <span className="gold-text">for the whole company.</span>
             </h1>
-            <p className="text-lg text-mist leading-relaxed mb-8 max-w-lg">
+            <p className="text-lg text-cloud leading-relaxed mb-8 max-w-lg">
               MailBroom for Business brings Smart Sweep, Storage Cleanup, and Power Search
               to Microsoft 365 and Exchange Online — right in the browser, no install, no
               per-user App Store purchase. IT signs in once, subscribes, and every employee
@@ -137,7 +138,7 @@ export default async function MailBroomWebAppPage() {
               ].map((s) => (
                 <div key={s.label}>
                   <div className="text-2xl font-black gold-text">{s.value}</div>
-                  <div className="text-xs text-mist">{s.label}</div>
+                  <div className="text-xs text-cloud">{s.label}</div>
                 </div>
               ))}
             </div>
@@ -150,21 +151,21 @@ export default async function MailBroomWebAppPage() {
                 <div className="text-cloud font-bold text-sm mb-5">Your organisation</div>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-mist">Domain</span>
+                    <span className="text-cloud">Domain</span>
                     <span className="text-cloud font-semibold">yourcompany.com</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-mist">Plan</span>
+                    <span className="text-cloud">Plan</span>
                     <span className="text-gold font-semibold">11–25 seats</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-mist">Seats used</span>
+                    <span className="text-cloud">Seats used</span>
                     <span className="text-cloud font-semibold">14 / 25</span>
                   </div>
                   <div className="w-full bg-white/10 rounded-full h-2 mt-2">
                     <div className="bg-gold h-2 rounded-full" style={{ width: "56%" }} />
                   </div>
-                  <p className="text-xs text-mist pt-3 border-t border-white/10 mt-4">
+                  <p className="text-xs text-cloud pt-3 border-t border-white/10 mt-4">
                     Any teammate signing in with an @yourcompany.com Microsoft account joins automatically — no invites to send.
                   </p>
                 </div>
@@ -207,7 +208,7 @@ export default async function MailBroomWebAppPage() {
             <div key={item.title} className="card-glass rounded-2xl p-8 flex flex-col">
               <div className="text-3xl mb-4">{item.icon}</div>
               <h3 className="text-lg font-bold text-cloud mb-3">{item.title}</h3>
-              <p className="text-sm text-mist leading-relaxed mb-5 flex-1">{item.desc}</p>
+              <p className="text-sm text-cloud leading-relaxed mb-5 flex-1">{item.desc}</p>
               <a href={item.href} className="text-sm text-gold font-semibold hover:underline">
                 {item.linkLabel} →
               </a>
@@ -248,7 +249,7 @@ export default async function MailBroomWebAppPage() {
                 <div className="text-xs font-black text-gold mb-4 tracking-widest">{item.step}</div>
                 <div className="text-4xl mb-4">{item.icon}</div>
                 <h3 className="text-lg font-bold text-cloud mb-3">{item.title}</h3>
-                <p className="text-sm text-mist leading-relaxed">{item.desc}</p>
+                <p className="text-sm text-cloud leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -265,7 +266,7 @@ export default async function MailBroomWebAppPage() {
               🔍
             </div>
             <h2 className="text-3xl font-black text-cloud mb-4">Smart Sweep</h2>
-            <p className="text-mist leading-relaxed mb-6">
+            <p className="text-cloud leading-relaxed mb-6">
               Ranks senders by volume and lets employees bulk-delete, unsubscribe, or keep
               newsletters and notifications in a few clicks — the same guided workflow as the
               MailBroom iOS app, now running against a full Microsoft 365 mailbox from any browser.
@@ -277,7 +278,7 @@ export default async function MailBroomWebAppPage() {
                 "Live progress bar while the mailbox is scanned",
                 "Works on mailboxes with tens of thousands of emails",
               ].map((b) => (
-                <li key={b} className="flex items-start gap-3 text-sm text-mist">
+                <li key={b} className="flex items-start gap-3 text-sm text-cloud">
                   <span className="mt-0.5 flex-shrink-0 text-cyan-400">✓</span>
                   {b}
                 </li>
@@ -290,7 +291,7 @@ export default async function MailBroomWebAppPage() {
               <div className="card-glass rounded-3xl p-8 max-w-sm w-full text-center">
                 <div className="text-5xl mb-4">🔍</div>
                 <div className="text-cloud font-bold">1,240 emails ready to sweep</div>
-                <div className="text-mist text-sm mt-1">across 38 senders</div>
+                <div className="text-cloud text-sm mt-1">across 38 senders</div>
               </div>
             </div>
           </div>
@@ -303,7 +304,7 @@ export default async function MailBroomWebAppPage() {
               💾
             </div>
             <h2 className="text-3xl font-black text-cloud mb-4">Storage Cleanup</h2>
-            <p className="text-mist leading-relaxed mb-6">
+            <p className="text-cloud leading-relaxed mb-6">
               Free up mailbox space by clearing old, large emails in bulk — grouped by sender,
               age, or domain — so employees stop hitting Exchange Online storage limits.
             </p>
@@ -314,7 +315,7 @@ export default async function MailBroomWebAppPage() {
                 "Bulk delete, unsubscribe, or keep per sender or domain",
                 "Fast bulk actions via Microsoft Graph batch requests",
               ].map((b) => (
-                <li key={b} className="flex items-start gap-3 text-sm text-mist">
+                <li key={b} className="flex items-start gap-3 text-sm text-cloud">
                   <span className="mt-0.5 flex-shrink-0 text-orange-400">✓</span>
                   {b}
                 </li>
@@ -327,7 +328,7 @@ export default async function MailBroomWebAppPage() {
               <div className="card-glass rounded-3xl p-8 max-w-sm w-full text-center">
                 <div className="text-5xl mb-4">💾</div>
                 <div className="text-cloud font-bold">4.2 GB reclaimable</div>
-                <div className="text-mist text-sm mt-1">from emails older than 3 years</div>
+                <div className="text-cloud text-sm mt-1">from emails older than 3 years</div>
               </div>
             </div>
           </div>
@@ -340,7 +341,7 @@ export default async function MailBroomWebAppPage() {
               🔎
             </div>
             <h2 className="text-3xl font-black text-cloud mb-4">Power Search</h2>
-            <p className="text-mist leading-relaxed mb-6">
+            <p className="text-cloud leading-relaxed mb-6">
               Search the whole mailbox by sender, keyword, date range, or folder, then bulk-act
               on the results — useful for offboarding, compliance sweeps, or clearing out a
               specific project&apos;s emails after it wraps up.
@@ -352,7 +353,7 @@ export default async function MailBroomWebAppPage() {
                 "Bulk-select results and delete, move, or unsubscribe",
                 "See match counts before committing to an action",
               ].map((b) => (
-                <li key={b} className="flex items-start gap-3 text-sm text-mist">
+                <li key={b} className="flex items-start gap-3 text-sm text-cloud">
                   <span className="mt-0.5 flex-shrink-0 text-purple-400">✓</span>
                   {b}
                 </li>
@@ -365,7 +366,7 @@ export default async function MailBroomWebAppPage() {
               <div className="card-glass rounded-3xl p-8 max-w-sm w-full text-center">
                 <div className="text-5xl mb-4">🔎</div>
                 <div className="text-cloud font-bold">849 matches</div>
-                <div className="text-mist text-sm mt-1">across every folder</div>
+                <div className="text-cloud text-sm mt-1">across every folder</div>
               </div>
             </div>
           </div>
@@ -379,13 +380,13 @@ export default async function MailBroomWebAppPage() {
           <div className="card-teal-accent rounded-3xl p-10 md:p-14 glow-teal text-center max-w-3xl mx-auto">
             <div className="text-5xl mb-6">🔐</div>
             <h2 className="text-3xl font-black text-cloud mb-4">Nothing to install. Nothing to trust blindly.</h2>
-            <p className="text-mist leading-relaxed mb-6 text-lg">
+            <p className="text-cloud leading-relaxed mb-6 text-lg">
               MailBroom for Business is a hosted web app — there&apos;s no plugin, no browser
               extension, no server for IT to stand up or maintain. Employees just open a browser
               and click <strong className="text-cloud">Sign in with Microsoft</strong>, using the exact same
               Entra ID login they already use for Outlook and Teams.
             </p>
-            <p className="text-mist leading-relaxed mb-8 text-lg">
+            <p className="text-cloud leading-relaxed mb-8 text-lg">
               Because it runs on Microsoft&apos;s own sign-in and the official Graph API, MailBroom
               never sees or stores a password — it only ever receives a scoped, revocable access
               token. If your tenant requires it, an Azure AD admin approves the app <strong className="text-cloud">once</strong>,
@@ -415,18 +416,18 @@ export default async function MailBroomWebAppPage() {
               <div className="flex flex-wrap justify-center gap-10">
                 <div>
                   <div className="text-4xl font-black gold-text">{impact.gb.toFixed(1)} GB</div>
-                  <div className="text-sm text-mist mt-1">of mailbox storage freed</div>
+                  <div className="text-sm text-cloud mt-1">of mailbox storage freed</div>
                 </div>
                 <div>
                   <div className="text-4xl font-black gold-text">{impact.co2Kg.toFixed(1)} kg</div>
-                  <div className="text-sm text-mist mt-1">of CO₂ saved</div>
+                  <div className="text-sm text-cloud mt-1">of CO₂ saved</div>
                 </div>
               </div>
-              <p className="text-xs text-mist mt-4">Across all MailBroom for Business customers</p>
+              <p className="text-xs text-cloud mt-4">Across all MailBroom for Business customers</p>
             </div>
           )}
 
-          <p className="text-center text-sm text-mist mt-14 max-w-xl mx-auto leading-relaxed">
+          <p className="text-center text-sm text-cloud mt-14 max-w-xl mx-auto leading-relaxed">
             Opt in from your Billing page and your company can appear on the public{" "}
             <a href="/mailbroom/leaderboard" className="text-gold hover:underline">company leaderboard</a>{" "}
             — and embed your own CO₂ &amp; storage badge directly on your own website, updated automatically.
@@ -439,7 +440,7 @@ export default async function MailBroomWebAppPage() {
         <div className="text-center mb-14">
           <p className="text-xs font-semibold uppercase tracking-widest mb-4 text-gold">Pricing</p>
           <h2 className="text-4xl font-black text-cloud">One licence. One domain. Everyone included.</h2>
-          <p className="text-mist mt-4 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-cloud mt-4 max-w-2xl mx-auto leading-relaxed">
             Pick the band that fits your headcount — every employee on your company&apos;s email
             domain gets access, with no extra invite step. Upgrade any time as your team grows.
           </p>
@@ -450,16 +451,16 @@ export default async function MailBroomWebAppPage() {
             <div key={band.key} className="card-glass rounded-2xl p-6 text-center">
               <div className="text-cloud font-bold mb-2">{band.label}</div>
               <div className="text-3xl font-black gold-text">{formatAmount(currency, band.amounts[currency])}</div>
-              <div className="text-mist text-xs">/mo</div>
+              <div className="text-cloud text-xs">/mo</div>
             </div>
           ))}
           <div className="card-glass rounded-2xl p-6 text-center border-2 border-gold/25">
             <div className="text-cloud font-bold mb-2">101+ seats</div>
             <div className="text-xl font-black gold-text">Contact Sales</div>
-            <div className="text-mist text-xs">Custom invoicing available</div>
+            <div className="text-cloud text-xs">Custom invoicing available</div>
           </div>
         </div>
-        <p className="text-center text-xs text-mist -mt-4 mb-8">
+        <p className="text-center text-xs text-cloud -mt-4 mb-8">
           Prices shown in {currency.toUpperCase()} based on your location — you can always sign in and check the exact price before subscribing.
         </p>
 
@@ -470,7 +471,7 @@ export default async function MailBroomWebAppPage() {
           >
             <span>🏢</span> Start with a plan
           </a>
-          <p className="mt-4 text-xs text-mist">
+          <p className="mt-4 text-xs text-cloud">
             Managed by Stripe · Cancel anytime · Upgrade or downgrade your plan whenever headcount changes
           </p>
         </div>
@@ -492,14 +493,14 @@ export default async function MailBroomWebAppPage() {
               <div key={item.name} className="card-glass rounded-2xl p-5 text-center">
                 <div className="text-3xl mb-3">{item.icon}</div>
                 <div className="font-bold text-cloud text-sm mb-1">{item.name}</div>
-                <div className="text-xs text-mist">{item.note}</div>
+                <div className="text-xs text-cloud">{item.note}</div>
               </div>
             ))}
           </div>
 
           <div className="max-w-2xl mx-auto mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-left">
             <p className="text-sm font-semibold text-cloud mb-2">⚠️ Requires Exchange Online — not on-premises Exchange</p>
-            <p className="text-sm text-mist leading-relaxed">
+            <p className="text-sm text-cloud leading-relaxed">
               MailBroom for Business connects entirely through Microsoft Graph, which only reaches
               mailboxes actually hosted in the Microsoft 365 cloud. If your mailbox still lives on an
               on-premises Exchange Server (2013, 2016, 2019, or older) and hasn&apos;t been migrated to
@@ -509,7 +510,7 @@ export default async function MailBroomWebAppPage() {
             </p>
           </div>
 
-          <p className="text-center text-xs text-mist mt-8">
+          <p className="text-center text-xs text-cloud mt-8">
             Still on-prem, or on Gmail, iCloud, or another IMAP provider? Try{" "}
             <a href="/mailbroom" className="text-gold hover:underline">MailBroom for iOS</a> instead — it connects over IMAP to almost any mail server.
           </p>
@@ -555,7 +556,7 @@ export default async function MailBroomWebAppPage() {
                 {faq.q}
                 <span className="text-gold group-open:rotate-180 transition-transform">▼</span>
               </summary>
-              <p className="text-mist text-sm mt-3">{faq.a}</p>
+              <p className="text-cloud text-sm mt-3">{faq.a}</p>
             </details>
           ))}
         </div>
@@ -567,7 +568,7 @@ export default async function MailBroomWebAppPage() {
           Ready to clean up<br />
           <span className="gold-text">your company&apos;s inboxes?</span>
         </h2>
-        <p className="text-lg text-mist mb-10 max-w-xl mx-auto">
+        <p className="text-lg text-cloud mb-10 max-w-xl mx-auto">
           Start with a free 30-day IT assessment — no card, no commitment — or sign in directly if your company already has a plan.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -584,7 +585,7 @@ export default async function MailBroomWebAppPage() {
             <MicrosoftIcon /> Sign in with Microsoft
           </a>
         </div>
-        <p className="mt-4 text-sm text-mist">Microsoft 365 &amp; Exchange Online · No install · Licensed per company domain</p>
+        <p className="mt-4 text-sm text-cloud">Microsoft 365 &amp; Exchange Online · No install · Licensed per company domain</p>
       </section>
 
       {/* ── FOOTER ─────────────────────────────────────── */}
@@ -597,10 +598,11 @@ export default async function MailBroomWebAppPage() {
               </div>
               <div>
                 <div className="font-bold text-cloud">AIERT Ltd</div>
-                <div className="text-xs text-mist">Registered in England &amp; Wales · No. 16587000</div>
+                <div className="text-xs text-cloud">Registered in England &amp; Wales · No. 16587000</div>
               </div>
             </div>
-            <div className="flex gap-6 text-sm text-mist flex-wrap justify-center">
+            <div className="flex gap-6 text-sm text-cloud flex-wrap justify-center">
+              <a href="/mailbroom/webapp/guide" className="hover:text-white transition-colors">User Guide</a>
               <a href="/mailbroom/webapp/roi" className="hover:text-white transition-colors">Business Case</a>
               <a href="/mailbroom/webapp/storage-costs" className="hover:text-white transition-colors">Storage Costs</a>
               <a href="/mailbroom/webapp/trial" className="hover:text-white transition-colors">Free IT Assessment</a>
@@ -616,7 +618,7 @@ export default async function MailBroomWebAppPage() {
               <a href="/mailbroom/webapp/support" className="hover:text-white transition-colors">Support</a>
             </div>
           </div>
-          <div className="footer-divider mt-8 pt-8 text-center text-xs text-mist">
+          <div className="footer-divider mt-8 pt-8 text-center text-xs text-cloud">
             © {new Date().getFullYear()} AIERT Ltd. MailBroom is a product of AIERT Ltd.
           </div>
         </div>

@@ -57,10 +57,10 @@ export default function MailBroomSupportPage() {
               AI
             </div>
             <span className="font-bold text-2xl tracking-tight text-cloud">
-              AIERT<span className="text-sm font-normal ml-1 text-mist">Ltd</span>
+              AIERT<span className="text-sm font-normal ml-1 text-cloud">Ltd</span>
             </span>
           </a>
-          <div className="hidden md:flex items-center gap-10 text-base text-mist">
+          <div className="hidden md:flex items-center gap-10 text-base text-cloud">
             <a href="/mailbroom/webapp" className="hover:text-white transition-colors font-medium">MailBroom for Business</a>
             <a href="/mailbroom/webapp/privacy" className="hover:text-white transition-colors font-medium">Privacy</a>
           </div>
@@ -79,7 +79,7 @@ export default function MailBroomSupportPage() {
         <h1 className="text-4xl md:text-5xl font-black tracking-tight text-cloud mb-4">
           Support
         </h1>
-        <p className="text-mist text-base max-w-xl mx-auto">
+        <p className="text-cloud text-base max-w-xl mx-auto">
           A quick guide to every feature in MailBroom for Business, and how to reach us directly if it doesn't answer your question.
         </p>
       </section>
@@ -93,7 +93,7 @@ export default function MailBroomSupportPage() {
                 <span className="text-xl">{t.icon}</span>
                 <h2 className="font-bold text-cloud">{t.title}</h2>
               </div>
-              <p className="text-sm text-mist leading-relaxed">{t.body}</p>
+              <p className="text-sm text-cloud leading-relaxed">{t.body}</p>
               {t.link && (
                 <a href={t.link.href} className="inline-block mt-3 text-sm text-gold font-semibold hover:underline">
                   {t.link.label}
@@ -110,7 +110,7 @@ export default function MailBroomSupportPage() {
           <div className="card-teal-accent rounded-3xl p-10 glow-teal">
             <div className="text-4xl mb-4">✉️</div>
             <h2 className="text-2xl font-bold text-cloud mb-3">Still need help?</h2>
-            <p className="text-mist leading-relaxed mb-6">
+            <p className="text-cloud leading-relaxed mb-6">
               Email AIERT Ltd directly and we'll get back to you.
             </p>
             <a
@@ -133,10 +133,10 @@ export default function MailBroomSupportPage() {
               </div>
               <div>
                 <div className="font-bold text-cloud">AIERT Ltd</div>
-                <div className="text-xs text-mist">Registered in England &amp; Wales · No. 16587000</div>
+                <div className="text-xs text-cloud">Registered in England &amp; Wales · No. 16587000</div>
               </div>
             </div>
-            <div className="flex gap-6 text-sm text-mist flex-wrap justify-center">
+            <div className="flex gap-6 text-sm text-cloud flex-wrap justify-center">
               <a href="/mailbroom/webapp" className="hover:text-white transition-colors">MailBroom for Business</a>
               <a href="/mailbroom/webapp/sso" className="hover:text-white transition-colors">SSO &amp; Permissions</a>
               <a href="/mailbroom/webapp/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
@@ -144,7 +144,7 @@ export default function MailBroomSupportPage() {
               <a href="/mailbroom/webapp/terms" className="hover:text-white transition-colors">Terms of Use</a>
             </div>
           </div>
-          <div className="footer-divider mt-8 pt-8 text-center text-xs text-mist">
+          <div className="footer-divider mt-8 pt-8 text-center text-xs text-cloud">
             © {new Date().getFullYear()} AIERT Ltd. MailBroom is a product of AIERT Ltd.
           </div>
         </div>
