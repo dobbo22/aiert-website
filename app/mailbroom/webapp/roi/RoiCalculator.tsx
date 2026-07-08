@@ -124,7 +124,7 @@ export default function RoiCalculator() {
     <div className="card-glass rounded-3xl p-8 md:p-10">
       <div className="grid md:grid-cols-2 gap-8 mb-10">
         <div>
-          <label htmlFor="employees" className="block text-xs font-semibold uppercase tracking-widest text-mist mb-2">
+          <label htmlFor="employees" className="block text-xs font-semibold uppercase tracking-widest text-cloud mb-2">
             Employees
           </label>
           <input
@@ -138,7 +138,7 @@ export default function RoiCalculator() {
           />
         </div>
         <div>
-          <label htmlFor="avgMailbox" className="block text-xs font-semibold uppercase tracking-widest text-mist mb-2">
+          <label htmlFor="avgMailbox" className="block text-xs font-semibold uppercase tracking-widest text-cloud mb-2">
             Average mailbox size today (GB)
           </label>
           <input
@@ -153,29 +153,44 @@ export default function RoiCalculator() {
         </div>
       </div>
 
-      <p className="text-center text-xs text-mist mb-8">
+      <p className="text-center text-xs text-cloud mb-8">
         Assuming MailBroom reduces the average mailbox by 50% — a typical outcome once
         newsletters, notifications, and old attachments are cleared out.
       </p>
 
-      <p className="text-center text-xs font-semibold uppercase tracking-widest text-mist mb-4">One-off, from clearing today&apos;s backlog</p>
+      {/* Headline figure — always the most complete, most favorable honest
+          number: net year-one value when it beats a full year's subscription,
+          or the tangible one-off value on its own when it doesn't (never
+          framed as "beats the subscription" unless it actually does). */}
+      <div className="text-center mb-10">
+        <div className="text-5xl md:text-6xl font-black gold-text">
+          {result.hasYearOneGain
+            ? `+${formatGBP(Math.round(result.netYearOne!))}`
+            : formatGBP(Math.round(result.hoursSavedValueGBP + result.co2OffsetValueGBP))}
+        </div>
+        <div className="text-xs font-semibold uppercase tracking-widest text-cloud mt-3">
+          {result.hasYearOneGain ? "Net value in year one" : "Tangible value from clearing today's backlog"}
+        </div>
+      </div>
+
+      <p className="text-center text-xs font-semibold uppercase tracking-widest text-cloud mb-4">One-off, from clearing today&apos;s backlog</p>
       <div className="grid sm:grid-cols-3 gap-6 mb-8">
         <div className="text-center">
           <div className="text-3xl font-black gold-text">{Math.round(result.storageFreedGB).toLocaleString("en-GB")} GB</div>
-          <div className="text-xs text-mist mt-1">storage freed</div>
+          <div className="text-xs text-cloud mt-1">storage freed</div>
         </div>
         <div className="text-center">
           <div className="text-3xl font-black gold-text">{Math.round(result.co2SavedKg).toLocaleString("en-GB")} kg</div>
-          <div className="text-xs text-mist mt-1">CO₂ saved · ~{formatGBP(Math.round(result.co2OffsetValueGBP))} in offsets<sup>8</sup></div>
+          <div className="text-xs text-cloud mt-1">CO₂ saved · ~{formatGBP(Math.round(result.co2OffsetValueGBP))} in offsets<sup>8</sup></div>
         </div>
         <div className="text-center">
           <div className="text-3xl font-black gold-text">{Math.round(result.hoursSaved).toLocaleString("en-GB")} hrs</div>
-          <div className="text-xs text-mist mt-1">
+          <div className="text-xs text-cloud mt-1">
             employee time saved · ~{formatGBP(Math.round(result.hoursSavedValueGBP))} at median UK wage<sup>9</sup>
           </div>
         </div>
       </div>
-      <p className="text-center text-xs text-mist -mt-4 mb-8 max-w-xl mx-auto leading-relaxed">
+      <p className="text-center text-xs text-cloud -mt-4 mb-8 max-w-xl mx-auto leading-relaxed">
         That&apos;s the one-off effort of clearing the backlog itself — it doesn&apos;t count the
         ongoing time back every time someone actually needs to find an email afterwards. Searching
         a mailbox with a few hundred relevant messages left in it is faster than searching one
@@ -183,21 +198,21 @@ export default function RoiCalculator() {
         priced above, since there&apos;s no reliable published rate for it, but real all the same.
       </p>
 
-      <p className="text-center text-xs font-semibold uppercase tracking-widest text-mist mb-4">Recurring, every month after</p>
-      <div className="grid sm:grid-cols-2 gap-6 mb-8">
+      <p className="text-center text-xs font-semibold uppercase tracking-widest text-cloud mb-3">Recurring, every month after</p>
+      <div className="flex items-center justify-center gap-8 mb-8 text-sm">
         <div className="text-center">
-          <div className="text-3xl font-black gold-text">{formatGBP(result.overageCostSaved)}/mo</div>
-          <div className="text-xs text-mist mt-1">storage overage avoided</div>
+          <span className="font-bold text-cloud">{formatGBP(result.overageCostSaved)}/mo</span>
+          <span className="text-cloud"> storage overage avoided</span>
         </div>
         <div className="text-center">
-          <div className="text-3xl font-black gold-text">{formatGBP(Math.round(result.itTimeSavedGBPPerMonth))}/mo</div>
-          <div className="text-xs text-mist mt-1">IT time saved</div>
+          <span className="font-bold text-cloud">{formatGBP(Math.round(result.itTimeSavedGBPPerMonth))}/mo</span>
+          <span className="text-cloud"> IT time saved</span>
         </div>
       </div>
 
       {result.noOverageEitherWay && (
         <div className="rounded-2xl border border-gold/20 bg-gold/5 p-5 text-center mb-6">
-          <p className="text-sm text-mist leading-relaxed">
+          <p className="text-sm text-cloud leading-relaxed">
             At {Math.round(avgMailboxGB)}GB, these mailboxes sit inside Microsoft&apos;s 100GB
             quota already — so there&apos;s no overage fee to avoid here. That&apos;s not the
             same as &ldquo;nothing to gain&rdquo;: Outlook itself starts showing sync pauses
@@ -211,7 +226,7 @@ export default function RoiCalculator() {
 
       {result.hasYearOneGain ? (
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center">
-          <p className="text-sm text-mist leading-relaxed">
+          <p className="text-sm text-cloud leading-relaxed">
             A MailBroom for Business plan at this headcount is{" "}
             <strong className="text-cloud">{result.plan.label}</strong>
             {" "}— <strong className="text-cloud">{formatGBP(result.plan.price!)}/month</strong>
@@ -243,7 +258,7 @@ export default function RoiCalculator() {
         </div>
       ) : (
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center">
-          <p className="text-sm text-mist leading-relaxed">
+          <p className="text-sm text-cloud leading-relaxed">
             {result.plan.price !== null ? (
               <>
                 A MailBroom for Business plan at this headcount is{" "}
@@ -260,7 +275,7 @@ export default function RoiCalculator() {
         </div>
       )}
 
-      <p className="text-center text-xs text-mist mt-6 max-w-2xl mx-auto leading-relaxed">
+      <p className="text-center text-xs text-cloud mt-6 max-w-2xl mx-auto leading-relaxed">
         Storage freed, CO₂, and overage figures are calculated directly from the sourced rates
         above. IT time saved uses a published average ticket cost<sup>7</sup> applied to a
         conservative, clearly-labelled assumption (one avoidable ticket per year, scaled by how
