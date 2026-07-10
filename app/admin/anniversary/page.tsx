@@ -131,6 +131,7 @@ export default async function AdminAnniversaryPage() {
           <span className="admin-stat-label">Guests Attending</span>
         </div>
       </div>
+      <div className="admin-table-wrap">
       <table className="admin-table">
         <thead>
           <tr>
@@ -176,6 +177,7 @@ export default async function AdminAnniversaryPage() {
           ))}
         </tbody>
       </table>
+      </div>
 
       <SeatingChart
         seats={seats}
@@ -183,6 +185,7 @@ export default async function AdminAnniversaryPage() {
           code: i.code,
           name: i.name,
           guestCount: guestCountForName(i.name),
+          rsvpStatus: i.rsvp_status,
         }))}
       />
     </div>

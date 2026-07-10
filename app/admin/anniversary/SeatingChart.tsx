@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { splitCoupleName } from "@/lib/names";
 
 type Seat = {
@@ -14,6 +14,7 @@ type Invitee = {
   code: string;
   name: string;
   guestCount: number;
+  rsvpStatus: "accepted" | "declined" | null;
 };
 
 type Individual = {
@@ -27,16 +28,18 @@ type Props = {
 };
 
 function buildIndividuals(invitees: Invitee[]): Individual[] {
-  return invitees.flatMap((inv) => {
-    if (inv.guestCount > 1) {
-      const [a, b] = splitCoupleName(inv.name);
-      return [
-        { code: inv.code, label: a },
-        { code: inv.code, label: b },
-      ];
-    }
-    return [{ code: inv.code, label: inv.name }];
-  });
+  return invitees
+    .filter((inv) => inv.rsvpStatus !== "declined")
+    .flatMap((inv) => {
+      if (inv.guestCount > 1) {
+        const [a, b] = splitCoupleName(inv.name);
+        return [
+          { code: inv.code, label: a },
+          { code: inv.code, label: b },
+        ];
+      }
+      return [{ code: inv.code, label: inv.name }];
+    });
 }
 
 export default function SeatingChart({ seats: initialSeats, invitees }: Props) {
@@ -45,6 +48,15 @@ export default function SeatingChart({ seats: initialSeats, invitees }: Props) {
   const [saving, setSaving] = useState(false);
 
   const individuals = buildIndividuals(invitees);
+  const declinedCodes = new Set(
+    invitees.filter((inv) => inv.rsvpStatus === "declined").map((inv) => inv.code)
+  );
+
+  useEffect(() => {
+    const toClear = seats.filter((s) => s.invitee_code && declinedCodes.has(s.invitee_code));
+    toClear.forEach((s) => assign(s.seat_id, null, null));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invitees]);
 
   const seatById = (id: number) => seats.find((s) => s.seat_id === id);
 

@@ -93,6 +93,12 @@
   margin-top: 0.25rem;
 }
 
+.admin-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 8px;
+}
+
 .admin-table {
   width: 100%;
   border-collapse: collapse;
@@ -100,7 +106,6 @@
   background: rgba(18, 24, 40, 0.6);
   border: 1px solid rgba(45, 55, 72, 0.5);
   border-radius: 8px;
-  overflow: hidden;
 }
 
 .admin-table thead tr {
@@ -128,6 +133,11 @@
 
 .admin-table tbody tr:hover {
   background: rgba(45, 55, 72, 0.25);
+}
+
+.admin-table td:last-child,
+.admin-table th:last-child {
+  min-width: 240px;
 }
 
 .admin-code {
