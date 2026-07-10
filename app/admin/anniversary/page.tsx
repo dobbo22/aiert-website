@@ -85,8 +85,12 @@ export default async function AdminAnniversaryPage() {
     ORDER BY seat_id ASC
   `) as SeatRow[];
 
-  const acceptedCount = invitees.filter((i) => i.rsvp_status === "accepted").length;
-  const declinedCount = invitees.filter((i) => i.rsvp_status === "declined").length;
+  const acceptedCount = invitees
+    .filter((i) => i.rsvp_status === "accepted")
+    .reduce((sum, i) => sum + guestCountForName(i.name), 0);
+  const declinedCount = invitees
+    .filter((i) => i.rsvp_status === "declined")
+    .reduce((sum, i) => sum + guestCountForName(i.name), 0);
   const totalGuests = invitees
     .filter((i) => i.rsvp_status === "accepted")
     .reduce((sum, i) => sum + (i.guest_count ?? 0), 0);
