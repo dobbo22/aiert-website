@@ -8,15 +8,23 @@ type Props = {
   alreadySent: boolean;
   accepted: boolean;
   whatsappConfirmed: boolean;
+  isReminder?: boolean;
 };
 
-export default function SendInviteButton({ code, hasEmail, alreadySent, accepted, whatsappConfirmed }: Props) {
+export default function SendInviteButton({
+  code,
+  hasEmail,
+  alreadySent,
+  accepted,
+  whatsappConfirmed,
+  isReminder = false,
+}: Props) {
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
   async function handleSend() {
     setState("sending");
     try {
-      const res = await fetch("/api/admin/send-invite", {
+      const res = await fetch(isReminder ? "/api/admin/send-reminder" : "/api/admin/send-invite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code }),
@@ -32,6 +40,24 @@ export default function SendInviteButton({ code, hasEmail, alreadySent, accepted
     return (
       <button type="button" className="admin-invite-btn admin-invite-ghosted" onClick={handleSend} disabled={!hasEmail}>
         {state === "sending" ? "Sending…" : "Accepted ✓"}
+      </button>
+    );
+  }
+
+  if (isReminder) {
+    if (!hasEmail) {
+      return <span className="admin-invite-disabled">No email</span>;
+    }
+    if (state === "sent") {
+      return (
+        <button type="button" className="admin-invite-btn admin-invite-ghosted" onClick={handleSend}>
+          Reminder Sent ✓
+        </button>
+      );
+    }
+    return (
+      <button type="button" className="admin-invite-btn" onClick={handleSend} disabled={state === "sending"}>
+        {state === "sending" ? "Sending…" : state === "error" ? "Retry" : "Send Reminder"}
       </button>
     );
   }

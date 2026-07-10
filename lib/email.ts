@@ -286,6 +286,74 @@ export async function sendInviteEmail({
   if (error) throw new Error(`Resend error: ${JSON.stringify(error)}`);
 }
 
+export async function sendReminderEmail({
+  name,
+  email,
+  inviteUrl,
+  code,
+}: {
+  name: string;
+  email: string;
+  inviteUrl: string;
+  code: string;
+}) {
+  const html = `
+  <body style="margin:0;padding:0;background:#0a0907;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0a0907;padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" style="max-width:480px;background:rgba(20,17,12,0.9);border:1px solid rgba(199,205,214,0.35);border-radius:4px;" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="padding:40px 32px;text-align:center;">
+
+                <h1 style="margin:0 0 8px;font-family:'Brush Script MT',cursive;font-weight:400;font-size:38px;color:#ffffff;">
+                  Martin &amp; Karen Dobson
+                </h1>
+
+                <p style="margin:0 0 24px;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:16px;color:#f2f4f6;">
+                  a gentle reminder
+                </p>
+
+                <div style="width:60px;height:1px;background:rgba(199,205,214,0.5);margin:0 auto 24px;"></div>
+
+                <p style="margin:0 0 28px;font-family:Georgia,'Times New Roman',serif;font-size:17px;line-height:1.7;color:#f5f6f8;">
+                  Dear ${firstNamesOnly(name)},<br />
+                  we'd love to know if you can join us for our<br />
+                  <em style="font-weight:bold;">25th Wedding Anniversary</em> dinner.<br />
+                  Could you let us know by <strong>25th July</strong>?
+                </p>
+
+                <a href="${inviteUrl}" style="display:inline-block;margin-bottom:28px;padding:14px 28px;background-color:#f2f4f6;border:1px solid #f2f4f6;color:#14110c;font-weight:700;font-family:Georgia,'Times New Roman',serif;font-size:15px;text-decoration:none;border-radius:3px;letter-spacing:0.03em;">
+                  View Invitation &amp; RSVP &rarr;
+                </a>
+
+                <p style="margin:16px 0 0;font-family:Georgia,'Times New Roman',serif;font-size:12px;color:#8d94a0;word-break:break-all;">
+                  Or copy this link: <a href="${inviteUrl}" style="color:#c7cdd6;text-decoration:underline;">${inviteUrl}</a>
+                </p>
+
+                <p style="margin:28px 0 0;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:14px;color:#c7cdd6;">
+                  We hope you can make it.
+                </p>
+
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+    <img src="https://aiert.co.uk/api/email-open?code=${encodeURIComponent(code)}" width="1" height="1" alt="" style="display:none;" />
+  </body>
+  `;
+
+  const { error } = await resend().emails.send({
+    from: FROM,
+    to: email,
+    subject: "Just checking — RSVP by 25th July? — Martin & Karen's Anniversary Dinner",
+    html,
+  });
+  if (error) throw new Error(`Resend error: ${JSON.stringify(error)}`);
+}
+
 export async function sendWhatsAppFollowUpDigest({
   guests,
 }: {

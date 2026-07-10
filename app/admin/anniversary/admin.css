@@ -241,6 +241,24 @@
   background: rgba(37, 211, 102, 0.25);
 }
 
+.admin-remind-both {
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid rgba(251, 191, 36, 0.5);
+  color: #fbbf24;
+  cursor: pointer;
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+.admin-remind-both:hover {
+  background: rgba(251, 191, 36, 0.25);
+}
+
+.admin-remind-both:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .admin-whatsapp-btn {
   background: rgba(148, 163, 184, 0.15);
   border: 1px solid rgba(148, 163, 184, 0.4);

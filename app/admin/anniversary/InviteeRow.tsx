@@ -7,6 +7,54 @@ import PhoneEditor from "./PhoneEditor";
 import WhatsAppToggle from "./WhatsAppToggle";
 import { guestFirstNames } from "@/lib/names";
 
+function RemindBothButton({
+  code,
+  email,
+  phones,
+  names,
+  name,
+  siteUrl,
+}: {
+  code: string;
+  email: string;
+  phones: string[];
+  names: string[];
+  name: string;
+  siteUrl: string;
+}) {
+  const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+
+  async function handleClick() {
+    setState("sending");
+    phones.forEach((p, idx) => {
+      window.open(buildWhatsAppShareUrl(names[idx] ?? names[0] ?? name, code, p, siteUrl, true), "_blank");
+    });
+    try {
+      const res = await fetch("/api/admin/send-reminder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      setState("sent");
+    } catch {
+      setState("error");
+    }
+  }
+
+  return (
+    <button type="button" className="admin-whatsapp-share admin-remind-both" onClick={handleClick} disabled={state === "sending"}>
+      {state === "sending"
+        ? "Sending…"
+        : state === "sent"
+          ? "Reminder Sent (Email + WhatsApp) ✓"
+          : state === "error"
+            ? "Email failed — retry"
+            : `Send Reminder — Both Channels (${email})`}
+    </button>
+  );
+}
+
 type MenuChoice = {
   name: string;
   choice: "" | "meat" | "fish" | "vegetarian";
@@ -49,9 +97,17 @@ function normalizePhoneForWhatsApp(phone: string): string {
   return digits;
 }
 
-function buildWhatsAppShareUrl(recipientName: string, code: string, phone: string, siteUrl: string): string {
+function buildWhatsAppShareUrl(
+  recipientName: string,
+  code: string,
+  phone: string,
+  siteUrl: string,
+  isReminder: boolean
+): string {
   const inviteUrl = `${siteUrl}/invite/${code}`;
-  const message = `Hi ${recipientName} — you're invited to Martin & Karen's 25th Wedding Anniversary Dinner! ${inviteUrl}`;
+  const message = isReminder
+    ? `Hi ${recipientName} — just a gentle reminder to RSVP for Martin & Karen's 25th Wedding Anniversary Dinner! Could you let us know by 25th July? ${inviteUrl}`
+    : `Hi ${recipientName} — you're invited to Martin & Karen's 25th Wedding Anniversary Dinner! ${inviteUrl}`;
   const digits = normalizePhoneForWhatsApp(phone);
   return digits
     ? `https://wa.me/${digits}?text=${encodeURIComponent(message)}`
@@ -84,6 +140,7 @@ export default function InviteeRow({
   const phones = parsePhones(phone);
   const names = guestFirstNames(name);
   const ghosted = !!inviteSentAt && !needsFollowUp;
+  const isReminder = viewCount > 0 && !rsvpStatus;
 
   return (
     <tr>
@@ -96,30 +153,38 @@ export default function InviteeRow({
           alreadySent={!!inviteSentAt}
           accepted={rsvpStatus === "accepted"}
           whatsappConfirmed={whatsappConfirmed}
+          isReminder={isReminder}
         />
       </td>
       <td>
         <div className={`admin-whatsapp-cell ${ghosted ? "admin-whatsapp-ghosted" : ""}`}>
           {needsFollowUp && <span className="admin-followup-badge">⚠ Needs WhatsApp follow-up</span>}
+          {isReminder && !!email && phones.length > 0 && (
+            <RemindBothButton code={code} email={email} phones={phones} names={names} name={name} siteUrl={siteUrl} />
+          )}
           {phones.length === 0 ? (
             <a
-              href={buildWhatsAppShareUrl(names[0] ?? name, code, "", siteUrl)}
+              href={buildWhatsAppShareUrl(names[0] ?? name, code, "", siteUrl, isReminder)}
               target="_blank"
               rel="noopener noreferrer"
               className="admin-whatsapp-share"
             >
-              Share via WhatsApp
+              {isReminder ? "Send Reminder via WhatsApp" : "Share via WhatsApp"}
             </a>
           ) : (
             phones.map((p, idx) => (
               <a
                 key={idx}
-                href={buildWhatsAppShareUrl(names[idx] ?? names[0] ?? name, code, p, siteUrl)}
+                href={buildWhatsAppShareUrl(names[idx] ?? names[0] ?? name, code, p, siteUrl, isReminder)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="admin-whatsapp-share"
               >
-                {phones.length > 1 ? `WhatsApp ${names[idx] ?? `#${idx + 1}`}` : "Share via WhatsApp"}
+                {phones.length > 1
+                  ? `${isReminder ? "Remind" : "WhatsApp"} ${names[idx] ?? `#${idx + 1}`}`
+                  : isReminder
+                    ? "Send Reminder via WhatsApp"
+                    : "Share via WhatsApp"}
               </a>
             ))
           )}
