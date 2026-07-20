@@ -1,3 +1,22 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "AIERT Ltd – ShareQuest & MailBroom | AI-Powered Fintech & Email Tools",
+  description:
+    "AIERT Ltd builds AI-powered products across two lines: ShareQuest, a UK stock trading competition platform, and MailBroom, an AI email cleaner that bulk-deletes, unsubscribes, and organises inboxes privately on-device.",
+  keywords: ["AIERT", "AI", "fintech", "ShareQuest", "MailBroom", "email cleaner", "inbox cleaner", "UK", "trading platform", "investment"],
+  metadataBase: new URL("https://aiert.co.uk"),
+  openGraph: {
+    title: "AIERT Ltd – ShareQuest & MailBroom",
+    description:
+      "UK-based AI company building ShareQuest (stock trading competitions) and MailBroom (private, on-device AI email cleanup).",
+    url: "https://aiert.co.uk",
+    siteName: "AIERT Ltd",
+    locale: "en_GB",
+    type: "website",
+  },
+};
+
 export default function Home() {
   return (
     <div className="min-h-screen hero-gradient grid-bg">

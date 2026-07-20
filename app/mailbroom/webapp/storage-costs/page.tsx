@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Microsoft 365 Storage Costs Explained | AIERT Ltd",
+  title: "How to Reduce Microsoft 365 Storage Costs | AIERT Ltd",
   description:
-    "What Microsoft actually charges once a mailbox outgrows its plan — extra storage, archive overage, and how to avoid paying to store clutter you don't need.",
-  keywords: ["Microsoft 365 storage cost", "Exchange Online storage overage", "mailbox storage limit", "archive mailbox cost", "email storage pricing"],
+    "What Microsoft actually charges once a mailbox outgrows its plan, and how to reduce Microsoft 365 storage costs — extra storage, archive overage, and how to avoid paying to store clutter you don't need.",
+  keywords: ["reduce Microsoft 365 storage costs", "Microsoft 365 storage cost", "Exchange Online storage overage", "mailbox storage limit", "archive mailbox cost", "email storage pricing", "lower Exchange Online costs"],
   metadataBase: new URL("https://aiert.co.uk"),
   openGraph: {
-    title: "Microsoft 365 Storage Costs Explained",
-    description: "What Microsoft actually charges once a mailbox outgrows its plan.",
+    title: "How to Reduce Microsoft 365 Storage Costs",
+    description: "What Microsoft actually charges once a mailbox outgrows its plan, and how to bring the bill back down.",
     url: "https://aiert.co.uk/mailbroom/webapp/storage-costs",
     siteName: "AIERT Ltd",
     locale: "en_GB",
@@ -16,9 +16,22 @@ export const metadata: Metadata = {
   },
 };
 
+const articleJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "How to Reduce Microsoft 365 Storage Costs",
+  description: "What Microsoft actually charges once a mailbox outgrows its plan, and how to reduce Microsoft 365 storage costs.",
+  url: "https://aiert.co.uk/mailbroom/webapp/storage-costs",
+  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
+};
+
 export default function StorageCostsPage() {
   return (
     <div className="min-h-screen hero-gradient grid-bg">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
 
       {/* ── NAV ─────────────────────────────────────────── */}
       <nav className="nav-glass sticky top-0 z-50">
@@ -51,11 +64,12 @@ export default function StorageCostsPage() {
           Microsoft 365 · Exchange Online
         </div>
         <h1 className="text-4xl md:text-5xl font-black tracking-tight leading-tight mb-6 text-cloud">
-          The real cost of <span className="gold-text">email storage.</span>
+          How to reduce <span className="gold-text">Microsoft 365 storage costs.</span>
         </h1>
         <p className="text-lg text-cloud leading-relaxed max-w-2xl mx-auto">
           Every Microsoft 365 mailbox has a storage limit built into its plan. Here&apos;s what
-          actually happens — and what it actually costs — once a mailbox goes over it.
+          actually happens once a mailbox goes over it — and the fastest way to bring the bill
+          back down.
         </p>
       </section>
 

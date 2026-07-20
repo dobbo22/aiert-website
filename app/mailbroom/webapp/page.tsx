@@ -27,6 +27,75 @@ export const metadata: Metadata = {
   },
 };
 
+// Shared by the visible FAQ section and the FAQPage JSON-LD below it, so
+// the structured data can never drift out of sync with what's on the page.
+const faqs = [
+  {
+    q: "Does this work with our on-premises Exchange server?",
+    a: "No. MailBroom for Business connects through Microsoft Graph, which only reaches mailboxes hosted in Exchange Online (the Microsoft 365 cloud) — not mailboxes still on an on-premises Exchange server. In a hybrid setup this applies per mailbox: anyone already migrated to the cloud side works fine, anyone still on-prem doesn't. If you're not on Exchange Online yet, MailBroom for iOS connects over IMAP to almost any mail server instead.",
+  },
+  {
+    q: "Do we need to install anything on our website or network?",
+    a: "No. MailBroom for Business is entirely hosted — there's nothing to install on your website, servers, or network, and no browser extension. Employees sign in at app.mailbroom.app with their existing Microsoft work account, the same way they'd sign in to any other Microsoft 365-connected web app.",
+  },
+  {
+    q: "Do employees need to be invited individually?",
+    a: "No. Once your company has an active plan, anyone signing in with a matching company email domain gets access automatically. There's nothing for IT to maintain per person.",
+  },
+  {
+    q: "Who can manage billing and seats?",
+    a: "Any account your organisation designates as an admin — you can have more than one, and admin access is reassignable at any time from the Billing page.",
+  },
+  {
+    q: "What if we outgrow our current plan?",
+    a: "An admin can move up a band at any time from the Billing page — the change takes effect immediately, prorated by Stripe. For 101+ seats, contact sales for custom pricing and invoicing.",
+  },
+  {
+    q: "Does MailBroom store our passwords?",
+    a: "No. Sign-in goes through Microsoft Entra ID — the same secure sign-in your company already uses for Microsoft 365. MailBroom only receives a Microsoft Graph access token, never a password.",
+  },
+  {
+    q: "Can personal Gmail or Outlook.com accounts sign up for a company plan?",
+    a: "No — company plans are scoped to a verified business email domain, so personal email providers can't accidentally join someone else's organisation.",
+  },
+];
+
+// SoftwareApplication + Offer schema so Google can show price/category rich
+// snippets. Price is fixed to the lowest GBP band (canonical currency for
+// AIERT Ltd) regardless of the visitor's detected currency, since crawlers
+// need one stable value rather than one that shifts with IP geolocation.
+const softwareApplicationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "MailBroom for Business",
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  url: "https://aiert.co.uk/mailbroom/webapp",
+  description:
+    "MailBroom for Business brings Smart Sweep, Storage Cleanup, and Power Search to Microsoft 365 and Exchange Online — right in the browser, no install needed.",
+  offers: {
+    "@type": "Offer",
+    price: String(BANDS[0].amounts.gbp),
+    priceCurrency: "GBP",
+    url: "https://aiert.co.uk/mailbroom/webapp#pricing",
+  },
+  publisher: {
+    "@type": "Organization",
+    name: "AIERT Ltd",
+    url: "https://aiert.co.uk",
+  },
+};
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((faq) => ({
+    "@type": "Question",
+    name: faq.q,
+    acceptedAnswer: { "@type": "Answer", text: faq.a },
+  })),
+};
+
 function MicrosoftIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 21 21" fill="none" className="shrink-0">
@@ -62,6 +131,14 @@ export default async function MailBroomWebAppPage() {
   const currency = await detectCurrency();
   return (
     <div className="min-h-screen hero-gradient grid-bg">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
 
       {/* ── NAV ─────────────────────────────────────────── */}
       <nav className="nav-glass sticky top-0 z-50">
@@ -521,36 +598,7 @@ export default async function MailBroomWebAppPage() {
       <section id="faq" className="max-w-3xl mx-auto px-6 py-24">
         <h3 className="text-xl font-bold text-cloud mb-8 text-center">Frequently asked questions</h3>
         <div className="space-y-4">
-          {[
-            {
-              q: "Does this work with our on-premises Exchange server?",
-              a: "No. MailBroom for Business connects through Microsoft Graph, which only reaches mailboxes hosted in Exchange Online (the Microsoft 365 cloud) — not mailboxes still on an on-premises Exchange server. In a hybrid setup this applies per mailbox: anyone already migrated to the cloud side works fine, anyone still on-prem doesn't. If you're not on Exchange Online yet, MailBroom for iOS connects over IMAP to almost any mail server instead.",
-            },
-            {
-              q: "Do we need to install anything on our website or network?",
-              a: "No. MailBroom for Business is entirely hosted — there's nothing to install on your website, servers, or network, and no browser extension. Employees sign in at app.mailbroom.app with their existing Microsoft work account, the same way they'd sign in to any other Microsoft 365-connected web app.",
-            },
-            {
-              q: "Do employees need to be invited individually?",
-              a: "No. Once your company has an active plan, anyone signing in with a matching company email domain gets access automatically. There's nothing for IT to maintain per person.",
-            },
-            {
-              q: "Who can manage billing and seats?",
-              a: "Any account your organisation designates as an admin — you can have more than one, and admin access is reassignable at any time from the Billing page.",
-            },
-            {
-              q: "What if we outgrow our current plan?",
-              a: "An admin can move up a band at any time from the Billing page — the change takes effect immediately, prorated by Stripe. For 101+ seats, contact sales for custom pricing and invoicing.",
-            },
-            {
-              q: "Does MailBroom store our passwords?",
-              a: "No. Sign-in goes through Microsoft Entra ID — the same secure sign-in your company already uses for Microsoft 365. MailBroom only receives a Microsoft Graph access token, never a password.",
-            },
-            {
-              q: "Can personal Gmail or Outlook.com accounts sign up for a company plan?",
-              a: "No — company plans are scoped to a verified business email domain, so personal email providers can't accidentally join someone else's organisation.",
-            },
-          ].map((faq, i) => (
+          {faqs.map((faq, i) => (
             <details key={i} className="card-glass rounded-xl p-6 group cursor-pointer">
               <summary className="font-semibold text-cloud text-sm flex items-center justify-between">
                 {faq.q}
@@ -605,6 +653,9 @@ export default async function MailBroomWebAppPage() {
               <a href="/mailbroom/webapp/guide" className="hover:text-white transition-colors">User Guide</a>
               <a href="/mailbroom/webapp/roi" className="hover:text-white transition-colors">Business Case</a>
               <a href="/mailbroom/webapp/storage-costs" className="hover:text-white transition-colors">Storage Costs</a>
+              <a href="/mailbroom/webapp/mailbox-full" className="hover:text-white transition-colors">Mailbox Full?</a>
+              <a href="/mailbroom/webapp/bulk-delete-emails" className="hover:text-white transition-colors">Bulk Delete Emails</a>
+              <a href="/mailbroom/webapp/employee-offboarding" className="hover:text-white transition-colors">Leaver Mailboxes</a>
               <a href="/mailbroom/webapp/trial" className="hover:text-white transition-colors">Free IT Assessment</a>
               <a href="/mailbroom/webapp/affiliates" className="hover:text-white transition-colors">Referral &amp; Affiliate</a>
               <a href="/mailbroom" className="hover:text-white transition-colors">MailBroom for iOS</a>

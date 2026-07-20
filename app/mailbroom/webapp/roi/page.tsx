@@ -17,9 +17,22 @@ export const metadata: Metadata = {
   },
 };
 
+const articleJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "The Business Case for MailBroom for Business",
+  description: "Storage overage costs, IT ticket time, and compliance-safe deletion — the numbers behind MailBroom for Business, with sources.",
+  url: "https://aiert.co.uk/mailbroom/webapp/roi",
+  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
+};
+
 export default function MailBroomRoiPage() {
   return (
     <div className="min-h-screen hero-gradient grid-bg">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
 
       {/* ── NAV ─────────────────────────────────────────── */}
       <nav className="nav-glass sticky top-0 z-50">

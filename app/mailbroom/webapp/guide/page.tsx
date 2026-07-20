@@ -14,6 +14,15 @@ export const metadata: Metadata = {
   },
 };
 
+const techArticleJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  headline: "MailBroom for Business — User Guide",
+  description: "A complete reference guide to MailBroom for Business — sign-in, Dashboard, Smart Sweep, Storage Cleanup, Power Search, plans & billing, Admin, and privacy.",
+  url: "https://aiert.co.uk/mailbroom/webapp/guide",
+  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
+};
+
 const ACTIONS = [
   { letter: "D", label: "Delete", color: "#dc2626" },
   { letter: "U", label: "Unsubscribe", color: "#ea580c" },
@@ -52,6 +61,10 @@ const TOC = [
 export default function MailBroomGuidePage() {
   return (
     <div className="min-h-screen hero-gradient grid-bg">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(techArticleJsonLd) }}
+      />
 
       {/* ── NAV ─────────────────────────────────────────── */}
       <nav className="nav-glass sticky top-0 z-50">
