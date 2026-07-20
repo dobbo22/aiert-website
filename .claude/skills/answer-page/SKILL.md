@@ -11,7 +11,15 @@ Reference implementation: `app/mailbroom/webapp/mailbox-full/page.tsx`. Read it 
 
 The buyer question must be specific and searchable — something a real IT admin or business owner would type into Google or ask ChatGPT/Perplexity. "Mailbox full in Exchange Online" is answer-shaped. "Email tips" is not. If you can't state the target question as a single sentence someone would actually ask, this isn't the right page to write yet.
 
-Before writing, check `app/sitemap.ts` and the existing pages under `app/mailbroom/webapp/` to confirm the question isn't already covered — extend an existing page rather than creating a near-duplicate.
+## Step 0 — check before writing anything
+
+Do this before drafting a single line of copy, every time, even if the target question feels obviously new:
+
+1. Read `app/sitemap.ts` in full — it's the canonical list of every published page and its URL.
+2. For each existing `app/mailbroom/webapp/*/page.tsx`, check its `faqs` array's questions (not just the page title) — a near-duplicate FAQ on an existing page is a stronger signal of overlap than the URL slug alone.
+3. If the target question is genuinely new, proceed. If it's a variant of something already covered, extend that existing page's `faqs` array instead of creating a new one — don't split one topic across two competing pages.
+
+Skipping this step is how a site ends up with two pages quietly competing for the same search query.
 
 ## Required structure
 
