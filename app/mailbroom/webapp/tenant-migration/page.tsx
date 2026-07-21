@@ -239,6 +239,7 @@ export default function TenantMigrationPage() {
               <a href="/storage-costs" className="hover:text-white transition-colors">Storage Costs</a>
               <a href="/bulk-delete-emails" className="hover:text-white transition-colors">Bulk Delete Emails</a>
               <a href="/employee-offboarding" className="hover:text-white transition-colors">Leaver Mailboxes</a>
+              <a href="/msp-storage-billing" className="hover:text-white transition-colors">MSP Billing</a>
               <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
               <a href="/terms" className="hover:text-white transition-colors">Terms of Use</a>
             </div>
