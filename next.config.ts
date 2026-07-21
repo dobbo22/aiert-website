@@ -30,9 +30,14 @@ const nextConfig: NextConfig = {
         // business.mailbroom.app transparently serves the existing
         // app/mailbroom/webapp/* page tree. sitemap.xml/robots.txt are
         // excluded so each subdomain's own metadata routes (which are
-        // host-aware, see app/sitemap.ts) are served instead.
+        // host-aware, see app/sitemap.ts) are served instead, and _next/*
+        // is excluded so the page's own CSS/JS assets keep loading —
+        // beforeFiles rewrites are checked before _next/static, so without
+        // this exclusion every asset request gets mangled into a
+        // non-existent /mailbroom/webapp/_next/... path and 404s, which
+        // is why the pages first went live completely unstyled.
         {
-          source: "/:path((?!sitemap\\.xml|robots\\.txt).*)",
+          source: "/:path((?!_next/|sitemap\\.xml|robots\\.txt).*)",
           has: [{ type: "host", value: "business.mailbroom.app" }],
           destination: "/mailbroom/webapp/:path*",
         },
@@ -41,7 +46,7 @@ const nextConfig: NextConfig = {
         // claimed by business.mailbroom.app above and never reached
         // here since that host won't match this rule)
         {
-          source: "/:path((?!sitemap\\.xml|robots\\.txt).*)",
+          source: "/:path((?!_next/|sitemap\\.xml|robots\\.txt).*)",
           has: [{ type: "host", value: "ios.mailbroom.app" }],
           destination: "/mailbroom/:path*",
         },
