@@ -76,11 +76,9 @@ export default function EmployeeOffboardingPage() {
       <nav className="nav-glass sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-8 py-5 flex items-center justify-between">
           <a href="/mailbroom/webapp" className="flex items-center gap-4">
-            <div className="nav-logo-icon w-11 h-11 rounded-lg flex items-center justify-center font-black text-base">
-              AI
-            </div>
+            <img src="/mailbroom-icon.png" alt="MailBroom" width={44} height={44} className="w-11 h-11 rounded-lg" />
             <span className="font-bold text-2xl tracking-tight text-cloud">
-              AIERT<span className="text-sm font-normal ml-1 text-cloud">Ltd</span>
+              MailBroom
             </span>
           </a>
           <div className="hidden md:flex items-center gap-10 text-base text-cloud">

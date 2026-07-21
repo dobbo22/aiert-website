@@ -55,8 +55,10 @@ const nextConfig: NextConfig = {
         // this exclusion every asset request gets mangled into a
         // non-existent /mailbroom/webapp/_next/... path and 404s, which
         // is why the pages first went live completely unstyled.
+        // mailbroom-icon.png (public/) is excluded for the same reason —
+        // beforeFiles also runs before /public files are served.
         {
-          source: "/:path((?!_next/|sitemap\\.xml|robots\\.txt).*)",
+          source: "/:path((?!_next/|sitemap\\.xml|robots\\.txt|mailbroom-icon\\.png).*)",
           has: [{ type: "host", value: "business.mailbroom.app" }],
           destination: "/mailbroom/webapp/:path*",
         },
@@ -65,7 +67,7 @@ const nextConfig: NextConfig = {
         // claimed by business.mailbroom.app above and never reached
         // here since that host won't match this rule)
         {
-          source: "/:path((?!_next/|sitemap\\.xml|robots\\.txt).*)",
+          source: "/:path((?!_next/|sitemap\\.xml|robots\\.txt|mailbroom-icon\\.png).*)",
           has: [{ type: "host", value: "ios.mailbroom.app" }],
           destination: "/mailbroom/:path*",
         },
