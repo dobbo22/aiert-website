@@ -21,6 +21,7 @@ const techArticleJsonLd = {
   headline: "MailBroom for Business — User Guide",
   description: "A complete reference guide to MailBroom for Business — sign-in, Dashboard, Smart Sweep, Storage Cleanup, Power Search, plans & billing, Admin, and privacy.",
   url: "https://business.mailbroom.app/guide",
+  dateModified: "2026-07-21",
   publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
 };
 
@@ -91,6 +92,7 @@ export default function MailBroomGuidePage() {
 
       {/* ── HEADER ──────────────────────────────────────── */}
       <section className="max-w-3xl mx-auto px-6 pt-20 pb-12 text-center">
+        <p className="text-xs text-mist mb-4">Last updated: 21 July 2026</p>
         <div className="badge-live inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium mb-6">
           <span className="w-2 h-2 rounded-full bg-gold animate-pulse inline-block" />
           Reference Guide

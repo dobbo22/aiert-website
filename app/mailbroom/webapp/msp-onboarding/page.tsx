@@ -49,6 +49,7 @@ const techArticleJsonLd = {
   headline: "Deploying MailBroom Across Multiple Client Tenants",
   description: "How an MSP sets up MailBroom for Business for a client's Microsoft 365 tenant, configured per client rather than through one MSP-wide login.",
   url: "https://business.mailbroom.app/msp-onboarding",
+  dateModified: "2026-07-21",
   publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
 };
 
@@ -99,6 +100,7 @@ export default function MspOnboardingPage() {
 
       {/* ── HERO ────────────────────────────────────────── */}
       <section className="max-w-4xl mx-auto px-6 pt-24 pb-16 text-center">
+        <p className="text-xs text-mist mb-4">Last updated: 21 July 2026</p>
         <div className="badge-live inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium mb-6">
           <span className="w-2 h-2 rounded-full bg-gold animate-pulse inline-block" />
           For MSPs · Microsoft 365

@@ -55,6 +55,7 @@ const techArticleJsonLd = {
   description:
     "What carries over and what doesn't in a Microsoft 365 tenant-to-tenant migration, and why mailbox size drives migration time and cost.",
   url: "https://business.mailbroom.app/tenant-migration",
+  dateModified: "2026-07-21",
   publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
 };
 
@@ -105,6 +106,7 @@ export default function TenantMigrationPage() {
 
       {/* ── HERO ────────────────────────────────────────── */}
       <section className="max-w-4xl mx-auto px-6 pt-24 pb-16 text-center">
+        <p className="text-xs text-mist mb-4">Last updated: 21 July 2026</p>
         <div className="badge-live inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium mb-6">
           <span className="w-2 h-2 rounded-full bg-gold animate-pulse inline-block" />
           Microsoft 365 · Tenant-to-Tenant Migration

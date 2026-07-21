@@ -47,6 +47,7 @@ const techArticleJsonLd = {
   headline: "Exchange Online Mailbox Full? How to Fix It",
   description: "Why an Exchange Online mailbox fills up, what breaks at each stage, and how to fix it — including the safest way to clear space across every mailbox in a company.",
   url: "https://business.mailbroom.app/mailbox-full",
+  dateModified: "2026-07-21",
   publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
 };
 
@@ -97,6 +98,7 @@ export default function MailboxFullPage() {
 
       {/* ── HERO ────────────────────────────────────────── */}
       <section className="max-w-4xl mx-auto px-6 pt-24 pb-16 text-center">
+        <p className="text-xs text-mist mb-4">Last updated: 21 July 2026</p>
         <div className="badge-live inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium mb-6">
           <span className="w-2 h-2 rounded-full bg-gold animate-pulse inline-block" />
           Exchange Online · Microsoft 365

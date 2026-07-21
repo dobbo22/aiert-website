@@ -24,6 +24,7 @@ const articleJsonLd = {
   headline: "The Business Case for MailBroom for Business",
   description: "Storage overage costs, IT ticket time, and compliance-safe deletion — the numbers behind MailBroom for Business, with sources.",
   url: "https://business.mailbroom.app/roi",
+  dateModified: "2026-07-21",
   publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
 };
 
@@ -60,6 +61,7 @@ export default function MailBroomRoiPage() {
 
       {/* ── HERO ────────────────────────────────────────── */}
       <section className="max-w-4xl mx-auto px-6 pt-24 pb-16 text-center">
+        <p className="text-xs text-mist mb-4">Last updated: 21 July 2026</p>
         <div className="badge-live inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium mb-6">
           <span className="w-2 h-2 rounded-full bg-gold animate-pulse inline-block" />
           For IT Directors &amp; Finance
