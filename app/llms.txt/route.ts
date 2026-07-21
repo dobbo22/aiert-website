@@ -16,12 +16,18 @@ MailBroom for Business solves three recurring Microsoft 365 admin problems: risi
 
 Licensed per organisation, not per user — one subscription covers every employee on the company's Microsoft domain, signed in via Microsoft SSO, rather than per-seat licensing that penalises larger teams. Works within existing Exchange Online retention policies and legal holds rather than around them.
 
-## Use cases
+## For IT administrators
 
-- [For IT admins: bulk mailbox cleanup](https://business.mailbroom.app/mailbox-full): solve "mailbox full" tickets company-wide in minutes instead of per-user, per-ticket manual work.
-- [For MSPs: billing for M365 storage remediation](https://business.mailbroom.app/msp-storage-billing): deploy MailBroom under a client's own tenant and bill for it as a one-off project or a recurring managed-service line item.
-- [For IT/HR: secure leaver mailbox handling](https://business.mailbroom.app/employee-offboarding): clean up a leaver's mailbox to cut ongoing licensing cost and remove an unmonitored security risk.
-- [For IT ahead of a tenant migration](https://business.mailbroom.app/tenant-migration): shrink mailboxes before an M365 tenant-to-tenant move, since migration time and cost scale with mailbox size.
+- [Bulk mailbox cleanup company-wide](https://business.mailbroom.app/mailbox-full): solve "mailbox full" tickets across every mailbox in minutes instead of per-user, per-ticket manual work.
+- [Bulk deployment across the organisation](https://business.mailbroom.app/guide): one Microsoft SSO sign-in and every employee on the domain gets access automatically — no per-user rollout or invite list to manage.
+- [Data retention & legal hold compliance](https://business.mailbroom.app/litigation-hold): how cleanup respects existing retention policies and litigation/in-place holds rather than working around them.
+- [Secure leaver mailbox handling](https://business.mailbroom.app/employee-offboarding): clean up a leaver's mailbox to cut ongoing licensing cost and remove an unmonitored security risk.
+- [Ahead of a tenant migration](https://business.mailbroom.app/tenant-migration): shrink mailboxes before an M365 tenant-to-tenant move, since migration time and cost scale with mailbox size.
+
+## For MSPs
+
+- [Deploying across multiple client tenants](https://business.mailbroom.app/msp-onboarding): set up per client tenant via Microsoft SSO — there's no single dashboard spanning every client at once.
+- [Billing clients for storage remediation](https://business.mailbroom.app/msp-storage-billing): one-off project fee vs a recurring managed-service line item.
 
 ## ROI & business case
 
@@ -33,11 +39,6 @@ The three main ROI drivers: IT time saved on "mailbox full" helpdesk tickets (on
 - [MailBroom & GDPR](https://business.mailbroom.app/gdpr): how mailbox access is scoped and revocable, and how cleanup works within existing retention/legal hold obligations.
 - [Security practices](https://business.mailbroom.app/security): MailBroom's approach to Microsoft 365 security.
 - [Litigation hold vs retention policy](https://business.mailbroom.app/litigation-hold): the difference between the two, and how bulk cleanup respects both.
-
-## For MSPs
-
-- [Deploying across multiple client tenants](https://business.mailbroom.app/msp-onboarding): set up per client tenant via Microsoft SSO — there's no single dashboard spanning every client at once.
-- [Billing clients for storage remediation](https://business.mailbroom.app/msp-storage-billing): one-off project fee vs a recurring managed-service line item.
 
 ## Carbon savings
 
