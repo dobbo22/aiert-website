@@ -238,6 +238,7 @@ export default function BulkDeleteEmailsPage() {
               <a href="/mailbroom/webapp" className="hover:text-white transition-colors">MailBroom for Business</a>
               <a href="/mailbroom/webapp/mailbox-full" className="hover:text-white transition-colors">Mailbox Full?</a>
               <a href="/mailbroom/webapp/storage-costs" className="hover:text-white transition-colors">Storage Costs</a>
+              <a href="/mailbroom/webapp/litigation-hold" className="hover:text-white transition-colors">Litigation Hold</a>
               <a href="/mailbroom/webapp/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
               <a href="/mailbroom/webapp/terms" className="hover:text-white transition-colors">Terms of Use</a>
             </div>

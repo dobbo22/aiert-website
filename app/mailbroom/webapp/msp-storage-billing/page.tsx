@@ -238,6 +238,7 @@ export default function MspStorageBillingPage() {
               <a href="/" className="hover:text-white transition-colors">MailBroom for Business</a>
               <a href="/storage-costs" className="hover:text-white transition-colors">Storage Costs</a>
               <a href="/tenant-migration" className="hover:text-white transition-colors">Tenant Migration</a>
+              <a href="/msp-onboarding" className="hover:text-white transition-colors">MSP Onboarding</a>
               <a href="/employee-offboarding" className="hover:text-white transition-colors">Leaver Mailboxes</a>
               <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
               <a href="/terms" className="hover:text-white transition-colors">Terms of Use</a>

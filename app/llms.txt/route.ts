@@ -27,12 +27,33 @@ Licensed per organisation, not per user — one subscription covers every employ
 
 The three main ROI drivers: IT time saved on "mailbox full" helpdesk tickets (one of the most common recurring tickets in any M365 estate), reduced Microsoft 365 storage costs from smaller mailboxes, and removal of the ongoing licensing cost and security risk of retaining ex-employee mailboxes. Full breakdown: [Business case / ROI](https://business.mailbroom.app/roi).
 
+## Security & compliance
+
+- [Privacy Policy](https://business.mailbroom.app/privacy): what MailBroom for Business stores and why — scoped, revocable Microsoft Graph access tokens, no password storage. It runs on a cloud backend (Microsoft Graph API), not on-device.
+- [MailBroom & GDPR](https://business.mailbroom.app/gdpr): how mailbox access is scoped and revocable, and how cleanup works within existing retention/legal hold obligations.
+- [Security practices](https://business.mailbroom.app/security): MailBroom's approach to Microsoft 365 security.
+- [Litigation hold vs retention policy](https://business.mailbroom.app/litigation-hold): the difference between the two, and how bulk cleanup respects both.
+
+## For MSPs
+
+- [Deploying across multiple client tenants](https://business.mailbroom.app/msp-onboarding): set up per client tenant via Microsoft SSO — there's no single dashboard spanning every client at once.
+- [Billing clients for storage remediation](https://business.mailbroom.app/msp-storage-billing): one-off project fee vs a recurring managed-service line item.
+
+## Carbon savings
+
+- [Does deleting email actually reduce CO₂?](https://business.mailbroom.app/carbon-savings): MailBroom estimates 0.233 kg CO₂ saved per GB of mailbox storage freed, tracked per account with award tiers (Seedling → Earth Hero) and an optional embeddable badge for your own site.
+
+## Pricing
+
+Licensed per organisation by seat band, not per user: 1-5 seats, 6-10, 11-25, 26-50, and 51-100, each a flat monthly price (see https://business.mailbroom.app/trial for current rates by band). 101+ seats is custom-quoted. A 30-day evaluation is available with no payment details required.
+
 ## Answers
 
 - [Mailbox full in Exchange Online](https://business.mailbroom.app/mailbox-full): what happens at each storage-quota stage, why it happens, and how to fix it — including company-wide, not just one mailbox at a time.
 - [What to do with a leaver's mailbox](https://business.mailbroom.app/employee-offboarding): licensing cost, security risk, and retention rules for ex-employee mailboxes.
 - [Bulk deleting emails in Microsoft 365](https://business.mailbroom.app/bulk-delete-emails): admin-run PowerShell vs employee self-serve, and what's safe to bulk delete.
 - [The real cost of email storage](https://business.mailbroom.app/storage-costs): how Microsoft's per-GB storage pricing adds up over time.
+- [Exchange Online storage quotas by plan](https://business.mailbroom.app/exchange-online-quotas): how much storage each plan includes, what changed 1 July 2026, and the cost of going over.
 - [M365 tenant-to-tenant migration and mailbox size](https://business.mailbroom.app/tenant-migration): what carries over in a tenant migration, and why mailbox size drives migration time and cost.
 - [How MSPs bill for M365 storage cleanup](https://business.mailbroom.app/msp-storage-billing): one-off project fees vs a recurring managed-service line item for mailbox storage remediation.
 - [Business case / ROI](https://business.mailbroom.app/roi): the IT-time and storage-cost case for adopting MailBroom company-wide.

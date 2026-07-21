@@ -242,6 +242,7 @@ export default function MailBroomRoiPage() {
             <div className="flex gap-6 text-sm text-cloud flex-wrap justify-center">
               <a href="/mailbroom/webapp" className="hover:text-white transition-colors">MailBroom for Business</a>
               <a href="/mailbroom/webapp/storage-costs" className="hover:text-white transition-colors">Storage Costs</a>
+              <a href="/mailbroom/webapp/carbon-savings" className="hover:text-white transition-colors">Carbon Savings</a>
               <a href="/mailbroom/webapp/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
               <a href="/mailbroom/webapp/terms" className="hover:text-white transition-colors">Terms of Use</a>
             </div>
