@@ -12,7 +12,9 @@ export const metadata: Metadata = {
     "how much storage does Microsoft 365 give",
   ],
   metadataBase: new URL("https://business.mailbroom.app"),
+  alternates: { canonical: "/exchange-online-quotas" },
   openGraph: {
+    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
     title: "Exchange Online Storage Quotas by Plan, Explained",
     description: "How much mailbox storage each M365 plan includes, and what happens once a mailbox is over the limit.",
     url: "https://business.mailbroom.app/exchange-online-quotas",

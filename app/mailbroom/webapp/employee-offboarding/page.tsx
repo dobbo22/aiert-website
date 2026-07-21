@@ -13,7 +13,9 @@ export const metadata: Metadata = {
     "delete employee email account",
   ],
   metadataBase: new URL("https://business.mailbroom.app"),
+  alternates: { canonical: "/employee-offboarding" },
   openGraph: {
+    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
     title: "What to Do With a Leaver's Mailbox in Microsoft 365",
     description: "Retention, cost, security risk, and the fastest safe way to close out a leaver's mailbox.",
     url: "https://business.mailbroom.app/employee-offboarding",

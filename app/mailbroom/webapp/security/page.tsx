@@ -4,6 +4,16 @@ export const metadata: Metadata = {
   title: "Security & Access Control – MailBroom for Business | AIERT Ltd",
   description: "How MailBroom for Business controls access to customer data, and how secrets and credentials are managed and rotated.",
   metadataBase: new URL("https://business.mailbroom.app"),
+  alternates: { canonical: "/security" },
+  openGraph: {
+    title: "Security & Access Control – MailBroom for Business",
+    description: "How MailBroom for Business controls access to customer data, and how secrets and credentials are managed and rotated.",
+    url: "https://business.mailbroom.app/security",
+    siteName: "AIERT Ltd",
+    locale: "en_GB",
+    type: "website",
+    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
+  },
 };
 
 const sections = [

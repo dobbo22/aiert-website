@@ -13,7 +13,9 @@ export const metadata: Metadata = {
     "sustainable IT email",
   ],
   metadataBase: new URL("https://business.mailbroom.app"),
+  alternates: { canonical: "/carbon-savings" },
   openGraph: {
+    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
     title: "Does Deleting Email Actually Reduce CO₂?",
     description: "How MailBroom estimates the CO₂ impact of mailbox cleanup, and the account-level tracking that comes with it.",
     url: "https://business.mailbroom.app/carbon-savings",

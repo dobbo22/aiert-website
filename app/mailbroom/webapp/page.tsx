@@ -12,6 +12,7 @@ export const metadata: Metadata = {
     "MailBroom for Business brings Smart Sweep, Storage Cleanup, and Power Search to Microsoft 365 and Exchange Online — right in the browser, no install needed. Licensed per company, not per person: once IT subscribes, every employee on that domain gets access automatically.",
   keywords: ["MailBroom", "MailBroom for Business", "email cleaner", "Microsoft 365", "Exchange Online", "IT admin", "inbox cleanup", "Graph API", "enterprise email"],
   metadataBase: new URL("https://business.mailbroom.app"),
+  alternates: { canonical: "/" },
   openGraph: {
     title: "MailBroom for Business – Inbox Cleanup for Microsoft 365",
     description: "Smart Sweep, Storage Cleanup, and Power Search for Microsoft 365 — no install, licensed per company domain.",

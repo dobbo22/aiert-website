@@ -7,6 +7,7 @@ export const metadata: Metadata = {
     "Storage overage costs, IT ticket time, and compliance-safe deletion — the numbers behind MailBroom for Business, with sources.",
   keywords: ["MailBroom ROI", "Microsoft 365 storage cost", "email cleanup business case", "compliance", "litigation hold", "eDiscovery"],
   metadataBase: new URL("https://business.mailbroom.app"),
+  alternates: { canonical: "/roi" },
   openGraph: {
     title: "The Business Case for MailBroom for Business",
     description: "Storage overage costs, IT ticket time, and compliance-safe deletion — with sources.",

@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: "MailBroom for Business – Company Leaderboard | AIERT Ltd",
   description: "See how companies using MailBroom for Business rank on CO₂ and mailbox storage saved — opt-in only, real company names.",
   metadataBase: new URL("https://ios.mailbroom.app"),
+  alternates: { canonical: "/leaderboard" },
 };
 
 // Same 7-tier CO2 award system as the mailbroom-web app (lib/co2-tiers.ts) —

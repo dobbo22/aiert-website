@@ -7,6 +7,7 @@ export const metadata: Metadata = {
     "MailBroom connects to any IMAP inbox and uses AI to classify, bulk-delete, unsubscribe, and organise your emails — 100% privately on your device. Sweep Mode clears 10,000 emails in minutes. Free with action limits, with Pro plans available in the App Store.",
   keywords: ["MailBroom", "email cleaner", "inbox cleaner", "unsubscribe", "bulk delete", "IMAP", "iOS", "AI", "AIERT", "sweep mode", "inbox zero"],
   metadataBase: new URL("https://ios.mailbroom.app"),
+  alternates: { canonical: "/" },
   openGraph: {
     title: "MailBroom – AI Email Cleaner for iPhone",
     description: "Bulk-delete thousands of emails in seconds. Smart unsubscribe. Fully private — your emails never leave your device.",

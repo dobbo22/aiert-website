@@ -12,7 +12,9 @@ export const metadata: Metadata = {
     "IT service provider mailbox tool rollout",
   ],
   metadataBase: new URL("https://business.mailbroom.app"),
+  alternates: { canonical: "/msp-onboarding" },
   openGraph: {
+    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
     title: "Deploying MailBroom Across Multiple Client Tenants",
     description: "How an MSP sets up MailBroom for a client's M365 tenant, client by client.",
     url: "https://business.mailbroom.app/msp-onboarding",

@@ -4,6 +4,7 @@ export const metadata: Metadata = {
   title: "User Guide – MailBroom for Business | AIERT Ltd",
   description: "A complete reference guide to MailBroom for Business — sign-in, Dashboard, Smart Sweep, Storage Cleanup, Power Search, plans & billing, Admin, and privacy.",
   metadataBase: new URL("https://business.mailbroom.app"),
+  alternates: { canonical: "/guide" },
   openGraph: {
     title: "MailBroom for Business — User Guide",
     description: "A complete reference guide to every feature.",

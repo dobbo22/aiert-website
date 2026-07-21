@@ -12,7 +12,9 @@ export const metadata: Metadata = {
     "M365 admin centre mailbox size report",
   ],
   metadataBase: new URL("https://business.mailbroom.app"),
+  alternates: { canonical: "/audit-mailbox-storage" },
   openGraph: {
+    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
     title: "Audit Mailbox Storage Across an M365 Tenant",
     description: "The two native ways to see every mailbox's storage usage, and what to do with the worst offenders.",
     url: "https://business.mailbroom.app/audit-mailbox-storage",

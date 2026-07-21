@@ -13,7 +13,9 @@ export const metadata: Metadata = {
     "MailBroom shared mailbox",
   ],
   metadataBase: new URL("https://business.mailbroom.app"),
+  alternates: { canonical: "/shared-mailbox-cleanup" },
   openGraph: {
+    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
     title: "Can MailBroom Clean Up a Shared Mailbox?",
     description: "Yes, once your admin enables it — here's exactly how shared and delegated mailbox cleanup works.",
     url: "https://business.mailbroom.app/shared-mailbox-cleanup",

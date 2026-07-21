@@ -13,7 +13,9 @@ export const metadata: Metadata = {
     "MSP GDPR client mailbox data",
   ],
   metadataBase: new URL("https://business.mailbroom.app"),
+  alternates: { canonical: "/gdpr" },
   openGraph: {
+    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
     title: "MailBroom & GDPR: How Mailbox Access Is Scoped",
     description: "Scoped, revocable Graph API access, no password storage, and how MailBroom works within existing retention and hold policies.",
     url: "https://business.mailbroom.app/gdpr",

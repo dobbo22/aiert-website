@@ -13,7 +13,9 @@ export const metadata: Metadata = {
     "Exchange Online tenant migration cleanup",
   ],
   metadataBase: new URL("https://business.mailbroom.app"),
+  alternates: { canonical: "/tenant-migration" },
   openGraph: {
+    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
     title: "M365 Tenant-to-Tenant Migration: What Happens to Mailboxes",
     description: "What carries over, what doesn't, and why mailbox size drives your migration cost and timeline.",
     url: "https://business.mailbroom.app/tenant-migration",

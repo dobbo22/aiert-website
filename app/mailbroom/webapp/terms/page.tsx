@@ -4,6 +4,16 @@ export const metadata: Metadata = {
   title: "Terms of Use – MailBroom for Business | AIERT Ltd",
   description: "Terms of Use for MailBroom for Business, the Microsoft 365 web app — licensing per company domain, Stripe billing, seat bands, and admin responsibilities.",
   metadataBase: new URL("https://business.mailbroom.app"),
+  alternates: { canonical: "/terms" },
+  openGraph: {
+    title: "Terms of Use – MailBroom for Business",
+    description: "Terms of Use for MailBroom for Business — licensing per company domain, Stripe billing, seat bands, and admin responsibilities.",
+    url: "https://business.mailbroom.app/terms",
+    siteName: "AIERT Ltd",
+    locale: "en_GB",
+    type: "website",
+    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
+  },
 };
 
 const sections = [

@@ -12,7 +12,9 @@ export const metadata: Metadata = {
     "M365 recoverable items purges",
   ],
   metadataBase: new URL("https://business.mailbroom.app"),
+  alternates: { canonical: "/litigation-hold" },
   openGraph: {
+    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
     title: "Litigation Hold vs Retention Policy in Exchange Online",
     description: "The difference between the two, and how bulk cleanup needs to respect both without breaking them.",
     url: "https://business.mailbroom.app/litigation-hold",

@@ -13,7 +13,9 @@ export const metadata: Metadata = {
     "MSP value added service email",
   ],
   metadataBase: new URL("https://business.mailbroom.app"),
+  alternates: { canonical: "/msp-storage-billing" },
   openGraph: {
+    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
     title: "How MSPs Bill for M365 Storage Cleanup",
     description: "Turning mailbox storage overage into a billable, recurring service line — not just a one-off fix.",
     url: "https://business.mailbroom.app/msp-storage-billing",

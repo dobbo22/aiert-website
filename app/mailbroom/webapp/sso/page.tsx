@@ -4,6 +4,16 @@ export const metadata: Metadata = {
   title: "Single Sign-On & Permissions – MailBroom for Business | AIERT Ltd",
   description: "How Microsoft Entra ID sign-in works in MailBroom for Business, exactly which Microsoft Graph permissions are requested, and why each one is needed.",
   metadataBase: new URL("https://business.mailbroom.app"),
+  alternates: { canonical: "/sso" },
+  openGraph: {
+    title: "Single Sign-On & Permissions – MailBroom for Business",
+    description: "How Microsoft Entra ID sign-in works in MailBroom for Business, and exactly which Microsoft Graph permissions are requested.",
+    url: "https://business.mailbroom.app/sso",
+    siteName: "AIERT Ltd",
+    locale: "en_GB",
+    type: "website",
+    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
+  },
 };
 
 const permissions = [

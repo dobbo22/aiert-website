@@ -6,7 +6,9 @@ export const metadata: Metadata = {
     "What Microsoft actually charges once a mailbox outgrows its plan, and how to reduce Microsoft 365 storage costs — extra storage, archive overage, and how to avoid paying to store clutter you don't need.",
   keywords: ["reduce Microsoft 365 storage costs", "Microsoft 365 storage cost", "Exchange Online storage overage", "mailbox storage limit", "archive mailbox cost", "email storage pricing", "lower Exchange Online costs"],
   metadataBase: new URL("https://business.mailbroom.app"),
+  alternates: { canonical: "/storage-costs" },
   openGraph: {
+    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
     title: "How to Reduce Microsoft 365 Storage Costs",
     description: "What Microsoft actually charges once a mailbox outgrows its plan, and how to bring the bill back down.",
     url: "https://business.mailbroom.app/storage-costs",

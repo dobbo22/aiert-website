@@ -6,7 +6,9 @@ export const metadata: Metadata = {
     "Mailbox full and can't send email in Exchange Online? Here's why it happens, what breaks first, and how to fix it fast — including the safest way to clear space across every mailbox in the company.",
   keywords: ["Exchange Online mailbox full", "mailbox full fix", "can't send email mailbox full", "Outlook mailbox full", "Exchange Online storage quota exceeded", "Microsoft 365 mailbox over quota"],
   metadataBase: new URL("https://business.mailbroom.app"),
+  alternates: { canonical: "/mailbox-full" },
   openGraph: {
+    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
     title: "Exchange Online Mailbox Full? How to Fix It",
     description: "Why it happens, what breaks first, and how to fix it fast.",
     url: "https://business.mailbroom.app/mailbox-full",
