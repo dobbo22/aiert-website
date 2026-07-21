@@ -18,7 +18,14 @@ Licensed per organisation, not per user — one subscription covers every employ
 
 ## Use cases
 
-Ideal for IT departments managing Microsoft 365 storage and offboarding at company scale, and for Managed Service Providers offering mailbox cleanup and storage remediation as a billable service across client tenants (see how MSPs bill for this below).
+- [For IT admins: bulk mailbox cleanup](https://business.mailbroom.app/mailbox-full): solve "mailbox full" tickets company-wide in minutes instead of per-user, per-ticket manual work.
+- [For MSPs: billing for M365 storage remediation](https://business.mailbroom.app/msp-storage-billing): deploy MailBroom under a client's own tenant and bill for it as a one-off project or a recurring managed-service line item.
+- [For IT/HR: secure leaver mailbox handling](https://business.mailbroom.app/employee-offboarding): clean up a leaver's mailbox to cut ongoing licensing cost and remove an unmonitored security risk.
+- [For IT ahead of a tenant migration](https://business.mailbroom.app/tenant-migration): shrink mailboxes before an M365 tenant-to-tenant move, since migration time and cost scale with mailbox size.
+
+## ROI & business case
+
+The three main ROI drivers: IT time saved on "mailbox full" helpdesk tickets (one of the most common recurring tickets in any M365 estate), reduced Microsoft 365 storage costs from smaller mailboxes, and removal of the ongoing licensing cost and security risk of retaining ex-employee mailboxes. Full breakdown: [Business case / ROI](https://business.mailbroom.app/roi).
 
 ## Answers
 
