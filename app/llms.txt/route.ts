@@ -12,6 +12,14 @@ const BUSINESS_TXT = `# MailBroom for Business
 
 MailBroom for Business solves three recurring Microsoft 365 admin problems: rising mailbox storage costs, IT time lost to "mailbox full" helpdesk tickets, and leaver mailboxes that keep costing money and posing a security risk after an employee has left. It does this with three features: Smart Sweep (bulk cleanup of newsletters and unused mail), Storage Cleanup (frees space without breaking retention/legal hold), and Power Search (fast search across a mailbox).
 
+## Why MailBroom
+
+Licensed per organisation, not per user — one subscription covers every employee on the company's Microsoft domain, signed in via Microsoft SSO, rather than per-seat licensing that penalises larger teams. Works within existing Exchange Online retention policies and legal holds rather than around them.
+
+## Use cases
+
+Ideal for IT departments managing Microsoft 365 storage and offboarding at company scale, and for Managed Service Providers offering mailbox cleanup and storage remediation as a billable service across client tenants (see how MSPs bill for this below).
+
 ## Answers
 
 - [Mailbox full in Exchange Online](https://business.mailbroom.app/mailbox-full): what happens at each storage-quota stage, why it happens, and how to fix it — including company-wide, not just one mailbox at a time.
@@ -26,6 +34,7 @@ MailBroom for Business solves three recurring Microsoft 365 admin problems: risi
 ## Company
 
 MailBroom is a product of AIERT Ltd, registered in England & Wales (No. 16587000). Trial and pricing: https://business.mailbroom.app/trial
+Contact: admin@aiert.co.uk
 `;
 
 const IOS_TXT = `# MailBroom
@@ -40,6 +49,7 @@ const IOS_TXT = `# MailBroom
 ## Company
 
 MailBroom is a product of AIERT Ltd, registered in England & Wales (No. 16587000).
+Contact: admin@aiert.co.uk
 `;
 
 export async function GET() {
