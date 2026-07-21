@@ -5,6 +5,25 @@ const AIERT_HOST = "(www\\.)?aiert\\.co\\.uk";
 const nextConfig: NextConfig = {
   async redirects() {
     return [
+      // The pages themselves still have internal nav/footer/CTA links
+      // hardcoded to the pre-split "/mailbroom/webapp/..." and
+      // "/mailbroom/..." paths (baked in from when this was all one site
+      // on aiert.co.uk). On the new subdomains those paths don't exist at
+      // the file-tree root, so clicking them would double up through the
+      // rewrites below and 404. Canonicalize back to the short form here
+      // rather than editing every link across every page.
+      {
+        source: "/mailbroom/webapp/:path*",
+        has: [{ type: "host", value: "business.mailbroom.app" }],
+        destination: "/:path*",
+        permanent: true,
+      },
+      {
+        source: "/mailbroom/:path*",
+        has: [{ type: "host", value: "ios.mailbroom.app" }],
+        destination: "/:path*",
+        permanent: true,
+      },
       // Old B2B webapp pages on aiert.co.uk -> business.mailbroom.app
       // (checked before the general /mailbroom rule below, and query
       // strings — including the ?ref= attribution token — are preserved
