@@ -28,9 +28,11 @@ const nextConfig: NextConfig = {
     return {
       beforeFiles: [
         // business.mailbroom.app transparently serves the existing
-        // app/mailbroom/webapp/* page tree
+        // app/mailbroom/webapp/* page tree. sitemap.xml/robots.txt are
+        // excluded so each subdomain's own metadata routes (which are
+        // host-aware, see app/sitemap.ts) are served instead.
         {
-          source: "/:path*",
+          source: "/:path((?!sitemap\\.xml|robots\\.txt).*)",
           has: [{ type: "host", value: "business.mailbroom.app" }],
           destination: "/mailbroom/webapp/:path*",
         },
@@ -39,7 +41,7 @@ const nextConfig: NextConfig = {
         // claimed by business.mailbroom.app above and never reached
         // here since that host won't match this rule)
         {
-          source: "/:path*",
+          source: "/:path((?!sitemap\\.xml|robots\\.txt).*)",
           has: [{ type: "host", value: "ios.mailbroom.app" }],
           destination: "/mailbroom/:path*",
         },
