@@ -68,7 +68,7 @@ export default async function EmbedBadgePage({ params }: { params: Promise<{ dom
       <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
         {impact ? (
           <a
-            href="https://aiert.co.uk/mailbroom/webapp"
+            href="https://business.mailbroom.app"
             target="_blank"
             rel="noopener noreferrer"
             style={{

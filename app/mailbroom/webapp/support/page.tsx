@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Support – MailBroom for Business | AIERT Ltd",
   description: "Help and support for MailBroom for Business — a quick guide to every feature, plus how to reach AIERT Ltd directly.",
-  metadataBase: new URL("https://aiert.co.uk"),
+  metadataBase: new URL("https://business.mailbroom.app"),
 };
 
 const topics = [

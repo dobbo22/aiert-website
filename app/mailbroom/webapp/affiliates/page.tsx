@@ -4,11 +4,11 @@ export const metadata: Metadata = {
   title: "Referral & Affiliate Programme – MailBroom for Business | AIERT Ltd",
   description:
     "Refer a company to MailBroom for Business and both sides get rewarded — or apply as an affiliate if you work with multiple Microsoft 365 clients.",
-  metadataBase: new URL("https://aiert.co.uk"),
+  metadataBase: new URL("https://business.mailbroom.app"),
   openGraph: {
     title: "MailBroom for Business — Referral & Affiliate Programme",
     description: "Refer a company, both sides get rewarded. IT consultants and MSPs can apply for cash commission.",
-    url: "https://aiert.co.uk/mailbroom/webapp/affiliates",
+    url: "https://business.mailbroom.app/affiliates",
     siteName: "AIERT Ltd",
     locale: "en_GB",
     type: "website",

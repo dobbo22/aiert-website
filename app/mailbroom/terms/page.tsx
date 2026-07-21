@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Terms of Use – MailBroom | AIERT Ltd",
   description: "MailBroom terms of use. Simple, fair terms for a privacy-first email cleaning app.",
-  metadataBase: new URL("https://aiert.co.uk"),
+  metadataBase: new URL("https://ios.mailbroom.app"),
 };
 
 const sections = [

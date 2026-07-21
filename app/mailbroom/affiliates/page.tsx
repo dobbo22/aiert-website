@@ -4,11 +4,11 @@ export const metadata: Metadata = {
   title: "Affiliate Guide – MailBroom | AIERT Ltd",
   description:
     "Everything affiliates need to promote MailBroom: how to get your link or short code, how attribution works, and tips for converting your audience.",
-  metadataBase: new URL("https://aiert.co.uk"),
+  metadataBase: new URL("https://ios.mailbroom.app"),
   openGraph: {
     title: "MailBroom Affiliate Guide",
     description: "How to get your link, share it, and get credited for every subscriber you bring to MailBroom.",
-    url: "https://aiert.co.uk/mailbroom/affiliates",
+    url: "https://ios.mailbroom.app/affiliates",
     siteName: "AIERT Ltd",
     locale: "en_GB",
     type: "website",

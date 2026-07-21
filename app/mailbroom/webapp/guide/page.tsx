@@ -3,11 +3,11 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "User Guide – MailBroom for Business | AIERT Ltd",
   description: "A complete reference guide to MailBroom for Business — sign-in, Dashboard, Smart Sweep, Storage Cleanup, Power Search, plans & billing, Admin, and privacy.",
-  metadataBase: new URL("https://aiert.co.uk"),
+  metadataBase: new URL("https://business.mailbroom.app"),
   openGraph: {
     title: "MailBroom for Business — User Guide",
     description: "A complete reference guide to every feature.",
-    url: "https://aiert.co.uk/mailbroom/webapp/guide",
+    url: "https://business.mailbroom.app/guide",
     siteName: "AIERT Ltd",
     locale: "en_GB",
     type: "website",
@@ -19,7 +19,7 @@ const techArticleJsonLd = {
   "@type": "TechArticle",
   headline: "MailBroom for Business — User Guide",
   description: "A complete reference guide to MailBroom for Business — sign-in, Dashboard, Smart Sweep, Storage Cleanup, Power Search, plans & billing, Admin, and privacy.",
-  url: "https://aiert.co.uk/mailbroom/webapp/guide",
+  url: "https://business.mailbroom.app/guide",
   publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
 };
 

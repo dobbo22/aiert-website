@@ -6,11 +6,11 @@ export const metadata: Metadata = {
   title: "Start Your Free 30-Day IT Assessment | MailBroom for Business",
   description:
     "No commitment, no payment details. Request a 30-day evaluation of MailBroom for Business for your Microsoft 365 tenant.",
-  metadataBase: new URL("https://aiert.co.uk"),
+  metadataBase: new URL("https://business.mailbroom.app"),
   openGraph: {
     title: "Start Your Free 30-Day IT Assessment — MailBroom for Business",
     description: "No commitment, no payment details. See the savings for yourself.",
-    url: "https://aiert.co.uk/mailbroom/webapp/trial",
+    url: "https://business.mailbroom.app/trial",
     siteName: "AIERT Ltd",
     locale: "en_GB",
     type: "website",

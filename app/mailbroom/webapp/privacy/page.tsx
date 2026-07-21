@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Privacy Policy – MailBroom for Business | AIERT Ltd",
   description: "Privacy policy for MailBroom for Business, the Microsoft 365 web app — what's stored, how sign-in works, and exactly what AIERT staff can and cannot see about your organisation.",
-  metadataBase: new URL("https://aiert.co.uk"),
+  metadataBase: new URL("https://business.mailbroom.app"),
 };
 
 const sections = [

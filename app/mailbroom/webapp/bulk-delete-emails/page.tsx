@@ -5,11 +5,11 @@ export const metadata: Metadata = {
   description:
     "How IT admins can bulk delete emails across Microsoft 365 and Exchange Online mailboxes safely — compliance holds, retention policies, and company-wide cleanup without per-mailbox manual work.",
   keywords: ["bulk delete emails Microsoft 365 admin", "bulk delete emails Exchange Online", "mass delete emails Office 365", "Microsoft 365 admin email cleanup", "bulk delete Outlook mailbox admin"],
-  metadataBase: new URL("https://aiert.co.uk"),
+  metadataBase: new URL("https://business.mailbroom.app"),
   openGraph: {
     title: "Bulk Delete Emails in Microsoft 365 — Admin Guide",
     description: "How IT admins can bulk delete emails across every mailbox safely — without breaking retention or legal hold.",
-    url: "https://aiert.co.uk/mailbroom/webapp/bulk-delete-emails",
+    url: "https://business.mailbroom.app/bulk-delete-emails",
     siteName: "AIERT Ltd",
     locale: "en_GB",
     type: "website",
@@ -44,7 +44,7 @@ const techArticleJsonLd = {
   "@type": "TechArticle",
   headline: "Bulk Delete Emails in Microsoft 365 — Admin Guide",
   description: "How IT admins can bulk delete emails across Microsoft 365 and Exchange Online mailboxes safely, without breaking retention or legal hold.",
-  url: "https://aiert.co.uk/mailbroom/webapp/bulk-delete-emails",
+  url: "https://business.mailbroom.app/bulk-delete-emails",
   publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
 };
 

@@ -5,11 +5,11 @@ export const metadata: Metadata = {
   description:
     "Mailbox full and can't send email in Exchange Online? Here's why it happens, what breaks first, and how to fix it fast — including the safest way to clear space across every mailbox in the company.",
   keywords: ["Exchange Online mailbox full", "mailbox full fix", "can't send email mailbox full", "Outlook mailbox full", "Exchange Online storage quota exceeded", "Microsoft 365 mailbox over quota"],
-  metadataBase: new URL("https://aiert.co.uk"),
+  metadataBase: new URL("https://business.mailbroom.app"),
   openGraph: {
     title: "Exchange Online Mailbox Full? How to Fix It",
     description: "Why it happens, what breaks first, and how to fix it fast.",
-    url: "https://aiert.co.uk/mailbroom/webapp/mailbox-full",
+    url: "https://business.mailbroom.app/mailbox-full",
     siteName: "AIERT Ltd",
     locale: "en_GB",
     type: "website",
@@ -44,7 +44,7 @@ const techArticleJsonLd = {
   "@type": "TechArticle",
   headline: "Exchange Online Mailbox Full? How to Fix It",
   description: "Why an Exchange Online mailbox fills up, what breaks at each stage, and how to fix it — including the safest way to clear space across every mailbox in a company.",
-  url: "https://aiert.co.uk/mailbroom/webapp/mailbox-full",
+  url: "https://business.mailbroom.app/mailbox-full",
   publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
 };
 
@@ -276,6 +276,7 @@ export default function MailboxFullPage() {
               <a href="/mailbroom/webapp/storage-costs" className="hover:text-white transition-colors">Storage Costs</a>
               <a href="/mailbroom/webapp/bulk-delete-emails" className="hover:text-white transition-colors">Bulk Delete Emails</a>
               <a href="/mailbroom/webapp/employee-offboarding" className="hover:text-white transition-colors">Leaver Mailboxes</a>
+              <a href="/mailbroom/webapp/tenant-migration" className="hover:text-white transition-colors">Tenant Migration</a>
               <a href="/mailbroom/webapp/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
               <a href="/mailbroom/webapp/terms" className="hover:text-white transition-colors">Terms of Use</a>
             </div>

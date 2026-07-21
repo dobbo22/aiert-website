@@ -6,11 +6,11 @@ export const metadata: Metadata = {
   description:
     "Storage overage costs, IT ticket time, and compliance-safe deletion — the numbers behind MailBroom for Business, with sources.",
   keywords: ["MailBroom ROI", "Microsoft 365 storage cost", "email cleanup business case", "compliance", "litigation hold", "eDiscovery"],
-  metadataBase: new URL("https://aiert.co.uk"),
+  metadataBase: new URL("https://business.mailbroom.app"),
   openGraph: {
     title: "The Business Case for MailBroom for Business",
     description: "Storage overage costs, IT ticket time, and compliance-safe deletion — with sources.",
-    url: "https://aiert.co.uk/mailbroom/webapp/roi",
+    url: "https://business.mailbroom.app/roi",
     siteName: "AIERT Ltd",
     locale: "en_GB",
     type: "website",
@@ -22,7 +22,7 @@ const articleJsonLd = {
   "@type": "Article",
   headline: "The Business Case for MailBroom for Business",
   description: "Storage overage costs, IT ticket time, and compliance-safe deletion — the numbers behind MailBroom for Business, with sources.",
-  url: "https://aiert.co.uk/mailbroom/webapp/roi",
+  url: "https://business.mailbroom.app/roi",
   publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
 };
 

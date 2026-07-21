@@ -17,6 +17,7 @@ const BUSINESS_ROUTES: Route[] = [
   { path: "/mailbox-full", priority: 0.7, changeFrequency: "monthly" },
   { path: "/employee-offboarding", priority: 0.6, changeFrequency: "monthly" },
   { path: "/bulk-delete-emails", priority: 0.7, changeFrequency: "monthly" },
+  { path: "/tenant-migration", priority: 0.6, changeFrequency: "monthly" },
   { path: "/security", priority: 0.6, changeFrequency: "monthly" },
   { path: "/sso", priority: 0.6, changeFrequency: "monthly" },
   { path: "/support", priority: 0.5, changeFrequency: "monthly" },

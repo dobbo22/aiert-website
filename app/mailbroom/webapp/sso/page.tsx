@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Single Sign-On & Permissions – MailBroom for Business | AIERT Ltd",
   description: "How Microsoft Entra ID sign-in works in MailBroom for Business, exactly which Microsoft Graph permissions are requested, and why each one is needed.",
-  metadataBase: new URL("https://aiert.co.uk"),
+  metadataBase: new URL("https://business.mailbroom.app"),
 };
 
 const permissions = [

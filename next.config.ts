@@ -58,7 +58,7 @@ const nextConfig: NextConfig = {
         // mailbroom-icon.png (public/) is excluded for the same reason —
         // beforeFiles also runs before /public files are served.
         {
-          source: "/:path((?!_next/|sitemap\\.xml|robots\\.txt|mailbroom-icon\\.png).*)",
+          source: "/:path((?!_next/|sitemap\\.xml|robots\\.txt|llms\\.txt|mailbroom-icon\\.png).*)",
           has: [{ type: "host", value: "business.mailbroom.app" }],
           destination: "/mailbroom/webapp/:path*",
         },
@@ -67,7 +67,7 @@ const nextConfig: NextConfig = {
         // claimed by business.mailbroom.app above and never reached
         // here since that host won't match this rule)
         {
-          source: "/:path((?!_next/|sitemap\\.xml|robots\\.txt|mailbroom-icon\\.png).*)",
+          source: "/:path((?!_next/|sitemap\\.xml|robots\\.txt|llms\\.txt|mailbroom-icon\\.png).*)",
           has: [{ type: "host", value: "ios.mailbroom.app" }],
           destination: "/mailbroom/:path*",
         },

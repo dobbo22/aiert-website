@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Security & Access Control – MailBroom for Business | AIERT Ltd",
   description: "How MailBroom for Business controls access to customer data, and how secrets and credentials are managed and rotated.",
-  metadataBase: new URL("https://aiert.co.uk"),
+  metadataBase: new URL("https://business.mailbroom.app"),
 };
 
 const sections = [

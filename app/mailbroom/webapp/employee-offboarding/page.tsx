@@ -12,11 +12,11 @@ export const metadata: Metadata = {
     "Exchange Online offboarding",
     "delete employee email account",
   ],
-  metadataBase: new URL("https://aiert.co.uk"),
+  metadataBase: new URL("https://business.mailbroom.app"),
   openGraph: {
     title: "What to Do With a Leaver's Mailbox in Microsoft 365",
     description: "Retention, cost, security risk, and the fastest safe way to close out a leaver's mailbox.",
-    url: "https://aiert.co.uk/mailbroom/webapp/employee-offboarding",
+    url: "https://business.mailbroom.app/employee-offboarding",
     siteName: "AIERT Ltd",
     locale: "en_GB",
     type: "website",
@@ -52,7 +52,7 @@ const techArticleJsonLd = {
   headline: "What to Do With a Leaver's Mailbox in Microsoft 365",
   description:
     "What happens to an Exchange Online mailbox when an employee leaves — retention, licensing cost, security risk, and how to close it out safely.",
-  url: "https://aiert.co.uk/mailbroom/webapp/employee-offboarding",
+  url: "https://business.mailbroom.app/employee-offboarding",
   publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
 };
 

@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Terms of Use – MailBroom for Business | AIERT Ltd",
   description: "Terms of Use for MailBroom for Business, the Microsoft 365 web app — licensing per company domain, Stripe billing, seat bands, and admin responsibilities.",
-  metadataBase: new URL("https://aiert.co.uk"),
+  metadataBase: new URL("https://business.mailbroom.app"),
 };
 
 const sections = [

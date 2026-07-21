@@ -11,11 +11,11 @@ export const metadata: Metadata = {
   description:
     "MailBroom for Business brings Smart Sweep, Storage Cleanup, and Power Search to Microsoft 365 and Exchange Online — right in the browser, no install needed. Licensed per company, not per person: once IT subscribes, every employee on that domain gets access automatically.",
   keywords: ["MailBroom", "MailBroom for Business", "email cleaner", "Microsoft 365", "Exchange Online", "IT admin", "inbox cleanup", "Graph API", "enterprise email"],
-  metadataBase: new URL("https://aiert.co.uk"),
+  metadataBase: new URL("https://business.mailbroom.app"),
   openGraph: {
     title: "MailBroom for Business – Inbox Cleanup for Microsoft 365",
     description: "Smart Sweep, Storage Cleanup, and Power Search for Microsoft 365 — no install, licensed per company domain.",
-    url: "https://aiert.co.uk/mailbroom/webapp",
+    url: "https://business.mailbroom.app",
     siteName: "AIERT Ltd",
     locale: "en_GB",
     type: "website",
@@ -70,14 +70,14 @@ const softwareApplicationJsonLd = {
   name: "MailBroom for Business",
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web",
-  url: "https://aiert.co.uk/mailbroom/webapp",
+  url: "https://business.mailbroom.app",
   description:
     "MailBroom for Business brings Smart Sweep, Storage Cleanup, and Power Search to Microsoft 365 and Exchange Online — right in the browser, no install needed.",
   offers: {
     "@type": "Offer",
     price: String(BANDS[0].amounts.gbp),
     priceCurrency: "GBP",
-    url: "https://aiert.co.uk/mailbroom/webapp#pricing",
+    url: "https://business.mailbroom.app#pricing",
   },
   publisher: {
     "@type": "Organization",

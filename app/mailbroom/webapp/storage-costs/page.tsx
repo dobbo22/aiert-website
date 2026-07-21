@@ -5,11 +5,11 @@ export const metadata: Metadata = {
   description:
     "What Microsoft actually charges once a mailbox outgrows its plan, and how to reduce Microsoft 365 storage costs — extra storage, archive overage, and how to avoid paying to store clutter you don't need.",
   keywords: ["reduce Microsoft 365 storage costs", "Microsoft 365 storage cost", "Exchange Online storage overage", "mailbox storage limit", "archive mailbox cost", "email storage pricing", "lower Exchange Online costs"],
-  metadataBase: new URL("https://aiert.co.uk"),
+  metadataBase: new URL("https://business.mailbroom.app"),
   openGraph: {
     title: "How to Reduce Microsoft 365 Storage Costs",
     description: "What Microsoft actually charges once a mailbox outgrows its plan, and how to bring the bill back down.",
-    url: "https://aiert.co.uk/mailbroom/webapp/storage-costs",
+    url: "https://business.mailbroom.app/storage-costs",
     siteName: "AIERT Ltd",
     locale: "en_GB",
     type: "website",
@@ -21,7 +21,7 @@ const articleJsonLd = {
   "@type": "Article",
   headline: "How to Reduce Microsoft 365 Storage Costs",
   description: "What Microsoft actually charges once a mailbox outgrows its plan, and how to reduce Microsoft 365 storage costs.",
-  url: "https://aiert.co.uk/mailbroom/webapp/storage-costs",
+  url: "https://business.mailbroom.app/storage-costs",
   publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
 };
 
