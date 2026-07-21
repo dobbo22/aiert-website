@@ -75,9 +75,9 @@ export default function MailBroomPage() {
           </a>
           <div className="hidden md:flex items-center gap-10 text-base text-mist">
             <a href="/" className="hover:text-white transition-colors font-medium">Home</a>
-            <a href="/mailbroom/webapp" className="hover:text-white transition-colors font-medium">For Business</a>
+            <a href="https://business.mailbroom.app" className="hover:text-white transition-colors font-medium">For Business</a>
             <a href="/#products" className="hover:text-white transition-colors font-medium">Products</a>
-            <a href="/blog" className="hover:text-white transition-colors font-medium">Blog</a>
+            <a href="https://aiert.co.uk/blog" className="hover:text-white transition-colors font-medium">Blog</a>
             <a href="/#contact" className="hover:text-white transition-colors font-medium">Contact</a>
           </div>
           <a
@@ -919,11 +919,12 @@ export default function MailBroomPage() {
               </div>
             </div>
             <div className="flex gap-6 text-sm text-mist flex-wrap justify-center">
-              <a href="/" className="hover:text-white transition-colors">AIERT Home</a>
+              <a href="https://aiert.co.uk" className="hover:text-white transition-colors">AIERT Home</a>
               <a href="https://sharequest.co.uk" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">ShareQuest</a>
               <a href="/#contact" className="hover:text-white transition-colors">Contact</a>
-              <a href="/mailbroom/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
-              <a href="/mailbroom/terms" className="hover:text-white transition-colors">Terms of Use</a>
+              <a href="/leaderboard" className="hover:text-white transition-colors">Leaderboard</a>
+              <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
+              <a href="/terms" className="hover:text-white transition-colors">Terms of Use</a>
             </div>
           </div>
           <div className="footer-divider mt-8 pt-8 text-center text-xs text-mist">

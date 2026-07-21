@@ -84,8 +84,8 @@ export default async function MailBroomLeaderboardPage() {
             </span>
           </a>
           <div className="hidden md:flex items-center gap-10 text-base text-mist">
-            <a href="/mailbroom/webapp" className="hover:text-white transition-colors font-medium">MailBroom for Business</a>
-            <a href="/mailbroom" className="hover:text-white transition-colors font-medium">MailBroom for iOS</a>
+            <a href="https://business.mailbroom.app" className="hover:text-white transition-colors font-medium">MailBroom for Business</a>
+            <a href="/" className="hover:text-white transition-colors font-medium">MailBroom for iOS</a>
           </div>
           <a href="https://app.mailbroom.app/sign-in" className="btn-gold px-6 py-3 rounded-full text-base hidden md:block">
             Sign in
@@ -171,9 +171,9 @@ export default async function MailBroomLeaderboardPage() {
               </div>
             </div>
             <div className="flex gap-6 text-sm text-mist flex-wrap justify-center">
-              <a href="/mailbroom/webapp" className="hover:text-white transition-colors">MailBroom for Business</a>
-              <a href="/mailbroom" className="hover:text-white transition-colors">MailBroom for iOS</a>
-              <a href="/" className="hover:text-white transition-colors">AIERT Home</a>
+              <a href="https://business.mailbroom.app" className="hover:text-white transition-colors">MailBroom for Business</a>
+              <a href="/" className="hover:text-white transition-colors">MailBroom for iOS</a>
+              <a href="https://aiert.co.uk" className="hover:text-white transition-colors">AIERT Home</a>
             </div>
           </div>
         </div>
