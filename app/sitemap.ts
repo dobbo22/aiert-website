@@ -23,6 +23,7 @@ const BUSINESS_ROUTES: Route[] = [
   { path: "/carbon-savings", priority: 0.5, changeFrequency: "monthly" },
   { path: "/gdpr", priority: 0.5, changeFrequency: "monthly" },
   { path: "/exchange-online-quotas", priority: 0.5, changeFrequency: "monthly" },
+  { path: "/audit-mailbox-storage", priority: 0.5, changeFrequency: "monthly" },
   { path: "/litigation-hold", priority: 0.5, changeFrequency: "monthly" },
   { path: "/security", priority: 0.6, changeFrequency: "monthly" },
   { path: "/sso", priority: 0.6, changeFrequency: "monthly" },

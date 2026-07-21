@@ -55,6 +55,7 @@ Licensed per organisation by seat band, not per user: 1-5 seats, 6-10, 11-25, 26
 - [Bulk deleting emails in Microsoft 365](https://business.mailbroom.app/bulk-delete-emails): admin-run PowerShell vs employee self-serve, and what's safe to bulk delete.
 - [The real cost of email storage](https://business.mailbroom.app/storage-costs): how Microsoft's per-GB storage pricing adds up over time.
 - [Exchange Online storage quotas by plan](https://business.mailbroom.app/exchange-online-quotas): how much storage each plan includes, what changed 1 July 2026, and the cost of going over.
+- [Audit mailbox storage across a tenant](https://business.mailbroom.app/audit-mailbox-storage): the two native ways (admin centre report, PowerShell) to find the biggest mailboxes before fixing them.
 - [M365 tenant-to-tenant migration and mailbox size](https://business.mailbroom.app/tenant-migration): what carries over in a tenant migration, and why mailbox size drives migration time and cost.
 - [How MSPs bill for M365 storage cleanup](https://business.mailbroom.app/msp-storage-billing): one-off project fees vs a recurring managed-service line item for mailbox storage remediation.
 - [Business case / ROI](https://business.mailbroom.app/roi): the IT-time and storage-cost case for adopting MailBroom company-wide.

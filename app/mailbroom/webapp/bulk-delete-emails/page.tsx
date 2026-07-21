@@ -37,6 +37,10 @@ const faqs = [
     q: "Does bulk deletion permanently remove the emails?",
     a: "Not immediately. Deleted items move to the Deleted Items folder (and from there, typically a recoverable-items store) before being permanently purged after Microsoft's retention window — so a bulk delete is recoverable for a period afterward, not instantly irreversible, unless a hard-delete/purge action is deliberately used.",
   },
+  {
+    q: "Is a custom PowerShell script safer than a purpose-built tool for ongoing bulk cleanup?",
+    a: "For a single one-off cleanup, a carefully written script is fine. The risk shows up over time: a script has to be maintained as Microsoft's PowerShell modules and Graph API change, re-tested against hold/retention edge cases, and re-run manually every time cleanup is needed again — none of which happens automatically the way it does with a maintained tool. For a recurring, company-wide need rather than a single cleanup, that ongoing maintenance burden is usually the deciding factor, not the initial script-writing effort.",
+  },
 ];
 
 const techArticleJsonLd = {
