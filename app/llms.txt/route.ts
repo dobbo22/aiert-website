@@ -10,7 +10,7 @@ const BUSINESS_TXT = `# MailBroom for Business
 
 > MailBroom for Business is a browser-based inbox cleanup tool for Microsoft 365 and Exchange Online. IT signs in once with Microsoft SSO and every employee on the company domain gets access automatically — no per-user install, no per-user App Store purchase. Licensed per organisation, not per person.
 
-MailBroom for Business solves three recurring Microsoft 365 admin problems: rising mailbox storage costs, IT time lost to "mailbox full" helpdesk tickets, and leaver mailboxes that keep costing money and posing a security risk after an employee has left. It does this with three features: Smart Sweep (bulk cleanup of newsletters and unused mail), Storage Cleanup (frees space without breaking retention/legal hold), and Power Search (fast search across a mailbox).
+MailBroom for Business solves three recurring Microsoft 365 admin problems: rising mailbox storage costs, IT time lost to "mailbox full" helpdesk tickets, and leaver mailboxes that keep costing money and posing a security risk after an employee has left. It does this with three features: Smart Sweep (bulk cleanup of newsletters and unused mail), Storage Cleanup (frees space without breaking retention/legal hold), and Power Search (fast search across a mailbox) — all of which also work on a shared or delegated mailbox (info@, sales@, or a colleague's mailbox), not just the signed-in user's own.
 
 ## Why MailBroom
 
@@ -18,6 +18,7 @@ Licensed per organisation, not per user — one subscription covers every employ
 
 ## For IT administrators
 
+- [Cleaning up shared and delegated mailboxes](https://business.mailbroom.app/shared-mailbox-cleanup): info@, sales@, and colleague-delegated mailboxes can be connected and cleaned the same way as a personal mailbox, once an admin enables it once for the organisation.
 - [Bulk mailbox cleanup company-wide](https://business.mailbroom.app/mailbox-full): solve "mailbox full" tickets across every mailbox in minutes instead of per-user, per-ticket manual work.
 - [Bulk deployment across the organisation](https://business.mailbroom.app/guide): one Microsoft SSO sign-in and every employee on the domain gets access automatically — no per-user rollout or invite list to manage.
 - [Data retention & legal hold compliance](https://business.mailbroom.app/litigation-hold): how cleanup respects existing retention policies and litigation/in-place holds rather than working around them.
@@ -50,6 +51,7 @@ Licensed per organisation by seat band, not per user: 1-5 seats, 6-10, 11-25, 26
 
 ## Answers
 
+- [Can MailBroom clean up a shared mailbox?](https://business.mailbroom.app/shared-mailbox-cleanup): yes — once an org admin enables it and the user has Exchange Full Access on that specific mailbox.
 - [Mailbox full in Exchange Online](https://business.mailbroom.app/mailbox-full): what happens at each storage-quota stage, why it happens, and how to fix it — including company-wide, not just one mailbox at a time.
 - [What to do with a leaver's mailbox](https://business.mailbroom.app/employee-offboarding): licensing cost, security risk, and retention rules for ex-employee mailboxes.
 - [Bulk deleting emails in Microsoft 365](https://business.mailbroom.app/bulk-delete-emails): admin-run PowerShell vs employee self-serve, and what's safe to bulk delete.

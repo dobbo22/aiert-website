@@ -20,6 +20,7 @@ const BUSINESS_ROUTES: Route[] = [
   { path: "/tenant-migration", priority: 0.6, changeFrequency: "monthly" },
   { path: "/msp-storage-billing", priority: 0.6, changeFrequency: "monthly" },
   { path: "/msp-onboarding", priority: 0.6, changeFrequency: "monthly" },
+  { path: "/shared-mailbox-cleanup", priority: 0.6, changeFrequency: "monthly" },
   { path: "/carbon-savings", priority: 0.5, changeFrequency: "monthly" },
   { path: "/gdpr", priority: 0.5, changeFrequency: "monthly" },
   { path: "/exchange-online-quotas", priority: 0.5, changeFrequency: "monthly" },

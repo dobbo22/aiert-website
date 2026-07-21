@@ -1,21 +1,22 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Deploying MailBroom Across Multiple Client Tenants | AIERT Ltd",
+  title: "Can MailBroom Clean Up a Shared Mailbox? | AIERT Ltd",
   description:
-    "How an MSP sets up MailBroom for Business for a client's Microsoft 365 tenant, and why it's configured per client rather than through one MSP-wide login.",
+    "Yes — MailBroom for Business can clean up a shared mailbox (info@, sales@) or a colleague's delegated mailbox, once your Microsoft 365 admin enables it. Here's exactly how it works.",
   keywords: [
-    "MSP deploy MailBroom client tenants",
-    "MSP onboarding Microsoft 365 tool",
-    "multi-tenant mailbox cleanup MSP",
-    "MSP client Microsoft 365 setup",
-    "IT service provider mailbox tool rollout",
+    "clean up shared mailbox Microsoft 365",
+    "shared mailbox full storage",
+    "delegated mailbox cleanup",
+    "info@ mailbox full",
+    "Exchange Online shared mailbox storage",
+    "MailBroom shared mailbox",
   ],
   metadataBase: new URL("https://business.mailbroom.app"),
   openGraph: {
-    title: "Deploying MailBroom Across Multiple Client Tenants",
-    description: "How an MSP sets up MailBroom for a client's M365 tenant, client by client.",
-    url: "https://business.mailbroom.app/msp-onboarding",
+    title: "Can MailBroom Clean Up a Shared Mailbox?",
+    description: "Yes, once your admin enables it — here's exactly how shared and delegated mailbox cleanup works.",
+    url: "https://business.mailbroom.app/shared-mailbox-cleanup",
     siteName: "AIERT Ltd",
     locale: "en_GB",
     type: "website",
@@ -24,29 +25,33 @@ export const metadata: Metadata = {
 
 const faqs = [
   {
-    q: "How does an MSP set up MailBroom for a client's Microsoft 365 tenant?",
-    a: "An admin (the MSP, or the client's own IT contact) signs in with Microsoft SSO against that specific client's tenant — the same Entra ID login already used for Microsoft 365. Once that's done, every employee on the client's domain gets access automatically, with no per-user invites to send.",
+    q: "Can MailBroom clean up a shared mailbox like info@ or sales@?",
+    a: "Yes. Any user with Exchange \"Full Access\" permission on a shared mailbox can connect it in MailBroom and run Smart Sweep, Storage Cleanup, or Power Search against it — the same way they clean their own mailbox, from the mailbox switcher in the top navigation.",
   },
   {
-    q: "Is there a single dashboard to manage MailBroom across every client tenant an MSP looks after?",
-    a: "No — MailBroom for Business is licensed and configured per organisation (per Microsoft 365 tenant), so an MSP sets it up separately for each client tenant rather than through one unified, MSP-wide login across all of them. In practice this means it's introduced client by client, not as a single all-or-nothing rollout.",
+    q: "What has to happen before we can connect a shared mailbox?",
+    a: "Two separate steps, both required. First, a one-time step: your organisation's Microsoft 365 admin enables shared mailbox access for the whole org from Admin → Shared Mailboxes — this grants a specific Microsoft permission (Mail.ReadWrite.Shared) and is off by default. Second, per mailbox: whoever wants to connect a shared mailbox needs real Exchange \"Full Access\" permission on it, granted by your admin in the Exchange admin centre, same as any other delegate access. MailBroom verifies this live before ever connecting a mailbox — it never assumes access.",
   },
   {
-    q: "Does onboarding a new client tenant take significant IT time?",
-    a: "The setup itself is a single Microsoft SSO sign-in per tenant, typically actioned within a business day — see the trial page for the exact process. The ongoing time saved is the point: once set up, employees clear their own mailboxes rather than raising tickets an MSP technician has to work by hand.",
+    q: "Does this also work for a colleague's individual mailbox, not just a shared mailbox?",
+    a: "Yes — the mechanism is identical. If a colleague has granted you delegate Full Access to their own mailbox (a common setup for an assistant managing someone's inbox), you can connect it the same way once your org has enabled shared mailbox access.",
   },
   {
-    q: "Can an MSP roll this out to some clients and not others?",
-    a: "Yes — since setup is per client tenant, an MSP can introduce it to one client at a time (e.g. starting with a client already hitting storage overage) rather than needing to commit across its whole client base upfront.",
+    q: "Is there a separate licence cost for a shared mailbox?",
+    a: "No — connecting a shared or delegated mailbox uses your own existing seat, not a separate one. This matches Microsoft's own model, where a shared mailbox up to 50GB needs no licence of its own.",
+  },
+  {
+    q: "Does cleaning a shared mailbox risk touching data it shouldn't?",
+    a: "No — every action is scoped to exactly the mailbox you've connected and been granted access to, re-verified on the server on every request, never trusted from what the browser sends. It's the same delegated-access model Exchange itself uses, not a separate broad-access credential.",
   },
 ];
 
 const techArticleJsonLd = {
   "@context": "https://schema.org",
   "@type": "TechArticle",
-  headline: "Deploying MailBroom Across Multiple Client Tenants",
-  description: "How an MSP sets up MailBroom for Business for a client's Microsoft 365 tenant, configured per client rather than through one MSP-wide login.",
-  url: "https://business.mailbroom.app/msp-onboarding",
+  headline: "Can MailBroom Clean Up a Shared Mailbox?",
+  description: "How MailBroom for Business supports cleaning up shared and delegated mailboxes, once an org admin enables it.",
+  url: "https://business.mailbroom.app/shared-mailbox-cleanup",
   publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
 };
 
@@ -60,7 +65,7 @@ const faqJsonLd = {
   })),
 };
 
-export default function MspOnboardingPage() {
+export default function SharedMailboxCleanupPage() {
   return (
     <div className="min-h-screen hero-gradient grid-bg">
       <script
@@ -83,8 +88,8 @@ export default function MspOnboardingPage() {
           </a>
           <div className="hidden md:flex items-center gap-10 text-base text-cloud">
             <a href="/" className="hover:text-white transition-colors font-medium">MailBroom for Business</a>
-            <a href="/msp-storage-billing" className="hover:text-white transition-colors font-medium">MSP Billing</a>
-            <a href="/tenant-migration" className="hover:text-white transition-colors font-medium">Tenant Migration</a>
+            <a href="/mailbox-full" className="hover:text-white transition-colors font-medium">Mailbox Full</a>
+            <a href="/msp-onboarding" className="hover:text-white transition-colors font-medium">For MSPs</a>
           </div>
           <a
             href="/trial"
@@ -99,50 +104,58 @@ export default function MspOnboardingPage() {
       <section className="max-w-4xl mx-auto px-6 pt-24 pb-16 text-center">
         <div className="badge-live inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium mb-6">
           <span className="w-2 h-2 rounded-full bg-gold animate-pulse inline-block" />
-          For MSPs · Microsoft 365
+          Microsoft 365 · Shared &amp; Delegated Mailboxes
         </div>
         <h1 className="text-4xl md:text-5xl font-black tracking-tight leading-tight mb-6 text-cloud">
-          One client tenant <span className="gold-text">at a time.</span>
+          Yes — <span className="gold-text">shared mailboxes too.</span>
         </h1>
         <p className="text-lg text-cloud leading-relaxed max-w-2xl mx-auto">
-          How MSPs actually set up MailBroom for a client's Microsoft 365 tenant — a single SSO
-          sign-in per client, not a unified dashboard across every client at once.
+          info@, sales@, and any mailbox delegated to you fill up too, but nobody &ldquo;owns&rdquo; them
+          the way a personal inbox is owned. Here&apos;s exactly how MailBroom cleans them up.
         </p>
       </section>
 
-      {/* ── HOW SETUP WORKS ──────────────────────────────── */}
+      {/* ── TWO STEPS ────────────────────────────────────── */}
       <section className="section-dark py-20">
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center mb-12">
-            <p className="text-xs font-semibold uppercase tracking-widest mb-4 text-teal">Per-tenant setup</p>
-            <h2 className="text-4xl font-black text-cloud">Configured client by client</h2>
+            <p className="text-xs font-semibold uppercase tracking-widest mb-4 text-teal">Two steps, both required</p>
+            <h2 className="text-4xl font-black text-cloud">Org-level, then per mailbox</h2>
           </div>
-          <div className="space-y-6">
+          <div className="grid sm:grid-cols-2 gap-6">
             <div className="card-glass rounded-2xl p-8">
-              <h3 className="font-bold text-cloud text-lg mb-2">Sign in against that client's tenant</h3>
+              <h3 className="font-bold text-cloud text-lg mb-2">1. Admin enables it, once</h3>
               <p className="text-sm text-cloud leading-relaxed">
-                An admin signs in with Microsoft SSO against the specific client tenant being
-                onboarded — the same Entra ID login already used for that client's Microsoft 365.
+                A one-time step from Admin → Shared Mailboxes, off by default. Grants a specific
+                Microsoft permission for the whole organisation — after this, no further admin
+                action is needed per mailbox.
               </p>
             </div>
             <div className="card-glass rounded-2xl p-8">
-              <h3 className="font-bold text-cloud text-lg mb-2">Every employee gets access automatically</h3>
+              <h3 className="font-bold text-cloud text-lg mb-2">2. Full Access, per mailbox</h3>
               <p className="text-sm text-cloud leading-relaxed">
-                Once that sign-in is done, any employee on the client's domain gets MailBroom access
-                automatically — no per-user invites to send, no individual App Store installs to
-                manage.
-              </p>
-            </div>
-            <div className="card-glass rounded-2xl p-8">
-              <h3 className="font-bold text-cloud text-lg mb-2">No cross-client dashboard, by design</h3>
-              <p className="text-sm text-cloud leading-relaxed">
-                MailBroom for Business is licensed per organisation, so there's no single login that
-                spans every client tenant an MSP manages — each client is set up on its own. In
-                practice that means an MSP can roll it out to one client at a time rather than
-                committing to every client at once.
+                Whoever connects a specific shared mailbox needs real Exchange Full Access on it,
+                granted by an admin in the Exchange admin centre — the exact same permission that
+                already governs who can open that mailbox in Outlook.
               </p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ── HOW IT WORKS ─────────────────────────────────── */}
+      <section className="max-w-4xl mx-auto px-6 py-20">
+        <div className="text-center mb-12">
+          <p className="text-xs font-semibold uppercase tracking-widest mb-4 text-gold">In practice</p>
+          <h2 className="text-4xl font-black text-cloud">Switch mailboxes, clean up the same way</h2>
+        </div>
+        <div className="card-glass rounded-2xl p-8">
+          <p className="text-sm text-cloud leading-relaxed">
+            Once enabled, connect a shared mailbox from the mailbox switcher in the top navigation —
+            MailBroom verifies your access live before connecting it, never assumes. From there,
+            Smart Sweep, Storage Cleanup, and Power Search all work exactly the same as they do on
+            your own mailbox, scoped to only that mailbox and re-checked on every action.
+          </p>
         </div>
       </section>
 
@@ -165,11 +178,10 @@ export default function MspOnboardingPage() {
       {/* ── CTA ────────────────────────────────────────── */}
       <section className="max-w-4xl mx-auto px-6 py-24 text-center">
         <h2 className="text-3xl md:text-4xl font-black text-cloud mb-6">
-          Start with <span className="gold-text">one client tenant.</span>
+          Not just your inbox — <span className="gold-text">every inbox that matters.</span>
         </h2>
         <p className="text-cloud mb-8 max-w-xl mx-auto">
-          A 30-day IT assessment costs nothing and needs no card — just that client's own
-          Microsoft 365 tenant.
+          A 30-day IT assessment costs nothing and needs no card — just your own Microsoft 365 tenant.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <a
@@ -179,10 +191,10 @@ export default function MspOnboardingPage() {
             <span>🧪</span> Start Your Free IT Assessment
           </a>
           <a
-            href="/msp-storage-billing"
+            href="/msp-onboarding"
             className="btn-outline px-10 py-5 rounded-full text-lg inline-flex items-center gap-3 justify-center"
           >
-            How to Bill For It
+            Read About MSP Rollouts
           </a>
         </div>
       </section>
@@ -202,9 +214,8 @@ export default function MspOnboardingPage() {
             </div>
             <div className="flex gap-6 text-sm text-cloud flex-wrap justify-center">
               <a href="/" className="hover:text-white transition-colors">MailBroom for Business</a>
-              <a href="/msp-storage-billing" className="hover:text-white transition-colors">MSP Billing</a>
-              <a href="/tenant-migration" className="hover:text-white transition-colors">Tenant Migration</a>
-              <a href="/shared-mailbox-cleanup" className="hover:text-white transition-colors">Shared Mailboxes</a>
+              <a href="/mailbox-full" className="hover:text-white transition-colors">Mailbox Full</a>
+              <a href="/msp-onboarding" className="hover:text-white transition-colors">For MSPs</a>
               <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
               <a href="/terms" className="hover:text-white transition-colors">Terms of Use</a>
             </div>

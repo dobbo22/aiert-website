@@ -279,6 +279,7 @@ export default function MailboxFullPage() {
               <a href="/mailbroom/webapp/tenant-migration" className="hover:text-white transition-colors">Tenant Migration</a>
               <a href="/mailbroom/webapp/exchange-online-quotas" className="hover:text-white transition-colors">Storage Quotas</a>
               <a href="/mailbroom/webapp/audit-mailbox-storage" className="hover:text-white transition-colors">Audit Storage</a>
+              <a href="/mailbroom/webapp/shared-mailbox-cleanup" className="hover:text-white transition-colors">Shared Mailboxes</a>
               <a href="/mailbroom/webapp/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
               <a href="/mailbroom/webapp/terms" className="hover:text-white transition-colors">Terms of Use</a>
             </div>
