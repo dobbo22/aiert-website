@@ -252,10 +252,11 @@ export default function MailBroomVsCleanEmailPage() {
           </div>
           <ul className="space-y-3 mt-2">
             {[
-              "Choose Clean Email if your team is on mixed email providers (not just Microsoft 365) and you're comfortable buying and distributing account access yourself.",
-              "Choose MailBroom for Business if you're an M365/Exchange Online shop and want one admin sign-in to cover the whole company automatically, including shared and delegated mailboxes, with transparent per-seat-band pricing.",
-            ].map((item) => (
-              <li key={item} className="flex items-start gap-3 text-sm text-mist">
+              <>Choose Clean Email if your team is on mixed email providers (not just Microsoft 365) and you&apos;re comfortable buying and distributing account access yourself.</>,
+              <>Choose MailBroom for Business if you&apos;re an M365/Exchange Online shop and want one admin sign-in to cover the whole company automatically, including shared and delegated mailboxes, with transparent per-seat-band pricing.</>,
+              <>Neither, if you&apos;re not buying for a company at all — just cleaning up your own personal inbox — see <a href="https://ios.mailbroom.app" className="text-gold font-semibold hover:opacity-80 transition-opacity">MailBroom for iOS</a> on the App Store instead, built for exactly that.</>,
+            ].map((item, i) => (
+              <li key={i} className="flex items-start gap-3 text-sm text-mist">
                 <span className="mt-0.5 flex-shrink-0 text-gold">✓</span>
                 <span>{item}</span>
               </li>

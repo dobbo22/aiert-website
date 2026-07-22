@@ -216,6 +216,9 @@ export default function MailBroomVsBitRecoverPage() {
           <p className="text-mist leading-relaxed">
             BitRecover&apos;s tool clearly works for the specific job of one-off bulk purges, and its filtering options (date range, subject, sender) are comparable to what MailBroom offers. But for an IT admin thinking about ongoing, company-wide mailbox hygiene rather than a single one-time purge, the access model is the deciding factor: a tool that needs a password every time it runs is a standing security decision each time, not a one-time setup you configure once and trust.
           </p>
+          <p className="text-mist leading-relaxed">
+            And if this isn&apos;t a company-wide M365 deployment at all — just cleaning up your own personal inbox — neither tool is really the right fit; see <a href="https://ios.mailbroom.app" className="text-gold font-semibold hover:opacity-80 transition-opacity">MailBroom for iOS</a> on the App Store instead.
+          </p>
         </div>
 
         {/* FAQ */}

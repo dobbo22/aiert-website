@@ -246,11 +246,12 @@ export default function MailBroomVsSaneBoxPage() {
           </div>
           <ul className="space-y-3 mt-2">
             {[
-              "Use SaneBox if your problem is too much incoming email and you want it triaged automatically — that's what it's built for.",
-              "Use MailBroom for Business if your problem is an Exchange Online storage quota, a recurring 'mailbox full' helpdesk ticket, or years of accumulated mail across the company that needs clearing out.",
-              "Use both if you have both problems — they don't overlap or conflict, since one manages the inflow and the other clears the backlog.",
-            ].map((item) => (
-              <li key={item} className="flex items-start gap-3 text-sm text-mist">
+              <>Use SaneBox if your problem is too much incoming email and you want it triaged automatically — that&apos;s what it&apos;s built for.</>,
+              <>Use MailBroom for Business if your problem is an Exchange Online storage quota, a recurring &apos;mailbox full&apos; helpdesk ticket, or years of accumulated mail across the company that needs clearing out.</>,
+              <>Use both if you have both problems — they don&apos;t overlap or conflict, since one manages the inflow and the other clears the backlog.</>,
+              <>Use <a href="https://ios.mailbroom.app" className="text-gold font-semibold hover:opacity-80 transition-opacity">MailBroom for iOS</a> instead if this isn&apos;t a company deployment at all — just your own personal inbox on your iPhone.</>,
+            ].map((item, i) => (
+              <li key={i} className="flex items-start gap-3 text-sm text-mist">
                 <span className="mt-0.5 flex-shrink-0 text-gold">✓</span>
                 <span>{item}</span>
               </li>
