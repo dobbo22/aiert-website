@@ -18,6 +18,18 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "hidden-drain-on-your-business",
+    date: "22 July 2026",
+    readTime: "8 min read",
+    icon: "🕵️",
+    tag: "Business Case",
+    tagColor: "text-teal",
+    tagBg: "bg-teal/10 border-teal/20",
+    title: "The Hidden Drain on Your Business",
+    excerpt: "Email clutter costs time, storage budget, and carbon footprint. How MailBroom turns your inbox from a cost centre into an efficiency engine — and what a real ROI case actually looks like.",
+    author: "Martin Dobson",
+  },
+  {
     slug: "mailbroom-vs-clean-email",
     date: "22 July 2026",
     readTime: "7 min read",

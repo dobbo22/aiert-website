@@ -49,6 +49,10 @@ The three main ROI drivers: IT time saved on "mailbox full" helpdesk tickets (on
 
 Licensed per organisation by seat band, not per user: 1-5 seats, 6-10, 11-25, 26-50, and 51-100, each a flat monthly price (see https://business.mailbroom.app/trial for current rates by band). 101+ seats is custom-quoted. A 30-day evaluation is available with no payment details required.
 
+## Blog
+
+- [The Hidden Drain on Your Business](https://business.mailbroom.app/blog/hidden-drain-on-your-business): the time, storage, and carbon cost of a dirty inbox, and why a real ROI case is calculated from your own numbers rather than a generic table.
+
 ## Comparisons
 
 - [MailBroom vs Clean Email](https://business.mailbroom.app/blog/mailbroom-vs-clean-email): the closest personal-cleanup competitor — Clean Email is priced per personal account bundle and scored 1/5 for team fit by an independent review; MailBroom is licensed per organisation via Microsoft SSO.

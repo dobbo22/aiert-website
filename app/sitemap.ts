@@ -34,6 +34,7 @@ const BUSINESS_ROUTES: Route[] = [
   { path: "/privacy", priority: 0.3, changeFrequency: "yearly" },
   { path: "/terms", priority: 0.3, changeFrequency: "yearly" },
   { path: "/blog", priority: 0.6, changeFrequency: "weekly" },
+  { path: "/blog/hidden-drain-on-your-business", priority: 0.6, changeFrequency: "monthly" },
   { path: "/blog/mailbroom-vs-clean-email", priority: 0.6, changeFrequency: "monthly" },
   { path: "/blog/mailbroom-vs-sanebox", priority: 0.6, changeFrequency: "monthly" },
   { path: "/blog/mailbroom-vs-bitrecover", priority: 0.6, changeFrequency: "monthly" },
