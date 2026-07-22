@@ -24,7 +24,7 @@ const faqs = [
   },
   {
     q: "How does MailBroom access a mailbox instead?",
-    a: "Through Microsoft Entra ID sign-in (Microsoft SSO) and the Microsoft Graph API. MailBroom never sees or stores a password — it receives a scoped, revocable access token that only grants the specific permissions needed, and that access can be revoked at any time via the organization's own Microsoft admin settings, independent of MailBroom.",
+    a: "Through Microsoft Entra ID sign-in (Microsoft SSO) and the Microsoft Graph API. MailBroom never sees or stores a password — it receives a scoped, revocable access token that only grants the specific permissions needed, and that access can be revoked at any time via the organisation's own Microsoft admin settings, independent of MailBroom.",
   },
   {
     q: "Why does the credential-vs-SSO difference matter for an IT admin?",
@@ -80,7 +80,7 @@ export default function MailBroomVsBitRecoverPage() {
       </nav>
 
       {/* ── ARTICLE HEADER ──────────────────────────────── */}
-      <section className="max-w-3xl mx-auto px-6 pt-20 pb-10">
+      <section className="max-w-4xl mx-auto px-6 pt-20 pb-10">
         <a href="/blog" className="inline-flex items-center gap-2 text-gold text-sm font-medium mb-8 hover:opacity-80 transition-opacity">
           ← Back to Blog
         </a>
@@ -97,7 +97,7 @@ export default function MailBroomVsBitRecoverPage() {
       </section>
 
       {/* ── ARTICLE BODY ────────────────────────────────── */}
-      <section className="max-w-3xl mx-auto px-6 pb-16 space-y-8">
+      <section className="max-w-4xl mx-auto px-6 pb-16 space-y-8">
 
         <div className="card-glass rounded-2xl p-8 space-y-5 text-mist leading-relaxed">
           <p>
@@ -118,7 +118,7 @@ export default function MailBroomVsBitRecoverPage() {
             When a tool asks for an email and password directly, it's holding a credential that can do anything that account can do — not just what the cleanup tool needs. If it's an admin account (as BitRecover&apos;s admin mode requires for bulk operation across multiple mailboxes), that's an admin-level credential sitting inside a third-party tool.
           </p>
           <p className="text-mist leading-relaxed">
-            MailBroom instead signs in via Microsoft Entra ID and receives a scoped Microsoft Graph API access token — permissioned to exactly what mailbox cleanup requires, nothing more, and revocable at any time from the organization&apos;s own Microsoft admin settings, independent of MailBroom itself. There&apos;s no password to leak, phish, or rotate.
+            MailBroom instead signs in via Microsoft Entra ID and receives a scoped Microsoft Graph API access token — permissioned to exactly what mailbox cleanup requires, nothing more, and revocable at any time from the organisation&apos;s own Microsoft admin settings, independent of MailBroom itself. There&apos;s no password to leak, phish, or rotate.
           </p>
         </div>
 
@@ -160,7 +160,7 @@ export default function MailBroomVsBitRecoverPage() {
                 </tr>
                 <tr>
                   <td className="py-3 pr-4 font-medium text-cloud">Licensing</td>
-                  <td className="py-3 pr-4">Per organization, by seat band</td>
+                  <td className="py-3 pr-4">Per organisation, by seat band</td>
                   <td className="py-3">Not published on-site</td>
                 </tr>
               </tbody>
@@ -251,7 +251,7 @@ export default function MailBroomVsBitRecoverPage() {
 
       {/* ── CTA ─────────────────────────────────────────── */}
       <section className="section-dark py-20">
-        <div className="max-w-3xl mx-auto px-6 text-center">
+        <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-3xl font-black text-cloud mb-4">
             Clean up mailboxes without <span className="gold-text">handing over passwords.</span>
           </h2>

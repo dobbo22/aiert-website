@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 const faqs = [
   {
     q: "What exactly does MailBroom for Business do?",
-    a: "It's a bulk mailbox cleanup and storage-remediation tool for Microsoft 365 and Exchange Online. Smart Sweep bulk-deletes or unsubscribes from newsletters and unused mail; Storage Cleanup frees space by age bracket or sender domain; Power Search finds and bulk-acts on specific mail. It's licensed once per organization via Microsoft SSO, and works on shared/delegated mailboxes as well as personal ones.",
+    a: "It's a bulk mailbox cleanup and storage-remediation tool for Microsoft 365 and Exchange Online. Smart Sweep bulk-deletes or unsubscribes from newsletters and unused mail; Storage Cleanup frees space by age bracket or sender domain; Power Search finds and bulk-acts on specific mail. It's licensed once per organisation via Microsoft SSO, and works on shared/delegated mailboxes as well as personal ones.",
   },
   {
     q: "Is MailBroom a team inbox or customer service platform?",
@@ -79,7 +79,7 @@ const categories = [
   },
   {
     icon: "✉️",
-    name: "Email clients & organizing add-ins",
+    name: "Email clients & organising add-ins",
     examples: "Spark, Tatem, ClearContext, and similar tools",
     job: "Replace how you read and compose email day to day, or file it into projects and tasks — priority inboxes, shortcuts, writing tools, project-based filing.",
     verdict: "Not MailBroom's job. MailBroom works in the background via Microsoft Graph API — keep using whatever client you already have. These organize; they don't delete or free storage.",
@@ -111,7 +111,7 @@ const categories = [
     name: "Personal bulk cleanup",
     examples: "Clean Email, Mailstrom, AgainstData, and similar tools",
     job: "Bulk-organize, unsubscribe, and mass-delete, built around individual/shared personal accounts rather than company-wide licensing.",
-    verdict: "The closest overlap. See our full comparison with Clean Email — the real difference is organization-wide licensing vs. personal account bundles.",
+    verdict: "The closest overlap. See our full comparison with Clean Email — the real difference is organisation-wide licensing vs. personal account bundles.",
     link: "/blog/mailbroom-vs-clean-email",
   },
   {
@@ -146,7 +146,7 @@ export default function HowMailBroomIsDifferentPage() {
       </nav>
 
       {/* ── ARTICLE HEADER ──────────────────────────────── */}
-      <section className="max-w-3xl mx-auto px-6 pt-20 pb-10">
+      <section className="max-w-4xl mx-auto px-6 pt-20 pb-10">
         <a href="/blog" className="inline-flex items-center gap-2 text-teal text-sm font-medium mb-8 hover:opacity-80 transition-opacity">
           ← Back to Blog
         </a>
@@ -163,14 +163,14 @@ export default function HowMailBroomIsDifferentPage() {
       </section>
 
       {/* ── ARTICLE BODY ────────────────────────────────── */}
-      <section className="max-w-3xl mx-auto px-6 pb-16 space-y-8">
+      <section className="max-w-4xl mx-auto px-6 pb-16 space-y-8">
 
         <div className="card-glass rounded-2xl p-8 space-y-5 text-mist leading-relaxed">
           <p>
             &quot;Email tool&quot; covers a lot of ground — team inboxes, CRMs, clients, hosting, archiving, filtering, and cleanup are all different jobs that happen to touch the same inbox. Being clear about which job MailBroom does is more useful to a prospective buyer than a vague claim of being better than everything.
           </p>
           <p>
-            <strong className="text-cloud">MailBroom for Business does exactly one job: bulk mailbox cleanup and storage remediation for Microsoft 365 and Exchange Online, licensed per organization.</strong> Here&apos;s how that maps against the other categories people sometimes confuse it with.
+            <strong className="text-cloud">MailBroom for Business does exactly one job: bulk mailbox cleanup and storage remediation for Microsoft 365 and Exchange Online, licensed per organisation.</strong> Here&apos;s how that maps against the other categories people sometimes confuse it with.
           </p>
         </div>
 
@@ -210,7 +210,7 @@ export default function HowMailBroomIsDifferentPage() {
               "Smart Sweep — bulk-delete or unsubscribe from newsletters and unused mail, grouped and ranked by sender volume",
               "Storage Cleanup — free space by age bracket or sender domain without breaking retention policy or legal hold",
               "Power Search — find and bulk-act on specific mail across folders",
-              "Licensed per organization, not per person — one Microsoft SSO sign-in covers every employee on the company domain automatically",
+              "Licensed per organisation, not per person — one Microsoft SSO sign-in covers every employee on the company domain automatically",
               "Works on shared and delegated mailboxes (info@, sales@, a colleague's mailbox), not just the signed-in user's own",
             ].map((item) => (
               <li key={item} className="flex items-start gap-3 text-sm text-mist">
@@ -254,7 +254,7 @@ export default function HowMailBroomIsDifferentPage() {
 
       {/* ── CTA ─────────────────────────────────────────── */}
       <section className="section-dark py-20">
-        <div className="max-w-3xl mx-auto px-6 text-center">
+        <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-3xl font-black text-cloud mb-4">
             If your problem is <span className="gold-text">mailbox storage,</span> you're in the right place.
           </h2>

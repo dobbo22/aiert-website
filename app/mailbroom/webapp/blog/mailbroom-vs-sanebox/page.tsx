@@ -80,7 +80,7 @@ export default function MailBroomVsSaneBoxPage() {
       </nav>
 
       {/* ── ARTICLE HEADER ──────────────────────────────── */}
-      <section className="max-w-3xl mx-auto px-6 pt-20 pb-10">
+      <section className="max-w-4xl mx-auto px-6 pt-20 pb-10">
         <a href="/blog" className="inline-flex items-center gap-2 text-gold text-sm font-medium mb-8 hover:opacity-80 transition-opacity">
           ← Back to Blog
         </a>
@@ -97,7 +97,7 @@ export default function MailBroomVsSaneBoxPage() {
       </section>
 
       {/* ── ARTICLE BODY ────────────────────────────────── */}
-      <section className="max-w-3xl mx-auto px-6 pb-16 space-y-8">
+      <section className="max-w-4xl mx-auto px-6 pb-16 space-y-8">
 
         <div className="card-glass rounded-2xl p-8 space-y-5 text-mist leading-relaxed">
           <p>
@@ -166,7 +166,7 @@ export default function MailBroomVsSaneBoxPage() {
                 </tr>
                 <tr className="border-b border-white/5">
                   <td className="py-3 pr-4 font-medium text-cloud">Company-wide licensing</td>
-                  <td className="py-3 pr-4">Per organization, via SSO</td>
+                  <td className="py-3 pr-4">Per organisation, via SSO</td>
                   <td className="py-3">Per individual account — ~$4.92/user/month per TheBusinessDive, no free plan</td>
                 </tr>
                 <tr className="border-b border-white/5">
@@ -291,7 +291,7 @@ export default function MailBroomVsSaneBoxPage() {
 
       {/* ── CTA ─────────────────────────────────────────── */}
       <section className="section-dark py-20">
-        <div className="max-w-3xl mx-auto px-6 text-center">
+        <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-3xl font-black text-cloud mb-4">
             Got the &quot;mailbox full&quot; problem, <span className="gold-text">not the inbox-overload problem?</span>
           </h2>

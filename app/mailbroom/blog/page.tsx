@@ -63,7 +63,7 @@ export default function BlogPage() {
       </nav>
 
       {/* ── HEADER ──────────────────────────────────────── */}
-      <section className="max-w-3xl mx-auto px-6 pt-20 pb-12 text-center">
+      <section className="max-w-4xl mx-auto px-6 pt-20 pb-12 text-center">
         <div className="text-5xl mb-6">✍️</div>
         <h1 className="text-4xl md:text-5xl font-black tracking-tight text-cloud mb-4">
           Blog
@@ -74,7 +74,7 @@ export default function BlogPage() {
       </section>
 
       {/* ── POSTS ───────────────────────────────────────── */}
-      <section className="max-w-3xl mx-auto px-6 pb-24 space-y-6">
+      <section className="max-w-4xl mx-auto px-6 pb-24 space-y-6">
         {posts.map((post) => (
           <a
             key={post.slug}

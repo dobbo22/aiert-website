@@ -62,7 +62,7 @@ const posts = [
     tagColor: "text-gold",
     tagBg: "bg-gold/10 border-gold/20",
     title: "Mailbox Cleanup Tool Cost Comparison",
-    excerpt: "How MailBroom's per-organization pricing compares to Clean Email, SaneBox, and BitRecover's per-account or unpublished pricing.",
+    excerpt: "How MailBroom's per-organisation pricing compares to Clean Email, SaneBox, and BitRecover's per-account or unpublished pricing.",
     author: "Martin Dobson",
   },
   {
@@ -107,7 +107,7 @@ export default function BusinessBlogPage() {
       </nav>
 
       {/* ── HEADER ──────────────────────────────────────── */}
-      <section className="max-w-3xl mx-auto px-6 pt-20 pb-12 text-center">
+      <section className="max-w-4xl mx-auto px-6 pt-20 pb-12 text-center">
         <div className="badge-live inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium mb-6">
           <span className="w-2 h-2 rounded-full bg-gold animate-pulse inline-block" />
           MailBroom for Business
@@ -121,7 +121,7 @@ export default function BusinessBlogPage() {
       </section>
 
       {/* ── POSTS ───────────────────────────────────────── */}
-      <section className="max-w-3xl mx-auto px-6 pb-24 space-y-6">
+      <section className="max-w-4xl mx-auto px-6 pb-24 space-y-6">
         {posts.map((post) => (
           <a
             key={post.slug}

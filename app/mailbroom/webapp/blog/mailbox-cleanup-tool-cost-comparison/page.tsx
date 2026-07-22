@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Mailbox Cleanup Tool Cost Comparison: MailBroom vs the Alternatives | AIERT Ltd",
-  description: "How MailBroom for Business's per-organization pricing compares to Clean Email, SaneBox, and BitRecover's per-account or unpublished pricing — what each actually costs to deploy company-wide.",
+  description: "How MailBroom for Business's per-organisation pricing compares to Clean Email, SaneBox, and BitRecover's per-account or unpublished pricing — what each actually costs to deploy company-wide.",
   keywords: ["mailbox cleanup tool pricing comparison", "MailBroom pricing", "Clean Email pricing", "SaneBox pricing", "M365 cleanup tool cost", "company-wide email cleanup cost"],
   metadataBase: new URL("https://business.mailbroom.app"),
   alternates: { canonical: "/blog/mailbox-cleanup-tool-cost-comparison" },
   openGraph: {
     title: "Mailbox Cleanup Tool Cost Comparison: MailBroom vs the Alternatives",
-    description: "What each tool actually costs to deploy company-wide — per-organization vs per-account vs unpublished pricing.",
+    description: "What each tool actually costs to deploy company-wide — per-organisation vs per-account vs unpublished pricing.",
     url: "https://business.mailbroom.app/blog/mailbox-cleanup-tool-cost-comparison",
     siteName: "AIERT Ltd",
     locale: "en_GB",
@@ -20,11 +20,11 @@ export const metadata: Metadata = {
 const faqs = [
   {
     q: "Why doesn't this comparison show exact competitor prices?",
-    a: "Because most of them don't publish exact prices for company-wide use. Clean Email sells personal account bundles (1/5/10 accounts) and directs organizations to 'contact us for a quote.' SaneBox publishes individual-tier pricing (named Snack/Lunch/Business plans) but no per-organization rate. BitRecover doesn't publish pricing on its own site at all. MailBroom is the only one with a full published price list by seat band — that transparency is itself part of the comparison.",
+    a: "Because most of them don't publish exact prices for company-wide use. Clean Email sells personal account bundles (1/5/10 accounts) and directs organisations to 'contact us for a quote.' SaneBox publishes individual-tier pricing (named Snack/Lunch/Business plans) but no per-organisation rate. BitRecover doesn't publish pricing on its own site at all. MailBroom is the only one with a full published price list by seat band — that transparency is itself part of the comparison.",
   },
   {
-    q: "What does 'per-organization' pricing actually save an IT admin?",
-    a: "Time and predictability. With per-account or per-seat tools, someone has to track who has a license, provision new starters, and de-provision leavers. With MailBroom's per-organization licensing, one subscription covers every employee on the company's Microsoft domain automatically via SSO — there's no seat count to manage as headcount changes within a seat band.",
+    q: "What does 'per-organisation' pricing actually save an IT admin?",
+    a: "Time and predictability. With per-account or per-seat tools, someone has to track who has a licence, provision new starters, and de-provision leavers. With MailBroom's per-organisation licensing, one subscription covers every employee on the company's Microsoft domain automatically via SSO — there's no seat count to manage as headcount changes within a seat band.",
   },
   {
     q: "Is the cheapest tool always the best value?",
@@ -36,7 +36,7 @@ const techArticleJsonLd = {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
   headline: "Mailbox Cleanup Tool Cost Comparison: MailBroom vs the Alternatives",
-  description: "What each tool actually costs to deploy company-wide — per-organization vs per-account vs unpublished pricing.",
+  description: "What each tool actually costs to deploy company-wide — per-organisation vs per-account vs unpublished pricing.",
   url: "https://business.mailbroom.app/blog/mailbox-cleanup-tool-cost-comparison",
   datePublished: "2026-07-22",
   dateModified: "2026-07-22",
@@ -57,7 +57,7 @@ const faqJsonLd = {
 const rows = [
   {
     name: "MailBroom for Business",
-    model: "Per organization, by seat band",
+    model: "Per organisation, by seat band",
     published: "Yes — flat monthly price, 5 published bands (1–5 through 51–100 seats), custom quote above 100",
     headcountHandling: "Automatic — one SSO sign-in covers the whole domain; no per-person provisioning",
     link: "/trial",
@@ -67,7 +67,7 @@ const rows = [
   {
     name: "Clean Email",
     model: "Per-account bundles (1 / 5 / 10 accounts)",
-    published: "~€11.99–35.99/mo per account bundle (per TheBusinessDive); organizational pricing is quote-only",
+    published: "~€11.99–35.99/mo per account bundle (per TheBusinessDive); organisational pricing is quote-only",
     headcountHandling: "Manual — buy and share individual account access; scored 1/5 for team fit by TheBusinessDive",
     link: "/blog/mailbroom-vs-clean-email",
     linkLabel: "Full comparison →",
@@ -75,7 +75,7 @@ const rows = [
   {
     name: "SaneBox",
     model: "Named individual plans (Snack / Lunch / Business)",
-    published: "~$4.92/user/month (per TheBusinessDive), no free plan; no per-organization rate published",
+    published: "~$4.92/user/month (per TheBusinessDive), no free plan; no per-organisation rate published",
     headcountHandling: "Manual — per-account subscriptions; TheBusinessDive lists teams as \"not ideal for\"",
     link: "/blog/mailbroom-vs-sanebox",
     linkLabel: "Full comparison →",
@@ -112,7 +112,7 @@ export default function CostComparisonPage() {
       </nav>
 
       {/* ── ARTICLE HEADER ──────────────────────────────── */}
-      <section className="max-w-3xl mx-auto px-6 pt-20 pb-10">
+      <section className="max-w-4xl mx-auto px-6 pt-20 pb-10">
         <a href="/blog" className="inline-flex items-center gap-2 text-gold text-sm font-medium mb-8 hover:opacity-80 transition-opacity">
           ← Back to Blog
         </a>
@@ -129,11 +129,11 @@ export default function CostComparisonPage() {
       </section>
 
       {/* ── ARTICLE BODY ────────────────────────────────── */}
-      <section className="max-w-3xl mx-auto px-6 pb-16 space-y-8">
+      <section className="max-w-4xl mx-auto px-6 pb-16 space-y-8">
 
         <div className="card-glass rounded-2xl p-8 space-y-5 text-mist leading-relaxed">
           <p>
-            Comparing prices across mailbox cleanup tools is harder than it should be — because most of them don&apos;t publish company-wide pricing at all. This isn&apos;t a like-for-like price table so much as an honest map of <strong className="text-cloud">what pricing model each tool actually uses</strong>, since that determines the real cost of rolling it out to a whole organization far more than any single published number does.
+            Comparing prices across mailbox cleanup tools is harder than it should be — because most of them don&apos;t publish company-wide pricing at all. This isn&apos;t a like-for-like price table so much as an honest map of <strong className="text-cloud">what pricing model each tool actually uses</strong>, since that determines the real cost of rolling it out to a whole organisation far more than any single published number does.
           </p>
         </div>
 
@@ -170,6 +170,80 @@ export default function CostComparisonPage() {
           </p>
         </div>
 
+        {/* Section: real numbers at 10 and 50 users */}
+        <div className="card-glass rounded-2xl p-8 space-y-5">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-2xl">🔢</span>
+            <h2 className="text-xl font-bold text-cloud">The Actual Numbers, at 10 and 50 Users</h2>
+          </div>
+          <p className="text-mist leading-relaxed">
+            Converted to GBP at approximate rates at time of writing (EUR≈0.85, USD≈0.75), here&apos;s what each tool would actually cost for a 10-person team and a 50-person company. Being direct about this: <strong className="text-cloud">on raw sticker price alone, MailBroom is not the cheapest at either size</strong> — SaneBox and Clean Email both work out lower per month at these headcounts. What they don&apos;t include is explained below the table.
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="py-3 pr-4 text-cloud font-semibold">Tool</th>
+                  <th className="py-3 pr-4 text-cloud font-semibold">10 users</th>
+                  <th className="py-3 text-cloud font-semibold">50 users</th>
+                </tr>
+              </thead>
+              <tbody className="text-mist">
+                <tr className="border-b border-white/5 bg-gold/5">
+                  <td className="py-3 pr-4 font-semibold text-gold">MailBroom for Business</td>
+                  <td className="py-3 pr-4">£45/mo flat (6–10 seat band) — £4.50/user</td>
+                  <td className="py-3">£200/mo flat (26–50 seat band) — £4.00/user</td>
+                </tr>
+                <tr className="border-b border-white/5">
+                  <td className="py-3 pr-4 font-semibold text-cloud">Clean Email</td>
+                  <td className="py-3 pr-4">~£30.66/mo (10-account bundle, €35.99) — £3.07/user</td>
+                  <td className="py-3">No published tier beyond 10 accounts — quote-only</td>
+                </tr>
+                <tr className="border-b border-white/5">
+                  <td className="py-3 pr-4 font-semibold text-cloud">SaneBox</td>
+                  <td className="py-3 pr-4">~£36.78/mo (10 × $4.92) — £3.68/user</td>
+                  <td className="py-3">~£183.89/mo (50 × $4.92) — £3.68/user</td>
+                </tr>
+                <tr>
+                  <td className="py-3 pr-4 font-semibold text-cloud">BitRecover</td>
+                  <td className="py-3 pr-4">Not published — contact vendor for a quote</td>
+                  <td className="py-3">Not published — contact vendor for a quote</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p className="text-mist text-xs leading-relaxed mt-2">
+            Clean Email figures assume the published 10-account bundle; there&apos;s no published 50-account tier, only &quot;contact us for a quote.&quot; SaneBox figures assume 10 or 50 individual subscriptions at its published per-user rate, since no team/volume plan is published — and per its own independent review, teams are explicitly listed as &quot;not ideal for.&quot; Exchange rates are indicative, not live.
+          </p>
+        </div>
+
+        {/* Section: what the sticker price doesn't show */}
+        <div className="card-glass rounded-2xl p-8 space-y-5">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-2xl">⚖️</span>
+            <h2 className="text-xl font-bold text-cloud">Why the Cheaper Number Isn&apos;t the Better Deal Here</h2>
+          </div>
+          <p className="text-mist leading-relaxed">
+            Clean Email and SaneBox are cheaper per month at these headcounts — that&apos;s a real, verified number, not spin. But neither does the same job MailBroom does, and neither is built to be deployed the same way:
+          </p>
+          <ul className="space-y-3 mt-2">
+            {[
+              "SaneBox filters incoming mail — it doesn't bulk-delete or free storage. If the actual problem is an Exchange Online quota or a 'mailbox full' ticket, a cheaper filtering tool doesn't solve it at any price. See our full comparison.",
+              "Clean Email's price is for personal account bundles you buy and distribute yourself — someone still has to track who has access, provision new starters, and de-provision leavers by hand. MailBroom's per-organisation SSO licence removes that admin overhead entirely. See our full comparison.",
+              "Neither publishes a stated position on Exchange Online retention policy or legal hold compatibility — MailBroom explicitly works within both rather than around them.",
+              "MailBroom's per-user cost actually falls as headcount grows within a band (£4.50 → £4.00/user from 10 to 50) — the seat-band model rewards scale, not just the raw number at one snapshot in time.",
+            ].map((item) => (
+              <li key={item} className="flex items-start gap-3 text-sm text-mist">
+                <span className="mt-0.5 flex-shrink-0 text-gold">✓</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-mist leading-relaxed">
+            Cheapest-per-month and best-value-for-the-job aren&apos;t always the same tool — see the full functionality checklists on each comparison page before deciding on price alone.
+          </p>
+        </div>
+
         {/* Section: real cost */}
         <div className="card-glass rounded-2xl p-8 space-y-5">
           <div className="flex items-center gap-3 mb-2">
@@ -177,7 +251,7 @@ export default function CostComparisonPage() {
             <h2 className="text-xl font-bold text-cloud">The Cost That Doesn&apos;t Show on a Pricing Page</h2>
           </div>
           <p className="text-mist leading-relaxed">
-            A per-account tool priced for individuals can look cheaper per seat than an organization-wide license — until you account for the admin time spent tracking who has access, provisioning new starters, and de-provisioning leavers by hand. MailBroom&apos;s per-organization model removes that entirely: one Microsoft SSO sign-in, and every employee on the company domain gets access automatically, with no seat list to maintain as headcount shifts within a band.
+            A per-account tool priced for individuals can look cheaper per seat than an organisation-wide licence — until you account for the admin time spent tracking who has access, provisioning new starters, and de-provisioning leavers by hand. MailBroom&apos;s per-organisation model removes that entirely: one Microsoft SSO sign-in, and every employee on the company domain gets access automatically, with no seat list to maintain as headcount shifts within a band.
           </p>
           <p className="text-mist leading-relaxed">
             Read the full breakdown of IT-time savings, storage-cost reduction, and leaver-mailbox risk in our <a href="/roi" className="text-gold font-semibold hover:opacity-80 transition-opacity">business case / ROI page</a>.
@@ -217,7 +291,7 @@ export default function CostComparisonPage() {
 
       {/* ── CTA ─────────────────────────────────────────── */}
       <section className="section-dark py-20">
-        <div className="max-w-3xl mx-auto px-6 text-center">
+        <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-3xl font-black text-cloud mb-4">
             See the exact price <span className="gold-text">for your seat band.</span>
           </h2>

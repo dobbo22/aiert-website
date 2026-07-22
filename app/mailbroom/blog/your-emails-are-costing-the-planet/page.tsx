@@ -50,7 +50,7 @@ export default function ArticlePage() {
       </nav>
 
       {/* ── ARTICLE HEADER ──────────────────────────────── */}
-      <section className="max-w-3xl mx-auto px-6 pt-20 pb-10">
+      <section className="max-w-4xl mx-auto px-6 pt-20 pb-10">
         <a href="/blog" className="inline-flex items-center gap-2 text-teal text-sm font-medium mb-8 hover:opacity-80 transition-opacity">
           ← Back to Blog
         </a>
@@ -67,7 +67,7 @@ export default function ArticlePage() {
       </section>
 
       {/* ── ARTICLE BODY ────────────────────────────────── */}
-      <section className="max-w-3xl mx-auto px-6 pb-24 space-y-8">
+      <section className="max-w-4xl mx-auto px-6 pb-24 space-y-8">
 
         <div className="card-glass rounded-2xl p-8 space-y-5 text-mist leading-relaxed">
           <p>
