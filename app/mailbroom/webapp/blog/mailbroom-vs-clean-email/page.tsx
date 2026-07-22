@@ -32,7 +32,7 @@ const faqs = [
   },
   {
     q: "Does Clean Email work with more email providers than MailBroom?",
-    a: "Yes, and this is a genuine Clean Email advantage if it matters to your organisation: it connects to Gmail, Yahoo, AOL, and other providers, not just Microsoft 365. MailBroom for Business is built specifically for Microsoft 365 and Exchange Online — that focus is what lets it plug directly into Microsoft Graph API and Entra ID for one-click company-wide SSO deployment, rather than juggling credentials across providers.",
+    a: "Within one product, yes: Clean Email connects to Gmail, Yahoo, AOL, and other providers as well as Microsoft 365. MailBroom for Business is deliberately M365/Exchange Online-only — that focus is what lets it plug directly into Microsoft Graph API and Entra ID for one-click company-wide SSO deployment, and M365/Exchange Online is what the large majority of businesses actually run, so this is rarely a real gap in practice. If your organisation genuinely needs other providers too, the wider MailBroom family covers that ground via a second product: MailBroom for iOS connects over IMAP to almost any mail server, including Gmail and Yahoo — just as a personal-inbox app rather than a company-wide deployment.",
   },
 ];
 
@@ -179,14 +179,14 @@ export default function MailBroomVsCleanEmailPage() {
                 </tr>
                 <tr>
                   <td className="py-3 pr-4 font-medium text-cloud">Email providers supported</td>
-                  <td className="py-3 pr-4">Microsoft 365 / Exchange Online</td>
-                  <td className="py-3">Gmail, Yahoo, AOL, and more — broader</td>
+                  <td className="py-3 pr-4">Microsoft 365 / Exchange Online (company-wide); other providers via the separate MailBroom for iOS app</td>
+                  <td className="py-3">Gmail, Yahoo, AOL, and more, all in one product</td>
                 </tr>
               </tbody>
             </table>
           </div>
           <p className="text-mist text-sm leading-relaxed mt-2">
-            That last row matters: if your organisation runs mixed email providers, not just Microsoft 365, Clean Email&apos;s broader provider support is a genuine advantage MailBroom doesn&apos;t have. MailBroom&apos;s Microsoft-only focus is what makes the one-click, tenant-wide SSO deployment possible in the first place — a trade-off, not a free win either way.
+            That last row is less of a gap than it looks: Microsoft 365/Exchange Online is what the large majority of businesses actually run, and MailBroom&apos;s Microsoft-only focus for Business is what makes the one-click, tenant-wide SSO deployment possible in the first place. For an organisation on genuinely mixed providers, Clean Email covers that in a single product — MailBroom&apos;s equivalent coverage exists too, just split across two products (Business for M365 companies, iOS for everything else via IMAP), not one.
           </p>
         </div>
 
@@ -227,7 +227,7 @@ export default function MailBroomVsCleanEmailPage() {
                   ["Company-wide SSO licensing", "✓", "✗ — per-account bundles"],
                   ["Published per-org pricing", "✓", "✗ — quote-only"],
                   ["Works within retention policy / legal hold", "✓", "Not published"],
-                  ["Non-Microsoft email providers (Gmail, Yahoo, etc.)", "✗", "✓"],
+                  ["Non-Microsoft email providers (Gmail, Yahoo, etc.)", "✗ — via MailBroom for iOS instead", "✓ — in one product"],
                   ["Never stores account credentials", "✓ — OAuth token only", "Not for all providers, per own policy"],
                 ].map(([feature, mb, ce]) => (
                   <tr key={feature} className="border-b border-white/5">
