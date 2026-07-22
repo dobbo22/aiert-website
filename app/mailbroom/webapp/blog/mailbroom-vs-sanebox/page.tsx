@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "MailBroom vs SaneBox: Solving Different Problems in the Inbox | AIERT Ltd",
-  description: "SaneBox prioritizes new email as it arrives. MailBroom cleans up what already piled up. An honest look at when you need one, the other, or both.",
-  keywords: ["MailBroom vs SaneBox", "SaneBox alternative", "email prioritization vs cleanup", "M365 mailbox storage tool", "SaneBox for business"],
+  description: "SaneBox prioritises new email as it arrives. MailBroom cleans up what already piled up. An honest look at when you need one, the other, or both.",
+  keywords: ["MailBroom vs SaneBox", "SaneBox alternative", "email prioritisation vs cleanup", "M365 mailbox storage tool", "SaneBox for business"],
   metadataBase: new URL("https://business.mailbroom.app"),
   alternates: { canonical: "/blog/mailbroom-vs-sanebox" },
   openGraph: {
     title: "MailBroom vs SaneBox: Solving Different Problems in the Inbox",
-    description: "Prioritization vs remediation — an honest look at when you need one, the other, or both.",
+    description: "Prioritisation vs remediation — an honest look at when you need one, the other, or both.",
     url: "https://business.mailbroom.app/blog/mailbroom-vs-sanebox",
     siteName: "AIERT Ltd",
     locale: "en_GB",
@@ -20,15 +20,15 @@ export const metadata: Metadata = {
 const faqs = [
   {
     q: "Is SaneBox a competitor to MailBroom, or a different kind of tool?",
-    a: "Different kind of tool solving an adjacent problem. SaneBox is an AI-powered filtering and prioritization layer — it sorts incoming email so the important stuff surfaces and the rest gets out of the way. MailBroom is a bulk cleanup and storage-remediation tool — it deletes, unsubscribes from, and frees space from mail that's already accumulated. One manages the flow of new mail; the other clears out the backlog.",
+    a: "Different kind of tool solving an adjacent problem. SaneBox is an AI-powered filtering and prioritisation layer — it sorts incoming email so the important stuff surfaces and the rest gets out of the way. MailBroom is a bulk cleanup and storage-remediation tool — it deletes, unsubscribes from, and frees space from mail that's already accumulated. One manages the flow of new mail; the other clears out the backlog.",
   },
   {
     q: "Does SaneBox reduce mailbox storage usage?",
-    a: "Not as its core function. SaneBox reorganizes where email lives within your inbox (moving lower-priority mail into folders like SaneLater) rather than deleting it or reducing what's stored. If the underlying problem is a mailbox approaching its Exchange Online storage quota, filtering alone doesn't fix that — the mail is still there, just relocated.",
+    a: "Not as its core function. SaneBox reorganises where email lives within your inbox (moving lower-priority mail into folders like SaneLater) rather than deleting it or reducing what's stored. If the underlying problem is a mailbox approaching its Exchange Online storage quota, filtering alone doesn't fix that — the mail is still there, just relocated.",
   },
   {
     q: "Does SaneBox work with Microsoft 365?",
-    a: "Yes — SaneBox states it works with Gmail, Microsoft 365, Apple iCloud, Yahoo! Mail, Fastmail, and any IMAP, Microsoft Exchange, or ActiveSync server. So it's a legitimate option for M365 users specifically looking for inbox prioritization, just not for bulk storage cleanup or company-wide deployment.",
+    a: "Yes — SaneBox states it works with Gmail, Microsoft 365, Apple iCloud, Yahoo! Mail, Fastmail, and any IMAP, Microsoft Exchange, or ActiveSync server. So it's a legitimate option for M365 users specifically looking for inbox prioritisation, just not for bulk storage cleanup or company-wide deployment.",
   },
   {
     q: "Should a company use SaneBox and MailBroom together?",
@@ -40,7 +40,7 @@ const techArticleJsonLd = {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
   headline: "MailBroom vs SaneBox: Solving Different Problems in the Inbox",
-  description: "Prioritization vs remediation — an honest look at when you need one, the other, or both.",
+  description: "Prioritisation vs remediation — an honest look at when you need one, the other, or both.",
   url: "https://business.mailbroom.app/blog/mailbroom-vs-sanebox",
   datePublished: "2026-07-22",
   dateModified: "2026-07-22",
@@ -104,7 +104,7 @@ export default function MailBroomVsSaneBoxPage() {
             SaneBox and MailBroom get compared because they both promise a better inbox — but they solve different jobs. Confusing the two is the most common mistake in this comparison, so it&apos;s worth being direct about it upfront.
           </p>
           <p>
-            <strong className="text-cloud">SaneBox is about prioritization: managing the flow of email arriving today.</strong> <strong className="text-cloud">MailBroom is about remediation: cleaning up storage and mail that already accumulated.</strong> If your problem is drowning in new email, that&apos;s a SaneBox problem. If your problem is an Exchange Online storage quota, a &quot;mailbox full&quot; ticket, or years of newsletters nobody unsubscribed from, that&apos;s a MailBroom problem.
+            <strong className="text-cloud">SaneBox is about prioritisation: managing the flow of email arriving today.</strong> <strong className="text-cloud">MailBroom is about remediation: cleaning up storage and mail that already accumulated.</strong> If your problem is drowning in new email, that&apos;s a SaneBox problem. If your problem is an Exchange Online storage quota, a &quot;mailbox full&quot; ticket, or years of newsletters nobody unsubscribed from, that&apos;s a MailBroom problem.
           </p>
         </div>
 
@@ -115,10 +115,10 @@ export default function MailBroomVsSaneBoxPage() {
             <h2 className="text-xl font-bold text-cloud">What SaneBox Actually Does</h2>
           </div>
           <p className="text-mist leading-relaxed">
-            SaneBox uses AI to filter and categorize incoming email — sorting lower-priority mail out of your main inbox (into folders like SaneLater), letting you block unwanted senders (BlackHole), snooze messages, and get daily digest summaries. It works with Gmail, Microsoft 365, Apple iCloud, Yahoo! Mail, Fastmail, and any IMAP, Exchange, or ActiveSync server — genuinely broad platform support.
+            SaneBox uses AI to filter and categorise incoming email — sorting lower-priority mail out of your main inbox (into folders like SaneLater), letting you block unwanted senders (BlackHole), snooze messages, and get daily digest summaries. It works with Gmail, Microsoft 365, Apple iCloud, Yahoo! Mail, Fastmail, and any IMAP, Exchange, or ActiveSync server — genuinely broad platform support.
           </p>
           <p className="text-mist leading-relaxed">
-            What it doesn&apos;t do, as far as we found published, is bulk-delete accumulated mail or reduce mailbox storage usage. It reorganizes where mail lives; it doesn&apos;t clear it out.
+            What it doesn&apos;t do, as far as we found published, is bulk-delete accumulated mail or reduce mailbox storage usage. It reorganises where mail lives; it doesn&apos;t clear it out.
           </p>
         </div>
 
@@ -152,12 +152,12 @@ export default function MailBroomVsSaneBoxPage() {
                 <tr className="border-b border-white/5">
                   <td className="py-3 pr-4 font-medium text-cloud">Core job</td>
                   <td className="py-3 pr-4">Bulk cleanup, storage remediation</td>
-                  <td className="py-3">Filtering, prioritization</td>
+                  <td className="py-3">Filtering, prioritisation</td>
                 </tr>
                 <tr className="border-b border-white/5">
                   <td className="py-3 pr-4 font-medium text-cloud">Reduces storage usage</td>
                   <td className="py-3 pr-4">Yes — deletion and unsubscribe</td>
-                  <td className="py-3">No — reorganizes, doesn&apos;t delete</td>
+                  <td className="py-3">No — reorganises, doesn&apos;t delete</td>
                 </tr>
                 <tr className="border-b border-white/5">
                   <td className="py-3 pr-4 font-medium text-cloud">Platforms</td>
@@ -191,10 +191,10 @@ export default function MailBroomVsSaneBoxPage() {
             <h2 className="text-xl font-bold text-cloud">Access Model — a Rare Case of Rough Parity</h2>
           </div>
           <p className="text-mist leading-relaxed">
-            Credit where it&apos;s due: SaneBox&apos;s own security documentation states that &quot;most services authorize SaneBox without a password&quot;, specifically naming Google, Office365, Yahoo, and AOL — meaning for Microsoft 365 specifically, SaneBox uses OAuth, not a stored password. Where it does need direct credentials (iCloud, Fastmail, since those providers don&apos;t offer the same OAuth flow), it says those are encrypted with public-key cryptography and stored on servers unreachable from the public internet, with encryption keys in hardware security modules.
+            Credit where it&apos;s due: SaneBox&apos;s own security documentation states that &quot;most services authorise SaneBox without a password&quot;, specifically naming Google, Office365, Yahoo, and AOL — meaning for Microsoft 365 specifically, SaneBox uses OAuth, not a stored password. Where it does need direct credentials (iCloud, Fastmail, since those providers don&apos;t offer the same OAuth flow), it says those are encrypted with public-key cryptography and stored on servers unreachable from the public internet, with encryption keys in hardware security modules.
           </p>
           <p className="text-mist leading-relaxed">
-            MailBroom&apos;s model is still slightly different in one respect: as a company-wide tool, it&apos;s built around one Microsoft SSO sign-in that an org admin controls and can revoke centrally for the whole domain, rather than each person authorizing their own account individually. For M365 access specifically, though, this is one area where the two tools are reasonably comparable — the real differences are elsewhere (see the table below).
+            MailBroom&apos;s model is still slightly different in one respect: as a company-wide tool, it&apos;s built around one Microsoft SSO sign-in that an org admin controls and can revoke centrally for the whole domain, rather than each person authorising their own account individually. For M365 access specifically, though, this is one area where the two tools are reasonably comparable — the real differences are elsewhere (see the table below).
           </p>
         </div>
 
@@ -215,13 +215,13 @@ export default function MailBroomVsSaneBoxPage() {
               </thead>
               <tbody className="text-mist">
                 {[
-                  ["Bulk delete accumulated mail", "✓", "✗ — reorganizes, doesn't delete"],
+                  ["Bulk delete accumulated mail", "✓", "✗ — reorganises, doesn't delete"],
                   ["Storage cleanup by age or domain", "✓", "✗"],
-                  ["AI filtering/prioritization of incoming mail", "✗", "✓"],
+                  ["AI filtering/prioritisation of incoming mail", "✗", "✓"],
                   ["Shared/delegated mailbox support", "✓", "Not published"],
                   ["Company-wide SSO licensing", "✓", "✗ — per-account plans"],
                   ["Works within retention policy / legal hold", "✓", "Not published"],
-                  ["Non-Microsoft email providers", "✗", "✓ — Gmail, iCloud, Yahoo, IMAP"],
+                  ["Non-Microsoft email providers", "✗ — via MailBroom for iOS instead", "✓ — Gmail, iCloud, Yahoo, IMAP"],
                   ["OAuth (no password) for M365 access", "✓", "✓ — per SaneBox's own security docs"],
                 ].map(([feature, mb, sb]) => (
                   <tr key={feature} className="border-b border-white/5">

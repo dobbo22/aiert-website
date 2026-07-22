@@ -28,7 +28,7 @@ const faqs = [
   },
   {
     q: "Is the cheapest tool always the best value?",
-    a: "Not if it doesn't do the job you need. A personal-account tool priced for individuals looks cheap per account, but doesn't scale to company-wide deployment, shared mailbox cleanup, or centralized IT administration — the actual costs of that gap (helpdesk tickets, manual per-person setup) don't show up on the pricing page.",
+    a: "Not if it doesn't do the job you need. A personal-account tool priced for individuals looks cheap per account, but doesn't scale to company-wide deployment, shared mailbox cleanup, or centralised IT administration — the actual costs of that gap (helpdesk tickets, manual per-person setup) don't show up on the pricing page.",
   },
 ];
 

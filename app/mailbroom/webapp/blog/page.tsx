@@ -38,7 +38,7 @@ const posts = [
     tagColor: "text-gold",
     tagBg: "bg-gold/10 border-gold/20",
     title: "MailBroom vs SaneBox: Solving Different Problems in the Inbox",
-    excerpt: "SaneBox prioritizes the email arriving today. MailBroom cleans up what already piled up. An honest look at when you need one, the other, or both.",
+    excerpt: "SaneBox prioritises the email arriving today. MailBroom cleans up what already piled up. An honest look at when you need one, the other, or both.",
     author: "Martin Dobson",
   },
   {

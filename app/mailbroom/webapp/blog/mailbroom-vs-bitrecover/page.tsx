@@ -28,7 +28,7 @@ const faqs = [
   },
   {
     q: "Why does the credential-vs-SSO difference matter for an IT admin?",
-    a: "A tool that logs in with a real password (especially an admin account's password) is a tool that now holds a credential capable of far more than mailbox cleanup, with no scoped limits and no easy revocation short of a password reset. Modern security guidance (and Microsoft's own direction with Entra ID) favors OAuth-scoped tokens specifically to avoid this exposure. It's a genuine architectural trade-off worth weighing, not a minor detail.",
+    a: "A tool that logs in with a real password (especially an admin account's password) is a tool that now holds a credential capable of far more than mailbox cleanup, with no scoped limits and no easy revocation short of a password reset. Modern security guidance (and Microsoft's own direction with Entra ID) favours OAuth-scoped tokens specifically to avoid this exposure. It's a genuine architectural trade-off worth weighing, not a minor detail.",
   },
   {
     q: "Does BitRecover support retention policies or legal hold?",
