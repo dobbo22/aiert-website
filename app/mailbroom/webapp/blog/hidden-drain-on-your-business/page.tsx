@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 const faqs = [
   {
     q: "Does MailBroom read the contents of my emails to decide what's important?",
-    a: "No. MailBroom classifies mail using sender memory, RFC List-Unsubscribe headers, a personalised on-device classifier, a Naive Bayes model trained on sender and subject signals, rule-based keyword matching, and on-device Apple Intelligence for ambiguous cases. It never reads message bodies or attachment contents, and it doesn't do full-thread importance analysis — it's genuinely good at telling a newsletter from real correspondence, based on sender, subject, and headers.",
+    a: "No. MailBroom for Business classifies mail using known sending-domain lists (mass-mailing providers like Mailchimp, SendGrid, Klaviyo), sender local-part patterns (noreply@, newsletter@, alerts@, and similar), and subject-line pattern matching for promotional and newsletter language. It never reads message bodies or attachment contents, and it doesn't do full-thread importance analysis — it's a deliberately simple, fast, server-side heuristic, not a machine-learning model.",
   },
   {
     q: "Does MailBroom automatically clean up mailboxes on a schedule?",
@@ -168,9 +168,9 @@ export default function HiddenDrainPage() {
             <h2 className="text-xl font-bold text-cloud">What Sets MailBroom Apart</h2>
           </div>
           <div>
-            <h3 className="text-cloud font-semibold mb-1">A Real Multi-Layer Classification Pipeline</h3>
+            <h3 className="text-cloud font-semibold mb-1">A Fast, Accurate Heuristic Classifier</h3>
             <p className="text-mist text-sm leading-relaxed">
-              MailBroom runs mail through a layered pipeline: sender memory, RFC List-Unsubscribe header detection, a personalised on-device classifier, a Naive Bayes model trained on sender and subject signals, rule-based keyword matching, and on-device Apple Intelligence for ambiguous cases. To be precise about scope: it classifies based on sender, subject line, and headers — it does not read message bodies or attachment contents, and it doesn&apos;t do full-thread importance analysis. What it&apos;s genuinely very good at is telling &quot;this is a newsletter you&apos;ve ignored for two years&quot; from &quot;this is mail from someone you actually correspond with&quot; — without guessing wrong on something from a real contact.
+              MailBroom for Business classifies mail using known mass-mailing sending domains (Mailchimp, SendGrid, Klaviyo, and similar providers), sender local-part patterns (noreply@, newsletter@, alerts@, and similar), and subject-line pattern matching for promotional and newsletter language. To be precise about scope: it classifies based on sender, subject line, and headers — it does not read message bodies or attachment contents, and it doesn&apos;t do full-thread importance analysis. This is a deliberately simple, server-side approach rather than a machine-learning model — fast, predictable, and easy to reason about when it&apos;s deciding what counts as clutter across an entire company&apos;s mail.
             </p>
           </div>
           <div>
