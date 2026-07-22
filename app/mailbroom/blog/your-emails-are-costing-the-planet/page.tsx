@@ -1,14 +1,18 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Your 50,000 Emails Are Costing the Planet – AIERT Ltd Blog",
+  title: "Your 50,000 Emails Are Costing the Planet – MailBroom Blog",
   description:
     "Every email you store has a measurable carbon footprint. We looked at the numbers — and built something that cleans your inbox without making things worse.",
-  metadataBase: new URL("https://aiert.co.uk"),
+  metadataBase: new URL("https://ios.mailbroom.app"),
+  alternates: { canonical: "/blog/your-emails-are-costing-the-planet" },
   openGraph: {
     title: "Your 50,000 Emails Are Costing the Planet. Here's the Cleaner That Fixes Both.",
     description:
       "Every email you store has a measurable carbon footprint. We looked at the numbers — and built something that cleans your inbox without making things worse.",
+    url: "https://ios.mailbroom.app/blog/your-emails-are-costing-the-planet",
+    siteName: "AIERT Ltd",
+    locale: "en_GB",
     type: "article",
     publishedTime: "2026-06-01",
     authors: ["Martin Dobson"],
@@ -23,16 +27,14 @@ export default function ArticlePage() {
       <nav className="nav-glass sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-8 py-5 flex items-center justify-between">
           <a href="/" className="flex items-center gap-4">
-            <div className="nav-logo-icon w-11 h-11 rounded-lg flex items-center justify-center font-black text-base">
-              AI
-            </div>
+            <img src="/mailbroom-icon.png" alt="MailBroom" width={44} height={44} className="w-11 h-11 rounded-lg" />
             <span className="font-bold text-2xl tracking-tight text-cloud">
-              AIERT<span className="text-sm font-normal ml-1 text-mist">Ltd</span>
+              MailBroom
             </span>
           </a>
           <div className="hidden md:flex items-center gap-10 text-base text-mist">
             <a href="/" className="hover:text-white transition-colors font-medium">Home</a>
-            <a href="/mailbroom" className="hover:text-white transition-colors font-medium">MailBroom</a>
+            <a href="https://business.mailbroom.app" className="hover:text-white transition-colors font-medium">For Business</a>
             <a href="/blog" className="hover:text-white transition-colors font-medium">Blog</a>
             <a href="/#contact" className="hover:text-white transition-colors font-medium">Contact</a>
           </div>
@@ -188,7 +190,7 @@ export default function ArticlePage() {
               Download MailBroom — Free
             </a>
             <a
-              href="/mailbroom"
+              href="/"
               className="px-6 py-3 rounded-full text-sm font-semibold text-center border border-teal/30 text-teal hover:bg-teal/10 transition-colors"
             >
               Learn more →
@@ -219,8 +221,8 @@ export default function ArticlePage() {
               </div>
             </div>
             <div className="flex gap-6 text-sm text-mist flex-wrap justify-center">
-              <a href="/" className="hover:text-white transition-colors">AIERT Home</a>
-              <a href="/mailbroom" className="hover:text-white transition-colors">MailBroom</a>
+              <a href="https://aiert.co.uk" className="hover:text-white transition-colors">AIERT Home</a>
+              <a href="/" className="hover:text-white transition-colors">MailBroom</a>
               <a href="/blog" className="hover:text-white transition-colors">Blog</a>
               <a href="https://sharequest.co.uk" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">ShareQuest</a>
               <a href="/#contact" className="hover:text-white transition-colors">Contact</a>

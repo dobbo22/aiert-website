@@ -41,6 +41,15 @@ const nextConfig: NextConfig = {
         destination: "https://ios.mailbroom.app/:path*",
         permanent: true,
       },
+      // The blog (previously aiert.co.uk/blog) moved to ios.mailbroom.app —
+      // its one existing post is about the iOS app specifically, not a
+      // generic AIERT topic, so it belongs alongside the product it covers.
+      {
+        source: "/blog/:path*",
+        has: [{ type: "host", value: AIERT_HOST }],
+        destination: "https://ios.mailbroom.app/blog/:path*",
+        permanent: true,
+      },
     ];
   },
   async rewrites() {

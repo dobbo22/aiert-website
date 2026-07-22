@@ -49,6 +49,14 @@ The three main ROI drivers: IT time saved on "mailbox full" helpdesk tickets (on
 
 Licensed per organisation by seat band, not per user: 1-5 seats, 6-10, 11-25, 26-50, and 51-100, each a flat monthly price (see https://business.mailbroom.app/trial for current rates by band). 101+ seats is custom-quoted. A 30-day evaluation is available with no payment details required.
 
+## Comparisons
+
+- [MailBroom vs Clean Email](https://business.mailbroom.app/blog/mailbroom-vs-clean-email): the closest personal-cleanup competitor — Clean Email is priced per personal account bundle and scored 1/5 for team fit by an independent review; MailBroom is licensed per organisation via Microsoft SSO.
+- [MailBroom vs SaneBox](https://business.mailbroom.app/blog/mailbroom-vs-sanebox): SaneBox filters and prioritises incoming mail; MailBroom bulk-deletes and frees storage from mail already accumulated — different jobs, sometimes used together.
+- [MailBroom vs BitRecover Office 365 Email Eraser](https://business.mailbroom.app/blog/mailbroom-vs-bitrecover): the closest enterprise bulk-delete competitor — BitRecover logs in with the account's actual email and password; MailBroom uses Microsoft SSO with scoped, revocable Graph API tokens and never sees a password.
+- [How MailBroom is different (and who it's not for)](https://business.mailbroom.app/blog/how-mailbroom-is-different): a category map distinguishing MailBroom from team inboxes, CRMs, email clients, email hosting, and archiving/eDiscovery tools it's sometimes confused with.
+- [Mailbox cleanup tool cost comparison](https://business.mailbroom.app/blog/mailbox-cleanup-tool-cost-comparison): MailBroom is the only tool in its category with fully published per-organisation pricing by seat band.
+
 ## Answers
 
 - [Can MailBroom clean up a shared mailbox?](https://business.mailbroom.app/shared-mailbox-cleanup): yes — once an org admin enables it and the user has Exchange Full Access on that specific mailbox.
@@ -77,6 +85,7 @@ const IOS_TXT = `# MailBroom
 
 - [MailBroom overview](https://ios.mailbroom.app/): what MailBroom does for individual iPhone users cleaning up their own inbox.
 - [Leaderboard](https://ios.mailbroom.app/leaderboard): users ranked by inbox cleanup activity.
+- [Blog](https://ios.mailbroom.app/blog): thoughts on email, AI, privacy, and the environment from the team behind MailBroom.
 
 ## Company
 

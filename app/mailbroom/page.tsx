@@ -77,7 +77,7 @@ export default function MailBroomPage() {
             <a href="/" className="hover:text-white transition-colors font-medium">Home</a>
             <a href="https://business.mailbroom.app" className="hover:text-white transition-colors font-medium">For Business</a>
             <a href="/#products" className="hover:text-white transition-colors font-medium">Products</a>
-            <a href="https://aiert.co.uk/blog" className="hover:text-white transition-colors font-medium">Blog</a>
+            <a href="/blog" className="hover:text-white transition-colors font-medium">Blog</a>
             <a href="/#contact" className="hover:text-white transition-colors font-medium">Contact</a>
           </div>
           <a

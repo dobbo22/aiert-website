@@ -33,12 +33,20 @@ const BUSINESS_ROUTES: Route[] = [
   { path: "/trial", priority: 0.7, changeFrequency: "monthly" },
   { path: "/privacy", priority: 0.3, changeFrequency: "yearly" },
   { path: "/terms", priority: 0.3, changeFrequency: "yearly" },
+  { path: "/blog", priority: 0.6, changeFrequency: "weekly" },
+  { path: "/blog/mailbroom-vs-clean-email", priority: 0.6, changeFrequency: "monthly" },
+  { path: "/blog/mailbroom-vs-sanebox", priority: 0.6, changeFrequency: "monthly" },
+  { path: "/blog/mailbroom-vs-bitrecover", priority: 0.6, changeFrequency: "monthly" },
+  { path: "/blog/how-mailbroom-is-different", priority: 0.5, changeFrequency: "monthly" },
+  { path: "/blog/mailbox-cleanup-tool-cost-comparison", priority: 0.5, changeFrequency: "monthly" },
 ];
 
 const IOS_BASE_URL = "https://ios.mailbroom.app";
 const IOS_ROUTES: Route[] = [
   { path: "", priority: 0.6, changeFrequency: "monthly" },
   { path: "/leaderboard", priority: 0.5, changeFrequency: "weekly" },
+  { path: "/blog", priority: 0.5, changeFrequency: "monthly" },
+  { path: "/blog/your-emails-are-costing-the-planet", priority: 0.5, changeFrequency: "yearly" },
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
