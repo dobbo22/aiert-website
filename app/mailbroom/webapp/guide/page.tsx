@@ -52,6 +52,7 @@ const BANDS = [
 const TOC = [
   { href: "#start", label: "Getting started" },
   { href: "#dashboard", label: "Dashboard" },
+  { href: "#workflow", label: "Quick-start workflow" },
   { href: "#sweep", label: "Smart Sweep" },
   { href: "#storage", label: "Storage Cleanup" },
   { href: "#search", label: "Power Search" },
@@ -159,6 +160,30 @@ export default function MailBroomGuidePage() {
             <h3 className="font-bold text-cloud mb-2">Your Impact</h3>
             <p className="text-sm text-cloud">Storage freed, emails deleted, unsubscribed, organised, time saved, a Potential Speed score, live Sync Status, and CO₂ saved with award tiers from Seedling up to Earth Hero — all real, lifetime totals tied to your account.</p>
           </div>
+        </div>
+      </section>
+
+      {/* ── QUICK-START WORKFLOW ───────────────────────────── */}
+      <section id="workflow" className="max-w-3xl mx-auto px-6 py-20 scroll-mt-20">
+        <p className="text-xs font-semibold uppercase tracking-widest mb-4 text-teal">Getting Started</p>
+        <h2 className="text-3xl font-black text-cloud mb-4">Suggested Quick-Start Workflow</h2>
+        <p className="text-cloud mb-8 max-w-2xl">
+          New to the three tools? This order gets you the biggest win first, then keeps the inbox clean going forward.
+        </p>
+        <div className="space-y-4">
+          {[
+            { step: "1", tool: "Storage Cleanup", desc: "Start here for the immediate win — find the largest, oldest attachments and senders actually taking up space, and clear them by age bracket or by domain." },
+            { step: "2", tool: "Smart Sweep", desc: "Then handle the ongoing flow — clear out daily newsletters and notifications sender by sender, or in bulk." },
+            { step: "3", tool: "Power Search", desc: "Use this as needed for anything specific — a targeted lookup, a compliance request, or a one-off cleanup task, rather than as a first pass." },
+          ].map((s) => (
+            <div key={s.step} className="card-glass rounded-2xl p-6 flex items-start gap-4">
+              <span className="nav-logo-icon w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm flex-shrink-0">{s.step}</span>
+              <div>
+                <h3 className="font-bold text-cloud mb-1">{s.tool}</h3>
+                <p className="text-sm text-cloud">{s.desc}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
