@@ -70,6 +70,7 @@ Licensed per organisation by seat band, not per user: 1-5 seats, 6-10, 11-25, 26
 - [How MSPs bill for M365 storage cleanup](https://business.mailbroom.app/msp-storage-billing): one-off project fees vs a recurring managed-service line item for mailbox storage remediation.
 - [Business case / ROI](https://business.mailbroom.app/roi): the IT-time and storage-cost case for adopting MailBroom company-wide.
 - [User guide](https://business.mailbroom.app/guide): sign-in, Dashboard, Smart Sweep, Storage Cleanup, Power Search, plans & billing, Admin, privacy.
+- [Company leaderboard](https://business.mailbroom.app/leaderboard): opted-in companies using MailBroom for Business, ranked by CO₂ and storage saved.
 
 ## Company
 
@@ -84,7 +85,6 @@ const IOS_TXT = `# MailBroom
 ## Answers
 
 - [MailBroom overview](https://ios.mailbroom.app/): what MailBroom does for individual iPhone users cleaning up their own inbox.
-- [Leaderboard](https://ios.mailbroom.app/leaderboard): users ranked by inbox cleanup activity.
 - [Blog](https://ios.mailbroom.app/blog): thoughts on email, AI, privacy, and the environment from the team behind MailBroom.
 
 ## Company

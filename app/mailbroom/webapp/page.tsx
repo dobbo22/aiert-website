@@ -144,22 +144,22 @@ export default async function MailBroomWebAppPage() {
       {/* ── NAV ─────────────────────────────────────────── */}
       <nav className="nav-glass sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-8 py-5 flex items-center justify-between">
-          <a href="/mailbroom/webapp" className="flex items-center gap-4">
+          <a href="/" className="flex items-center gap-4">
             <img src="/mailbroom-icon.png" alt="MailBroom" width={44} height={44} className="w-11 h-11 rounded-lg" />
             <span className="font-bold text-2xl tracking-tight text-cloud">
               MailBroom
             </span>
           </a>
           <div className="hidden md:flex items-center gap-10 text-base text-cloud">
-            <a href="/mailbroom/webapp/guide" className="hover:text-white transition-colors font-medium">Guide</a>
-            <a href="/mailbroom/webapp/roi" className="hover:text-white transition-colors font-medium">Business Case</a>
+            <a href="/guide" className="hover:text-white transition-colors font-medium">Guide</a>
+            <a href="/roi" className="hover:text-white transition-colors font-medium">Business Case</a>
             <a href="#pricing" className="hover:text-white transition-colors font-medium">Pricing</a>
-            <a href="/mailbroom/leaderboard" className="hover:text-white transition-colors font-medium">Leaderboard</a>
+            <a href="/blog" className="hover:text-white transition-colors font-medium">Blog</a>
             <a href="#faq" className="hover:text-white transition-colors font-medium">FAQ</a>
-            <a href="/#contact" className="hover:text-white transition-colors font-medium">Contact</a>
+            <a href="#contact" className="hover:text-white transition-colors font-medium">Contact</a>
           </div>
           <a
-            href="/mailbroom/webapp/trial"
+            href="/trial"
             className="btn-gold px-6 py-3 rounded-full text-base hidden md:block"
           >
             Start a Trial
@@ -199,7 +199,7 @@ export default async function MailBroomWebAppPage() {
             </div>
 
             <a
-              href="/mailbroom/webapp/roi"
+              href="/roi"
               className="btn-gold mt-6 inline-flex flex-col items-center gap-1 px-8 py-4 rounded-2xl text-center w-full sm:w-auto"
             >
               <span className="text-base font-black">📊 See how much you could save with MailBroom →</span>
@@ -505,7 +505,7 @@ export default async function MailBroomWebAppPage() {
 
           <p className="text-center text-sm text-cloud mt-14 max-w-xl mx-auto leading-relaxed">
             Opt in from your Billing page and your company can appear on the public{" "}
-            <a href="/mailbroom/leaderboard" className="text-gold hover:underline">company leaderboard</a>{" "}
+            <a href="/leaderboard" className="text-gold hover:underline">company leaderboard</a>{" "}
             — and embed your own CO₂ &amp; storage badge directly on your own website, updated automatically.
           </p>
         </div>
@@ -588,7 +588,7 @@ export default async function MailBroomWebAppPage() {
 
           <p className="text-center text-xs text-cloud mt-8">
             Still on-prem, or on Gmail, iCloud, or another IMAP provider? Try{" "}
-            <a href="/mailbroom" className="text-gold hover:underline">MailBroom for iOS</a> instead — it connects over IMAP to almost any mail server.
+            <a href="https://ios.mailbroom.app" className="text-gold hover:underline">MailBroom for iOS</a> instead — it connects over IMAP to almost any mail server.
           </p>
         </div>
       </section>
@@ -609,6 +609,36 @@ export default async function MailBroomWebAppPage() {
         </div>
       </section>
 
+      {/* ── FROM THE BLOG ──────────────────────────────── */}
+      <section className="max-w-6xl mx-auto px-6 py-16">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-2xl md:text-3xl font-black text-cloud">
+            From the <span className="gold-text">Blog</span>
+          </h2>
+          <a href="/blog" className="text-gold text-sm font-semibold hover:opacity-80 transition-opacity">
+            View all posts →
+          </a>
+        </div>
+        <a
+          href="/blog/mailbroom-vs-clean-email"
+          className="block card-glass rounded-2xl p-8 hover:opacity-90 transition-opacity group"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-2xl">⚖️</span>
+            <span className="inline-flex items-center px-3 py-1 rounded-full border bg-gold/10 border-gold/20 text-gold text-xs font-semibold">
+              Comparison
+            </span>
+            <span className="text-mist text-xs ml-auto">Latest</span>
+          </div>
+          <h3 className="text-lg font-bold text-cloud mb-2 group-hover:text-gold transition-colors">
+            MailBroom vs Clean Email: Which Is Right for Your M365 Tenant?
+          </h3>
+          <p className="text-mist text-sm leading-relaxed">
+            Clean Email is a genuine competitor — but built for individuals sharing an account, not IT admins licensing a whole company. Here&apos;s the actual difference.
+          </p>
+        </a>
+      </section>
+
       {/* ── CTA ────────────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-6 py-24 text-center">
         <h2 className="text-4xl md:text-5xl font-black text-cloud mb-6">
@@ -620,7 +650,7 @@ export default async function MailBroomWebAppPage() {
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <a
-            href="/mailbroom/webapp/trial"
+            href="/trial"
             className="btn-gold px-10 py-5 rounded-full text-lg inline-flex items-center gap-3 justify-center"
           >
             <span>🧪</span> Start Your Free IT Assessment
@@ -649,23 +679,23 @@ export default async function MailBroomWebAppPage() {
               </div>
             </div>
             <div className="flex gap-6 text-sm text-cloud flex-wrap justify-center">
-              <a href="/mailbroom/webapp/guide" className="hover:text-white transition-colors">User Guide</a>
-              <a href="/mailbroom/webapp/roi" className="hover:text-white transition-colors">Business Case</a>
-              <a href="/mailbroom/webapp/storage-costs" className="hover:text-white transition-colors">Storage Costs</a>
-              <a href="/mailbroom/webapp/mailbox-full" className="hover:text-white transition-colors">Mailbox Full?</a>
-              <a href="/mailbroom/webapp/bulk-delete-emails" className="hover:text-white transition-colors">Bulk Delete Emails</a>
-              <a href="/mailbroom/webapp/employee-offboarding" className="hover:text-white transition-colors">Leaver Mailboxes</a>
-              <a href="/mailbroom/webapp/trial" className="hover:text-white transition-colors">Free IT Assessment</a>
-              <a href="/mailbroom/webapp/affiliates" className="hover:text-white transition-colors">Referral &amp; Affiliate</a>
-              <a href="/mailbroom" className="hover:text-white transition-colors">MailBroom for iOS</a>
-              <a href="/mailbroom/leaderboard" className="hover:text-white transition-colors">Leaderboard</a>
-              <a href="/mailbroom/webapp" className="hover:text-white transition-colors">MailBroom for Business</a>
+              <a href="/guide" className="hover:text-white transition-colors">User Guide</a>
+              <a href="/roi" className="hover:text-white transition-colors">Business Case</a>
+              <a href="/storage-costs" className="hover:text-white transition-colors">Storage Costs</a>
+              <a href="/mailbox-full" className="hover:text-white transition-colors">Mailbox Full?</a>
+              <a href="/bulk-delete-emails" className="hover:text-white transition-colors">Bulk Delete Emails</a>
+              <a href="/employee-offboarding" className="hover:text-white transition-colors">Leaver Mailboxes</a>
+              <a href="/trial" className="hover:text-white transition-colors">Free IT Assessment</a>
+              <a href="/affiliates" className="hover:text-white transition-colors">Referral &amp; Affiliate</a>
+              <a href="https://ios.mailbroom.app" className="hover:text-white transition-colors">MailBroom for iOS</a>
+              <a href="/leaderboard" className="hover:text-white transition-colors">Leaderboard</a>
+              <a href="/" className="hover:text-white transition-colors">MailBroom for Business</a>
               <a href="/#contact" className="hover:text-white transition-colors">Contact</a>
-              <a href="/mailbroom/webapp/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
-              <a href="/mailbroom/webapp/terms" className="hover:text-white transition-colors">Terms of Use</a>
-              <a href="/mailbroom/webapp/sso" className="hover:text-white transition-colors">SSO &amp; Permissions</a>
-              <a href="/mailbroom/webapp/security" className="hover:text-white transition-colors">Security &amp; Access</a>
-              <a href="/mailbroom/webapp/support" className="hover:text-white transition-colors">Support</a>
+              <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
+              <a href="/terms" className="hover:text-white transition-colors">Terms of Use</a>
+              <a href="/sso" className="hover:text-white transition-colors">SSO &amp; Permissions</a>
+              <a href="/security" className="hover:text-white transition-colors">Security &amp; Access</a>
+              <a href="/support" className="hover:text-white transition-colors">Support</a>
             </div>
           </div>
           <div className="footer-divider mt-8 pt-8 text-center text-xs text-cloud">

@@ -6,7 +6,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "MailBroom for Business – Company Leaderboard | AIERT Ltd",
   description: "See how companies using MailBroom for Business rank on CO₂ and mailbox storage saved — opt-in only, real company names.",
-  metadataBase: new URL("https://ios.mailbroom.app"),
+  metadataBase: new URL("https://business.mailbroom.app"),
   alternates: { canonical: "/leaderboard" },
 };
 
@@ -84,8 +84,8 @@ export default async function MailBroomLeaderboardPage() {
             </span>
           </a>
           <div className="hidden md:flex items-center gap-10 text-base text-mist">
-            <a href="https://business.mailbroom.app" className="hover:text-white transition-colors font-medium">MailBroom for Business</a>
-            <a href="/" className="hover:text-white transition-colors font-medium">MailBroom for iOS</a>
+            <a href="/" className="hover:text-white transition-colors font-medium">MailBroom for Business</a>
+            <a href="https://ios.mailbroom.app" className="hover:text-white transition-colors font-medium">MailBroom for iOS</a>
           </div>
           <a href="https://app.mailbroom.app/sign-in" className="btn-gold px-6 py-3 rounded-full text-base hidden md:block">
             Sign in
@@ -171,8 +171,8 @@ export default async function MailBroomLeaderboardPage() {
               </div>
             </div>
             <div className="flex gap-6 text-sm text-mist flex-wrap justify-center">
-              <a href="https://business.mailbroom.app" className="hover:text-white transition-colors">MailBroom for Business</a>
-              <a href="/" className="hover:text-white transition-colors">MailBroom for iOS</a>
+              <a href="/" className="hover:text-white transition-colors">MailBroom for Business</a>
+              <a href="https://ios.mailbroom.app" className="hover:text-white transition-colors">MailBroom for iOS</a>
               <a href="https://aiert.co.uk" className="hover:text-white transition-colors">AIERT Home</a>
             </div>
           </div>

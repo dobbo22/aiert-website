@@ -39,12 +39,12 @@ const BUSINESS_ROUTES: Route[] = [
   { path: "/blog/mailbroom-vs-bitrecover", priority: 0.6, changeFrequency: "monthly" },
   { path: "/blog/how-mailbroom-is-different", priority: 0.5, changeFrequency: "monthly" },
   { path: "/blog/mailbox-cleanup-tool-cost-comparison", priority: 0.5, changeFrequency: "monthly" },
+  { path: "/leaderboard", priority: 0.5, changeFrequency: "weekly" },
 ];
 
 const IOS_BASE_URL = "https://ios.mailbroom.app";
 const IOS_ROUTES: Route[] = [
   { path: "", priority: 0.6, changeFrequency: "monthly" },
-  { path: "/leaderboard", priority: 0.5, changeFrequency: "weekly" },
   { path: "/blog", priority: 0.5, changeFrequency: "monthly" },
   { path: "/blog/your-emails-are-costing-the-planet", priority: 0.5, changeFrequency: "yearly" },
 ];

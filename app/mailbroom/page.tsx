@@ -922,7 +922,6 @@ export default function MailBroomPage() {
               <a href="https://aiert.co.uk" className="hover:text-white transition-colors">AIERT Home</a>
               <a href="https://sharequest.co.uk" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">ShareQuest</a>
               <a href="/#contact" className="hover:text-white transition-colors">Contact</a>
-              <a href="/leaderboard" className="hover:text-white transition-colors">Leaderboard</a>
               <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
               <a href="/terms" className="hover:text-white transition-colors">Terms of Use</a>
             </div>

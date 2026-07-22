@@ -24,6 +24,17 @@ const nextConfig: NextConfig = {
         destination: "/:path*",
         permanent: true,
       },
+      // The company leaderboard is Business content (queries opted-in
+      // organizations, links to app.mailbroom.app/billing) that was
+      // misplaced in the iOS file tree during the original split — it
+      // briefly lived at ios.mailbroom.app/leaderboard; redirect that to
+      // its correct home.
+      {
+        source: "/leaderboard",
+        has: [{ type: "host", value: "ios.mailbroom.app" }],
+        destination: "https://business.mailbroom.app/leaderboard",
+        permanent: true,
+      },
       // Old B2B webapp pages on aiert.co.uk -> business.mailbroom.app
       // (checked before the general /mailbroom rule below, and query
       // strings — including the ?ref= attribution token — are preserved
@@ -32,6 +43,15 @@ const nextConfig: NextConfig = {
         source: "/mailbroom/webapp/:path*",
         has: [{ type: "host", value: AIERT_HOST }],
         destination: "https://business.mailbroom.app/:path*",
+        permanent: true,
+      },
+      // The company leaderboard, same as above — was under /mailbroom/
+      // on aiert.co.uk pre-split, but belongs on business.mailbroom.app,
+      // not ios.mailbroom.app like the rest of /mailbroom/* below.
+      {
+        source: "/mailbroom/leaderboard",
+        has: [{ type: "host", value: AIERT_HOST }],
+        destination: "https://business.mailbroom.app/leaderboard",
         permanent: true,
       },
       // Everything else under /mailbroom (iOS/Apple app content) -> ios.mailbroom.app
