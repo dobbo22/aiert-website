@@ -224,9 +224,9 @@ export default function HiddenDrainPage() {
           </div>
           <ol className="space-y-3 mt-2 list-decimal list-inside">
             {[
-              "Start a free 30-day evaluation — no payment details required.",
-              "Sign in with Microsoft SSO — every employee on the domain gets access automatically once IT subscribes.",
-              "Run Smart Sweep and Storage Cleanup on a pilot team first if you want to see the impact before rolling out company-wide.",
+              "Request a free 30-day evaluation — a single time-limited login for whoever's assessing it (typically the IT director), no payment details required.",
+              "Run Smart Sweep and Storage Cleanup yourself against your own tenant during the evaluation to see the real impact before deciding.",
+              "Subscribe when you're satisfied — licensing is per company domain, not per person, so every employee gets access automatically via Microsoft SSO the moment the organisation has a paid plan, with no separate invite step.",
               "Check the ROI calculator with your own numbers to see the real, sourced case for your organisation.",
             ].map((item) => (
               <li key={item} className="text-sm text-mist leading-relaxed">{item}</li>
