@@ -35,6 +35,16 @@ const sections = [
     ],
   },
   {
+    icon: "💾",
+    title: "Data backup",
+    list: [
+      "The database (Neon, managed PostgreSQL) is automatically backed up by the provider, with point-in-time recovery available to restore to a specific moment before an incident.",
+      "Application code is version-controlled in Git — every deployed version is independently recoverable by commit, with no separate code backup required.",
+      "Email content itself is never stored by MailBroom in the first place (see the Privacy Policy), so it isn't part of what's backed up here — the backup covers account, organisation, and usage data, not mailbox content.",
+    ],
+    link: { href: "/mailbroom/webapp/privacy", label: "See the full Privacy Policy →" },
+  },
+  {
     icon: "🔄",
     title: "Rotation & incident response",
     body: "If a secret is ever suspected to be exposed — through a leaked log, a compromised device, or any other route — it is rotated immediately and the affected credential is invalidated at the source (Stripe, Microsoft Entra ID, or the database provider, as applicable). This isn't a scheduled quarterly process; it's an immediate response triggered by suspicion, not calendar dates.",
@@ -88,10 +98,11 @@ export default function MailBroomSecurityPage() {
       {/* ── HIGHLIGHTS ──────────────────────────────────── */}
       <section className="section-dark py-12">
         <div className="max-w-3xl mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
             {[
               { icon: "🔑", label: "Session-based, role-controlled access" },
               { icon: "🗝️", label: "Encrypted secrets at rest" },
+              { icon: "💾", label: "Automated backups with point-in-time recovery" },
               { icon: "🔄", label: "Immediate rotation on suspected exposure" },
               { icon: "🔐", label: "Need-to-know internal access" },
             ].map((item) => (
