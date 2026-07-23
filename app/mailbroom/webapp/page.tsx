@@ -130,6 +130,12 @@ async function getImpactStats() {
 export default async function MailBroomWebAppPage() {
   const impact = await getImpactStats();
   const currency = await detectCurrency();
+  // Unset until each listing is public — see docs/aws-marketplace-saas-plan.md
+  // and docs/microsoft-marketplace-saas-plan.md in mailbroom-web. Buttons
+  // below only render once the corresponding URL is actually live, so this
+  // section never ships a dead or premature link.
+  const awsMarketplaceUrl = process.env.AWS_MARKETPLACE_LISTING_URL;
+  const microsoftMarketplaceUrl = process.env.MICROSOFT_MARKETPLACE_LISTING_URL;
   return (
     <div className="min-h-screen hero-gradient grid-bg">
       <script
@@ -550,6 +556,30 @@ export default async function MailBroomWebAppPage() {
           <p className="mt-4 text-xs text-cloud">
             Managed by Stripe · Cancel anytime · Upgrade or downgrade your plan whenever headcount changes
           </p>
+
+          {(awsMarketplaceUrl || microsoftMarketplaceUrl) && (
+            <div className="mt-8 pt-8 border-t border-white/10 max-w-md mx-auto">
+              <p className="text-xs text-cloud mb-4">Prefer to buy against your existing cloud spend?</p>
+              <div className="flex items-center justify-center gap-3 flex-wrap">
+                {awsMarketplaceUrl && (
+                  <a
+                    href={awsMarketplaceUrl}
+                    className="btn-outline px-5 py-2.5 rounded-full text-sm inline-flex items-center gap-2"
+                  >
+                    Buy via AWS Marketplace
+                  </a>
+                )}
+                {microsoftMarketplaceUrl && (
+                  <a
+                    href={microsoftMarketplaceUrl}
+                    className="btn-outline px-5 py-2.5 rounded-full text-sm inline-flex items-center gap-2"
+                  >
+                    Buy via Microsoft Marketplace
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
