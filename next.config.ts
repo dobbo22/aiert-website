@@ -18,12 +18,6 @@ const nextConfig: NextConfig = {
         destination: "/:path*",
         permanent: true,
       },
-      {
-        source: "/mailbroom/:path*",
-        has: [{ type: "host", value: "ios.mailbroom.app" }],
-        destination: "/:path*",
-        permanent: true,
-      },
       // Business content wrongly reachable on the iOS host: the ios
       // rewrite below maps any path to /mailbroom/:path*, which doesn't
       // exclude /webapp (unlike the business rewrite, which explicitly
@@ -31,6 +25,11 @@ const nextConfig: NextConfig = {
       // duplicated at ios.mailbroom.app/webapp/*, and double-prefixed
       // paths like /mailbroom/webapp/* (stale pre-split URLs) resolve to
       // a non-existent route. Canonicalize both back to business.mailbroom.app.
+      // Must come before the generic "/mailbroom/:path*" rule below —
+      // Next.js redirects are first-match-wins, and that broader rule
+      // would otherwise catch /mailbroom/webapp/* first and bounce it to
+      // /webapp/* on this same host before the rule below ever saw it,
+      // turning a one-hop redirect into two.
       {
         source: "/mailbroom/webapp/:path*",
         has: [{ type: "host", value: "ios.mailbroom.app" }],
@@ -41,6 +40,12 @@ const nextConfig: NextConfig = {
         source: "/webapp/:path*",
         has: [{ type: "host", value: "ios.mailbroom.app" }],
         destination: "https://business.mailbroom.app/:path*",
+        permanent: true,
+      },
+      {
+        source: "/mailbroom/:path*",
+        has: [{ type: "host", value: "ios.mailbroom.app" }],
+        destination: "/:path*",
         permanent: true,
       },
       // The company leaderboard is Business content (queries opted-in

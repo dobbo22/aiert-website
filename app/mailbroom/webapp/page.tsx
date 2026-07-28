@@ -162,7 +162,7 @@ export default async function MailBroomWebAppPage() {
             <a href="#pricing" className="hover:text-white transition-colors font-medium">Pricing</a>
             <a href="/blog" className="hover:text-white transition-colors font-medium">Blog</a>
             <a href="#faq" className="hover:text-white transition-colors font-medium">FAQ</a>
-            <a href="#contact" className="hover:text-white transition-colors font-medium">Contact</a>
+            <a href="/support" className="hover:text-white transition-colors font-medium">Contact</a>
           </div>
           <a
             href="/trial"
@@ -720,7 +720,7 @@ export default async function MailBroomWebAppPage() {
               <a href="https://ios.mailbroom.app" className="hover:text-white transition-colors">MailBroom for iOS</a>
               <a href="/leaderboard" className="hover:text-white transition-colors">Leaderboard</a>
               <a href="/" className="hover:text-white transition-colors">MailBroom for Business</a>
-              <a href="/#contact" className="hover:text-white transition-colors">Contact</a>
+              <a href="/support" className="hover:text-white transition-colors">Contact</a>
               <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
               <a href="/terms" className="hover:text-white transition-colors">Terms of Use</a>
               <a href="/sso" className="hover:text-white transition-colors">SSO &amp; Permissions</a>

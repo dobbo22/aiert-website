@@ -105,7 +105,7 @@ export default function MailBroomSsoPage() {
           <div className="hidden md:flex items-center gap-10 text-base text-cloud">
             <a href="/mailbroom/webapp" className="hover:text-white transition-colors font-medium">MailBroom for Business</a>
             <a href="/mailbroom/webapp/privacy" className="hover:text-white transition-colors font-medium">Privacy</a>
-            <a href="/#contact" className="hover:text-white transition-colors font-medium">Contact</a>
+            <a href="/support" className="hover:text-white transition-colors font-medium">Contact</a>
           </div>
           <a
             href="https://app.mailbroom.app/sign-in"
@@ -229,7 +229,7 @@ export default function MailBroomSsoPage() {
               <a href="/mailbroom/webapp/terms" className="hover:text-white transition-colors">Terms of Use</a>
               <a href="/mailbroom/webapp/security" className="hover:text-white transition-colors">Security &amp; Access</a>
               <a href="/mailbroom/webapp/support" className="hover:text-white transition-colors">Support</a>
-              <a href="/#contact" className="hover:text-white transition-colors">Contact</a>
+              <a href="/support" className="hover:text-white transition-colors">Contact</a>
             </div>
           </div>
           <div className="footer-divider mt-8 pt-8 text-center text-xs text-cloud">

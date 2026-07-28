@@ -75,7 +75,7 @@ export default function MailBroomAffiliatesPage() {
           <div className="hidden md:flex items-center gap-10 text-base text-mist">
             <a href="/" className="hover:text-white transition-colors font-medium">Home</a>
             <a href="/mailbroom" className="hover:text-white transition-colors font-medium">MailBroom</a>
-            <a href="/#contact" className="hover:text-white transition-colors font-medium">Contact</a>
+            <a href="mailto:enquiries@aiert.co.uk" className="hover:text-white transition-colors font-medium">Contact</a>
           </div>
           <a
             href="https://apps.apple.com/gb/app/mailbroom"
@@ -235,7 +235,7 @@ export default function MailBroomAffiliatesPage() {
               <a href="/" className="hover:text-white transition-colors">AIERT Home</a>
               <a href="/mailbroom" className="hover:text-white transition-colors">MailBroom</a>
               <a href="/mailbroom/privacy" className="hover:text-white transition-colors">Privacy</a>
-              <a href="/#contact" className="hover:text-white transition-colors">Contact</a>
+              <a href="mailto:enquiries@aiert.co.uk" className="hover:text-white transition-colors">Contact</a>
             </div>
           </div>
           <div className="footer-divider mt-8 pt-8 text-center text-xs text-mist">

@@ -77,7 +77,7 @@ export default function MailBroomPage() {
             <a href="/" className="hover:text-white transition-colors font-medium">Home</a>
             <a href="/#products" className="hover:text-white transition-colors font-medium">Products</a>
             <a href="/blog" className="hover:text-white transition-colors font-medium">Blog</a>
-            <a href="/#contact" className="hover:text-white transition-colors font-medium">Contact</a>
+            <a href="mailto:enquiries@aiert.co.uk" className="hover:text-white transition-colors font-medium">Contact</a>
           </div>
           <a
             href="https://business.mailbroom.app"
@@ -921,7 +921,7 @@ export default function MailBroomPage() {
               <a href="https://sharequest.co.uk" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">ShareQuest</a>
               */}
               <a href="https://business.mailbroom.app" className="hover:text-white transition-colors">For Business</a>
-              <a href="/#contact" className="hover:text-white transition-colors">Contact</a>
+              <a href="mailto:enquiries@aiert.co.uk" className="hover:text-white transition-colors">Contact</a>
               <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
               <a href="/terms" className="hover:text-white transition-colors">Terms of Use</a>
             </div>
