@@ -725,6 +725,15 @@ export default async function MailBroomWebAppPage() {
               <a href="/terms" className="hover:text-white transition-colors">Terms of Use</a>
               <a href="/sso" className="hover:text-white transition-colors">SSO &amp; Permissions</a>
               <a href="/security" className="hover:text-white transition-colors">Security &amp; Access</a>
+              <a href="/gdpr" className="hover:text-white transition-colors">GDPR</a>
+              <a href="/litigation-hold" className="hover:text-white transition-colors">Litigation Hold</a>
+              <a href="/exchange-online-quotas" className="hover:text-white transition-colors">Exchange Online Quotas</a>
+              <a href="/audit-mailbox-storage" className="hover:text-white transition-colors">Audit Mailbox Storage</a>
+              <a href="/tenant-migration" className="hover:text-white transition-colors">Tenant Migration</a>
+              <a href="/shared-mailbox-cleanup" className="hover:text-white transition-colors">Shared Mailbox Cleanup</a>
+              <a href="/carbon-savings" className="hover:text-white transition-colors">Carbon Savings</a>
+              <a href="/msp-onboarding" className="hover:text-white transition-colors">MSP Onboarding</a>
+              <a href="/msp-storage-billing" className="hover:text-white transition-colors">MSP Storage Billing</a>
               <a href="/support" className="hover:text-white transition-colors">Support</a>
             </div>
           </div>

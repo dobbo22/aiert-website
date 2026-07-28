@@ -24,6 +24,25 @@ const nextConfig: NextConfig = {
         destination: "/:path*",
         permanent: true,
       },
+      // Business content wrongly reachable on the iOS host: the ios
+      // rewrite below maps any path to /mailbroom/:path*, which doesn't
+      // exclude /webapp (unlike the business rewrite, which explicitly
+      // owns that tree). That let business.mailbroom.app content get
+      // duplicated at ios.mailbroom.app/webapp/*, and double-prefixed
+      // paths like /mailbroom/webapp/* (stale pre-split URLs) resolve to
+      // a non-existent route. Canonicalize both back to business.mailbroom.app.
+      {
+        source: "/mailbroom/webapp/:path*",
+        has: [{ type: "host", value: "ios.mailbroom.app" }],
+        destination: "https://business.mailbroom.app/:path*",
+        permanent: true,
+      },
+      {
+        source: "/webapp/:path*",
+        has: [{ type: "host", value: "ios.mailbroom.app" }],
+        destination: "https://business.mailbroom.app/:path*",
+        permanent: true,
+      },
       // The company leaderboard is Business content (queries opted-in
       // organizations, links to app.mailbroom.app/billing) that was
       // misplaced in the iOS file tree during the original split — it
