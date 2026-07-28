@@ -75,18 +75,15 @@ export default function MailBroomPage() {
           </a>
           <div className="hidden md:flex items-center gap-10 text-base text-mist">
             <a href="/" className="hover:text-white transition-colors font-medium">Home</a>
-            <a href="https://business.mailbroom.app" className="hover:text-white transition-colors font-medium">For Business</a>
             <a href="/#products" className="hover:text-white transition-colors font-medium">Products</a>
             <a href="/blog" className="hover:text-white transition-colors font-medium">Blog</a>
             <a href="/#contact" className="hover:text-white transition-colors font-medium">Contact</a>
           </div>
           <a
-            href="https://sharequest.co.uk"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="https://business.mailbroom.app"
             className="btn-gold px-6 py-3 rounded-full text-base hidden md:block"
           >
-            Visit ShareQuest
+            For Business
           </a>
         </div>
       </nav>
