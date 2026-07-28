@@ -114,6 +114,8 @@ export default function Home() {
       </section>
 
       {/* ── ABOUT ─────────────────────────────────────────── */}
+      {/* Previous ShareQuest-flavoured About copy — commented out for now,
+      replaced with MailBroom-focused version below.
       <section id="about" className="max-w-6xl mx-auto px-6 py-24">
         <div className="grid md:grid-cols-2 gap-16 items-center">
           <div>
@@ -139,6 +141,42 @@ export default function Home() {
               { icon: "📊", title: "Real-time Data", desc: "Live price feeds and fundamental analysis updated continuously" },
               { icon: "🏆", title: "Gamification", desc: "Competitive trading platforms that make learning engaging and rewarding" },
               { icon: "🔒", title: "Regulated Tech", desc: "Built with compliance and data security at its core" },
+            ].map((item) => (
+              <div key={item.title} className="card-glass rounded-2xl p-5">
+                <div className="text-3xl mb-3">{item.icon}</div>
+                <h3 className="font-bold mb-2 text-cloud">{item.title}</h3>
+                <p className="text-sm text-mist">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+      */}
+      <section id="about" className="max-w-6xl mx-auto px-6 py-24">
+        <div className="grid md:grid-cols-2 gap-16 items-center">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest mb-4 text-gold">About AIERT Ltd</p>
+            <h2 className="text-4xl font-black leading-tight mb-6 text-cloud">
+              Building the future of<br />
+              <span className="teal-text">intelligent inbox management</span>
+            </h2>
+            <p className="mb-4 text-mist leading-relaxed">
+              AIERT Ltd (AI Enhanced Research &amp; Technology) is a London-based technology company focused on
+              applying artificial intelligence to everyday problems. Our team combines deep expertise in machine
+              learning, data engineering, and product design.
+            </p>
+            <p className="text-mist leading-relaxed">
+              We believe inbox management should be effortless and private. MailBroom, our flagship product,
+              classifies, cleans, and organises email entirely on-device — turning an overflowing inbox into a
+              clear one, without your data ever leaving your phone.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {[
+              { icon: "🧠", title: "On-Device AI", desc: "Classifies every email as Junk, Lists, or Keep — privately, on your phone" },
+              { icon: "🗑️", title: "Bulk Cleanup", desc: "Delete thousands of unwanted emails in seconds" },
+              { icon: "🌱", title: "Lower Footprint", desc: "Less stored email means a smaller environmental footprint" },
+              { icon: "🔒", title: "Privacy First", desc: "No server, no account — your emails never leave your device" },
             ].map((item) => (
               <div key={item.title} className="card-glass rounded-2xl p-5">
                 <div className="text-3xl mb-3">{item.icon}</div>
@@ -208,7 +246,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* AIERT Index */}
+          {/* AIERT Index — commented out for now (ShareQuest-related tech)
           <div className="card-teal-accent rounded-3xl p-8 md:p-12 glow-teal">
             <div className="grid md:grid-cols-2 gap-10 items-center">
               <div>
@@ -250,6 +288,7 @@ export default function Home() {
               </div>
             </div>
           </div>
+          */}
         </div>
       </section>
 
