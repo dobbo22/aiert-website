@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { headers } from "next/headers";
+import { BUSINESS_BASE_URL, BUSINESS_ROUTES, IOS_BASE_URL, IOS_ROUTES } from "@/lib/mailbroom-routes.mjs";
 
 // MailBroom marketing pages now live on their own domains, split by
 // audience: mailbroom.app (B2B webapp funnel — the former
@@ -8,49 +9,17 @@ import { headers } from "next/headers";
 // (consumer iOS app). aiert.co.uk 301-redirects the old /mailbroom/*
 // paths to these hosts (see next.config.ts) but is no longer the
 // canonical URL for this content.
+//
+// The route lists themselves live in lib/mailbroom-routes.mjs, not here —
+// scripts/submit-indexnow.mjs needs the same list and can't import a .ts
+// file without a build step, so that plain-JS module is the single source
+// of truth for both.
 type Route = { path: string; priority: number; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"] };
 
-const BUSINESS_BASE_URL = "https://mailbroom.app";
-const BUSINESS_ROUTES: Route[] = [
-  { path: "", priority: 1.0, changeFrequency: "weekly" },
-  { path: "/roi", priority: 0.8, changeFrequency: "monthly" },
-  { path: "/guide", priority: 0.8, changeFrequency: "monthly" },
-  { path: "/storage-costs", priority: 0.7, changeFrequency: "monthly" },
-  { path: "/mailbox-full", priority: 0.7, changeFrequency: "monthly" },
-  { path: "/employee-offboarding", priority: 0.6, changeFrequency: "monthly" },
-  { path: "/bulk-delete-emails", priority: 0.7, changeFrequency: "monthly" },
-  { path: "/tenant-migration", priority: 0.6, changeFrequency: "monthly" },
-  { path: "/msp-storage-billing", priority: 0.6, changeFrequency: "monthly" },
-  { path: "/msp-onboarding", priority: 0.6, changeFrequency: "monthly" },
-  { path: "/shared-mailbox-cleanup", priority: 0.6, changeFrequency: "monthly" },
-  { path: "/carbon-savings", priority: 0.5, changeFrequency: "monthly" },
-  { path: "/gdpr", priority: 0.5, changeFrequency: "monthly" },
-  { path: "/exchange-online-quotas", priority: 0.5, changeFrequency: "monthly" },
-  { path: "/audit-mailbox-storage", priority: 0.5, changeFrequency: "monthly" },
-  { path: "/litigation-hold", priority: 0.5, changeFrequency: "monthly" },
-  { path: "/security", priority: 0.6, changeFrequency: "monthly" },
-  { path: "/sso", priority: 0.6, changeFrequency: "monthly" },
-  { path: "/support", priority: 0.5, changeFrequency: "monthly" },
-  { path: "/affiliates", priority: 0.5, changeFrequency: "monthly" },
-  { path: "/trial", priority: 0.7, changeFrequency: "monthly" },
-  { path: "/privacy", priority: 0.3, changeFrequency: "yearly" },
-  { path: "/terms", priority: 0.3, changeFrequency: "yearly" },
-  { path: "/blog", priority: 0.6, changeFrequency: "weekly" },
-  { path: "/blog/hidden-drain-on-your-business", priority: 0.6, changeFrequency: "monthly" },
-  { path: "/blog/mailbroom-vs-clean-email", priority: 0.6, changeFrequency: "monthly" },
-  { path: "/blog/mailbroom-vs-sanebox", priority: 0.6, changeFrequency: "monthly" },
-  { path: "/blog/mailbroom-vs-bitrecover", priority: 0.6, changeFrequency: "monthly" },
-  { path: "/blog/how-mailbroom-is-different", priority: 0.5, changeFrequency: "monthly" },
-  { path: "/blog/mailbox-cleanup-tool-cost-comparison", priority: 0.5, changeFrequency: "monthly" },
-  { path: "/leaderboard", priority: 0.5, changeFrequency: "weekly" },
-];
-
-const IOS_BASE_URL = "https://ios.mailbroom.app";
-const IOS_ROUTES: Route[] = [
-  { path: "", priority: 0.6, changeFrequency: "monthly" },
-  { path: "/blog", priority: 0.5, changeFrequency: "monthly" },
-  { path: "/blog/your-emails-are-costing-the-planet", priority: 0.5, changeFrequency: "yearly" },
-];
+// lib/mailbroom-routes.mjs is plain JS, so TS widens changeFrequency to
+// `string` — cast back to the literal union sitemap() actually returns.
+const businessRoutes = BUSINESS_ROUTES as Route[];
+const iosRoutes = IOS_ROUTES as Route[];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const lastModified = new Date();
@@ -69,15 +38,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // stray request lands here before its 301-to-mailbroom.app redirect
   // (next.config.ts) has fully propagated.
   if (host === "mailbroom.app" || host === "www.mailbroom.app" || host.startsWith("business.mailbroom.app")) {
-    return BUSINESS_ROUTES.map(toEntry(BUSINESS_BASE_URL));
+    return businessRoutes.map(toEntry(BUSINESS_BASE_URL));
   }
   if (host.startsWith("ios.mailbroom.app")) {
-    return IOS_ROUTES.map(toEntry(IOS_BASE_URL));
+    return iosRoutes.map(toEntry(IOS_BASE_URL));
   }
   // Fallback (e.g. requested directly on aiert.co.uk): list both, since
   // this host no longer canonically owns either page tree.
   return [
-    ...BUSINESS_ROUTES.map(toEntry(BUSINESS_BASE_URL)),
-    ...IOS_ROUTES.map(toEntry(IOS_BASE_URL)),
+    ...businessRoutes.map(toEntry(BUSINESS_BASE_URL)),
+    ...iosRoutes.map(toEntry(IOS_BASE_URL)),
   ];
 }

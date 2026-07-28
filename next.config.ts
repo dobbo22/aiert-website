@@ -113,9 +113,12 @@ const nextConfig: NextConfig = {
         // non-existent /mailbroom/webapp/_next/... path and 404s, which
         // is why the pages first went live completely unstyled.
         // mailbroom-icon.png (public/) is excluded for the same reason —
-        // beforeFiles also runs before /public files are served.
+        // beforeFiles also runs before /public files are served. The
+        // IndexNow key file is excluded too — Bing's verification fetch
+        // expects it at the literal root path exactly as generated in
+        // Bing Webmaster Tools, not rewritten under /mailbroom/webapp/.
         {
-          source: "/:path((?!_next/|sitemap\\.xml|robots\\.txt|llms\\.txt|mailbroom-icon\\.png).*)",
+          source: "/:path((?!_next/|sitemap\\.xml|robots\\.txt|llms\\.txt|mailbroom-icon\\.png|09d90e3ec75e4e3c93a57c014df8764a\\.txt).*)",
           has: [{ type: "host", value: MAILBROOM_APEX_HOST }],
           destination: "/mailbroom/webapp/:path*",
         },
