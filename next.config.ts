@@ -125,9 +125,13 @@ const nextConfig: NextConfig = {
         // ios.mailbroom.app transparently serves the existing
         // app/mailbroom/* page tree (excluding /webapp, which is
         // claimed by mailbroom.app above and never reached here since
-        // that host won't match this rule)
+        // that host won't match this rule). Same IndexNow key file as
+        // mailbroom.app — one key can be reused across multiple hosts
+        // as long as it's hosted at each host's own root, so it's the
+        // same physical public/ file, just excluded from this rewrite
+        // too rather than a second key file.
         {
-          source: "/:path((?!_next/|sitemap\\.xml|robots\\.txt|llms\\.txt|mailbroom-icon\\.png).*)",
+          source: "/:path((?!_next/|sitemap\\.xml|robots\\.txt|llms\\.txt|mailbroom-icon\\.png|09d90e3ec75e4e3c93a57c014df8764a\\.txt).*)",
           has: [{ type: "host", value: "ios.mailbroom.app" }],
           destination: "/mailbroom/:path*",
         },
