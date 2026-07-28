@@ -12,13 +12,13 @@ export const metadata: Metadata = {
     "IT support storage cleanup pricing",
     "MSP value added service email",
   ],
-  metadataBase: new URL("https://business.mailbroom.app"),
+  metadataBase: new URL("https://mailbroom.app"),
   alternates: { canonical: "/msp-storage-billing" },
   openGraph: {
-    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
+    images: [{ url: "https://mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
     title: "How MSPs Bill for M365 Storage Cleanup",
     description: "Turning mailbox storage overage into a billable, recurring service line — not just a one-off fix.",
-    url: "https://business.mailbroom.app/msp-storage-billing",
+    url: "https://mailbroom.app/msp-storage-billing",
     siteName: "AIERT Ltd",
     locale: "en_GB",
     type: "website",
@@ -54,7 +54,7 @@ const techArticleJsonLd = {
   headline: "How MSPs Bill for M365 Storage Cleanup",
   description:
     "How MSPs turn Microsoft 365 mailbox storage overage into a billable service, and what makes it worth offering as a recurring line item.",
-  url: "https://business.mailbroom.app/msp-storage-billing",
+  url: "https://mailbroom.app/msp-storage-billing",
   dateModified: "2026-07-21",
   publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
 };

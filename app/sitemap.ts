@@ -1,14 +1,16 @@
 import type { MetadataRoute } from "next";
 import { headers } from "next/headers";
 
-// MailBroom marketing pages now live on their own subdomains, split by
-// audience: business.mailbroom.app (B2B webapp funnel) and
-// ios.mailbroom.app (consumer iOS app). aiert.co.uk 301-redirects the
-// old /mailbroom/* paths to these hosts (see next.config.ts) but is no
-// longer the canonical URL for this content.
+// MailBroom marketing pages now live on their own domains, split by
+// audience: mailbroom.app (B2B webapp funnel — the former
+// business.mailbroom.app, retired and now 301-redirected here to
+// consolidate SEO signal onto the apex domain) and ios.mailbroom.app
+// (consumer iOS app). aiert.co.uk 301-redirects the old /mailbroom/*
+// paths to these hosts (see next.config.ts) but is no longer the
+// canonical URL for this content.
 type Route = { path: string; priority: number; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"] };
 
-const BUSINESS_BASE_URL = "https://business.mailbroom.app";
+const BUSINESS_BASE_URL = "https://mailbroom.app";
 const BUSINESS_ROUTES: Route[] = [
   { path: "", priority: 1.0, changeFrequency: "weekly" },
   { path: "/roi", priority: 0.8, changeFrequency: "monthly" },
@@ -60,7 +62,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   });
 
   const host = (await headers()).get("host") ?? "";
-  if (host.startsWith("business.mailbroom.app")) {
+  // Exact match, not startsWith — "app.mailbroom.app" would otherwise
+  // never match anyway (doesn't start with "mailbroom.app"), but staying
+  // exact here avoids the same substring trap as next.config.ts's rewrite.
+  // business.mailbroom.app is kept as a fallback match too, in case a
+  // stray request lands here before its 301-to-mailbroom.app redirect
+  // (next.config.ts) has fully propagated.
+  if (host === "mailbroom.app" || host === "www.mailbroom.app" || host.startsWith("business.mailbroom.app")) {
     return BUSINESS_ROUTES.map(toEntry(BUSINESS_BASE_URL));
   }
   if (host.startsWith("ios.mailbroom.app")) {

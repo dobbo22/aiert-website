@@ -6,7 +6,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "MailBroom for Business – Company Leaderboard | AIERT Ltd",
   description: "See how companies using MailBroom for Business rank on CO₂ and mailbox storage saved — opt-in only, real company names.",
-  metadataBase: new URL("https://business.mailbroom.app"),
+  metadataBase: new URL("https://mailbroom.app"),
   alternates: { canonical: "/leaderboard" },
 };
 

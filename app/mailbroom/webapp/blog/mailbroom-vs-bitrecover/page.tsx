@@ -4,16 +4,16 @@ export const metadata: Metadata = {
   title: "MailBroom vs BitRecover Office 365 Email Eraser | AIERT Ltd",
   description: "BitRecover's Office 365 Eraser is a genuine bulk-delete competitor for M365 — but it works by logging in with the account's actual email and password, not Microsoft SSO. Here's why that matters.",
   keywords: ["MailBroom vs BitRecover", "BitRecover Office 365 Eraser alternative", "bulk delete Office 365 emails tool", "M365 bulk email deletion security"],
-  metadataBase: new URL("https://business.mailbroom.app"),
+  metadataBase: new URL("https://mailbroom.app"),
   alternates: { canonical: "/blog/mailbroom-vs-bitrecover" },
   openGraph: {
     title: "MailBroom vs BitRecover Office 365 Email Eraser",
     description: "A genuine bulk-delete competitor for M365 — with a fundamentally different, credential-based access model.",
-    url: "https://business.mailbroom.app/blog/mailbroom-vs-bitrecover",
+    url: "https://mailbroom.app/blog/mailbroom-vs-bitrecover",
     siteName: "AIERT Ltd",
     locale: "en_GB",
     type: "article",
-    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
+    images: [{ url: "https://mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
   },
 };
 
@@ -41,7 +41,7 @@ const techArticleJsonLd = {
   "@type": "BlogPosting",
   headline: "MailBroom vs BitRecover Office 365 Email Eraser",
   description: "A genuine bulk-delete competitor for M365 — with a fundamentally different, credential-based access model.",
-  url: "https://business.mailbroom.app/blog/mailbroom-vs-bitrecover",
+  url: "https://mailbroom.app/blog/mailbroom-vs-bitrecover",
   datePublished: "2026-07-22",
   dateModified: "2026-07-22",
   author: { "@type": "Person", name: "Martin Dobson" },

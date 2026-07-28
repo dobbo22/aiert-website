@@ -3,16 +3,16 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Support – MailBroom for Business | AIERT Ltd",
   description: "Help and support for MailBroom for Business — a quick guide to every feature, plus how to reach AIERT Ltd directly.",
-  metadataBase: new URL("https://business.mailbroom.app"),
+  metadataBase: new URL("https://mailbroom.app"),
   alternates: { canonical: "/support" },
   openGraph: {
     title: "Support – MailBroom for Business",
     description: "Help and support for MailBroom for Business — a quick guide to every feature, plus how to reach AIERT Ltd directly.",
-    url: "https://business.mailbroom.app/support",
+    url: "https://mailbroom.app/support",
     siteName: "AIERT Ltd",
     locale: "en_GB",
     type: "website",
-    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
+    images: [{ url: "https://mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
   },
 };
 

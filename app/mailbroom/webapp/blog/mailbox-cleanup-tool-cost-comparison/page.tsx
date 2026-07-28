@@ -4,16 +4,16 @@ export const metadata: Metadata = {
   title: "Mailbox Cleanup Tool Cost Comparison: MailBroom vs the Alternatives | AIERT Ltd",
   description: "How MailBroom for Business's per-organisation pricing compares to Clean Email, SaneBox, and BitRecover's per-account or unpublished pricing — what each actually costs to deploy company-wide.",
   keywords: ["mailbox cleanup tool pricing comparison", "MailBroom pricing", "Clean Email pricing", "SaneBox pricing", "M365 cleanup tool cost", "company-wide email cleanup cost"],
-  metadataBase: new URL("https://business.mailbroom.app"),
+  metadataBase: new URL("https://mailbroom.app"),
   alternates: { canonical: "/blog/mailbox-cleanup-tool-cost-comparison" },
   openGraph: {
     title: "Mailbox Cleanup Tool Cost Comparison: MailBroom vs the Alternatives",
     description: "What each tool actually costs to deploy company-wide — per-organisation vs per-account vs unpublished pricing.",
-    url: "https://business.mailbroom.app/blog/mailbox-cleanup-tool-cost-comparison",
+    url: "https://mailbroom.app/blog/mailbox-cleanup-tool-cost-comparison",
     siteName: "AIERT Ltd",
     locale: "en_GB",
     type: "article",
-    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
+    images: [{ url: "https://mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
   },
 };
 
@@ -37,7 +37,7 @@ const techArticleJsonLd = {
   "@type": "BlogPosting",
   headline: "Mailbox Cleanup Tool Cost Comparison: MailBroom vs the Alternatives",
   description: "What each tool actually costs to deploy company-wide — per-organisation vs per-account vs unpublished pricing.",
-  url: "https://business.mailbroom.app/blog/mailbox-cleanup-tool-cost-comparison",
+  url: "https://mailbroom.app/blog/mailbox-cleanup-tool-cost-comparison",
   datePublished: "2026-07-22",
   dateModified: "2026-07-22",
   author: { "@type": "Person", name: "Martin Dobson" },

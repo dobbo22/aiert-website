@@ -4,16 +4,16 @@ export const metadata: Metadata = {
   title: "MailBroom vs Clean Email: Which Is Right for Your M365 Tenant? | AIERT Ltd",
   description: "Clean Email is a genuine competitor for bulk inbox cleanup — but built for individuals sharing an account, not IT admins licensing a company. Here's the real difference.",
   keywords: ["MailBroom vs Clean Email", "Clean Email alternative", "M365 mailbox cleanup tool", "bulk email cleanup for business", "Clean Email for business"],
-  metadataBase: new URL("https://business.mailbroom.app"),
+  metadataBase: new URL("https://mailbroom.app"),
   alternates: { canonical: "/blog/mailbroom-vs-clean-email" },
   openGraph: {
     title: "MailBroom vs Clean Email: Which Is Right for Your M365 Tenant?",
     description: "A genuine competitor, built for a different buyer — individuals sharing an account, not IT admins licensing a company.",
-    url: "https://business.mailbroom.app/blog/mailbroom-vs-clean-email",
+    url: "https://mailbroom.app/blog/mailbroom-vs-clean-email",
     siteName: "AIERT Ltd",
     locale: "en_GB",
     type: "article",
-    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
+    images: [{ url: "https://mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
   },
 };
 
@@ -41,7 +41,7 @@ const techArticleJsonLd = {
   "@type": "BlogPosting",
   headline: "MailBroom vs Clean Email: Which Is Right for Your M365 Tenant?",
   description: "A genuine competitor for bulk inbox cleanup, built for a different buyer — individuals sharing an account, not IT admins licensing a company.",
-  url: "https://business.mailbroom.app/blog/mailbroom-vs-clean-email",
+  url: "https://mailbroom.app/blog/mailbroom-vs-clean-email",
   datePublished: "2026-07-22",
   dateModified: "2026-07-22",
   author: { "@type": "Person", name: "Martin Dobson" },

@@ -4,16 +4,16 @@ export const metadata: Metadata = {
   title: "MailBroom vs SaneBox: Solving Different Problems in the Inbox | AIERT Ltd",
   description: "SaneBox prioritises new email as it arrives. MailBroom cleans up what already piled up. An honest look at when you need one, the other, or both.",
   keywords: ["MailBroom vs SaneBox", "SaneBox alternative", "email prioritisation vs cleanup", "M365 mailbox storage tool", "SaneBox for business"],
-  metadataBase: new URL("https://business.mailbroom.app"),
+  metadataBase: new URL("https://mailbroom.app"),
   alternates: { canonical: "/blog/mailbroom-vs-sanebox" },
   openGraph: {
     title: "MailBroom vs SaneBox: Solving Different Problems in the Inbox",
     description: "Prioritisation vs remediation — an honest look at when you need one, the other, or both.",
-    url: "https://business.mailbroom.app/blog/mailbroom-vs-sanebox",
+    url: "https://mailbroom.app/blog/mailbroom-vs-sanebox",
     siteName: "AIERT Ltd",
     locale: "en_GB",
     type: "article",
-    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
+    images: [{ url: "https://mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
   },
 };
 
@@ -41,7 +41,7 @@ const techArticleJsonLd = {
   "@type": "BlogPosting",
   headline: "MailBroom vs SaneBox: Solving Different Problems in the Inbox",
   description: "Prioritisation vs remediation — an honest look at when you need one, the other, or both.",
-  url: "https://business.mailbroom.app/blog/mailbroom-vs-sanebox",
+  url: "https://mailbroom.app/blog/mailbroom-vs-sanebox",
   datePublished: "2026-07-22",
   dateModified: "2026-07-22",
   author: { "@type": "Person", name: "Martin Dobson" },

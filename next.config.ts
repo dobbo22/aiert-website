@@ -1,30 +1,34 @@
 import type { NextConfig } from "next";
 
 const AIERT_HOST = "(www\\.)?aiert\\.co\\.uk";
+// Anchored exactly — "app.mailbroom.app" and "ios.mailbroom.app" both
+// contain "mailbroom.app" as a substring, and all three domains live on
+// this same Vercel project, so an unanchored match here would wrongly
+// swallow those hosts too.
+const MAILBROOM_APEX_HOST = "^mailbroom\\.app$";
 
 const nextConfig: NextConfig = {
   async redirects() {
     return [
-      // The pages themselves still have internal nav/footer/CTA links
-      // hardcoded to the pre-split "/mailbroom/webapp/..." and
-      // "/mailbroom/..." paths (baked in from when this was all one site
-      // on aiert.co.uk). On the new subdomains those paths don't exist at
-      // the file-tree root, so clicking them would double up through the
-      // rewrites below and 404. Canonicalize back to the short form here
-      // rather than editing every link across every page.
+      // business.mailbroom.app is retired as a content host — mailbroom.app
+      // is now canonical (see rewrites below) so every prior link/bookmark/
+      // backlink to business.mailbroom.app just 301s straight across,
+      // consolidating SEO signal onto the apex domain rather than splitting
+      // it across two live hosts. Must come before any other rule so
+      // nothing else tries to rewrite this host first.
       {
-        source: "/mailbroom/webapp/:path*",
+        source: "/:path*",
         has: [{ type: "host", value: "business.mailbroom.app" }],
-        destination: "/:path*",
+        destination: "https://mailbroom.app/:path*",
         permanent: true,
       },
       // Business content wrongly reachable on the iOS host: the ios
       // rewrite below maps any path to /mailbroom/:path*, which doesn't
-      // exclude /webapp (unlike the business rewrite, which explicitly
-      // owns that tree). That let business.mailbroom.app content get
-      // duplicated at ios.mailbroom.app/webapp/*, and double-prefixed
-      // paths like /mailbroom/webapp/* (stale pre-split URLs) resolve to
-      // a non-existent route. Canonicalize both back to business.mailbroom.app.
+      // exclude /webapp (unlike mailbroom.app's rewrite, which explicitly
+      // owns that tree). That let business content get duplicated at
+      // ios.mailbroom.app/webapp/*, and double-prefixed paths like
+      // /mailbroom/webapp/* (stale pre-split URLs) resolve to a
+      // non-existent route. Canonicalize both back to mailbroom.app.
       // Must come before the generic "/mailbroom/:path*" rule below —
       // Next.js redirects are first-match-wins, and that broader rule
       // would otherwise catch /mailbroom/webapp/* first and bounce it to
@@ -33,13 +37,13 @@ const nextConfig: NextConfig = {
       {
         source: "/mailbroom/webapp/:path*",
         has: [{ type: "host", value: "ios.mailbroom.app" }],
-        destination: "https://business.mailbroom.app/:path*",
+        destination: "https://mailbroom.app/:path*",
         permanent: true,
       },
       {
         source: "/webapp/:path*",
         has: [{ type: "host", value: "ios.mailbroom.app" }],
-        destination: "https://business.mailbroom.app/:path*",
+        destination: "https://mailbroom.app/:path*",
         permanent: true,
       },
       {
@@ -56,26 +60,26 @@ const nextConfig: NextConfig = {
       {
         source: "/leaderboard",
         has: [{ type: "host", value: "ios.mailbroom.app" }],
-        destination: "https://business.mailbroom.app/leaderboard",
+        destination: "https://mailbroom.app/leaderboard",
         permanent: true,
       },
-      // Old B2B webapp pages on aiert.co.uk -> business.mailbroom.app
+      // Old B2B webapp pages on aiert.co.uk -> mailbroom.app
       // (checked before the general /mailbroom rule below, and query
       // strings — including the ?ref= attribution token — are preserved
       // automatically by Next.js)
       {
         source: "/mailbroom/webapp/:path*",
         has: [{ type: "host", value: AIERT_HOST }],
-        destination: "https://business.mailbroom.app/:path*",
+        destination: "https://mailbroom.app/:path*",
         permanent: true,
       },
       // The company leaderboard, same as above — was under /mailbroom/
-      // on aiert.co.uk pre-split, but belongs on business.mailbroom.app,
-      // not ios.mailbroom.app like the rest of /mailbroom/* below.
+      // on aiert.co.uk pre-split, but belongs on mailbroom.app, not
+      // ios.mailbroom.app like the rest of /mailbroom/* below.
       {
         source: "/mailbroom/leaderboard",
         has: [{ type: "host", value: AIERT_HOST }],
-        destination: "https://business.mailbroom.app/leaderboard",
+        destination: "https://mailbroom.app/leaderboard",
         permanent: true,
       },
       // Everything else under /mailbroom (iOS/Apple app content) -> ios.mailbroom.app
@@ -99,7 +103,7 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return {
       beforeFiles: [
-        // business.mailbroom.app transparently serves the existing
+        // mailbroom.app transparently serves the existing
         // app/mailbroom/webapp/* page tree. sitemap.xml/robots.txt are
         // excluded so each subdomain's own metadata routes (which are
         // host-aware, see app/sitemap.ts) are served instead, and _next/*
@@ -112,13 +116,13 @@ const nextConfig: NextConfig = {
         // beforeFiles also runs before /public files are served.
         {
           source: "/:path((?!_next/|sitemap\\.xml|robots\\.txt|llms\\.txt|mailbroom-icon\\.png).*)",
-          has: [{ type: "host", value: "business.mailbroom.app" }],
+          has: [{ type: "host", value: MAILBROOM_APEX_HOST }],
           destination: "/mailbroom/webapp/:path*",
         },
         // ios.mailbroom.app transparently serves the existing
         // app/mailbroom/* page tree (excluding /webapp, which is
-        // claimed by business.mailbroom.app above and never reached
-        // here since that host won't match this rule)
+        // claimed by mailbroom.app above and never reached here since
+        // that host won't match this rule)
         {
           source: "/:path((?!_next/|sitemap\\.xml|robots\\.txt|llms\\.txt|mailbroom-icon\\.png).*)",
           has: [{ type: "host", value: "ios.mailbroom.app" }],

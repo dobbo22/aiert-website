@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 
-// Twitter default for every page under business.mailbroom.app — no page
+// Twitter default for every page under mailbroom.app — no page
 // defines its own `twitter` block, so this layout-level default is
 // inherited everywhere. NOTE: og:image can't be set the same way here —
 // Next.js's metadata merging replaces (doesn't deep-merge) a child's
@@ -11,7 +11,7 @@ import Script from "next/script";
 // mailbroom-business-og.png usage across app/mailbroom/webapp/*/page.tsx).
 // The 3 pages with their own dynamic opengraph-image.tsx (root, guide,
 // roi) are unaffected either way — that file convention takes priority.
-const OG_IMAGE = "https://business.mailbroom.app/mailbroom-business-og.png";
+const OG_IMAGE = "https://mailbroom.app/mailbroom-business-og.png";
 
 export const metadata: Metadata = {
   twitter: {

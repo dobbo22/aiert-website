@@ -5,13 +5,13 @@ export const metadata: Metadata = {
   description:
     "Mailbox full and can't send email in Exchange Online? Here's why it happens, what breaks first, and how to fix it fast — including the safest way to clear space across every mailbox in the company.",
   keywords: ["Exchange Online mailbox full", "mailbox full fix", "can't send email mailbox full", "Outlook mailbox full", "Exchange Online storage quota exceeded", "Microsoft 365 mailbox over quota"],
-  metadataBase: new URL("https://business.mailbroom.app"),
+  metadataBase: new URL("https://mailbroom.app"),
   alternates: { canonical: "/mailbox-full" },
   openGraph: {
-    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
+    images: [{ url: "https://mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
     title: "Exchange Online Mailbox Full? How to Fix It",
     description: "Why it happens, what breaks first, and how to fix it fast.",
-    url: "https://business.mailbroom.app/mailbox-full",
+    url: "https://mailbroom.app/mailbox-full",
     siteName: "AIERT Ltd",
     locale: "en_GB",
     type: "website",
@@ -46,7 +46,7 @@ const techArticleJsonLd = {
   "@type": "TechArticle",
   headline: "Exchange Online Mailbox Full? How to Fix It",
   description: "Why an Exchange Online mailbox fills up, what breaks at each stage, and how to fix it — including the safest way to clear space across every mailbox in a company.",
-  url: "https://business.mailbroom.app/mailbox-full",
+  url: "https://mailbroom.app/mailbox-full",
   dateModified: "2026-07-21",
   publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
 };

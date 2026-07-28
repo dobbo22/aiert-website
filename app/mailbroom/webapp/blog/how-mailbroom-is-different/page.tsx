@@ -4,16 +4,16 @@ export const metadata: Metadata = {
   title: "How MailBroom Is Different (and Who It's Not For) | AIERT Ltd",
   description: "Not every email tool solves the same problem. A clear map of what MailBroom for Business does — and where a team inbox, CRM, archiving tool, or personal cleanup app is the better fit instead.",
   keywords: ["what is MailBroom", "MailBroom alternative", "M365 mailbox cleanup tool comparison", "best tool for mailbox full", "email management tool categories"],
-  metadataBase: new URL("https://business.mailbroom.app"),
+  metadataBase: new URL("https://mailbroom.app"),
   alternates: { canonical: "/blog/how-mailbroom-is-different" },
   openGraph: {
     title: "How MailBroom Is Different (and Who It's Not For)",
     description: "A clear map of what MailBroom does — and where a different category of tool is the better fit.",
-    url: "https://business.mailbroom.app/blog/how-mailbroom-is-different",
+    url: "https://mailbroom.app/blog/how-mailbroom-is-different",
     siteName: "AIERT Ltd",
     locale: "en_GB",
     type: "article",
-    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
+    images: [{ url: "https://mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
   },
 };
 
@@ -45,7 +45,7 @@ const techArticleJsonLd = {
   "@type": "BlogPosting",
   headline: "How MailBroom Is Different (and Who It's Not For)",
   description: "A clear map of what MailBroom does — and where a team inbox, CRM, archiving tool, or personal cleanup app is the better fit instead.",
-  url: "https://business.mailbroom.app/blog/how-mailbroom-is-different",
+  url: "https://mailbroom.app/blog/how-mailbroom-is-different",
   datePublished: "2026-07-22",
   dateModified: "2026-07-22",
   author: { "@type": "Person", name: "Martin Dobson" },

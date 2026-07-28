@@ -4,16 +4,16 @@ export const metadata: Metadata = {
   title: "The Hidden Drain on Your Business: Why Email Cleaning Is No Longer Optional | AIERT Ltd",
   description: "Email clutter costs time, storage budget, and carbon footprint. How MailBroom for Business turns your inbox from a cost centre into an efficiency engine.",
   keywords: ["email clutter cost business", "why clean up company email", "email management ROI", "mailbox storage cost", "email carbon footprint business"],
-  metadataBase: new URL("https://business.mailbroom.app"),
+  metadataBase: new URL("https://mailbroom.app"),
   alternates: { canonical: "/blog/hidden-drain-on-your-business" },
   openGraph: {
     title: "The Hidden Drain on Your Business: Why Email Cleaning Is No Longer Optional",
     description: "How MailBroom for Business turns your inbox from a cost centre into an efficiency engine.",
-    url: "https://business.mailbroom.app/blog/hidden-drain-on-your-business",
+    url: "https://mailbroom.app/blog/hidden-drain-on-your-business",
     siteName: "AIERT Ltd",
     locale: "en_GB",
     type: "article",
-    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
+    images: [{ url: "https://mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
   },
 };
 
@@ -41,7 +41,7 @@ const techArticleJsonLd = {
   "@type": "BlogPosting",
   headline: "The Hidden Drain on Your Business: Why Email Cleaning Is No Longer Optional",
   description: "Email clutter costs time, storage budget, and carbon footprint. How MailBroom for Business turns your inbox from a cost centre into an efficiency engine.",
-  url: "https://business.mailbroom.app/blog/hidden-drain-on-your-business",
+  url: "https://mailbroom.app/blog/hidden-drain-on-your-business",
   datePublished: "2026-07-22",
   dateModified: "2026-07-22",
   author: { "@type": "Person", name: "Martin Dobson" },

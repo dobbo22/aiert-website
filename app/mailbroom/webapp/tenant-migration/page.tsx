@@ -12,13 +12,13 @@ export const metadata: Metadata = {
     "MSP tenant migration client mailboxes",
     "Exchange Online tenant migration cleanup",
   ],
-  metadataBase: new URL("https://business.mailbroom.app"),
+  metadataBase: new URL("https://mailbroom.app"),
   alternates: { canonical: "/tenant-migration" },
   openGraph: {
-    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
+    images: [{ url: "https://mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
     title: "M365 Tenant-to-Tenant Migration: What Happens to Mailboxes",
     description: "What carries over, what doesn't, and why mailbox size drives your migration cost and timeline.",
-    url: "https://business.mailbroom.app/tenant-migration",
+    url: "https://mailbroom.app/tenant-migration",
     siteName: "AIERT Ltd",
     locale: "en_GB",
     type: "website",
@@ -54,7 +54,7 @@ const techArticleJsonLd = {
   headline: "M365 Tenant-to-Tenant Migration: What Happens to Mailboxes",
   description:
     "What carries over and what doesn't in a Microsoft 365 tenant-to-tenant migration, and why mailbox size drives migration time and cost.",
-  url: "https://business.mailbroom.app/tenant-migration",
+  url: "https://mailbroom.app/tenant-migration",
   dateModified: "2026-07-21",
   publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
 };

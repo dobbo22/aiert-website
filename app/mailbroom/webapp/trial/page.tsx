@@ -6,13 +6,13 @@ export const metadata: Metadata = {
   title: "Start Your Free 30-Day IT Assessment | MailBroom for Business",
   description:
     "No commitment, no payment details. Request a 30-day evaluation of MailBroom for Business for your Microsoft 365 tenant.",
-  metadataBase: new URL("https://business.mailbroom.app"),
+  metadataBase: new URL("https://mailbroom.app"),
   alternates: { canonical: "/trial" },
   openGraph: {
-    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
+    images: [{ url: "https://mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
     title: "Start Your Free 30-Day IT Assessment — MailBroom for Business",
     description: "No commitment, no payment details. See the savings for yourself.",
-    url: "https://business.mailbroom.app/trial",
+    url: "https://mailbroom.app/trial",
     siteName: "AIERT Ltd",
     locale: "en_GB",
     type: "website",

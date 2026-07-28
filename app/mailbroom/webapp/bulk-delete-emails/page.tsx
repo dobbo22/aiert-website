@@ -5,13 +5,13 @@ export const metadata: Metadata = {
   description:
     "How IT admins can bulk delete emails across Microsoft 365 and Exchange Online mailboxes safely — compliance holds, retention policies, and company-wide cleanup without per-mailbox manual work.",
   keywords: ["bulk delete emails Microsoft 365 admin", "bulk delete emails Exchange Online", "mass delete emails Office 365", "Microsoft 365 admin email cleanup", "bulk delete Outlook mailbox admin"],
-  metadataBase: new URL("https://business.mailbroom.app"),
+  metadataBase: new URL("https://mailbroom.app"),
   alternates: { canonical: "/bulk-delete-emails" },
   openGraph: {
-    images: [{ url: "https://business.mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
+    images: [{ url: "https://mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
     title: "Bulk Delete Emails in Microsoft 365 — Admin Guide",
     description: "How IT admins can bulk delete emails across every mailbox safely — without breaking retention or legal hold.",
-    url: "https://business.mailbroom.app/bulk-delete-emails",
+    url: "https://mailbroom.app/bulk-delete-emails",
     siteName: "AIERT Ltd",
     locale: "en_GB",
     type: "website",
@@ -50,7 +50,7 @@ const techArticleJsonLd = {
   "@type": "TechArticle",
   headline: "Bulk Delete Emails in Microsoft 365 — Admin Guide",
   description: "How IT admins can bulk delete emails across Microsoft 365 and Exchange Online mailboxes safely, without breaking retention or legal hold.",
-  url: "https://business.mailbroom.app/bulk-delete-emails",
+  url: "https://mailbroom.app/bulk-delete-emails",
   dateModified: "2026-07-21",
   publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
 };
