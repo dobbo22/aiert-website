@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "AIERT Ltd – ShareQuest & MailBroom | AI-Powered Fintech & Email Tools",
+  title: "AIERT Ltd – MailBroom | AI-Powered Fintech & Email Tools",
   description:
-    "AIERT Ltd builds AI-powered products across two lines: ShareQuest, a UK stock trading competition platform, and MailBroom, an AI email cleaner that bulk-deletes, unsubscribes, and organises inboxes privately on-device.",
-  keywords: ["AIERT", "AI", "fintech", "ShareQuest", "MailBroom", "email cleaner", "inbox cleaner", "UK", "trading platform", "investment"],
+    "AIERT Ltd builds AI-powered products, including MailBroom, an AI email cleaner that bulk-deletes, unsubscribes, and organises inboxes privately on-device.",
+  keywords: ["AIERT", "AI", "fintech", "MailBroom", "email cleaner", "inbox cleaner", "UK", "trading platform", "investment"],
   metadataBase: new URL("https://aiert.co.uk"),
   openGraph: {
-    title: "AIERT Ltd – ShareQuest & MailBroom",
+    title: "AIERT Ltd – MailBroom",
     description:
-      "UK-based AI company building ShareQuest (stock trading competitions) and MailBroom (private, on-device AI email cleanup).",
+      "UK-based AI company building MailBroom (private, on-device AI email cleanup).",
     url: "https://aiert.co.uk",
     siteName: "AIERT Ltd",
     locale: "en_GB",
@@ -39,6 +39,7 @@ export default function Home() {
             <a href="#technology" className="hover:text-white transition-colors font-medium">Technology</a>
             <a href="#contact" className="hover:text-white transition-colors font-medium">Contact</a>
           </div>
+          {/* ShareQuest CTA — commented out for now, replaced with MailBroom
           <a
             href="https://sharequest.co.uk"
             target="_blank"
@@ -46,6 +47,13 @@ export default function Home() {
             className="btn-gold px-6 py-3 rounded-full text-base hidden md:block"
           >
             Visit ShareQuest
+          </a>
+          */}
+          <a
+            href="/mailbroom"
+            className="btn-gold px-6 py-3 rounded-full text-base hidden md:block"
+          >
+            Get MailBroom
           </a>
         </div>
       </nav>
@@ -69,6 +77,7 @@ export default function Home() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          {/* ShareQuest CTA — commented out for now, replaced with MailBroom
           <a
             href="https://sharequest.co.uk"
             target="_blank"
@@ -76,6 +85,13 @@ export default function Home() {
             className="btn-gold px-8 py-4 rounded-full text-base inline-block"
           >
             Explore ShareQuest →
+          </a>
+          */}
+          <a
+            href="/mailbroom"
+            className="btn-gold px-8 py-4 rounded-full text-base inline-block"
+          >
+            Explore MailBroom →
           </a>
           <a href="#about" className="btn-outline px-8 py-4 rounded-full text-base inline-block">
             Learn About AIERT
@@ -140,58 +156,6 @@ export default function Home() {
           <div className="text-center mb-16">
             <p className="text-xs font-semibold uppercase tracking-widest mb-4 text-teal">Our Products</p>
             <h2 className="text-4xl font-black text-cloud">Platforms built for performance</h2>
-          </div>
-
-          {/* ShareQuest */}
-          <div className="card-gold-accent rounded-3xl p-8 md:p-12 mb-8 glow-gold">
-            <div className="grid md:grid-cols-2 gap-10 items-center">
-              <div>
-                <div className="badge-gold inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-6">
-                  ★ Flagship Product
-                </div>
-                <h3 className="text-3xl font-black mb-4 text-cloud">ShareQuest</h3>
-                <p className="mb-6 text-mist leading-relaxed">
-                  The UK&apos;s premier virtual stock trading competition platform. Users trade real UK stocks
-                  with virtual funds in weekly, monthly, and annual competitions — competing for real cash prizes.
-                  ShareQuest combines the excitement of competitive gaming with genuine financial education.
-                </p>
-                <ul className="space-y-3 mb-8">
-                  {[
-                    "Live UK stock market prices",
-                    "AI-powered AIERT Index stock scoring",
-                    "Weekly, monthly & annual competitions",
-                    "Real cash prizes for top performers",
-                    "iOS & Android mobile app",
-                  ].map((f) => (
-                    <li key={f} className="flex items-center gap-3 text-sm text-mist">
-                      <span className="text-gold">✓</span>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <a
-                  href="https://sharequest.co.uk"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-gold px-7 py-3 rounded-full text-sm inline-block"
-                >
-                  Visit sharequest.co.uk →
-                </a>
-              </div>
-              <div className="flex flex-col gap-4">
-                {[
-                  { label: "Asset Universe", value: "UK Listed Equities" },
-                  { label: "Competition Types", value: "Weekly · Monthly · Annual" },
-                  { label: "Platform", value: "Web + iOS + Android" },
-                  { label: "Analysis Engine", value: "AIERT AI Index" },
-                ].map((stat) => (
-                  <div key={stat.label} className="stat-gold rounded-xl px-5 py-4">
-                    <div className="text-xs mb-1 text-mist">{stat.label}</div>
-                    <div className="font-semibold text-gold">{stat.value}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
 
           {/* MailBroom */}
@@ -324,7 +288,8 @@ export default function Home() {
             {[
               { icon: "✉️", title: "General Enquiries", detail: "enquiries@aiert.co.uk", href: "mailto:enquiries@aiert.co.uk", isExternal: false },
               { icon: "🏢", title: "Registered Address", detail: "8 Clarendon Gardens\nLondon W9 1AY\nEngland & Wales · Co. No. 16587000", href: null, isExternal: false },
-              { icon: "🌐", title: "ShareQuest Platform", detail: "sharequest.co.uk", href: "https://sharequest.co.uk", isExternal: true },
+              // { icon: "🌐", title: "ShareQuest Platform", detail: "sharequest.co.uk", href: "https://sharequest.co.uk", isExternal: true }, // commented out for now, replaced with MailBroom below
+              { icon: "🌐", title: "MailBroom", detail: "mailbroom.app", href: "/mailbroom", isExternal: false },
               { icon: "📞", title: "Phone", detail: "Available on request\nEmail us to arrange a call", href: null, isExternal: false },
               { icon: "🤝", title: "Business Development", detail: "admin@aiert.co.uk", href: "mailto:admin@aiert.co.uk", isExternal: false },
             ].map((item) => (
@@ -366,12 +331,16 @@ export default function Home() {
               <a href="#about" className="hover:text-white transition-colors">About</a>
               <a href="#products" className="hover:text-white transition-colors">Products</a>
               <a href="#contact" className="hover:text-white transition-colors">Contact</a>
+              {/* ShareQuest privacy/terms — commented out for now, replaced with MailBroom
               <a href="https://sharequest.co.uk/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Privacy</a>
               <a href="https://sharequest.co.uk/terms" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Terms</a>
+              */}
+              <a href="https://ios.mailbroom.app/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Privacy</a>
+              <a href="https://ios.mailbroom.app/terms" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Terms</a>
             </div>
           </div>
           <div className="footer-divider mt-8 pt-8 text-center text-xs text-mist">
-            © {new Date().getFullYear()} AIERT Ltd. All rights reserved. ShareQuest is a trading name of AIERT Ltd.
+            © {new Date().getFullYear()} AIERT Ltd. All rights reserved.
             AIERT Ltd does not provide financial advice. Past performance is not indicative of future results.
           </div>
         </div>

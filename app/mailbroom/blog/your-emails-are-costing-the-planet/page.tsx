@@ -38,6 +38,7 @@ export default function ArticlePage() {
             <a href="/blog" className="hover:text-white transition-colors font-medium">Blog</a>
             <a href="/#contact" className="hover:text-white transition-colors font-medium">Contact</a>
           </div>
+          {/* ShareQuest CTA — commented out for now, replaced with MailBroom
           <a
             href="https://sharequest.co.uk"
             target="_blank"
@@ -45,6 +46,13 @@ export default function ArticlePage() {
             className="btn-gold px-6 py-3 rounded-full text-base hidden md:block"
           >
             Visit ShareQuest
+          </a>
+          */}
+          <a
+            href="/"
+            className="btn-gold px-6 py-3 rounded-full text-base hidden md:block"
+          >
+            Get MailBroom
           </a>
         </div>
       </nav>
@@ -224,7 +232,10 @@ export default function ArticlePage() {
               <a href="https://aiert.co.uk" className="hover:text-white transition-colors">AIERT Home</a>
               <a href="/" className="hover:text-white transition-colors">MailBroom</a>
               <a href="/blog" className="hover:text-white transition-colors">Blog</a>
+              {/* ShareQuest — commented out for now, replaced with MailBroom for Business
               <a href="https://sharequest.co.uk" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">ShareQuest</a>
+              */}
+              <a href="https://business.mailbroom.app" className="hover:text-white transition-colors">For Business</a>
               <a href="/#contact" className="hover:text-white transition-colors">Contact</a>
             </div>
           </div>

@@ -51,6 +51,7 @@ export default function BlogPage() {
             <a href="/blog" className="text-white font-medium">Blog</a>
             <a href="/#contact" className="hover:text-white transition-colors font-medium">Contact</a>
           </div>
+          {/* ShareQuest CTA — commented out for now, replaced with MailBroom for Business
           <a
             href="https://sharequest.co.uk"
             target="_blank"
@@ -58,6 +59,13 @@ export default function BlogPage() {
             className="btn-gold px-6 py-3 rounded-full text-base hidden md:block"
           >
             Visit ShareQuest
+          </a>
+          */}
+          <a
+            href="https://business.mailbroom.app"
+            className="btn-gold px-6 py-3 rounded-full text-base hidden md:block"
+          >
+            For Business
           </a>
         </div>
       </nav>
@@ -115,7 +123,10 @@ export default function BlogPage() {
             </div>
             <div className="flex gap-6 text-sm text-mist flex-wrap justify-center">
               <a href="https://aiert.co.uk" className="hover:text-white transition-colors">AIERT Home</a>
+              {/* ShareQuest — commented out for now, replaced with MailBroom for Business
               <a href="https://sharequest.co.uk" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">ShareQuest</a>
+              */}
+              <a href="https://business.mailbroom.app" className="hover:text-white transition-colors">For Business</a>
               <a href="/#contact" className="hover:text-white transition-colors">Contact</a>
               <a href="/leaderboard" className="hover:text-white transition-colors">Leaderboard</a>
             </div>

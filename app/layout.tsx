@@ -9,12 +9,12 @@ export const metadata: Metadata = {
   title: "AIERT Ltd – AI-Powered Financial Technology",
   description:
     "AIERT Ltd is a UK-based artificial intelligence and financial technology company. We build intelligent platforms that empower investors and traders through data-driven insights.",
-  keywords: ["AIERT", "AI", "fintech", "financial technology", "ShareQuest", "UK", "investment", "trading platform"],
+  keywords: ["AIERT", "AI", "fintech", "financial technology", "MailBroom", "email cleaner", "UK", "investment", "trading platform"],
   metadataBase: new URL("https://aiert.co.uk"),
   openGraph: {
     title: "AIERT Ltd – AI-Powered Financial Technology",
     description:
-      "UK-based AI & fintech company building intelligent investment platforms. Home of ShareQuest — the UK's premier stock trading competition.",
+      "UK-based AI & fintech company building intelligent platforms. Home of MailBroom — the AI-powered email cleaner.",
     url: "https://aiert.co.uk",
     siteName: "AIERT Ltd",
     locale: "en_GB",
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "AIERT Ltd – AI-Powered Financial Technology",
-    description: "UK-based AI & fintech company. Home of ShareQuest.",
+    description: "UK-based AI & fintech company. Home of MailBroom.",
   },
 };
 
