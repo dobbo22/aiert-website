@@ -33,15 +33,24 @@ export const metadata: Metadata = {
 // business.mailbroom.app, but that host now 301s straight to mailbroom.app
 // (see next.config.ts) before a page ever loads, so it belongs here instead
 // — this layout is what actually renders for mailbroom.app/webapp/* traffic.
-// Apollo's own snippet is an inline bootstrap function, not a plain `src`
-// include, hence dangerouslySetInnerHTML rather than a src prop.
+//
+// Deliberately a plain JSX <script> tag, NOT next/script's Script component —
+// verified via a real curl of the deployed page (see rendering-strategies
+// skill's "golden rule": content must be in the initial HTML, not JS-
+// injected) that Script's afterInteractive/lazyOnload strategies never
+// render a literal <script> tag into server HTML at all; they only exist as
+// escaped JSON inside the RSC flight-data payload until React hydrates
+// client-side. Apollo's own "Test connection" check fetches the raw page
+// and greps for the literal tag — it doesn't execute JS — so that first
+// attempt showed "Failed to connect" despite the script genuinely running
+// for real browser visitors. A plain <script> tag is real server-rendered
+// HTML output, no Next.js script-injection machinery involved, so it's
+// present immediately for both that kind of checker and any non-JS crawler.
 export default function MailBroomWebAppLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Script src="https://assets.endorsely.com/endorsely.js" data-endorsely="0ff935cf-9c47-4c3d-bc19-ca92ae9e9e85" strategy="afterInteractive" async />
-      <Script
-        id="apollo-tracker"
-        strategy="afterInteractive"
+      <script
         dangerouslySetInnerHTML={{
           __html: `function initApollo(){var n=Math.random().toString(36).substring(7),o=document.createElement("script");o.src="https://assets.apollo.io/micro/website-tracker/tracker.iife.js?nocache="+n,o.async=!0,o.defer=!0,o.onload=function(){window.trackingFunctions.onLoad({appId:"6a68cb2e485525001ca10e0c"})},document.head.appendChild(o)}initApollo();`,
         }}
