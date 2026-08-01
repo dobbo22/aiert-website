@@ -37,7 +37,7 @@ const tracks = [
 const faqs = [
   {
     q: "How does attribution actually work?",
-    a: "You get a promotion code (e.g. \"YOURNAME10\"), not a tracking link. The company you refer enters it directly on MailBroom's own Stripe checkout page when they subscribe — there's a native \"Add promotion code\" field there. No cookies, no browser tracking, no risk of losing attribution because someone clicked your link on one device and subscribed from another.",
+    a: "Two ways, and either works on its own. You get a unique referral link (tracked via Endorsely, our affiliate platform) — share that, and a click is remembered automatically so a subscription is credited to you even if it happens later. Or, if a link isn't practical, the company you refer can enter a promotion code directly on MailBroom's own Stripe checkout page instead — there's a native \"Add promotion code\" field there. Either route reaches the same place: your commission gets tracked and reported automatically.",
   },
   {
     q: "What if the company I refer cancels early?",
