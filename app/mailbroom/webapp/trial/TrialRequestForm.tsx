@@ -8,6 +8,12 @@ type RequestType = "trial" | "demo";
 export default function TrialRequestForm() {
   const searchParams = useSearchParams();
   const initialType: RequestType = searchParams.get("intent") === "demo" ? "demo" : "trial";
+  // Present only when this visit came from a tracked link (intellireach's
+  // click-redirect appends ?ref=<EmailSend id>, see that project's
+  // /api/track/click) — forwarded so a submitted request can be attributed
+  // back to the specific campaign/call that drove it, via the same
+  // /api/attribution/report hook intellireach already uses for conversions.
+  const ref = searchParams.get("ref");
 
   const [requestType, setRequestType] = useState<RequestType>(initialType);
   const [contactName, setContactName] = useState("");
@@ -18,6 +24,7 @@ export default function TrialRequestForm() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [bookingLink, setBookingLink] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -27,10 +34,15 @@ export default function TrialRequestForm() {
       const res = await fetch("/api/mailbroom/trial-request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contactName, workEmail, companyName, userCount, notes, requestType }),
+        body: JSON.stringify({ contactName, workEmail, companyName, userCount, notes, requestType, ref }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
+      // Only ever comes from the server, only after a valid submission —
+      // never a build-time constant here, so the booking page can't be
+      // reached by reading the client bundle/network tab without actually
+      // submitting real details first (see the route's own comment).
+      if (typeof data.bookingLink === "string") setBookingLink(data.bookingLink);
       setDone(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -44,19 +56,28 @@ export default function TrialRequestForm() {
       <div className="card-teal-accent rounded-3xl p-10 text-center glow-teal">
         <div className="text-5xl mb-4">✅</div>
         <h3 className="text-xl font-bold text-cloud mb-2">Request received</h3>
-        <p className="text-cloud text-sm">
-          {requestType === "demo" ? (
-            <>
-              Martin will reach out at <strong className="text-cloud">{workEmail}</strong> to find a time —
-              usually within one business day.
-            </>
-          ) : (
-            <>
-              We&apos;ll be in touch at <strong className="text-cloud">{workEmail}</strong> to set up your
-              30-day assessment — usually within one business day.
-            </>
-          )}
-        </p>
+        {requestType === "demo" ? (
+          <>
+            <p className="text-cloud text-sm mb-6">
+              No need to wait — pick a time that works for you directly on Martin&apos;s calendar.
+            </p>
+            {bookingLink && (
+              <a
+                href={bookingLink}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-gold inline-block px-8 py-4 rounded-full text-base font-bold"
+              >
+                Pick a time for your call →
+              </a>
+            )}
+          </>
+        ) : (
+          <p className="text-cloud text-sm">
+            We&apos;ll be in touch at <strong className="text-cloud">{workEmail}</strong> to set up your
+            30-day assessment — usually within one business day.
+          </p>
+        )}
       </div>
     );
   }
@@ -176,7 +197,7 @@ export default function TrialRequestForm() {
       </button>
       <p className="text-xs text-cloud text-center">
         {requestType === "demo"
-          ? "No card required. Martin will reach out directly to find a time."
+          ? "No card required. You'll get a link to pick a time immediately."
           : "No card required. We'll email you to set up access — usually within one business day."}
       </p>
     </form>
