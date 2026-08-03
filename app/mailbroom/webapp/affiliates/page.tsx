@@ -30,14 +30,14 @@ const tracks = [
     title: "Affiliate",
     who: "For IT consultants, MSPs, and Microsoft partners who work with multiple client companies",
     reward: "30% cash commission on the referred company's subscription payments for their first 12 months, paid monthly as each payment clears.",
-    cta: "Apply below — a good fit is anyone who already recommends Microsoft 365 tooling to their clients.",
+    cta: "Apply instantly below — pass a short 10-question quiz on Microsoft 365 and MailBroom, and you're in immediately, no waiting on a reply.",
   },
 ];
 
 const faqs = [
   {
     q: "How does attribution actually work?",
-    a: "Two ways, and either works on its own. You get a unique referral link (tracked via Endorsely, our affiliate platform) — share that, and a click is remembered automatically so a subscription is credited to you even if it happens later. Or, if a link isn't practical, the company you refer can enter a promotion code directly on MailBroom's own Stripe checkout page instead — there's a native \"Add promotion code\" field there. Either route reaches the same place: your commission gets tracked and reported automatically.",
+    a: "Your referral code is entered directly on MailBroom's own Stripe checkout page — there's a native \"Add promotion code\" field there, no link or cookie tracking involved. The code itself is the attribution: it gets the referred company a discount on their first invoice, and gets your commission tracked and reported automatically from that point on.",
   },
   {
     q: "What if the company I refer cancels early?",
@@ -48,8 +48,8 @@ const faqs = [
     a: "Yes — MailBroom for Business is licensed per company domain, not per seat, so the referred company's discount and your commission are both based on whatever plan they actually subscribe to, regardless of size.",
   },
   {
-    q: "How do I get a code?",
-    a: "Email us — this programme is early and codes are set up individually for now, so we can make sure attribution is configured correctly for each referrer or affiliate.",
+    q: "How do I get a code as an affiliate?",
+    a: "Apply directly — pass a short quiz on Microsoft 365/Graph basics and MailBroom itself (10 questions, drawn randomly from a larger bank each time) and you get instant access to your own dashboard and referral code, no waiting on a manual application review.",
   },
 ];
 
@@ -106,6 +106,14 @@ export default function MailBroomWebAppAffiliatesPage() {
                 <p className="text-xs text-gold font-semibold uppercase tracking-widest mb-4">{t.who}</p>
                 <p className="text-sm text-cloud leading-relaxed mb-4">{t.reward}</p>
                 <p className="text-sm text-cloud font-semibold">{t.cta}</p>
+                {t.title === "Affiliate" && (
+                  <a
+                    href="https://app.mailbroom.app/affiliate/apply"
+                    className="btn-gold mt-4 inline-block rounded-full px-6 py-2.5 text-sm"
+                  >
+                    Apply now
+                  </a>
+                )}
               </div>
             ))}
           </div>
@@ -133,15 +141,22 @@ export default function MailBroomWebAppAffiliatesPage() {
         <div className="max-w-3xl mx-auto px-6">
           <h2 className="text-2xl font-black text-cloud mb-4">Ready to refer someone, or apply as an affiliate?</h2>
           <p className="text-cloud mb-6">
-            Email us the company you&apos;re referring, or a bit about your consultancy/MSP practice
-            if you&apos;re applying as an affiliate.
+            Email us the company you&apos;re referring — or apply directly as an affiliate, no waiting on a reply.
           </p>
-          <a
-            href="mailto:enquiries@aiert.co.uk?subject=MailBroom%20for%20Business%20—%20Referral%2FAffiliate"
-            className="btn-gold px-8 py-4 rounded-full text-base inline-block"
-          >
-            enquiries@aiert.co.uk
-          </a>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <a
+              href="mailto:enquiries@aiert.co.uk?subject=MailBroom%20for%20Business%20—%20Referral"
+              className="btn-outline px-8 py-4 rounded-full text-base inline-block"
+            >
+              enquiries@aiert.co.uk
+            </a>
+            <a
+              href="https://app.mailbroom.app/affiliate/apply"
+              className="btn-gold px-8 py-4 rounded-full text-base inline-block"
+            >
+              Apply as an affiliate
+            </a>
+          </div>
         </div>
       </section>
 
