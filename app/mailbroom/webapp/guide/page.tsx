@@ -72,15 +72,15 @@ export default function MailBroomGuidePage() {
       {/* ── NAV ─────────────────────────────────────────── */}
       <nav className="nav-glass sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-8 py-5 flex items-center justify-between">
-          <a href="/mailbroom/webapp" className="flex items-center gap-4">
+          <a href="/" className="flex items-center gap-4">
             <img src="/mailbroom-icon.png" alt="MailBroom" width={44} height={44} className="w-11 h-11 rounded-lg" />
             <span className="font-bold text-2xl tracking-tight text-cloud">
               MailBroom
             </span>
           </a>
           <div className="hidden md:flex items-center gap-10 text-base text-cloud">
-            <a href="/mailbroom/webapp" className="hover:text-white transition-colors font-medium">MailBroom for Business</a>
-            <a href="/mailbroom/webapp/support" className="hover:text-white transition-colors font-medium">Support</a>
+            <a href="/" className="hover:text-white transition-colors font-medium">MailBroom for Business</a>
+            <a href="/support" className="hover:text-white transition-colors font-medium">Support</a>
           </div>
           <a
             href="https://app.mailbroom.app/sign-in"
@@ -346,7 +346,7 @@ export default function MailBroomGuidePage() {
         <div className="rounded-2xl border border-gold/20 bg-gold/5 p-5 text-sm text-cloud mb-8">
           Internal access is need-to-know: support staff can see your plan and aggregate totals — never a list of individual employees or their usage.
         </div>
-        <a href="/mailbroom/webapp/privacy" className="text-gold underline hover:text-gold/80 transition-colors text-sm font-semibold">
+        <a href="/privacy" className="text-gold underline hover:text-gold/80 transition-colors text-sm font-semibold">
           Read the full Privacy Policy →
         </a>
       </section>
@@ -379,10 +379,10 @@ export default function MailBroomGuidePage() {
               </div>
             </div>
             <div className="flex gap-6 text-sm text-cloud flex-wrap justify-center">
-              <a href="/mailbroom/webapp" className="hover:text-white transition-colors">MailBroom for Business</a>
-              <a href="/mailbroom/webapp/support" className="hover:text-white transition-colors">Support</a>
-              <a href="/mailbroom/webapp/privacy" className="hover:text-white transition-colors">Privacy</a>
-              <a href="/mailbroom/webapp/terms" className="hover:text-white transition-colors">Terms of Use</a>
+              <a href="/" className="hover:text-white transition-colors">MailBroom for Business</a>
+              <a href="/support" className="hover:text-white transition-colors">Support</a>
+              <a href="/privacy" className="hover:text-white transition-colors">Privacy</a>
+              <a href="/terms" className="hover:text-white transition-colors">Terms of Use</a>
             </div>
           </div>
           <div className="footer-divider mt-8 pt-8 text-center text-xs text-cloud">

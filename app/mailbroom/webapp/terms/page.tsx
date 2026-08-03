@@ -102,14 +102,14 @@ export default function MailBroomBusinessTermsPage() {
       {/* ── NAV ─────────────────────────────────────────── */}
       <nav className="nav-glass sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-8 py-5 flex items-center justify-between">
-          <a href="/mailbroom/webapp" className="flex items-center gap-4">
+          <a href="/" className="flex items-center gap-4">
             <img src="/mailbroom-icon.png" alt="MailBroom" width={44} height={44} className="w-11 h-11 rounded-lg" />
             <span className="font-bold text-2xl tracking-tight text-cloud">
               MailBroom
             </span>
           </a>
           <div className="hidden md:flex items-center gap-10 text-base text-cloud">
-            <a href="/mailbroom/webapp" className="hover:text-white transition-colors font-medium">MailBroom for Business</a>
+            <a href="/" className="hover:text-white transition-colors font-medium">MailBroom for Business</a>
             <a href="/mailbroom" className="hover:text-white transition-colors font-medium">MailBroom for iOS</a>
             <a href="/support" className="hover:text-white transition-colors font-medium">Contact</a>
           </div>
@@ -202,9 +202,9 @@ export default function MailBroomBusinessTermsPage() {
               </div>
             </div>
             <div className="flex gap-6 text-sm text-cloud flex-wrap justify-center">
-              <a href="/mailbroom/webapp" className="hover:text-white transition-colors">MailBroom for Business</a>
+              <a href="/" className="hover:text-white transition-colors">MailBroom for Business</a>
               <a href="/mailbroom" className="hover:text-white transition-colors">MailBroom for iOS</a>
-              <a href="/mailbroom/webapp/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
+              <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
               <a href="/support" className="hover:text-white transition-colors">Contact</a>
             </div>
           </div>

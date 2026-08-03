@@ -64,16 +64,16 @@ export default function MailBroomSecurityPage() {
       {/* ── NAV ─────────────────────────────────────────── */}
       <nav className="nav-glass sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-8 py-5 flex items-center justify-between">
-          <a href="/mailbroom/webapp" className="flex items-center gap-4">
+          <a href="/" className="flex items-center gap-4">
             <img src="/mailbroom-icon.png" alt="MailBroom" width={44} height={44} className="w-11 h-11 rounded-lg" />
             <span className="font-bold text-2xl tracking-tight text-cloud">
               MailBroom
             </span>
           </a>
           <div className="hidden md:flex items-center gap-10 text-base text-cloud">
-            <a href="/mailbroom/webapp" className="hover:text-white transition-colors font-medium">MailBroom for Business</a>
-            <a href="/mailbroom/webapp/sso" className="hover:text-white transition-colors font-medium">SSO &amp; Permissions</a>
-            <a href="/mailbroom/webapp/privacy" className="hover:text-white transition-colors font-medium">Privacy</a>
+            <a href="/" className="hover:text-white transition-colors font-medium">MailBroom for Business</a>
+            <a href="/sso" className="hover:text-white transition-colors font-medium">SSO &amp; Permissions</a>
+            <a href="/privacy" className="hover:text-white transition-colors font-medium">Privacy</a>
           </div>
           <a
             href="https://app.mailbroom.app/sign-in"
@@ -167,10 +167,10 @@ export default function MailBroomSecurityPage() {
               </div>
             </div>
             <div className="flex gap-6 text-sm text-cloud flex-wrap justify-center">
-              <a href="/mailbroom/webapp" className="hover:text-white transition-colors">MailBroom for Business</a>
-              <a href="/mailbroom/webapp/sso" className="hover:text-white transition-colors">SSO &amp; Permissions</a>
-              <a href="/mailbroom/webapp/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
-              <a href="/mailbroom/webapp/support" className="hover:text-white transition-colors">Support</a>
+              <a href="/" className="hover:text-white transition-colors">MailBroom for Business</a>
+              <a href="/sso" className="hover:text-white transition-colors">SSO &amp; Permissions</a>
+              <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
+              <a href="/support" className="hover:text-white transition-colors">Support</a>
             </div>
           </div>
           <div className="footer-divider mt-8 pt-8 text-center text-xs text-cloud">

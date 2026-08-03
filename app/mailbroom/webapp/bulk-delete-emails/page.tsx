@@ -80,19 +80,19 @@ export default function BulkDeleteEmailsPage() {
       {/* ── NAV ─────────────────────────────────────────── */}
       <nav className="nav-glass sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-8 py-5 flex items-center justify-between">
-          <a href="/mailbroom/webapp" className="flex items-center gap-4">
+          <a href="/" className="flex items-center gap-4">
             <img src="/mailbroom-icon.png" alt="MailBroom" width={44} height={44} className="w-11 h-11 rounded-lg" />
             <span className="font-bold text-2xl tracking-tight text-cloud">
               MailBroom
             </span>
           </a>
           <div className="hidden md:flex items-center gap-10 text-base text-cloud">
-            <a href="/mailbroom/webapp" className="hover:text-white transition-colors font-medium">MailBroom for Business</a>
-            <a href="/mailbroom/webapp/mailbox-full" className="hover:text-white transition-colors font-medium">Mailbox Full?</a>
-            <a href="/mailbroom/webapp/roi" className="hover:text-white transition-colors font-medium">Business Case</a>
+            <a href="/" className="hover:text-white transition-colors font-medium">MailBroom for Business</a>
+            <a href="/mailbox-full" className="hover:text-white transition-colors font-medium">Mailbox Full?</a>
+            <a href="/roi" className="hover:text-white transition-colors font-medium">Business Case</a>
           </div>
           <a
-            href="/mailbroom/webapp/trial"
+            href="/trial"
             className="btn-gold px-6 py-3 rounded-full text-base hidden md:block"
           >
             Start a Trial
@@ -215,13 +215,13 @@ export default function BulkDeleteEmailsPage() {
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <a
-            href="/mailbroom/webapp/trial"
+            href="/trial"
             className="btn-gold px-10 py-5 rounded-full text-lg inline-flex items-center gap-3 justify-center"
           >
             <span>🧪</span> Start Your Free IT Assessment
           </a>
           <a
-            href="/mailbroom/webapp/mailbox-full"
+            href="/mailbox-full"
             className="btn-outline px-10 py-5 rounded-full text-lg inline-flex items-center gap-3 justify-center"
           >
             Mailbox Full? Read the Fix
@@ -243,12 +243,12 @@ export default function BulkDeleteEmailsPage() {
               </div>
             </div>
             <div className="flex gap-6 text-sm text-cloud flex-wrap justify-center">
-              <a href="/mailbroom/webapp" className="hover:text-white transition-colors">MailBroom for Business</a>
-              <a href="/mailbroom/webapp/mailbox-full" className="hover:text-white transition-colors">Mailbox Full?</a>
-              <a href="/mailbroom/webapp/storage-costs" className="hover:text-white transition-colors">Storage Costs</a>
-              <a href="/mailbroom/webapp/litigation-hold" className="hover:text-white transition-colors">Litigation Hold</a>
-              <a href="/mailbroom/webapp/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
-              <a href="/mailbroom/webapp/terms" className="hover:text-white transition-colors">Terms of Use</a>
+              <a href="/" className="hover:text-white transition-colors">MailBroom for Business</a>
+              <a href="/mailbox-full" className="hover:text-white transition-colors">Mailbox Full?</a>
+              <a href="/storage-costs" className="hover:text-white transition-colors">Storage Costs</a>
+              <a href="/litigation-hold" className="hover:text-white transition-colors">Litigation Hold</a>
+              <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
+              <a href="/terms" className="hover:text-white transition-colors">Terms of Use</a>
             </div>
           </div>
           <div className="footer-divider mt-8 pt-8 text-center text-xs text-cloud">
