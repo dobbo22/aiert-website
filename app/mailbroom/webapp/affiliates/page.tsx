@@ -3,13 +3,13 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Referral & Affiliate Programme – MailBroom for Business | AIERT Ltd",
   description:
-    "Refer a company to MailBroom for Business and both sides get rewarded — or apply as an affiliate if you work with multiple Microsoft 365 clients.",
+    "Refer a company to MailBroom for Business and both sides get rewarded — or apply as an affiliate, open to anyone, pass a short quiz and start earning 30% commission.",
   metadataBase: new URL("https://mailbroom.app"),
   alternates: { canonical: "/affiliates" },
   openGraph: {
     images: [{ url: "https://mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
     title: "MailBroom for Business — Referral & Affiliate Programme",
-    description: "Refer a company, both sides get rewarded. IT consultants and MSPs can apply for cash commission.",
+    description: "Refer a company, both sides get rewarded. Anyone can apply as an affiliate for 30% cash commission.",
     url: "https://mailbroom.app/affiliates",
     siteName: "AIERT Ltd",
     locale: "en_GB",
@@ -28,7 +28,7 @@ const tracks = [
   {
     icon: "💼",
     title: "Affiliate",
-    who: "For IT consultants, MSPs, and Microsoft partners who work with multiple client companies",
+    who: "Open to anyone — no IT background or existing client base required. Pass the quiz, get your code, start selling.",
     reward: "30% cash commission on the referred company's subscription payments for their first 12 months, paid monthly as each payment clears.",
     cta: "Apply instantly below — pass a short 10-question quiz on Microsoft 365 and MailBroom, and you're in immediately, no waiting on a reply.",
   },
