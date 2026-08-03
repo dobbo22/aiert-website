@@ -717,6 +717,7 @@ export default async function MailBroomWebAppPage() {
               <a href="/employee-offboarding" className="hover:text-white transition-colors">Leaver Mailboxes</a>
               <a href="/trial" className="hover:text-white transition-colors">Free IT Assessment</a>
               <a href="/affiliates" className="hover:text-white transition-colors">Referral &amp; Affiliate</a>
+              <a href="https://app.mailbroom.app/affiliate/sign-in" className="hover:text-white transition-colors">Affiliate Sign In</a>
               <a href="https://ios.mailbroom.app" className="hover:text-white transition-colors">MailBroom for iOS</a>
               <a href="/leaderboard" className="hover:text-white transition-colors">Leaderboard</a>
               <a href="/" className="hover:text-white transition-colors">MailBroom for Business</a>
