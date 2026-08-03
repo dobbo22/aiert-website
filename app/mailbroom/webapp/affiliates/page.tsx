@@ -22,8 +22,8 @@ const tracks = [
     icon: "🤝",
     title: "Referral",
     who: "For anyone already using MailBroom for Business",
-    reward: "10% off their first invoice for the company you refer, plus a free month credited to your own subscription once they convert to a paid plan.",
-    cta: "Email us the company you're referring and we'll set up a code for them.",
+    reward: "10% off their first invoice for the company you refer, plus a credit toward your own next invoice once they convert to a paid plan.",
+    cta: "Sign in to MailBroom and find your referral code under Admin → Plan & Billing — generate it yourself instantly, no need to email us.",
   },
   {
     icon: "💼",
@@ -50,6 +50,10 @@ const faqs = [
   {
     q: "How do I get a code as an affiliate?",
     a: "Apply directly — pass a short quiz on Microsoft 365/Graph basics and MailBroom itself (10 questions, drawn randomly from a larger bank each time) and you get instant access to your own dashboard and referral code, no waiting on a manual application review.",
+  },
+  {
+    q: "How do I get a code as an existing customer?",
+    a: "Sign in to MailBroom and go to Admin → Plan & Billing — there's a \"Refer a company\" section there that generates your code instantly, no need to contact us.",
   },
 ];
 
@@ -139,16 +143,17 @@ export default function MailBroomWebAppAffiliatesPage() {
       {/* ── CONTACT ───────────────────────────────────────── */}
       <section className="section-dark py-20 text-center">
         <div className="max-w-3xl mx-auto px-6">
-          <h2 className="text-2xl font-black text-cloud mb-4">Ready to refer someone, or apply as an affiliate?</h2>
+          <h2 className="text-2xl font-black text-cloud mb-4">Already referring, or applying as an affiliate?</h2>
           <p className="text-cloud mb-6">
-            Email us the company you&apos;re referring — or apply directly as an affiliate, no waiting on a reply.
+            Existing customers find their referral code inside MailBroom, under Admin → Plan &amp; Billing —
+            everyone else can apply directly as an affiliate.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <a
-              href="mailto:enquiries@aiert.co.uk?subject=MailBroom%20for%20Business%20—%20Referral"
+              href="https://app.mailbroom.app/sign-in"
               className="btn-outline px-8 py-4 rounded-full text-base inline-block"
             >
-              enquiries@aiert.co.uk
+              Sign in to MailBroom
             </a>
             <a
               href="https://app.mailbroom.app/affiliate/apply"
