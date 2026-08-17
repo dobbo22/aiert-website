@@ -190,6 +190,7 @@ export default async function AdminAnniversaryPage() {
           name: i.name,
           guestCount: guestCountForName(i.name),
           rsvpStatus: i.rsvp_status,
+          menuChoices: i.menu_choices,
         }))}
       />
     </div>

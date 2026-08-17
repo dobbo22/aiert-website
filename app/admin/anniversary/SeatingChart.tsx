@@ -10,11 +10,18 @@ type Seat = {
   guest_label: string | null;
 };
 
+type MenuChoice = {
+  name: string;
+  choice: "" | "meat" | "fish" | "vegetarian";
+  notes: string;
+};
+
 type Invitee = {
   code: string;
   name: string;
   guestCount: number;
   rsvpStatus: "accepted" | "declined" | null;
+  menuChoices: MenuChoice[] | null;
 };
 
 type Individual = {
@@ -40,6 +47,27 @@ function buildIndividuals(invitees: Invitee[]): Individual[] {
       }
       return [{ code: inv.code, label: inv.name }];
     });
+}
+
+function choiceFor(invitees: Invitee[], code: string | null, label: string | null): MenuChoice["choice"] | null {
+  if (!code || !label) return null;
+  const invitee = invitees.find((inv) => inv.code === code);
+  const firstName = label.split(/\s+/)[0].toLowerCase();
+  const match = invitee?.menuChoices?.find((m) => m.name.toLowerCase() === firstName);
+  return match?.choice || null;
+}
+
+function choiceLabel(choice: MenuChoice["choice"] | null) {
+  switch (choice) {
+    case "meat":
+      return "Meat";
+    case "fish":
+      return "Fish";
+    case "vegetarian":
+      return "Veg";
+    default:
+      return "No choice yet";
+  }
 }
 
 export default function SeatingChart({ seats: initialSeats, invitees }: Props) {
@@ -85,6 +113,7 @@ export default function SeatingChart({ seats: initialSeats, invitees }: Props) {
     const seat = seatById(id);
     const label = seat?.guest_label;
     const isActive = activeSeat === id;
+    const choice = label ? choiceFor(invitees, seat?.invitee_code ?? null, label) : null;
 
     return (
       <div className="seat-wrap" key={id}>
@@ -92,11 +121,13 @@ export default function SeatingChart({ seats: initialSeats, invitees }: Props) {
           type="button"
           className={`seat-disc ${label ? "seat-filled" : ""}`}
           onClick={() => setActiveSeat(isActive ? null : id)}
-          title={label ?? `Seat ${id}`}
+          title={label ? `${label} — ${choiceLabel(choice)}` : `Seat ${id}`}
         >
           {label ? initials(label) : id}
+          {label && <span className={`seat-choice-dot seat-choice-${choice ?? "none"}`} />}
         </button>
         {label && <span className="seat-name">{label}</span>}
+        {label && <span className={`seat-choice-label seat-choice-text-${choice ?? "none"}`}>{choiceLabel(choice)}</span>}
 
         {isActive && (
           <div className="seat-popover">
@@ -151,6 +182,20 @@ export default function SeatingChart({ seats: initialSeats, invitees }: Props) {
   return (
     <div className="seating-section">
       <h2 className="admin-subtitle">Table Plan {saving && <span className="seat-saving">saving…</span>}</h2>
+      <div className="seating-legend">
+        <span className="seating-legend-item">
+          <span className="seating-legend-dot seat-choice-meat" /> Meat
+        </span>
+        <span className="seating-legend-item">
+          <span className="seating-legend-dot seat-choice-fish" /> Fish
+        </span>
+        <span className="seating-legend-item">
+          <span className="seating-legend-dot seat-choice-vegetarian" /> Veg
+        </span>
+        <span className="seating-legend-item">
+          <span className="seating-legend-dot seat-choice-none" /> No choice yet
+        </span>
+      </div>
       <div className="seating-u">
         <div className="seating-top">{topSeats.map(renderSeat)}</div>
         <div className="seating-sides">

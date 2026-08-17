@@ -404,6 +404,7 @@
 }
 
 .seat-disc {
+  position: relative;
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -446,6 +447,75 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.seat-choice-dot {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #0b0f1a;
+}
+
+.seat-choice-meat {
+  background: #ef4444;
+}
+
+.seat-choice-fish {
+  background: #3b82f6;
+}
+
+.seat-choice-vegetarian {
+  background: #22c55e;
+}
+
+.seat-choice-none {
+  background: #6b7280;
+}
+
+.seat-choice-label {
+  font-size: 0.6rem;
+  text-align: center;
+  margin-top: 0.1rem;
+  max-width: 64px;
+}
+
+.seat-choice-text-meat {
+  color: #ef4444;
+}
+
+.seat-choice-text-fish {
+  color: #3b82f6;
+}
+
+.seat-choice-text-vegetarian {
+  color: #22c55e;
+}
+
+.seat-choice-text-none {
+  color: #6b7280;
+}
+
+.seating-legend {
+  display: flex;
+  gap: 1.25rem;
+  margin-top: 1rem;
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.seating-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.seating-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
 }
 
 .seat-popover {
