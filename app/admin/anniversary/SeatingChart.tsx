@@ -49,12 +49,11 @@ function buildIndividuals(invitees: Invitee[]): Individual[] {
     });
 }
 
-function choiceFor(invitees: Invitee[], code: string | null, label: string | null): MenuChoice["choice"] | null {
+function menuEntryFor(invitees: Invitee[], code: string | null, label: string | null): MenuChoice | null {
   if (!code || !label) return null;
   const invitee = invitees.find((inv) => inv.code === code);
   const firstName = label.split(/\s+/)[0].toLowerCase();
-  const match = invitee?.menuChoices?.find((m) => m.name.toLowerCase() === firstName);
-  return match?.choice || null;
+  return invitee?.menuChoices?.find((m) => m.name.toLowerCase() === firstName) ?? null;
 }
 
 function choiceLabel(choice: MenuChoice["choice"] | null) {
@@ -113,21 +112,27 @@ export default function SeatingChart({ seats: initialSeats, invitees }: Props) {
     const seat = seatById(id);
     const label = seat?.guest_label;
     const isActive = activeSeat === id;
-    const choice = label ? choiceFor(invitees, seat?.invitee_code ?? null, label) : null;
+    const menuEntry = label ? menuEntryFor(invitees, seat?.invitee_code ?? null, label) : null;
+    const choice = menuEntry?.choice || null;
+    const allergen = menuEntry?.notes?.trim() || "";
+
+    const titleParts = label ? [`${label} — ${choiceLabel(choice)}`] : [`Seat ${id}`];
+    if (allergen) titleParts.push(`Allergen: ${allergen}`);
 
     return (
       <div className="seat-wrap" key={id}>
         <button
           type="button"
-          className={`seat-disc ${label ? "seat-filled" : ""}`}
+          className={`seat-disc ${label ? `seat-fill-${choice ?? "none"}` : ""}`}
           onClick={() => setActiveSeat(isActive ? null : id)}
-          title={label ? `${label} — ${choiceLabel(choice)}` : `Seat ${id}`}
+          title={titleParts.join(" — ")}
         >
           {label ? initials(label) : id}
-          {label && <span className={`seat-choice-dot seat-choice-${choice ?? "none"}`} />}
+          {allergen && <span className="seat-allergen-badge">!</span>}
         </button>
         {label && <span className="seat-name">{label}</span>}
         {label && <span className={`seat-choice-label seat-choice-text-${choice ?? "none"}`}>{choiceLabel(choice)}</span>}
+        {allergen && <span className="seat-allergen-text">⚠ {allergen}</span>}
 
         {isActive && (
           <div className="seat-popover">
@@ -194,6 +199,9 @@ export default function SeatingChart({ seats: initialSeats, invitees }: Props) {
         </span>
         <span className="seating-legend-item">
           <span className="seating-legend-dot seat-choice-none" /> No choice yet
+        </span>
+        <span className="seating-legend-item">
+          <span className="seating-legend-allergen">!</span> Allergen — hover seat for details
         </span>
       </div>
       <div className="seating-u">

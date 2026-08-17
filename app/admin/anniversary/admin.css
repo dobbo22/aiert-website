@@ -425,10 +425,53 @@
   background: rgba(148, 163, 184, 0.2);
 }
 
-.seat-filled {
+.seat-fill-meat {
+  background: #ef4444;
+  color: #fff;
+  border-color: #ef4444;
+}
+
+.seat-fill-fish {
+  background: #3b82f6;
+  color: #fff;
+  border-color: #3b82f6;
+}
+
+.seat-fill-vegetarian {
+  background: #22c55e;
+  color: #0b0f1a;
+  border-color: #22c55e;
+}
+
+.seat-fill-none {
   background: linear-gradient(135deg, #cbd5e1, #64748b);
   color: #0b0f1a;
   border-color: #cbd5e1;
+}
+
+.seat-allergen-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #f59e0b;
+  color: #0b0f1a;
+  font-size: 0.65rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #0b0f1a;
+}
+
+.seat-allergen-text {
+  font-size: 0.58rem;
+  color: #f59e0b;
+  text-align: center;
+  margin-top: 0.1rem;
+  max-width: 72px;
 }
 
 .seat-popover-label {
@@ -447,16 +490,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.seat-choice-dot {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 2px solid #0b0f1a;
 }
 
 .seat-choice-meat {
@@ -516,6 +549,19 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
+}
+
+.seating-legend-allergen {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #f59e0b;
+  color: #0b0f1a;
+  font-size: 0.6rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .seat-popover {
