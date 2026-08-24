@@ -354,6 +354,78 @@ export async function sendReminderEmail({
   if (error) throw new Error(`Resend error: ${JSON.stringify(error)}`);
 }
 
+export async function sendTimingUpdateEmail({
+  name,
+  email,
+  code,
+}: {
+  name: string;
+  email: string;
+  code: string;
+}) {
+  const html = `
+  <body style="margin:0;padding:0;background:#0a0907;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0a0907;padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" style="max-width:480px;background:rgba(20,17,12,0.9);border:1px solid rgba(199,205,214,0.35);border-radius:4px;" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="padding:40px 32px;text-align:center;">
+
+                <p style="margin:0 0 16px;font-family:Georgia,'Times New Roman',serif;letter-spacing:3px;text-transform:uppercase;font-size:12px;color:#f2f4f6;">
+                  Timing Update
+                </p>
+
+                <h1 style="margin:0 0 8px;font-family:'Brush Script MT',cursive;font-weight:400;font-size:38px;color:#ffffff;">
+                  Martin &amp; Karen Dobson
+                </h1>
+
+                <p style="margin:0 0 24px;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:16px;color:#f2f4f6;">
+                  a small change to the schedule
+                </p>
+
+                <div style="width:60px;height:1px;background:rgba(199,205,214,0.5);margin:0 auto 24px;"></div>
+
+                <p style="margin:0 0 24px;font-family:Georgia,'Times New Roman',serif;font-size:17px;line-height:1.7;color:#f5f6f8;">
+                  Dear ${firstNamesOnly(name)},<br />
+                  a quick update on timings for our<br />
+                  <em style="font-weight:bold;">25th Wedding Anniversary</em> dinner<br />
+                  on Sunday 30th August.
+                </p>
+
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="text-align:left;margin-bottom:24px;">
+                  ${detailRow("Arrival from", "6:30pm")}
+                  ${detailRow("Please be in by", "7:00pm")}
+                  ${detailRow("Dinner starts", "7:30pm")}
+                </table>
+
+                <p style="margin:0 0 24px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.7;color:#c7cdd6;">
+                  We know a few of you will be at the Chelsea vs Brighton match that afternoon, so this gives everyone a bit more breathing room to reach the River Room without rushing.
+                </p>
+
+                <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:14px;color:#c7cdd6;">
+                  See you there!
+                </p>
+
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+    <img src="https://aiert.co.uk/api/email-open?code=${encodeURIComponent(code)}" width="1" height="1" alt="" style="display:none;" />
+  </body>
+  `;
+
+  const { error } = await resend().emails.send({
+    from: FROM,
+    to: email,
+    subject: "Timing update — Martin & Karen's 25th Anniversary, Sunday 30th August",
+    html,
+  });
+  if (error) throw new Error(`Resend error: ${JSON.stringify(error)}`);
+}
+
 export async function sendWhatsAppFollowUpDigest({
   guests,
 }: {

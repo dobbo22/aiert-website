@@ -251,6 +251,16 @@
   background: rgba(37, 211, 102, 0.25);
 }
 
+.admin-timing-update {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.5);
+  color: #38bdf8;
+}
+
+.admin-timing-update:hover {
+  background: rgba(56, 189, 248, 0.25);
+}
+
 .admin-remind-both {
   background: rgba(251, 191, 36, 0.15);
   border: 1px solid rgba(251, 191, 36, 0.5);

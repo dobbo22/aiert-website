@@ -114,6 +114,17 @@ function buildWhatsAppShareUrl(
     : `https://wa.me/?text=${encodeURIComponent(message)}`;
 }
 
+const TIMING_UPDATE_MESSAGE = (recipientName: string) =>
+  `Hi ${recipientName} — a quick update on timings for Martin & Karen's 25th Anniversary on Sunday 30th August. We've adjusted things slightly: arrival now from 6:30pm, everyone in by 7:00pm, with dinner starting at 7:30pm. We know a few of you will be at the Chelsea vs Brighton match that afternoon, so this gives you a bit more breathing room to get to the River Room without rushing. See you there!`;
+
+function buildTimingUpdateWhatsAppUrl(recipientName: string, phone: string): string {
+  const digits = normalizePhoneForWhatsApp(phone);
+  const message = TIMING_UPDATE_MESSAGE(recipientName);
+  return digits
+    ? `https://wa.me/${digits}?text=${encodeURIComponent(message)}`
+    : `https://wa.me/?text=${encodeURIComponent(message)}`;
+}
+
 export default function InviteeRow({
   code,
   name,
@@ -188,6 +199,29 @@ export default function InviteeRow({
               </a>
             ))
           )}
+          {rsvpStatus === "accepted" &&
+            (phones.length === 0
+              ? (
+                <a
+                  href={buildTimingUpdateWhatsAppUrl(names[0] ?? name, "")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="admin-whatsapp-share admin-timing-update"
+                >
+                  Send Timing Update via WhatsApp
+                </a>
+              )
+              : phones.map((p, idx) => (
+                <a
+                  key={`timing-${idx}`}
+                  href={buildTimingUpdateWhatsAppUrl(names[idx] ?? names[0] ?? name, p)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="admin-whatsapp-share admin-timing-update"
+                >
+                  {phones.length > 1 ? `Timing Update ${names[idx] ?? `#${idx + 1}`}` : "Send Timing Update via WhatsApp"}
+                </a>
+              )))}
           <WhatsAppToggle code={code} sent={whatsappConfirmed} onChange={setWhatsappConfirmed} />
         </div>
       </td>
