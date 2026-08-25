@@ -97,7 +97,7 @@ const allergenRows = rows
   .join("");
 
 const fullListRows = [...rows]
-  .sort((a, b) => a.guest.localeCompare(b.guest))
+  .sort((a, b) => a.seat - b.seat)
   .map(
     (r) => `
     <tr>
@@ -538,7 +538,7 @@ const html = `<!doctype html>
   </table>
 
   <h2 class="section">Full Guest &amp; Menu List</h2>
-  <p class="section-note">Alphabetical, cross-referenced to seat number.</p>
+  <p class="section-note">Sorted by seat number.</p>
   <table class="doc-table">
     <thead>
       <tr><th>Seat</th><th>Position</th><th>Guest</th><th>Menu</th><th>Note</th></tr>
