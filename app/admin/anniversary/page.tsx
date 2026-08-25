@@ -135,6 +135,17 @@ export default async function AdminAnniversaryPage() {
           <span className="admin-stat-label">Guests Attending</span>
         </div>
       </div>
+      <SeatingChart
+        seats={seats}
+        invitees={invitees.map((i) => ({
+          code: i.code,
+          name: i.name,
+          guestCount: guestCountForName(i.name),
+          rsvpStatus: i.rsvp_status,
+          menuChoices: i.menu_choices,
+        }))}
+      />
+
       <div className="admin-table-wrap">
       <table className="admin-table">
         <thead>
@@ -182,17 +193,6 @@ export default async function AdminAnniversaryPage() {
         </tbody>
       </table>
       </div>
-
-      <SeatingChart
-        seats={seats}
-        invitees={invitees.map((i) => ({
-          code: i.code,
-          name: i.name,
-          guestCount: guestCountForName(i.name),
-          rsvpStatus: i.rsvp_status,
-          menuChoices: i.menu_choices,
-        }))}
-      />
     </div>
   );
 }
