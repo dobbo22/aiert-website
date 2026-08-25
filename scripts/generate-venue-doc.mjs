@@ -324,27 +324,27 @@ const html = `<!doctype html>
   .side-col.right .seat { text-align: right; }
 
   .seat {
-    width: 84px;
+    width: 72px;
     display: flex;
     flex-direction: column;
     align-items: center;
     break-inside: avoid;
   }
 
-  .side-col .seat { width: 100%; flex-direction: row; align-items: center; gap: 8px; }
-  .side-col.right .seat { flex-direction: row-reverse; }
+  .side-col .seat { width: 100%; flex-direction: row; align-items: center; gap: 6px; justify-content: flex-start; }
+  .side-col.right .seat { flex-direction: row-reverse; justify-content: flex-end; }
 
   .disc {
     position: relative;
-    width: 34px;
-    height: 34px;
-    min-width: 34px;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #fff;
-    font-size: 10.5px;
+    font-size: 9px;
     font-weight: 700;
     letter-spacing: 0.2px;
   }
@@ -356,14 +356,14 @@ const html = `<!doctype html>
 
   .badge {
     position: absolute;
-    top: -4px;
-    right: -4px;
-    width: 13px;
-    height: 13px;
+    top: -3px;
+    right: -3px;
+    width: 11px;
+    height: 11px;
     border-radius: 50%;
     background: var(--allergen);
     color: #fff;
-    font-size: 8.5px;
+    font-size: 7.5px;
     font-weight: 800;
     display: flex;
     align-items: center;
@@ -372,18 +372,18 @@ const html = `<!doctype html>
   }
 
   .seat-name {
-    font-size: 10px;
+    font-size: 9px;
     text-align: center;
-    margin-top: 4px;
-    max-width: 84px;
+    margin-top: 3px;
+    max-width: 72px;
     color: var(--ink);
   }
 
-  .side-col .seat-name { text-align: left; margin-top: 0; max-width: none; flex: 1; }
+  .side-col .seat-name { text-align: left; margin-top: 0; max-width: none; flex: none; }
   .side-col.right .seat-name { text-align: right; }
 
   .seat-choice {
-    font-size: 9px;
+    font-size: 8px;
     text-transform: uppercase;
     letter-spacing: 0.6px;
     margin-top: 1px;
