@@ -364,6 +364,13 @@
   margin-left: 0.5rem;
 }
 
+.seating-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
 .seating-u {
   display: inline-flex;
   flex-direction: column;
@@ -371,6 +378,59 @@
   border: 1px solid rgba(45, 55, 72, 0.5);
   border-radius: 8px;
   padding: 1.5rem;
+}
+
+.unseated-panel {
+  min-width: 200px;
+  max-width: 240px;
+  background: rgba(18, 24, 40, 0.6);
+  border: 1px solid rgba(45, 55, 72, 0.5);
+  border-radius: 8px;
+  padding: 1rem;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.unseated-panel-drag-over {
+  border-color: #cbd5e1;
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.unseated-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0 0 0.75rem;
+}
+
+.unseated-empty {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.unseated-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.unseated-chip {
+  padding: 0.4rem 0.6rem;
+  background: rgba(45, 55, 72, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 4px;
+  font-size: 0.78rem;
+  color: #e2e8f0;
+  cursor: grab;
+}
+
+.unseated-chip:active {
+  cursor: grabbing;
+}
+
+.seat-drag-over {
+  outline: 2px dashed #cbd5e1;
+  outline-offset: 2px;
 }
 
 .seating-top {

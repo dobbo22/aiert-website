@@ -2,7 +2,6 @@ import { cookies } from "next/headers";
 import sql from "@/lib/db";
 import { isValidAdminSession, COOKIE_NAME } from "@/lib/adminAuth";
 import LoginForm from "./LoginForm";
-import SeatingChart from "./SeatingChart";
 import SendAllButton from "./SendAllButton";
 import LogoutButton from "./LogoutButton";
 import InviteeRow from "./InviteeRow";
@@ -56,13 +55,6 @@ type Row = {
   phone_number: string | null;
 };
 
-type SeatRow = {
-  seat_id: number;
-  side: "top" | "left" | "right";
-  invitee_code: string | null;
-  guest_label: string | null;
-};
-
 export default async function AdminAnniversaryPage() {
   const cookieStore = await cookies();
   const session = cookieStore.get(COOKIE_NAME)?.value;
@@ -78,12 +70,6 @@ export default async function AdminAnniversaryPage() {
     FROM anniversary_invitees
     ORDER BY name ASC
   `) as Row[];
-
-  const seats = (await sql`
-    SELECT seat_id, side, invitee_code, guest_label
-    FROM anniversary_seats
-    ORDER BY seat_id ASC
-  `) as SeatRow[];
 
   const acceptedCount = invitees
     .filter((i) => i.rsvp_status === "accepted")
@@ -104,6 +90,9 @@ export default async function AdminAnniversaryPage() {
         <p className="admin-updated">
           Updated {new Date().toLocaleString("en-GB")} · auto-refreshes every 30s
         </p>
+        <a href="/admin/table-plan" className="admin-logout-btn" style={{ marginRight: "0.5rem" }}>
+          Table Plan →
+        </a>
         <LogoutButton />
       </div>
       <SendAllButton
@@ -135,17 +124,6 @@ export default async function AdminAnniversaryPage() {
           <span className="admin-stat-label">Guests Attending</span>
         </div>
       </div>
-      <SeatingChart
-        seats={seats}
-        invitees={invitees.map((i) => ({
-          code: i.code,
-          name: i.name,
-          guestCount: guestCountForName(i.name),
-          rsvpStatus: i.rsvp_status,
-          menuChoices: i.menu_choices,
-        }))}
-      />
-
       <div className="admin-table-wrap">
       <table className="admin-table">
         <thead>

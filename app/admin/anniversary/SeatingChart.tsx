@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type DragEvent } from "react";
 import { splitCoupleName } from "@/lib/names";
 
 type Seat = {
@@ -69,10 +69,18 @@ function choiceLabel(choice: MenuChoice["choice"] | null) {
   }
 }
 
+type DragPayload = {
+  code: string;
+  label: string;
+  sourceSeatId: number | null;
+};
+
 export default function SeatingChart({ seats: initialSeats, invitees }: Props) {
   const [seats, setSeats] = useState(initialSeats);
   const [activeSeat, setActiveSeat] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
+  const [dragOverSeat, setDragOverSeat] = useState<number | null>(null);
+  const [dragOverSidebar, setDragOverSidebar] = useState(false);
 
   const individuals = buildIndividuals(invitees);
   const declinedCodes = new Set(
@@ -91,6 +99,8 @@ export default function SeatingChart({ seats: initialSeats, invitees }: Props) {
     seats.filter((s) => s.invitee_code && s.guest_label).map((s) => `${s.invitee_code}|${s.guest_label}`)
   );
 
+  const unseated = individuals.filter((p) => !assignedKeys.has(`${p.code}|${p.label}`));
+
   async function assign(seatId: number, code: string | null, guestLabel: string | null) {
     setSaving(true);
     setSeats((prev) =>
@@ -108,6 +118,33 @@ export default function SeatingChart({ seats: initialSeats, invitees }: Props) {
     }
   }
 
+  function readDragPayload(e: DragEvent<HTMLElement>): DragPayload | null {
+    try {
+      const raw = e.dataTransfer.getData("text/plain");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function handleSeatDrop(e: DragEvent<HTMLElement>, targetSeatId: number) {
+    e.preventDefault();
+    setDragOverSeat(null);
+    const payload = readDragPayload(e);
+    if (!payload) return;
+    if (payload.sourceSeatId === targetSeatId) return;
+    if (payload.sourceSeatId !== null) assign(payload.sourceSeatId, null, null);
+    assign(targetSeatId, payload.code, payload.label);
+  }
+
+  function handleSidebarDrop(e: DragEvent<HTMLElement>) {
+    e.preventDefault();
+    setDragOverSidebar(false);
+    const payload = readDragPayload(e);
+    if (!payload || payload.sourceSeatId === null) return;
+    assign(payload.sourceSeatId, null, null);
+  }
+
   function renderSeat(id: number) {
     const seat = seatById(id);
     const label = seat?.guest_label;
@@ -123,8 +160,22 @@ export default function SeatingChart({ seats: initialSeats, invitees }: Props) {
       <div className="seat-wrap" key={id}>
         <button
           type="button"
-          className={`seat-disc ${label ? `seat-fill-${choice ?? "none"}` : ""}`}
+          draggable={!!label}
+          className={`seat-disc ${label ? `seat-fill-${choice ?? "none"}` : ""} ${dragOverSeat === id ? "seat-drag-over" : ""}`}
           onClick={() => setActiveSeat(isActive ? null : id)}
+          onDragStart={(e) => {
+            if (!label || !seat?.invitee_code) return;
+            e.dataTransfer.setData(
+              "text/plain",
+              JSON.stringify({ code: seat.invitee_code, label, sourceSeatId: id })
+            );
+          }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOverSeat(id);
+          }}
+          onDragLeave={() => setDragOverSeat((cur) => (cur === id ? null : cur))}
+          onDrop={(e) => handleSeatDrop(e, id)}
           title={titleParts.join(" — ")}
         >
           {label ? initials(label) : id}
@@ -163,10 +214,10 @@ export default function SeatingChart({ seats: initialSeats, invitees }: Props) {
                 const key = `${person.code}|${person.label}`;
                 const isCurrentSeat = seat?.invitee_code === person.code && seat?.guest_label === person.label;
                 const seatedElsewhere = assignedKeys.has(key) && !isCurrentSeat;
+                if (seatedElsewhere) return null;
                 return (
                   <option key={`${key}-${idx}`} value={idx}>
                     {person.label}
-                    {seatedElsewhere ? " (seated)" : ""}
                   </option>
                 );
               })}
@@ -204,12 +255,47 @@ export default function SeatingChart({ seats: initialSeats, invitees }: Props) {
           <span className="seating-legend-allergen">!</span> Allergen — hover seat for details
         </span>
       </div>
-      <div className="seating-u">
-        <div className="seating-top">{topSeats.map(renderSeat)}</div>
-        <div className="seating-sides">
-          <div className="seating-side seating-left">{leftSeats.map(renderSeat)}</div>
-          <div className="seating-open" />
-          <div className="seating-side seating-right">{rightSeats.map(renderSeat)}</div>
+      <div className="seating-layout">
+        <div className="seating-u">
+          <div className="seating-top">{topSeats.map(renderSeat)}</div>
+          <div className="seating-sides">
+            <div className="seating-side seating-left">{leftSeats.map(renderSeat)}</div>
+            <div className="seating-open" />
+            <div className="seating-side seating-right">{rightSeats.map(renderSeat)}</div>
+          </div>
+        </div>
+
+        <div
+          className={`unseated-panel ${dragOverSidebar ? "unseated-panel-drag-over" : ""}`}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOverSidebar(true);
+          }}
+          onDragLeave={() => setDragOverSidebar(false)}
+          onDrop={handleSidebarDrop}
+        >
+          <h3 className="unseated-title">Unseated ({unseated.length})</h3>
+          {unseated.length === 0 ? (
+            <p className="unseated-empty">Everyone has a seat.</p>
+          ) : (
+            <div className="unseated-list">
+              {unseated.map((person) => (
+                <div
+                  key={`${person.code}|${person.label}`}
+                  className="unseated-chip"
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData(
+                      "text/plain",
+                      JSON.stringify({ code: person.code, label: person.label, sourceSeatId: null })
+                    );
+                  }}
+                >
+                  {person.label}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
