@@ -332,7 +332,7 @@ const html = `<!doctype html>
   }
 
   .side-col .seat { width: 100%; flex-direction: row; align-items: center; gap: 6px; justify-content: flex-start; }
-  .side-col.right .seat { flex-direction: row-reverse; justify-content: flex-end; }
+  .side-col.right .seat { flex-direction: row-reverse; justify-content: flex-start; }
 
   .disc {
     position: relative;
