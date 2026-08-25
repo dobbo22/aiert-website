@@ -34,6 +34,7 @@ type SeatRow = {
   side: "top" | "left" | "right";
   invitee_code: string | null;
   guest_label: string | null;
+  seat_number: number | null;
 };
 
 export default async function AdminTablePlanPage() {
@@ -51,7 +52,7 @@ export default async function AdminTablePlanPage() {
   `) as Row[];
 
   const seats = (await sql`
-    SELECT seat_id, side, invitee_code, guest_label
+    SELECT seat_id, side, invitee_code, guest_label, seat_number
     FROM anniversary_seats
     ORDER BY seat_id ASC
   `) as SeatRow[];

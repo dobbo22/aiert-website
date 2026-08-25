@@ -8,6 +8,7 @@ type Seat = {
   side: "top" | "left" | "right";
   invitee_code: string | null;
   guest_label: string | null;
+  seat_number: number | null;
 };
 
 type MenuChoice = {
@@ -178,7 +179,10 @@ export default function SeatingChart({ seats: initialSeats, invitees }: Props) {
           onDrop={(e) => handleSeatDrop(e, id)}
           title={titleParts.join(" — ")}
         >
-          {label ? initials(label) : id}
+          {label ? initials(label) : (seat?.seat_number ?? id)}
+          {label && seat?.seat_number != null && (
+            <span className="seat-number-badge">{seat.seat_number}</span>
+          )}
           {allergen && <span className="seat-allergen-badge">!</span>}
         </button>
         {label && <span className="seat-name">{label}</span>}

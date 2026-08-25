@@ -519,6 +519,23 @@
   border-color: #cbd5e1;
 }
 
+.seat-number-badge {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #1e293b;
+  color: #f8fafc;
+  font-size: 0.62rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #0b0f1a;
+}
+
 .seat-allergen-badge {
   position: absolute;
   top: -4px;

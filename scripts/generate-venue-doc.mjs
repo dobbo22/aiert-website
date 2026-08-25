@@ -6,7 +6,7 @@ config({ path: ".env.local" });
 const sql = neon(process.env.DATABASE_URL);
 
 const seats = await sql`
-  SELECT seat_id, side, invitee_code, guest_label
+  SELECT seat_id, side, invitee_code, guest_label, seat_number
   FROM anniversary_seats
   ORDER BY
     CASE side WHEN 'top' THEN 0 WHEN 'left' THEN 1 WHEN 'right' THEN 2 END,
@@ -30,7 +30,7 @@ const rows = seats
   .map((s) => {
     const entry = entryFor(s.invitee_code, s.guest_label);
     return {
-      seat: s.seat_id,
+      seat: s.seat_number ?? s.seat_id,
       side: s.side,
       guest: s.guest_label,
       choice: entry?.choice || "",
@@ -70,9 +70,10 @@ function initials(name) {
 function seatDisc(r) {
   const cls = r.choice || "none";
   const allergenBadge = r.notes ? `<span class="badge">!</span>` : "";
+  const numberBadge = `<span class="seat-num-badge">${r.seat}</span>`;
   return `
     <div class="seat">
-      <div class="disc disc-${cls}">${initials(r.guest)}${allergenBadge}</div>
+      <div class="disc disc-${cls}">${numberBadge}${initials(r.guest)}${allergenBadge}</div>
       <div class="seat-name">${r.guest}</div>
       <div class="seat-choice choice-${cls}">${choiceLabel(r.choice)}</div>
     </div>`;
@@ -364,6 +365,23 @@ const html = `<!doctype html>
     background: var(--allergen);
     color: #fff;
     font-size: 7.5px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid var(--panel);
+  }
+
+  .seat-num-badge {
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--silver-deep);
+    color: #fff;
+    font-size: 7px;
     font-weight: 800;
     display: flex;
     align-items: center;
