@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import mailbroomSql from "@/lib/mailbroomDb";
-import { BANDS, detectCurrency, formatAmount } from "@/lib/currency";
+import { BANDS, LEMONSQUEEZY_CHECKOUT_URLS, detectCurrency, formatAmount } from "@/lib/currency";
 
 // Refresh the aggregate impact stat at most once an hour rather than
 // querying the DB on every page load.
@@ -580,6 +580,21 @@ export default async function MailBroomWebAppPage() {
               </div>
             </div>
           )}
+
+          <div className="mt-8 pt-8 border-t border-white/10 max-w-2xl mx-auto">
+            <p className="text-xs text-cloud mb-4">Or buy directly via Lemon Squeezy (handles VAT/sales tax for you):</p>
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              {LEMONSQUEEZY_CHECKOUT_URLS.map(({ key, label, url }) => (
+                <a
+                  key={key}
+                  href={url}
+                  className="btn-outline px-5 py-2.5 rounded-full text-sm inline-flex items-center gap-2"
+                >
+                  {label}
+                </a>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 

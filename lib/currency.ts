@@ -16,6 +16,19 @@ export const BANDS = [
   { key: "51-100", label: "51–100 seats", amounts: { gbp: 350, usd: 469, eur: 409 } },
 ] as const;
 
+// Lemon Squeezy is GBP-only (one product, 5 variants) — live checkout links,
+// one per BANDS key. Pulled from the live product listing 2026-08-25; if a
+// product is ever re-copied to live mode its checkout URL changes (see
+// mailbroom-web's LEMONSQUEEZY_VARIANT_ID_* env vars, which must be updated
+// in lockstep with these).
+export const LEMONSQUEEZY_CHECKOUT_URLS = [
+  { key: "1-5", label: "5 users", url: "https://shop.mailbroom.app/checkout/buy/ef32e00b-ea28-417c-928c-8f95a4ba8e8b" },
+  { key: "6-10", label: "10 users", url: "https://shop.mailbroom.app/checkout/buy/c005bdc6-d911-4e94-b536-a45caf73a6a8" },
+  { key: "11-25", label: "25 users", url: "https://shop.mailbroom.app/checkout/buy/21f08e79-e04e-4e84-95a2-0c7327cda2fb" },
+  { key: "26-50", label: "50 users", url: "https://shop.mailbroom.app/checkout/buy/9ef321bb-88fb-4ec5-ae82-5b97d13ec453" },
+  { key: "51-100", label: "100 users", url: "https://shop.mailbroom.app/checkout/buy/5e1a73c6-5777-4af3-aac7-07ab955c11ab" },
+] as const;
+
 // EU member states — priced in EUR. Everywhere else (including non-euro
 // European countries) falls back to GBP.
 const EU_COUNTRIES = new Set([
