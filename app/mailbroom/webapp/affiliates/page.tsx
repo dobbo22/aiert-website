@@ -124,6 +124,42 @@ export default function MailBroomWebAppAffiliatesPage() {
         </div>
       </section>
 
+      {/* ── WARRIORPLUS ───────────────────────────────────── */}
+      {/* Distinct from the Referral/Affiliate tracks above — those are our
+      own quiz-based program (Stripe promo-code attribution, 12-month
+      commission cap, enforced in app/api/billing/webhook). WarriorPlus is a
+      separate marketplace channel with its own tracking and no 12-month cap
+      option on their side, so it genuinely pays longer — described here
+      rather than folded into the tracks above, to avoid contradicting the
+      accurate terms stated for our own program. */}
+      <section className="max-w-3xl mx-auto px-6 py-20">
+        <div className="card-glass rounded-2xl p-8 md:p-12">
+          <div className="text-4xl mb-4">🛒</div>
+          <p className="text-xs text-gold font-semibold uppercase tracking-widest mb-2">Via WarriorPlus</p>
+          <h2 className="text-2xl font-bold text-cloud mb-4">Promoting MailBroom for Business through WarriorPlus?</h2>
+          <p className="text-sm text-cloud leading-relaxed mb-4">
+            If you found MailBroom for Business through the WarriorPlus marketplace, your commission
+            works a little differently from the Referral and Affiliate tracks above — WarriorPlus
+            handles your tracking and payouts entirely on their own platform, not through MailBroom
+            directly.
+          </p>
+          <ul className="space-y-3">
+            <li className="flex items-center gap-3 text-sm text-cloud">
+              <span className="text-gold">✓</span>
+              30% commission, paid per billing cycle
+            </li>
+            <li className="flex items-center gap-3 text-sm text-cloud">
+              <span className="text-gold">✓</span>
+              Recurring for the full lifetime of the referred subscription — no 12-month cap
+            </li>
+            <li className="flex items-center gap-3 text-sm text-cloud">
+              <span className="text-gold">✓</span>
+              Tracked and paid out by WarriorPlus, via your WarriorPlus account
+            </li>
+          </ul>
+        </div>
+      </section>
+
       {/* ── FAQ ───────────────────────────────────────────── */}
       <section className="max-w-3xl mx-auto px-6 py-20">
         <div className="text-center mb-12">
