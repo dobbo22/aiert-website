@@ -374,10 +374,6 @@ export default function MailBroomWarriorPlusPage() {
           </div>
         </div>
 
-        <p className="text-center text-xs text-cloud mt-10 max-w-xl mx-auto leading-relaxed">
-          Need more than 5 seats? <a href="/support" className="text-gold hover:underline">Contact us</a> for
-          a larger band.
-        </p>
       </section>
 
       {/* ── COMPATIBILITY ──────────────────────────────── */}
