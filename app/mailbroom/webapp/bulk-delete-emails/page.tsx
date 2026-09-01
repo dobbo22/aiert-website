@@ -52,7 +52,7 @@ const techArticleJsonLd = {
   description: "How IT admins can bulk delete emails across Microsoft 365 and Exchange Online mailboxes safely, without breaking retention or legal hold.",
   url: "https://mailbroom.app/bulk-delete-emails",
   dateModified: "2026-07-21",
-  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
+  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://www.aiert.co.uk" },
 };
 
 const faqJsonLd = {

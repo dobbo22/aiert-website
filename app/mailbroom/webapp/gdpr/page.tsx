@@ -55,7 +55,7 @@ const techArticleJsonLd = {
   description: "How MailBroom for Business handles Microsoft 365 mailbox data under GDPR — scoped access, revocability, and retention/hold compatibility.",
   url: "https://mailbroom.app/gdpr",
   dateModified: "2026-07-21",
-  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
+  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://www.aiert.co.uk" },
 };
 
 const faqJsonLd = {

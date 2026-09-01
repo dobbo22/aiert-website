@@ -83,7 +83,7 @@ const softwareApplicationJsonLd = {
   publisher: {
     "@type": "Organization",
     name: "AIERT Ltd",
-    url: "https://aiert.co.uk",
+    url: "https://www.aiert.co.uk",
   },
 };
 

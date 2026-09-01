@@ -25,7 +25,7 @@ const articleJsonLd = {
   description: "Storage overage costs, IT ticket time, and compliance-safe deletion — the numbers behind MailBroom for Business, with sources.",
   url: "https://mailbroom.app/roi",
   dateModified: "2026-07-21",
-  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
+  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://www.aiert.co.uk" },
 };
 
 export default function MailBroomRoiPage() {

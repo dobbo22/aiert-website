@@ -25,7 +25,7 @@ const articleJsonLd = {
   description: "What Microsoft actually charges once a mailbox outgrows its plan, and how to reduce Microsoft 365 storage costs.",
   url: "https://mailbroom.app/storage-costs",
   dateModified: "2026-07-21",
-  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
+  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://www.aiert.co.uk" },
 };
 
 export default function StorageCostsPage() {

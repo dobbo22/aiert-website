@@ -173,7 +173,7 @@ export default async function MailBroomLeaderboardPage() {
             <div className="flex gap-6 text-sm text-mist flex-wrap justify-center">
               <a href="/" className="hover:text-white transition-colors">MailBroom for Business</a>
               <a href="https://ios.mailbroom.app" className="hover:text-white transition-colors">MailBroom for iOS</a>
-              <a href="https://aiert.co.uk" className="hover:text-white transition-colors">AIERT Home</a>
+              <a href="https://www.aiert.co.uk" className="hover:text-white transition-colors">AIERT Home</a>
             </div>
           </div>
         </div>

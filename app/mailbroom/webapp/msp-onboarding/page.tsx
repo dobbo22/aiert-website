@@ -50,7 +50,7 @@ const techArticleJsonLd = {
   description: "How an MSP sets up MailBroom for Business for a client's Microsoft 365 tenant, configured per client rather than through one MSP-wide login.",
   url: "https://mailbroom.app/msp-onboarding",
   dateModified: "2026-07-21",
-  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
+  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://www.aiert.co.uk" },
 };
 
 const faqJsonLd = {

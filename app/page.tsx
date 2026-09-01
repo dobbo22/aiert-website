@@ -5,12 +5,12 @@ export const metadata: Metadata = {
   description:
     "AIERT Ltd builds AI-powered products, including MailBroom, an AI email cleaner that bulk-deletes, unsubscribes, and organises inboxes privately on-device.",
   keywords: ["AIERT", "AI", "fintech", "MailBroom", "email cleaner", "inbox cleaner", "UK", "trading platform", "investment"],
-  metadataBase: new URL("https://aiert.co.uk"),
+  metadataBase: new URL("https://www.aiert.co.uk"),
   openGraph: {
     title: "AIERT Ltd – MailBroom",
     description:
       "UK-based AI company building MailBroom (private, on-device AI email cleanup).",
-    url: "https://aiert.co.uk",
+    url: "https://www.aiert.co.uk",
     siteName: "AIERT Ltd",
     locale: "en_GB",
     type: "website",

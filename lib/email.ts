@@ -52,7 +52,7 @@ export async function sendRsvpNotification({
       ${menuHtml}
       ${message ? `<p><strong>Message:</strong> ${message}</p>` : ""}
       <p style="margin-top: 24px;">
-        <a href="https://aiert.co.uk/admin/anniversary" style="color:#92400e;">View all RSVPs in the admin dashboard →</a>
+        <a href="https://www.aiert.co.uk/admin/anniversary" style="color:#92400e;">View all RSVPs in the admin dashboard →</a>
       </p>
     </div>
   `;
@@ -167,7 +167,7 @@ export async function sendGuestConfirmation({
                 </table>
 
                 <img
-                  src="https://aiert.co.uk/venue-staircase.png"
+                  src="https://www.aiert.co.uk/venue-staircase.png"
                   width="420"
                   alt="The River Room, One Whitehall Place"
                   style="display:block;width:100%;max-width:420px;height:auto;border:1px solid rgba(199,205,214,0.35);border-radius:3px;margin:0 auto 20px;"
@@ -175,7 +175,7 @@ export async function sendGuestConfirmation({
 
                 <a href="${VENUE_MAP_URL}" style="display:inline-block;">
                   <img
-                    src="https://aiert.co.uk/venue-map.png"
+                    src="https://www.aiert.co.uk/venue-map.png"
                     width="420"
                     height="200"
                     alt="Map to River Room, One Whitehall Place, London SW1A 2EJ"
@@ -232,7 +232,7 @@ export async function sendInviteEmail({
               <td style="padding:40px 32px;text-align:center;">
 
                 <img
-                  src="https://aiert.co.uk/anniversary-og.jpg"
+                  src="https://www.aiert.co.uk/anniversary-og.jpg"
                   width="416"
                   alt="Martin and Karen on their wedding day, in a silver ornate frame"
                   style="display:block;width:100%;max-width:416px;height:auto;border-radius:3px;margin:0 auto 24px;"
@@ -273,7 +273,7 @@ export async function sendInviteEmail({
         </td>
       </tr>
     </table>
-    <img src="https://aiert.co.uk/api/email-open?code=${encodeURIComponent(code)}" width="1" height="1" alt="" style="display:none;" />
+    <img src="https://www.aiert.co.uk/api/email-open?code=${encodeURIComponent(code)}" width="1" height="1" alt="" style="display:none;" />
   </body>
   `;
 
@@ -341,7 +341,7 @@ export async function sendReminderEmail({
         </td>
       </tr>
     </table>
-    <img src="https://aiert.co.uk/api/email-open?code=${encodeURIComponent(code)}" width="1" height="1" alt="" style="display:none;" />
+    <img src="https://www.aiert.co.uk/api/email-open?code=${encodeURIComponent(code)}" width="1" height="1" alt="" style="display:none;" />
   </body>
   `;
 
@@ -413,7 +413,7 @@ export async function sendTimingUpdateEmail({
         </td>
       </tr>
     </table>
-    <img src="https://aiert.co.uk/api/email-open?code=${encodeURIComponent(code)}" width="1" height="1" alt="" style="display:none;" />
+    <img src="https://www.aiert.co.uk/api/email-open?code=${encodeURIComponent(code)}" width="1" height="1" alt="" style="display:none;" />
   </body>
   `;
 
@@ -431,7 +431,7 @@ export async function sendWhatsAppFollowUpDigest({
 }: {
   guests: { name: string; code: string; sentAt: string }[];
 }) {
-  const baseUrl = process.env.SITE_URL || "https://aiert.co.uk";
+  const baseUrl = process.env.SITE_URL || "https://www.aiert.co.uk";
 
   const rowsHtml = guests
     .map(

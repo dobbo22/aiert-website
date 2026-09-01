@@ -229,7 +229,7 @@ export default function ArticlePage() {
               </div>
             </div>
             <div className="flex gap-6 text-sm text-mist flex-wrap justify-center">
-              <a href="https://aiert.co.uk" className="hover:text-white transition-colors">AIERT Home</a>
+              <a href="https://www.aiert.co.uk" className="hover:text-white transition-colors">AIERT Home</a>
               <a href="/" className="hover:text-white transition-colors">MailBroom</a>
               <a href="/blog" className="hover:text-white transition-colors">Blog</a>
               {/* ShareQuest — commented out for now, replaced with MailBroom for Business

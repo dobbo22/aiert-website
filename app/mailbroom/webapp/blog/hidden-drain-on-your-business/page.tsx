@@ -45,7 +45,7 @@ const techArticleJsonLd = {
   datePublished: "2026-07-22",
   dateModified: "2026-07-22",
   author: { "@type": "Person", name: "Martin Dobson" },
-  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
+  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://www.aiert.co.uk" },
 };
 
 const faqJsonLd = {
@@ -291,7 +291,7 @@ export default function HiddenDrainPage() {
               </div>
             </div>
             <div className="flex gap-6 text-sm text-mist flex-wrap justify-center">
-              <a href="https://aiert.co.uk" className="hover:text-white transition-colors">AIERT Home</a>
+              <a href="https://www.aiert.co.uk" className="hover:text-white transition-colors">AIERT Home</a>
               <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
               <a href="/terms" className="hover:text-white transition-colors">Terms of Use</a>
             </div>

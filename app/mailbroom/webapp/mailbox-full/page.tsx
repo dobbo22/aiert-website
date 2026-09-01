@@ -48,7 +48,7 @@ const techArticleJsonLd = {
   description: "Why an Exchange Online mailbox fills up, what breaks at each stage, and how to fix it — including the safest way to clear space across every mailbox in a company.",
   url: "https://mailbroom.app/mailbox-full",
   dateModified: "2026-07-21",
-  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
+  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://www.aiert.co.uk" },
 };
 
 const faqJsonLd = {

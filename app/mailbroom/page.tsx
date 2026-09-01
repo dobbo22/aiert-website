@@ -942,7 +942,7 @@ export default function MailBroomPage() {
               </div>
             </div>
             <div className="flex gap-6 text-sm text-mist flex-wrap justify-center">
-              <a href="https://aiert.co.uk" className="hover:text-white transition-colors">AIERT Home</a>
+              <a href="https://www.aiert.co.uk" className="hover:text-white transition-colors">AIERT Home</a>
               {/* ShareQuest — commented out for now, replaced with MailBroom for Business
               <a href="https://sharequest.co.uk" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">ShareQuest</a>
               */}

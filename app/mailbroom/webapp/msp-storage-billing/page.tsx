@@ -56,7 +56,7 @@ const techArticleJsonLd = {
     "How MSPs turn Microsoft 365 mailbox storage overage into a billable service, and what makes it worth offering as a recurring line item.",
   url: "https://mailbroom.app/msp-storage-billing",
   dateModified: "2026-07-21",
-  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
+  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://www.aiert.co.uk" },
 };
 
 const faqJsonLd = {

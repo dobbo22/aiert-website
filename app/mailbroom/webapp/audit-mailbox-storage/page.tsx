@@ -50,7 +50,7 @@ const techArticleJsonLd = {
   description: "The two native ways to see every mailbox's storage usage across a Microsoft 365 tenant, and what to do with the worst offenders.",
   url: "https://mailbroom.app/audit-mailbox-storage",
   dateModified: "2026-07-21",
-  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
+  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://www.aiert.co.uk" },
 };
 
 const faqJsonLd = {

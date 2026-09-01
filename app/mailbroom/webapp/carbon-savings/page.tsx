@@ -51,7 +51,7 @@ const techArticleJsonLd = {
   description: "How MailBroom estimates the CO₂ impact of mailbox cleanup, and the account-level tracking and embeddable badge that come with it.",
   url: "https://mailbroom.app/carbon-savings",
   dateModified: "2026-07-21",
-  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
+  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://www.aiert.co.uk" },
 };
 
 const faqJsonLd = {

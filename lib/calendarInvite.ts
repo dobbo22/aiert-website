@@ -30,7 +30,7 @@ export function buildAnniversaryIcs(): string {
 
 export const VENUE_MAP_URL = "https://maps.app.goo.gl/ZRLAxXVy1z1ZkV5a6";
 
-export const ICS_DOWNLOAD_URL = "https://aiert.co.uk/api/calendar";
+export const ICS_DOWNLOAD_URL = "https://www.aiert.co.uk/api/calendar";
 
 export function buildGoogleCalendarUrl(): string {
   const params = new URLSearchParams({

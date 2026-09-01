@@ -9,7 +9,7 @@ import AutoRefresh from "./AutoRefresh";
 import { guestCountForName } from "@/lib/guestCount";
 import "./admin.css";
 
-const SITE_URL = process.env.SITE_URL || "https://aiert.co.uk";
+const SITE_URL = process.env.SITE_URL || "https://www.aiert.co.uk";
 
 function needsWhatsAppFollowUp(i: {
   invite_sent_at: string | null;

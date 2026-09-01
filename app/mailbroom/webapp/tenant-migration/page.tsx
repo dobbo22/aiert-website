@@ -56,7 +56,7 @@ const techArticleJsonLd = {
     "What carries over and what doesn't in a Microsoft 365 tenant-to-tenant migration, and why mailbox size drives migration time and cost.",
   url: "https://mailbroom.app/tenant-migration",
   dateModified: "2026-07-21",
-  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
+  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://www.aiert.co.uk" },
 };
 
 const faqJsonLd = {

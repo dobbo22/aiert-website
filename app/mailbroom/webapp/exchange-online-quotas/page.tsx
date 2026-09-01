@@ -50,7 +50,7 @@ const techArticleJsonLd = {
   description: "How much mailbox storage each Microsoft 365 plan includes, what changed on 1 July 2026, and what happens once a mailbox is over the limit.",
   url: "https://mailbroom.app/exchange-online-quotas",
   dateModified: "2026-07-21",
-  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
+  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://www.aiert.co.uk" },
 };
 
 const faqJsonLd = {

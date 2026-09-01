@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No email on file for this invitee" }, { status: 400 });
   }
 
-  const baseUrl = process.env.SITE_URL || "https://aiert.co.uk";
+  const baseUrl = process.env.SITE_URL || "https://www.aiert.co.uk";
   await sendReminderEmail({ name, email, inviteUrl: `${baseUrl}/invite/${code}`, code });
 
   return NextResponse.json({ ok: true });

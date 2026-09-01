@@ -56,7 +56,7 @@ const techArticleJsonLd = {
     "What happens to an Exchange Online mailbox when an employee leaves — retention, licensing cost, security risk, and how to close it out safely.",
   url: "https://mailbroom.app/employee-offboarding",
   dateModified: "2026-07-21",
-  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
+  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://www.aiert.co.uk" },
 };
 
 const faqJsonLd = {

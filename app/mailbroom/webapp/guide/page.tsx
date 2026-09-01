@@ -22,7 +22,7 @@ const techArticleJsonLd = {
   description: "A complete reference guide to MailBroom for Business — sign-in, Dashboard, Smart Sweep, Storage Cleanup, Power Search, plans & billing, Admin, and privacy.",
   url: "https://mailbroom.app/guide",
   dateModified: "2026-07-21",
-  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
+  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://www.aiert.co.uk" },
 };
 
 const ACTIONS = [

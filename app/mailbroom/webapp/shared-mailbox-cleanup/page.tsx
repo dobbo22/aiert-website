@@ -55,7 +55,7 @@ const techArticleJsonLd = {
   description: "How MailBroom for Business supports cleaning up shared and delegated mailboxes, once an org admin enables it.",
   url: "https://mailbroom.app/shared-mailbox-cleanup",
   dateModified: "2026-07-21",
-  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://aiert.co.uk" },
+  publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://www.aiert.co.uk" },
 };
 
 const faqJsonLd = {
