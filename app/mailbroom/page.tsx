@@ -714,7 +714,7 @@ export default function MailBroomPage() {
             rel="noopener noreferrer"
             className="btn-gold px-8 py-4 rounded-full text-base inline-flex items-center gap-2"
           >
-            <span>🍎</span> Get Started Free
+            <span>🍎</span> Download on the App Store
           </a>
           <p className="mt-4 text-xs text-mist">
             Try before you buy with free actions · Subscriptions managed by Apple · Cancel any time
@@ -882,6 +882,32 @@ export default function MailBroomPage() {
         </div>
       </section>
 
+      {/* ── GOOGLE SIGN-IN & DATA ACCESS ──────────────────── */}
+      <section className="section-dark py-20">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <p className="text-xs font-semibold uppercase tracking-widest mb-4 text-teal">Privacy &amp; Permissions</p>
+          <h2 className="text-4xl font-black text-cloud mb-6">Signing in with Google</h2>
+          <p className="text-mist text-base leading-relaxed max-w-2xl mx-auto">
+            For Gmail accounts, MailBroom offers <strong className="text-cloud">Sign in with Google</strong> as
+            a faster alternative to entering IMAP credentials manually. When you connect this way, MailBroom
+            requests permission to read, organise, and delete messages in your Gmail account on your behalf —
+            this is what powers Sweep Mode, Storage Cleanup, Smart Organise, and Smart Unsubscribe. MailBroom
+            never sees or stores your Google password, and all email processing happens on your device — nothing
+            is sent to AIERT's servers or any third party. You can revoke MailBroom's access at any time from
+            your{" "}
+            <a
+              href="https://myaccount.google.com/permissions"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gold hover:underline"
+            >
+              Google Account permissions
+            </a>{" "}
+            page.
+          </p>
+        </div>
+      </section>
+
       {/* ── CTA ────────────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-6 py-24 text-center">
         <h2 className="text-4xl md:text-5xl font-black text-cloud mb-6">
@@ -897,7 +923,7 @@ export default function MailBroomPage() {
           rel="noopener noreferrer"
           className="btn-gold px-10 py-5 rounded-full text-lg inline-flex items-center gap-3"
         >
-          <span>🍎</span> Download Free
+          <span>🍎</span> Download on the App Store
         </a>
         <p className="mt-4 text-sm text-mist">iOS 17.0+ · iPhone & iPad · Try before you buy with free actions · Pro plans in the App Store · cancel any time</p>
       </section>
