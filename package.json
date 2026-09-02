@@ -10,7 +10,8 @@
     "migrate:anniversary": "node scripts/migrate-anniversary.mjs",
     "migrate:mailbroom-reviewers": "node scripts/migrate-mailbroom-reviewers.mjs",
     "add-invitee": "node scripts/add-invitee.mjs",
-    "indexnow": "node scripts/submit-indexnow.mjs"
+    "indexnow": "node scripts/submit-indexnow.mjs",
+    "check:ai-citations": "node scripts/check-ai-citations.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
