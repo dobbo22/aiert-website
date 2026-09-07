@@ -99,7 +99,7 @@ export default function MailBroomBusinessPrivacyPage() {
           </a>
           <div className="hidden md:flex items-center gap-10 text-base text-cloud">
             <a href="/" className="hover:text-white transition-colors font-medium">MailBroom for Business</a>
-            <a href="/mailbroom" className="hover:text-white transition-colors font-medium">MailBroom for iOS</a>
+            <a href="https://ios.mailbroom.app" className="hover:text-white transition-colors font-medium">MailBroom for iOS</a>
             <a href="/support" className="hover:text-white transition-colors font-medium">Contact</a>
           </div>
           <a
@@ -192,7 +192,7 @@ export default function MailBroomBusinessPrivacyPage() {
             </div>
             <div className="flex gap-6 text-sm text-cloud flex-wrap justify-center">
               <a href="/" className="hover:text-white transition-colors">MailBroom for Business</a>
-              <a href="/mailbroom" className="hover:text-white transition-colors">MailBroom for iOS</a>
+              <a href="https://ios.mailbroom.app" className="hover:text-white transition-colors">MailBroom for iOS</a>
               <a href="/sso" className="hover:text-white transition-colors">SSO &amp; Permissions</a>
               <a href="/security" className="hover:text-white transition-colors">Security &amp; Access</a>
               <a href="/gdpr" className="hover:text-white transition-colors">GDPR</a>

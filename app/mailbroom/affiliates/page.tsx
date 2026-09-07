@@ -74,7 +74,7 @@ export default function MailBroomAffiliatesPage() {
           </a>
           <div className="hidden md:flex items-center gap-10 text-base text-mist">
             <a href="/" className="hover:text-white transition-colors font-medium">Home</a>
-            <a href="/mailbroom" className="hover:text-white transition-colors font-medium">MailBroom</a>
+            <a href="/" className="hover:text-white transition-colors font-medium">MailBroom</a>
             <a href="mailto:enquiries@aiert.co.uk" className="hover:text-white transition-colors font-medium">Contact</a>
           </div>
           <a
@@ -141,7 +141,7 @@ export default function MailBroomAffiliatesPage() {
             unlimited bulk actions, multiple accounts, and server-side rules. That&apos;s the part
             you get a commission on.
           </p>
-          <a href="/mailbroom" className="inline-block mt-6 text-gold underline hover:text-gold/80 transition-colors text-sm">
+          <a href="/" className="inline-block mt-6 text-gold underline hover:text-gold/80 transition-colors text-sm">
             See the full feature list →
           </a>
         </div>
@@ -233,7 +233,7 @@ export default function MailBroomAffiliatesPage() {
             </div>
             <div className="flex gap-6 text-sm text-mist flex-wrap justify-center">
               <a href="/" className="hover:text-white transition-colors">AIERT Home</a>
-              <a href="/mailbroom" className="hover:text-white transition-colors">MailBroom</a>
+              <a href="/" className="hover:text-white transition-colors">MailBroom</a>
               <a href="/mailbroom/privacy" className="hover:text-white transition-colors">Privacy</a>
               <a href="mailto:enquiries@aiert.co.uk" className="hover:text-white transition-colors">Contact</a>
             </div>

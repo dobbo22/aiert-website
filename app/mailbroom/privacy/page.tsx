@@ -83,7 +83,7 @@ export default function MailBroomPrivacyPage() {
           </a>
           <div className="hidden md:flex items-center gap-10 text-base text-mist">
             <a href="/" className="hover:text-white transition-colors font-medium">Home</a>
-            <a href="/mailbroom" className="hover:text-white transition-colors font-medium">MailBroom</a>
+            <a href="/" className="hover:text-white transition-colors font-medium">MailBroom</a>
             <a href="mailto:enquiries@aiert.co.uk" className="hover:text-white transition-colors font-medium">Contact</a>
           </div>
           {/* ShareQuest CTA — commented out for now, replaced with MailBroom for Business
@@ -191,7 +191,7 @@ export default function MailBroomPrivacyPage() {
             </div>
             <div className="flex gap-6 text-sm text-mist flex-wrap justify-center">
               <a href="/" className="hover:text-white transition-colors">AIERT Home</a>
-              <a href="/mailbroom" className="hover:text-white transition-colors">MailBroom</a>
+              <a href="/" className="hover:text-white transition-colors">MailBroom</a>
               {/* ShareQuest — commented out for now, replaced with MailBroom for Business
               <a href="https://sharequest.co.uk" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">ShareQuest</a>
               */}

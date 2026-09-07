@@ -110,7 +110,7 @@ export default function MailBroomBusinessTermsPage() {
           </a>
           <div className="hidden md:flex items-center gap-10 text-base text-cloud">
             <a href="/" className="hover:text-white transition-colors font-medium">MailBroom for Business</a>
-            <a href="/mailbroom" className="hover:text-white transition-colors font-medium">MailBroom for iOS</a>
+            <a href="https://ios.mailbroom.app" className="hover:text-white transition-colors font-medium">MailBroom for iOS</a>
             <a href="/support" className="hover:text-white transition-colors font-medium">Contact</a>
           </div>
           <a
@@ -203,7 +203,7 @@ export default function MailBroomBusinessTermsPage() {
             </div>
             <div className="flex gap-6 text-sm text-cloud flex-wrap justify-center">
               <a href="/" className="hover:text-white transition-colors">MailBroom for Business</a>
-              <a href="/mailbroom" className="hover:text-white transition-colors">MailBroom for iOS</a>
+              <a href="https://ios.mailbroom.app" className="hover:text-white transition-colors">MailBroom for iOS</a>
               <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
               <a href="/support" className="hover:text-white transition-colors">Contact</a>
             </div>
