@@ -6,6 +6,7 @@
 // Usage:
 //   npm run linkedin:post -- "Post text here"
 //   npm run linkedin:post -- "Post text here" ./path/to/image.jpg
+//   npm run linkedin:post -- --file scripts/posts/draft.txt [./path/to/image.jpg]
 //
 // Required env vars (see .env.local):
 //   LINKEDIN_ACCESS_TOKEN   OAuth2 access token with w_organization_social
@@ -17,6 +18,7 @@ config({ path: ".env.local" });
 
 const LINKEDIN_VERSION = "202604"; // YYYYMM — bump periodically per LinkedIn's versioning schedule
 const API_BASE = "https://api.linkedin.com/rest";
+const MAX_COMMENTARY_LENGTH = 3000;
 
 const ACCESS_TOKEN = process.env.LINKEDIN_ACCESS_TOKEN;
 const ORG_URN = process.env.LINKEDIN_ORG_URN;
@@ -26,10 +28,26 @@ if (!ACCESS_TOKEN || !ORG_URN) {
   process.exit(1);
 }
 
-const [commentary, imagePath] = process.argv.slice(2);
+const rawArgs = process.argv.slice(2);
+
+let commentary;
+let imagePath;
+
+if (rawArgs[0] === "--file") {
+  commentary = (await readFile(rawArgs[1], "utf-8")).trim();
+  imagePath = rawArgs[2];
+} else {
+  [commentary, imagePath] = rawArgs;
+}
 
 if (!commentary) {
   console.error('Usage: npm run linkedin:post -- "Post text" [path/to/image.jpg]');
+  console.error("   or: npm run linkedin:post -- --file scripts/posts/draft.txt [path/to/image.jpg]");
+  process.exit(1);
+}
+
+if (commentary.length > MAX_COMMENTARY_LENGTH) {
+  console.error(`Post text is ${commentary.length} characters — LinkedIn's limit is ${MAX_COMMENTARY_LENGTH}. Trim before posting.`);
   process.exit(1);
 }
 

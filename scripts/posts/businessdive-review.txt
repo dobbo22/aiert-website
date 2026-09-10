@@ -1,0 +1,30 @@
+Building a product in a crowded market is humbling — especially when that market is email, where the tools people already trust have been around for years.
+
+So when The Business Dive said they'd test MailBroom against their standard review framework — the same one used for every email app they cover — we said yes. No conditions, no preview. Just test it and tell us the truth.
+
+The result: 4.5 / 5.
+
+They also included us in their roundup of the best unsubscribe apps for 2026 — not as an honourable mention, but as "Best for fast AI-powered inbox cleanup."
+
+What the independent review found worked well:
+
+✅ Smart Sweep — sender-based bulk cleanup, hundreds of emails with one decision instead of triaging individually
+✅ Power Search — per-email selection with tri-state checkboxes when you need to target specific messages
+✅ Storage Cleanup — find the senders eating your storage, sorted by age, domain, and space used
+✅ Privacy on iOS — processing happens entirely on-device, no backend, no third parties
+
+What they flagged honestly:
+
+⚠️ MailBroom is a dedicated cleanup tool, not a full email client. Fair — that's exactly what we built and why.
+
+On the unsubscribe apps list, the reviewer wrote: "MailBroom earns its place on this list because it goes beyond simply helping you unsubscribe from newsletters... If your main goal is to get rid of thousands of unwanted emails rather than simply manage subscriptions, MailBroom is one of the more capable options on this list."
+
+That list includes SaneBox, Clean Email, Leave Me Alone, Cleanfox, and Unroll.me — tools with years of history and large user bases. We launched recently, we're a small team, and we were placed alongside them on merit — tested the same way, scored the same way.
+
+We're early. But we're building something that stands on its own.
+
+🔗 Full review: https://thebusinessdive.com/mailbroom-review
+🔗 Best unsubscribe apps roundup: https://thebusinessdive.com/best-unsubscribe-apps
+💡 Promo code BUSINESSDIVE for 10% off your first invoice
+
+#EmailManagement #InboxZero #Productivity #SaaS #Startup #AI #EmailCleanup #MailBroom
