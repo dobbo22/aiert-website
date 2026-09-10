@@ -11,6 +11,14 @@
 // Required env vars (see .env.local):
 //   LINKEDIN_ACCESS_TOKEN   OAuth2 access token with w_organization_social
 //   LINKEDIN_ORG_URN        e.g. urn:li:organization:12345678
+//
+// Optional env var:
+//   LINKEDIN_GROUPS   Comma-separated list of LinkedIn Group names you're a
+//                      member of. There is no public Groups API — LinkedIn
+//                      deprecated it years ago and it can't be automated
+//                      without violating their User Agreement — so after a
+//                      successful post this just prints a reminder to
+//                      manually reshare into each one.
 import { config } from "dotenv";
 import { readFile } from "fs/promises";
 
@@ -128,3 +136,18 @@ if (imagePath) {
 const postUrn = await createPost(postBody);
 console.log(`Post created: ${postUrn}`);
 console.log(`View at: https://www.linkedin.com/feed/update/${postUrn}/`);
+
+const groups = (process.env.LINKEDIN_GROUPS || "")
+  .split(",")
+  .map((g) => g.trim())
+  .filter(Boolean);
+
+if (groups.length) {
+  console.log("\nNo Groups API exists — manually reshare this post into:");
+  for (const g of groups) console.log(`  [ ] ${g}`);
+} else {
+  console.log(
+    "\nTip: set LINKEDIN_GROUPS in .env.local (comma-separated group names) " +
+    "to get a reshare checklist here after each post."
+  );
+}
