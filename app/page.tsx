@@ -374,7 +374,7 @@ export default function Home() {
               <a href="https://sharequest.co.uk/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Privacy</a>
               <a href="https://sharequest.co.uk/terms" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Terms</a>
               */}
-              <a href="https://ios.mailbroom.app/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Privacy</a>
+              <a href="/privacy" className="hover:text-white transition-colors">Privacy</a>
               <a href="https://ios.mailbroom.app/terms" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Terms</a>
             </div>
           </div>
