@@ -6,7 +6,7 @@ import LoginForm from "./LoginForm";
 import LogoutButton from "./LogoutButton";
 import AddReviewerForm from "./AddReviewerForm";
 import ReviewerRow from "./ReviewerRow";
-import "../anniversary/admin.css";
+import "./admin.css";
 
 export const metadata = {
   title: "MailBroom Reviewers — Admin",
