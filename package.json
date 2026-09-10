@@ -11,7 +11,10 @@
     "migrate:mailbroom-reviewers": "node scripts/migrate-mailbroom-reviewers.mjs",
     "add-invitee": "node scripts/add-invitee.mjs",
     "indexnow": "node scripts/submit-indexnow.mjs",
-    "check:ai-citations": "node scripts/check-ai-citations.mjs"
+    "check:ai-citations": "node scripts/check-ai-citations.mjs",
+    "linkedin:auth": "node scripts/linkedin-auth.mjs",
+    "linkedin:whoami": "node scripts/linkedin-whoami.mjs",
+    "linkedin:post": "node scripts/linkedin-post.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
