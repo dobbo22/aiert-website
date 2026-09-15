@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 import { isValidAdminSession, COOKIE_NAME } from "@/lib/mailbroomAdminAuth";
 import { createTextThread } from "@/lib/threadsGraph";
 
+export const maxDuration = 30; // container-ready polling can take a few seconds
+
 export async function POST(req: NextRequest) {
   const session = (await cookies()).get(COOKIE_NAME)?.value;
   if (!isValidAdminSession(session)) {

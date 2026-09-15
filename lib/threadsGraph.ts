@@ -47,12 +47,30 @@ export async function listThreads(limit = 15): Promise<ThreadsPost[]> {
   return json.data ?? [];
 }
 
+// Threads recommends waiting for the container to finish processing before
+// publishing rather than publishing immediately — polling its status is
+// faster in practice than the ~30s blind wait the docs suggest.
+async function waitForContainerReady(containerId: string): Promise<void> {
+  const deadline = Date.now() + 25_000;
+  while (Date.now() < deadline) {
+    const json = await graphFetch(`/${containerId}`, {
+      fields: "status,error_message",
+      access_token: accessToken(),
+    });
+    if (json.status === "FINISHED") return;
+    if (json.status === "ERROR") throw new Error(json.error_message || "Threads container failed to process");
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+  throw new Error("Timed out waiting for Threads container to finish processing");
+}
+
 export async function createTextThread(text: string): Promise<string> {
   const containerJson = await graphFetch(
     `/${userId()}/threads`,
     { media_type: "TEXT", text, access_token: accessToken() },
     "POST"
   );
+  await waitForContainerReady(containerJson.id);
   const publishJson = await graphFetch(
     `/${userId()}/threads_publish`,
     { creation_id: containerJson.id, access_token: accessToken() },
@@ -82,6 +100,7 @@ export async function replyToThread(threadId: string, text: string): Promise<str
     { media_type: "TEXT", text, reply_to_id: threadId, access_token: accessToken() },
     "POST"
   );
+  await waitForContainerReady(containerJson.id);
   const publishJson = await graphFetch(
     `/${userId()}/threads_publish`,
     { creation_id: containerJson.id, access_token: accessToken() },
