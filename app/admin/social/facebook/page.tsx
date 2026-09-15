@@ -1,6 +1,5 @@
 import { listPagePosts } from "@/lib/facebookGraph";
-import ComposeForm from "./ComposeForm";
-import PostCard from "./PostCard";
+import FacebookFeed from "./FacebookFeed";
 
 export const dynamic = "force-dynamic";
 
@@ -15,13 +14,9 @@ export default async function FacebookTabPage() {
   }
 
   return (
-    <div>
-      <ComposeForm />
+    <>
       {error && <p className="social-compose-error">{error}</p>}
-      {!error && posts.length === 0 && <p className="social-empty">No posts yet.</p>}
-      {posts.map((post) => (
-        <PostCard key={post.id} post={post} />
-      ))}
-    </div>
+      <FacebookFeed initialPosts={posts} />
+    </>
   );
 }

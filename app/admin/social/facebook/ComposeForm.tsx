@@ -1,17 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
 import { toStyledUnicode, type TextStyle } from "@/lib/unicodeStyle";
+import type { FacebookPost } from "@/lib/facebookGraph";
 
-export default function ComposeForm() {
+export default function ComposeForm({ onPosted }: { onPosted: (post: FacebookPost) => void }) {
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const router = useRouter();
 
   function applyStyle(style: TextStyle) {
     const el = textareaRef.current;
@@ -25,12 +24,6 @@ export default function ComposeForm() {
     const caret = start + styled.length;
     el.setSelectionRange(caret, caret);
   }
-
-  useEffect(() => {
-    return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-    };
-  }, [previewUrl]);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -50,6 +43,9 @@ export default function ComposeForm() {
     setSubmitting(true);
     setStatus(null);
 
+    const message = textareaRef.current?.value ?? "";
+    const usedPreviewUrl = previewUrl;
+
     const res = await fetch("/api/admin/social/facebook/post", {
       method: "POST",
       body: new FormData(formRef.current),
@@ -58,9 +54,18 @@ export default function ComposeForm() {
 
     if (res.ok) {
       setStatus({ ok: true, text: "Posted to Facebook." });
+      onPosted({
+        id: json.postId,
+        message,
+        created_time: new Date().toISOString(),
+        permalink_url: `https://www.facebook.com/${json.postId}`,
+        full_picture: usedPreviewUrl ?? undefined,
+        comments: { summary: { total_count: 0 } },
+      });
       formRef.current.reset();
-      clearImage();
-      router.refresh();
+      // Don't revoke usedPreviewUrl — the post card above now owns that blob URL.
+      setPreviewUrl(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     } else {
       setStatus({ ok: false, text: json.error ?? "Post failed" });
     }
