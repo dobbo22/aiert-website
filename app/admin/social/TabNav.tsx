@@ -6,8 +6,8 @@ import { usePathname } from "next/navigation";
 const TABS = [
   { href: "/admin/social", label: "Overview", exact: true },
   { href: "/admin/social/facebook", label: "Facebook" },
-  { href: "/admin/social/instagram", label: "Instagram", badge: "Soon" },
-  { href: "/admin/social/threads", label: "Threads", badge: "Soon" },
+  { href: "/admin/social/instagram", label: "Instagram" },
+  { href: "/admin/social/threads", label: "Threads" },
   { href: "/admin/social/linkedin", label: "LinkedIn", badge: "Soon" },
 ];
 
