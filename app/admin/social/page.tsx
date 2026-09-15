@@ -25,15 +25,15 @@ export default async function SocialOverviewPage() {
           <span className="admin-stat-label">Comments (last 5 posts)</span>
         </div>
         <div className="admin-stat">
-          <span className="admin-stat-value">1 / 4</span>
+          <span className="admin-stat-value">2 / 4</span>
           <span className="admin-stat-label">Platforms wired up</span>
         </div>
       </div>
 
       <p className="admin-mailbroom-note">
-        Facebook is live — compose posts and manage comments under the Facebook tab.
-        Instagram, Threads, and LinkedIn tabs are placeholders until those posting flows
-        are added here too.
+        Facebook and Instagram are live — compose posts and manage comments under their
+        tabs. Threads and LinkedIn tabs are placeholders until those posting flows are
+        added here too.
       </p>
 
       {error && <p className="social-compose-error">{error}</p>}
