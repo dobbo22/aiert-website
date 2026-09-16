@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import sql from "@/lib/db";
+import mailbroomSql from "@/lib/mailbroomDb";
 import { isValidAdminSession, COOKIE_NAME } from "@/lib/mailbroomAdminAuth";
 import { getSearchPerformance } from "@/lib/googleSearchConsole";
 import LoginForm from "../mailbroom/LoginForm";
@@ -25,6 +26,34 @@ async function getTrend(): Promise<SnapshotRow[]> {
   } catch {
     // Table doesn't exist until the daily cron job (or a manual backfill) has run once.
     return [];
+  }
+}
+
+type SignupSourceRow = { source: string; count: number };
+
+async function getSignupsBySource(): Promise<{
+  rows: SignupSourceRow[];
+  totalSignups: number;
+  totalAttributed: number;
+}> {
+  try {
+    const [bySourceRaw, totalRowRaw] = await Promise.all([
+      mailbroomSql`
+        SELECT COALESCE("utmSource", 'direct / unknown') as source, COUNT(*)::int as count
+        FROM "SignupAttribution"
+        GROUP BY source
+        ORDER BY count DESC
+        LIMIT 15
+      `,
+      mailbroomSql`SELECT COUNT(*)::int as count FROM "User"`,
+    ]);
+    const bySource = bySourceRaw as SignupSourceRow[];
+    const totalRow = totalRowRaw as { count: number }[];
+    const totalAttributed = bySource.reduce((sum, r) => sum + r.count, 0);
+    return { rows: bySource, totalSignups: totalRow[0]?.count ?? 0, totalAttributed };
+  } catch {
+    // SignupAttribution only fills in for signups after this feature shipped.
+    return { rows: [], totalSignups: 0, totalAttributed: 0 };
   }
 }
 
@@ -59,6 +88,7 @@ export default async function MarketingPage() {
   }
 
   const trend = await getTrend();
+  const signupsBySource = await getSignupsBySource();
 
   return (
     <div className="min-h-screen hero-gradient grid-bg">
@@ -136,6 +166,44 @@ export default async function MarketingPage() {
               No history yet — a daily snapshot job runs each morning, so a trend will build up
               from today. Trigger <code>/api/cron/search-console-snapshot?backfill=30</code>{" "}
               (with the <code>CRON_SECRET</code> bearer token) to backfill the last 30 days now.
+            </p>
+          )}
+
+          <h2 className="admin-subtitle">Signups by source</h2>
+          {signupsBySource.totalSignups > 0 ? (
+            <>
+              <p className="admin-mailbroom-note">
+                {signupsBySource.totalAttributed} of {signupsBySource.totalSignups} signups have
+                attribution data (tracking started 2026-09-16 — earlier signups aren&apos;t
+                included).
+              </p>
+              <table className="admin-table" style={{ marginBottom: "2rem" }}>
+                <thead>
+                  <tr>
+                    <th>Source</th>
+                    <th>Signups</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {signupsBySource.rows.map((row) => (
+                    <tr key={row.source}>
+                      <td>{row.source}</td>
+                      <td>{row.count}</td>
+                    </tr>
+                  ))}
+                  {signupsBySource.rows.length === 0 && (
+                    <tr>
+                      <td colSpan={2} className="admin-empty-cell">
+                        No attributed signups yet.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </>
+          ) : (
+            <p className="admin-mailbroom-note" style={{ marginBottom: "2rem" }}>
+              No signup data available.
             </p>
           )}
 
