@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "AIERT Ltd – MailBroom | AI-Powered Fintech & Email Tools",
+  title: "AIERT Ltd – MailBroom | AI-Powered Productivity Tools",
   description:
-    "AIERT Ltd builds AI-powered products, including MailBroom, an AI email cleaner that bulk-deletes, unsubscribes, and organises inboxes privately on-device.",
-  keywords: ["AIERT", "AI", "fintech", "MailBroom", "email cleaner", "inbox cleaner", "UK", "trading platform", "investment"],
+    "AIERT Ltd builds AI-powered productivity tools, including MailBroom, an AI email cleaner that bulk-deletes, unsubscribes, and organises inboxes privately on-device.",
+  keywords: ["AIERT", "AI", "productivity", "MailBroom", "email cleaner", "inbox cleaner", "UK", "on-device AI"],
   metadataBase: new URL("https://www.aiert.co.uk"),
   openGraph: {
     title: "AIERT Ltd – MailBroom",
     description:
-      "UK-based AI company building MailBroom (private, on-device AI email cleanup).",
+      "UK-based AI company building productivity tools, starting with MailBroom (private, on-device AI email cleanup).",
     url: "https://www.aiert.co.uk",
     siteName: "AIERT Ltd",
     locale: "en_GB",
@@ -68,12 +68,12 @@ export default function Home() {
         <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-tight mb-6">
           <span className="text-cloud">Artificial Intelligence</span>
           <br />
-          <span className="gold-text">meets Financial Markets</span>
+          <span className="gold-text">meets Everyday Productivity</span>
         </h1>
 
         <p className="text-lg md:text-xl max-w-2xl mx-auto mb-10 text-mist leading-relaxed">
-          AIERT Ltd is a UK-based AI and financial technology company building intelligent platforms
-          that empower everyday investors with professional-grade insights.
+          AIERT Ltd is a UK-based AI company building intelligent tools that give people back their time
+          — starting with MailBroom, private on-device AI that clears an overflowing inbox in minutes.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -301,11 +301,11 @@ export default function Home() {
         <div className="grid md:grid-cols-3 gap-6">
           {[
             { icon: "⚡", title: "Cloud Native", desc: "Deployed on globally distributed infrastructure with 99.9% uptime SLA, automatic scaling, and edge delivery." },
-            { icon: "🤖", title: "Machine Learning", desc: "Custom ML pipelines process market data continuously, generating real-time insights and scoring updates." },
+            { icon: "🤖", title: "On-Device AI", desc: "Machine learning models run locally on your device — classification and cleanup happen without your data ever reaching a server." },
             { icon: "📱", title: "Cross-Platform", desc: "Native iOS and Android apps alongside a responsive web platform, all sharing a unified API layer." },
             { icon: "🔐", title: "Security First", desc: "End-to-end encryption, secure authentication, and regular third-party security audits protect user data." },
-            { icon: "📈", title: "Real-time Data", desc: "Live market data integration with sub-second latency for price feeds across all UK-listed securities." },
-            { icon: "🌍", title: "UK Focused", desc: "Purpose-built for UK equities, UK regulations, and UK investors — with GBP-native accounting throughout." },
+            { icon: "⏱️", title: "Built for Speed", desc: "Bulk actions process thousands of items in seconds, turning hours of manual cleanup into minutes." },
+            { icon: "🌍", title: "UK Founded", desc: "Registered in England & Wales, built with UK data protection and privacy standards at its core." },
           ].map((item) => (
             <div key={item.title} className="card-glass rounded-2xl p-6 hover:border-gold/30 transition-colors">
               <div className="text-4xl mb-4">{item.icon}</div>
@@ -380,7 +380,6 @@ export default function Home() {
           </div>
           <div className="footer-divider mt-8 pt-8 text-center text-xs text-mist">
             © {new Date().getFullYear()} AIERT Ltd. All rights reserved.
-            AIERT Ltd does not provide financial advice. Past performance is not indicative of future results.
           </div>
         </div>
       </footer>
