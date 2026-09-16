@@ -1,10 +1,32 @@
 import { cookies } from "next/headers";
+import sql from "@/lib/db";
 import { isValidAdminSession, COOKIE_NAME } from "@/lib/mailbroomAdminAuth";
 import { getSearchPerformance } from "@/lib/googleSearchConsole";
 import LoginForm from "../mailbroom/LoginForm";
 import AdminHeader from "../AdminHeader";
+import ClicksSparkline from "./ClicksSparkline";
 import "../mailbroom/admin.css";
 import "./marketing.css";
+
+const ALL_HOSTS_KEY = "__all__";
+
+type SnapshotRow = { snapshot_date: string; clicks: number; impressions: number };
+
+async function getTrend(): Promise<SnapshotRow[]> {
+  try {
+    const rows = (await sql`
+      SELECT snapshot_date, clicks, impressions
+      FROM search_console_snapshots
+      WHERE host = ${ALL_HOSTS_KEY}
+      ORDER BY snapshot_date ASC
+      LIMIT 90
+    `) as SnapshotRow[];
+    return rows;
+  } catch {
+    // Table doesn't exist until the daily cron job (or a manual backfill) has run once.
+    return [];
+  }
+}
 
 export const metadata = {
   title: "Marketing — Admin",
@@ -35,6 +57,8 @@ export default async function MarketingPage() {
   } catch (err) {
     error = err instanceof Error ? err.message : "Failed to load Search Console data";
   }
+
+  const trend = await getTrend();
 
   return (
     <div className="min-h-screen hero-gradient grid-bg">
@@ -76,6 +100,44 @@ export default async function MarketingPage() {
               <span className="admin-stat-label">Avg. position</span>
             </div>
           </div>
+
+          {data.bySubdomain.length > 0 && (
+            <>
+              <h2 className="admin-subtitle">By subdomain</h2>
+              <div className="marketing-subdomains">
+                {data.bySubdomain.map((s) => (
+                  <div key={s.host} className="marketing-subdomain-card">
+                    <div className="marketing-subdomain-host">{s.host}</div>
+                    <div className="marketing-subdomain-stats">
+                      <div>
+                        <span className="marketing-subdomain-value">{s.clicks}</span>
+                        <span className="marketing-subdomain-label">clicks</span>
+                      </div>
+                      <div>
+                        <span className="marketing-subdomain-value">{s.impressions.toLocaleString()}</span>
+                        <span className="marketing-subdomain-label">impr.</span>
+                      </div>
+                      <div>
+                        <span className="marketing-subdomain-value">{fmtPos(s.position)}</span>
+                        <span className="marketing-subdomain-label">pos.</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          <h2 className="admin-subtitle">Clicks trend</h2>
+          {trend.length > 1 ? (
+            <ClicksSparkline data={trend} />
+          ) : (
+            <p className="admin-mailbroom-note">
+              No history yet — a daily snapshot job runs each morning, so a trend will build up
+              from today. Trigger <code>/api/cron/search-console-snapshot?backfill=30</code>{" "}
+              (with the <code>CRON_SECRET</code> bearer token) to backfill the last 30 days now.
+            </p>
+          )}
 
           <div className="marketing-columns">
             <div>

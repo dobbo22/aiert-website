@@ -96,6 +96,40 @@ async function queryAnalytics(opts: {
   return json.rows ?? [];
 }
 
+export type SubdomainBreakdown = {
+  host: string;
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number;
+};
+
+function groupByHost(rows: SearchAnalyticsRow[]): SubdomainBreakdown[] {
+  const byHost = new Map<string, { clicks: number; impressions: number; weightedPosition: number }>();
+  for (const row of rows) {
+    let host: string;
+    try {
+      host = new URL(row.keys[0]).hostname;
+    } catch {
+      host = "unknown";
+    }
+    const entry = byHost.get(host) ?? { clicks: 0, impressions: 0, weightedPosition: 0 };
+    entry.clicks += row.clicks;
+    entry.impressions += row.impressions;
+    entry.weightedPosition += row.position * row.impressions;
+    byHost.set(host, entry);
+  }
+  return Array.from(byHost.entries())
+    .map(([host, e]) => ({
+      host,
+      clicks: e.clicks,
+      impressions: e.impressions,
+      ctr: e.impressions ? e.clicks / e.impressions : 0,
+      position: e.impressions ? e.weightedPosition / e.impressions : 0,
+    }))
+    .sort((a, b) => b.impressions - a.impressions);
+}
+
 export type SearchPerformance = {
   siteUrl: string;
   startDate: string;
@@ -103,6 +137,7 @@ export type SearchPerformance = {
   totals: { clicks: number; impressions: number; ctr: number; position: number };
   topQueries: SearchAnalyticsRow[];
   topPages: SearchAnalyticsRow[];
+  bySubdomain: SubdomainBreakdown[];
 };
 
 export async function getSearchPerformance(days = 28): Promise<SearchPerformance> {
@@ -114,13 +149,14 @@ export async function getSearchPerformance(days = 28): Promise<SearchPerformance
   const startDate = fmt(start);
   const endDate = fmt(end);
 
-  const [totalsRows, topQueries, topPages] = await Promise.all([
+  const [totalsRows, topQueries, allPages] = await Promise.all([
     queryAnalytics({ startDate, endDate }),
     queryAnalytics({ startDate, endDate, dimensions: ["query"], rowLimit: 10 }),
-    queryAnalytics({ startDate, endDate, dimensions: ["page"], rowLimit: 10 }),
+    queryAnalytics({ startDate, endDate, dimensions: ["page"], rowLimit: 5000 }),
   ]);
 
   const totals = totalsRows[0] ?? { clicks: 0, impressions: 0, ctr: 0, position: 0 };
+  const topPages = [...allPages].sort((a, b) => b.clicks - a.clicks || b.impressions - a.impressions).slice(0, 10);
 
   return {
     siteUrl: siteUrl(),
@@ -134,5 +170,30 @@ export async function getSearchPerformance(days = 28): Promise<SearchPerformance
     },
     topQueries,
     topPages,
+    bySubdomain: groupByHost(allPages),
+  };
+}
+
+export type DailySnapshot = {
+  date: string;
+  overall: { clicks: number; impressions: number; ctr: number; position: number };
+  byHost: SubdomainBreakdown[];
+};
+
+export async function getDailySnapshot(date: string): Promise<DailySnapshot> {
+  const [totalsRows, pages] = await Promise.all([
+    queryAnalytics({ startDate: date, endDate: date }),
+    queryAnalytics({ startDate: date, endDate: date, dimensions: ["page"], rowLimit: 5000 }),
+  ]);
+  const t = totalsRows[0] ?? { clicks: 0, impressions: 0, ctr: 0, position: 0 };
+  return {
+    date,
+    overall: {
+      clicks: t.clicks ?? 0,
+      impressions: t.impressions ?? 0,
+      ctr: t.ctr ?? 0,
+      position: t.position ?? 0,
+    },
+    byHost: groupByHost(pages),
   };
 }

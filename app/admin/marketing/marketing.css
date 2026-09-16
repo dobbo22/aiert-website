@@ -17,3 +17,99 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.marketing-subdomains {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.marketing-subdomain-card {
+  background: rgba(18, 24, 40, 0.85);
+  border: 1px solid rgba(45, 212, 191, 0.2);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.marketing-subdomain-host {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  margin-bottom: 0.6rem;
+}
+
+.marketing-subdomain-stats {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.marketing-subdomain-stats > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.marketing-subdomain-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.marketing-subdomain-label {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.marketing-trend {
+  background: rgba(18, 24, 40, 0.85);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 2rem;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.marketing-trend-svg {
+  width: 100%;
+  height: 140px;
+  display: block;
+}
+
+.marketing-trend-legend {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-top: 0.75rem;
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.marketing-trend-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.marketing-trend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.marketing-trend-swatch-gold {
+  background: #fbbf24;
+}
+
+.marketing-trend-swatch-teal {
+  background: #2dd4bf;
+}
+
+.marketing-trend-range {
+  margin-left: auto;
+}
