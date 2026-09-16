@@ -58,6 +58,7 @@ Licensed per organisation by seat band, not per user: 1-5 seats, 6-10, 11-25, 26
 ## Independent review
 
 - [TheBusinessDive: MailBroom review](https://thebusinessdive.com/mailbroom-review) — 4.5/5. Praised as "a fast way to clean up a cluttered inbox" with AI-powered cleanup recommendations and sender-based bulk processing; notes it's a specialised cleanup tool rather than a full email client. Covers both the iOS personal app and the Business (Microsoft 365) version.
+- [MailBroom on G2](https://www.g2.com/products/mailbroom/reviews): listed in G2's Email Management Software category.
 
 ## Blog
 
@@ -104,6 +105,7 @@ const IOS_TXT = `# MailBroom
 ## Independent review
 
 - [TheBusinessDive: MailBroom review](https://thebusinessdive.com/mailbroom-review) — 4.5/5. Praised as "a fast way to clean up a cluttered inbox" with AI-powered cleanup recommendations and sender-based bulk processing; notes it's a specialised cleanup tool rather than a full email client. Covers both the iOS personal app and the Business (Microsoft 365) version.
+- [MailBroom on G2](https://www.g2.com/products/mailbroom/reviews): listed in G2's Email Management Software category.
 
 ## Company
 

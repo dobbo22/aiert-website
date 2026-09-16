@@ -173,15 +173,25 @@ export default function MailBroomPage() {
               ))}
             </div>
 
-            <a
-              href="https://thebusinessdive.com/mailbroom-review"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 mt-6 text-sm text-mist hover:text-white transition-colors"
-            >
-              <span className="text-gold font-bold">★ 4.5/5</span>
-              <span>Reviewed by TheBusinessDive →</span>
-            </a>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-6">
+              <a
+                href="https://thebusinessdive.com/mailbroom-review"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-mist hover:text-white transition-colors"
+              >
+                <span className="text-gold font-bold">★ 4.5/5</span>
+                <span>Reviewed by TheBusinessDive →</span>
+              </a>
+              <a
+                href="https://www.g2.com/products/mailbroom/reviews"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-mist hover:text-white transition-colors"
+              >
+                <span>Rated on G2 →</span>
+              </a>
+            </div>
           </div>
 
           <div className="flex justify-center">

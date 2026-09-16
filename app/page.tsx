@@ -98,15 +98,25 @@ export default function Home() {
           </a>
         </div>
 
-        <a
-          href="https://thebusinessdive.com/mailbroom-review"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 mt-8 text-sm text-mist hover:text-white transition-colors"
-        >
-          <span className="text-gold font-bold">★ 4.5/5</span>
-          <span>MailBroom, reviewed by TheBusinessDive →</span>
-        </a>
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-8">
+          <a
+            href="https://thebusinessdive.com/mailbroom-review"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-sm text-mist hover:text-white transition-colors"
+          >
+            <span className="text-gold font-bold">★ 4.5/5</span>
+            <span>MailBroom, reviewed by TheBusinessDive →</span>
+          </a>
+          <a
+            href="https://www.g2.com/products/mailbroom/reviews"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-sm text-mist hover:text-white transition-colors"
+          >
+            <span>Rated on G2 →</span>
+          </a>
+        </div>
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-6 max-w-2xl mx-auto mt-20">
