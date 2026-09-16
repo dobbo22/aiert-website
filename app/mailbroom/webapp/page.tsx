@@ -224,6 +224,16 @@ export default async function MailBroomWebAppPage() {
                 </div>
               ))}
             </div>
+
+            <a
+              href="https://thebusinessdive.com/mailbroom-review"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 mt-6 text-sm text-cloud hover:text-white transition-colors"
+            >
+              <span className="text-gold font-bold">★ 4.5/5</span>
+              <span>Reviewed by TheBusinessDive →</span>
+            </a>
           </div>
 
           <div className="flex justify-center">
