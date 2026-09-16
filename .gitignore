@@ -40,3 +40,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env*.local
+
+# dated diagnostic snapshots, not meant to accumulate in history
+reports/

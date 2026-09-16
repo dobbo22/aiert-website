@@ -3,6 +3,13 @@
 // is the same retrieval/answer engine as perplexity.ai, so this is a real
 // proxy for AEO visibility — not a generic web-search check.
 //
+// As of 2026-09, Perplexity retired the old Sonar /chat/completions API
+// (the "sonar" model can't even be selected directly anymore) in favour of
+// an Agent API (POST /v1/agent, {preset, input}) that does its own live web
+// search + citations via a "fast"/"quality" preset rather than a single
+// named model — still Perplexity's own product surface, just a different
+// mechanism than before. See docs.perplexity.ai/docs/agent-api.
+//
 // Requires PERPLEXITY_API_KEY in .env.local (https://www.perplexity.ai/settings/api).
 // Run: npm run check:ai-citations
 // Writes a dated Markdown report to reports/ai-citations/.
@@ -49,29 +56,32 @@ const PROMPTS = [
 ];
 
 async function askPerplexity(prompt) {
-  const res = await fetch("https://api.perplexity.ai/chat/completions", {
+  const res = await fetch("https://api.perplexity.ai/v1/agent", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${API_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "sonar",
-      messages: [{ role: "user", content: prompt }],
+      preset: "fast",
+      input: prompt,
     }),
   });
   if (!res.ok) {
     throw new Error(`Perplexity API ${res.status}: ${await res.text()}`);
   }
   const data = await res.json();
-  const content = data.choices?.[0]?.message?.content ?? "";
-  const citations = data.citations ?? [];
+  const output = data.output ?? [];
+  const message = output.find((item) => item.type === "message");
+  const content = (message?.content ?? []).map((c) => c.text ?? "").join("\n");
+  const searchResults = output.find((item) => item.type === "search_results");
+  const citations = (searchResults?.results ?? []).map((r) => r.url).filter(Boolean);
   return { content, citations };
 }
 
 function analyse(content, citations) {
   const haystack = `${content}\n${citations.join("\n")}`.toLowerCase();
-  const citedMailbroom = haystack.includes("mailbroom.app") || haystack.includes("mailbroom for business");
+  const citedMailbroom = haystack.includes("mailbroom");
   const citedCompetitors = COMPETITORS.filter((c) => haystack.includes(c.toLowerCase()));
   return { citedMailbroom, citedCompetitors };
 }
@@ -99,7 +109,7 @@ async function main() {
   const date = new Date().toISOString().slice(0, 10);
 
   let md = `# AI citation check — ${date}\n\n`;
-  md += `MailBroom cited in **${citedCount}/${results.length}** prompts (Perplexity, model: sonar).\n\n`;
+  md += `MailBroom cited in **${citedCount}/${results.length}** prompts (Perplexity Agent API, preset: fast).\n\n`;
   md += `| # | Bucket | Prompt | MailBroom cited? | Competitors mentioned |\n`;
   md += `|---|--------|--------|-------------------|------------------------|\n`;
   results.forEach((r, i) => {
