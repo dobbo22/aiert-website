@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { isValidAdminSession, COOKIE_NAME } from "@/lib/mailbroomAdminAuth";
 import LoginForm from "../mailbroom/LoginForm";
-import LogoutButton from "../mailbroom/LogoutButton";
+import AdminHeader from "../AdminHeader";
 import TabNav from "./TabNav";
 import "../mailbroom/admin.css";
 import "./social.css";
@@ -21,13 +21,15 @@ export default async function SocialLayout({ children }: { children: React.React
   }
 
   return (
-    <div className="admin-page">
-      <div className="admin-header">
-        <h1 className="admin-title">MailBroom Social</h1>
-        <LogoutButton />
+    <div className="min-h-screen hero-gradient grid-bg">
+      <AdminHeader />
+      <div className="admin-page">
+        <h1 className="admin-title" style={{ marginBottom: "1rem" }}>
+          Social
+        </h1>
+        <TabNav />
+        {children}
       </div>
-      <TabNav />
-      {children}
     </div>
   );
 }

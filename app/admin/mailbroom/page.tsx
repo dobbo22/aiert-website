@@ -3,9 +3,9 @@ import sql from "@/lib/db";
 import mailbroomSql from "@/lib/mailbroomDb";
 import { isValidAdminSession, COOKIE_NAME } from "@/lib/mailbroomAdminAuth";
 import LoginForm from "./LoginForm";
-import LogoutButton from "./LogoutButton";
 import AddReviewerForm from "./AddReviewerForm";
 import ReviewerRow from "./ReviewerRow";
+import AdminHeader from "../AdminHeader";
 import "./admin.css";
 
 export const metadata = {
@@ -47,16 +47,17 @@ export default async function AdminMailBroomReviewersPage() {
   const signedUpSet = new Set(signedUpRows.map((r) => r.email));
 
   return (
-    <div className="admin-page">
-      <div className="admin-header">
-        <h1 className="admin-title">MailBroom Reviewers</h1>
-        <p className="admin-updated">
-          {reviewers.length} reviewer{reviewers.length === 1 ? "" : "s"} allowlisted for free Pro access
-        </p>
-        <LogoutButton />
-      </div>
+    <div className="min-h-screen hero-gradient grid-bg">
+      <AdminHeader />
+      <div className="admin-page">
+        <div className="admin-header">
+          <h1 className="admin-title">Reviewers</h1>
+          <p className="admin-updated">
+            {reviewers.length} reviewer{reviewers.length === 1 ? "" : "s"} allowlisted for free Pro access
+          </p>
+        </div>
 
-      <p className="admin-mailbroom-note">
+        <p className="admin-mailbroom-note">
         Anyone added here gets full Pro access in the live MailBroom app, free, as soon as
         they connect that exact email address — no payment, no app update needed. Only a
         SHA-256 hash of each email is ever published publicly; the plaintext addresses below
@@ -95,6 +96,7 @@ export default async function AdminMailBroomReviewersPage() {
           )}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

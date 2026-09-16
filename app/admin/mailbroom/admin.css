@@ -6,6 +6,26 @@
   color: #e2e8f0;
 }
 
+.admin-nav-link {
+  padding: 0.4rem 0.95rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.admin-nav-link:hover {
+  color: #e2e8f0;
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.admin-nav-link-active {
+  color: #0b0f1a;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+}
+
 .admin-header {
   display: flex;
   align-items: baseline;
@@ -34,6 +54,7 @@
   max-width: 640px;
   margin-bottom: 1.5rem;
 }
+
 
 .admin-empty-cell {
   color: #64748b;
@@ -73,9 +94,11 @@
   flex-direction: column;
   padding: 1rem 1.5rem;
   background: rgba(18, 24, 40, 0.85);
-  border: 1px solid rgba(45, 55, 72, 0.6);
+  border: 1px solid rgba(251, 191, 36, 0.2);
   border-radius: 8px;
   min-width: 130px;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }
 
 .admin-stat-value {
