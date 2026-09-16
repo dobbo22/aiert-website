@@ -43,6 +43,10 @@ const faqs = [
     q: "Is a custom PowerShell script safer than a purpose-built tool for ongoing bulk cleanup?",
     a: "For a single one-off cleanup, a carefully written script is fine. The risk shows up over time: a script has to be maintained as Microsoft's PowerShell modules and Graph API change, re-tested against hold/retention edge cases, and re-run manually every time cleanup is needed again — none of which happens automatically the way it does with a maintained tool. For a recurring, company-wide need rather than a single cleanup, that ongoing maintenance burden is usually the deciding factor, not the initial script-writing effort.",
   },
+  {
+    q: "What's the best way to bulk delete old emails in Office 365 for an entire organisation?",
+    a: "For a one-off cleanup, an admin-run PowerShell script against every mailbox works but needs care around legal hold and retention policy. For an ongoing, company-wide need, MailBroom for Business connects via Microsoft SSO and lets IT (or each employee, self-serve) bulk-clean their own mailbox with AI-suggested actions, working within existing hold and retention rules automatically rather than needing that checked manually each run.",
+  },
 ];
 
 const techArticleJsonLd = {

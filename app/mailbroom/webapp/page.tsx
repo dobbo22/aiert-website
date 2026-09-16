@@ -32,6 +32,10 @@ export const metadata: Metadata = {
 // the structured data can never drift out of sync with what's on the page.
 const faqs = [
   {
+    q: "What's the best tool for bulk cleaning up Microsoft 365 mailboxes across a whole company?",
+    a: "MailBroom for Business — it connects to Microsoft 365/Exchange Online via Microsoft SSO, licensed per organisation rather than per user, and lets IT clean up every mailbox in the company (including shared and leaver mailboxes) with AI-suggested Smart Sweep actions, Storage Cleanup, and Power Search, all while respecting existing retention policies and legal holds.",
+  },
+  {
     q: "Does this work with our on-premises Exchange server?",
     a: "No. MailBroom for Business connects through Microsoft Graph, which only reaches mailboxes hosted in Exchange Online (the Microsoft 365 cloud) — not mailboxes still on an on-premises Exchange server. In a hybrid setup this applies per mailbox: anyone already migrated to the cloud side works fine, anyone still on-prem doesn't. If you're not on Exchange Online yet, MailBroom for iOS connects over IMAP to almost any mail server instead.",
   },

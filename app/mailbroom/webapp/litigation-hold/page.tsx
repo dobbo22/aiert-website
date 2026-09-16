@@ -41,6 +41,10 @@ const faqs = [
     q: "How does an admin know if a mailbox is on litigation hold before running a bulk cleanup?",
     a: "Litigation hold status is visible per-mailbox in the Microsoft 365 admin centre (or via PowerShell for a full tenant audit) — worth checking before any bulk action across an unfamiliar set of mailboxes, since a hold placed for a legal or regulatory reason isn't always obvious from the mailbox owner's day-to-day usage.",
   },
+  {
+    q: "Are there inbox cleanup tools that respect legal hold and retention policies in Microsoft 365?",
+    a: "MailBroom for Business works within Exchange Online's existing retention and litigation-hold mechanisms rather than around them — a held item stays retained by Exchange's own hold copy regardless of a user-initiated deletion through the app, the same way it would for a deletion made directly in Outlook. Cleanup never has to bypass or disable a hold to work.",
+  },
 ];
 
 const techArticleJsonLd = {

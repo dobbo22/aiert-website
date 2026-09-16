@@ -24,8 +24,29 @@ const articleJsonLd = {
   headline: "How to Reduce Microsoft 365 Storage Costs",
   description: "What Microsoft actually charges once a mailbox outgrows its plan, and how to reduce Microsoft 365 storage costs.",
   url: "https://mailbroom.app/storage-costs",
-  dateModified: "2026-07-21",
+  dateModified: "2026-09-16",
   publisher: { "@type": "Organization", name: "AIERT Ltd", url: "https://www.aiert.co.uk" },
+};
+
+const faqs = [
+  {
+    q: "How can IT reduce Microsoft 365 mailbox storage costs across many users at once?",
+    a: "The two levers are the same as for a single mailbox, just applied company-wide: clean up what's no longer needed (old newsletters, automated notifications, stale attachments) rather than paying for extra storage, and do it in bulk rather than per mailbox. MailBroom for Business connects every mailbox in the organisation via Microsoft SSO and runs that cleanup at scale, so IT isn't repeating the same manual process per user.",
+  },
+  {
+    q: "Is it cheaper to buy Microsoft's extra storage add-on or clean up mailboxes instead?",
+    a: "Buying more storage is a recurring monthly cost that compounds across every mailbox that needs it; cleaning up existing mailboxes is a one-off action with no ongoing charge. For most organisations, a bulk cleanup resolves the immediate storage pressure without needing the add-on at all.",
+  },
+];
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((faq) => ({
+    "@type": "Question",
+    name: faq.q,
+    acceptedAnswer: { "@type": "Answer", text: faq.a },
+  })),
 };
 
 export default function StorageCostsPage() {
@@ -34,6 +55,10 @@ export default function StorageCostsPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
 
       {/* ── NAV ─────────────────────────────────────────── */}
@@ -194,6 +219,22 @@ export default function StorageCostsPage() {
           <li>Microsoft Learn, &ldquo;Learn about auto-expanding archiving&rdquo; — Exchange Online Archiving add-on pricing, the 1.5 TB auto-expand ceiling, and consumption-based billing beyond it.</li>
           <li>Microsoft 365 extra storage add-on, commonly listed at $0.20/GB/month; not a fixed global published price — varies by region, currency, and agreement type.</li>
         </ol>
+      </section>
+
+      {/* ── FAQ ────────────────────────────────────────── */}
+      <section className="max-w-3xl mx-auto px-6 py-24">
+        <h3 className="text-xl font-bold text-cloud mb-8 text-center">Frequently asked questions</h3>
+        <div className="space-y-4">
+          {faqs.map((faq, i) => (
+            <details key={i} className="card-glass rounded-xl p-6 group cursor-pointer">
+              <summary className="font-semibold text-cloud text-sm flex items-center justify-between">
+                {faq.q}
+                <span className="text-gold group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+              <p className="text-cloud text-sm mt-3">{faq.a}</p>
+            </details>
+          ))}
+        </div>
       </section>
 
       {/* ── FOOTER ─────────────────────────────────────── */}

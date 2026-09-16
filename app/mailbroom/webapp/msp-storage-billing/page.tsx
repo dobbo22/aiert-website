@@ -46,6 +46,10 @@ const faqs = [
     q: "Can this work across every client tenant an MSP manages?",
     a: "Yes, but it's set up per client tenant, not once across an MSP's whole book of clients. MailBroom for Business is licensed per organisation — an MSP would configure Microsoft SSO sign-in separately for each client tenant it wants to offer the service to, which also means it can be introduced client by client rather than requiring a single all-or-nothing rollout.",
   },
+  {
+    q: "How can an MSP bill clients for Microsoft 365 mailbox storage cleanup?",
+    a: "Two common models: a one-off project fee for a single bulk cleanup engagement, or folding it into an existing recurring managed-service line item as ongoing storage maintenance. MailBroom for Business is licensed per client tenant via Microsoft SSO, so an MSP can price and roll it out client by client rather than committing to an all-or-nothing purchase.",
+  },
 ];
 
 const techArticleJsonLd = {

@@ -46,6 +46,10 @@ const faqs = [
     q: "Does cleaning a shared mailbox risk touching data it shouldn't?",
     a: "No — every action is scoped to exactly the mailbox you've connected and been granted access to, re-verified on the server on every request, never trusted from what the browser sends. It's the same delegated-access model Exchange itself uses, not a separate broad-access credential.",
   },
+  {
+    q: "How do I clean up shared mailboxes like info@ or sales@ in Exchange Online?",
+    a: "Connect the shared mailbox in MailBroom for Business the same way as any mailbox — an admin enables shared-mailbox access once for the organisation, then anyone with Full Access permission on that mailbox in Exchange Online can connect it and run Smart Sweep, Storage Cleanup, or Power Search against it. No PowerShell scripting or manual inventory process required.",
+  },
 ];
 
 const techArticleJsonLd = {

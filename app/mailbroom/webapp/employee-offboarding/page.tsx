@@ -46,6 +46,10 @@ const faqs = [
     q: "Can IT handle this at scale, or is it always a manual, per-person job?",
     a: "It's manual by default in Microsoft 365 — each mailbox gets converted, forwarded, or archived individually through the admin center or PowerShell. With enough leavers across a year, that adds up to real recurring IT time for a task that doesn't need a person doing it one at a time.",
   },
+  {
+    q: "What should I do with a former employee's mailbox after they leave the company?",
+    a: "Convert it to a shared mailbox (free, no licence needed) so relevant colleagues can still access anything necessary, then clean up what's no longer needed — old newsletters, automated notifications, and clutter that's just costing storage — while respecting any retention policy or legal hold on the account. MailBroom for Business does this cleanup step in minutes instead of a manual PowerShell pass, without touching anything under hold.",
+  },
 ];
 
 const techArticleJsonLd = {

@@ -39,6 +39,10 @@ const faqs = [
     q: "Will cleaning up a full mailbox break compliance or legal hold requirements?",
     a: "It shouldn't, provided the tool respects existing retention policies and litigation holds — Exchange Online's hold mechanisms retain a copy of held items regardless of user-initiated deletion, so a properly built cleanup tool works within that, not around it. Always confirm this explicitly with whatever tool you use before running a bulk cleanup.",
   },
+  {
+    q: "What's a good way to handle 'mailbox full' helpdesk tickets at scale in Exchange Online?",
+    a: "Handling them one ticket at a time doesn't scale — each fix is the same manual PowerShell or admin-centre cleanup repeated per user. MailBroom for Business lets IT run that same cleanup across every mailbox in the company at once via Microsoft SSO, turning a recurring per-ticket task into a bulk one-off, and lets end users self-serve their own Smart Sweep if IT would rather not be the bottleneck.",
+  },
 ];
 
 const techArticleJsonLd = {

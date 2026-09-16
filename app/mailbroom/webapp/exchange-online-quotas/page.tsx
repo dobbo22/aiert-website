@@ -41,6 +41,10 @@ const faqs = [
     q: "Is it cheaper to buy more storage or clean up the mailbox?",
     a: "Buying more storage is a recurring monthly cost that compounds across every mailbox that needs it; cleaning up a mailbox is a one-off action with no ongoing charge. For a mailbox with years of unread newsletters and old attachments, cleanup usually resolves the immediate quota pressure without needing the add-on at all — see the full cost breakdown on the storage costs page.",
   },
+  {
+    q: "What are the Exchange Online mailbox storage quotas by Microsoft 365 plan?",
+    a: "Quotas vary by plan — Business Basic and Standard include less mailbox storage than Business Premium or the Enterprise (E3/E5) tiers, and exact figures have changed over time, most recently 1 July 2026 (see the full breakdown above). Whatever the quota, the fix for a mailbox approaching it is usually the same: clean up what's no longer needed rather than paying for extra storage to keep clutter around.",
+  },
 ];
 
 const techArticleJsonLd = {

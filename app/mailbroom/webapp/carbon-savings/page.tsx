@@ -42,6 +42,10 @@ const faqs = [
     q: "Can I show my company's CO₂ savings on our own website?",
     a: "Yes — MailBroom for Business includes an embeddable badge showing your organisation's aggregate CO₂ and storage savings, updated automatically as the totals grow. It's opt-in (an admin has to explicitly enable it) and only ever shows your organisation's aggregate totals, never individual employee data.",
   },
+  {
+    q: "Does deleting old emails actually reduce a company's carbon footprint?",
+    a: "Yes, in proportion to the storage freed — data storage has a real ongoing energy cost, and MailBroom for Business estimates it at 0.233 kg CO₂ saved per GB of mailbox storage freed, tracked per account with award tiers from Seedling to Earth Hero. It's a genuine but modest saving, not a substitute for a company's larger sustainability efforts.",
+  },
 ];
 
 const techArticleJsonLd = {

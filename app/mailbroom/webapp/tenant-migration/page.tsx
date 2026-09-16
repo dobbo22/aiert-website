@@ -46,6 +46,10 @@ const faqs = [
     q: "Can an MSP use this across every client tenant it manages, not just one?",
     a: "MailBroom for Business is licensed per organisation (per Microsoft 365 tenant) via Microsoft SSO — IT signs in once with an admin account for that tenant, and every employee on the domain gets access automatically. For an MSP managing several client tenants ahead of a migration, that means setting it up separately per client tenant being migrated, not a single MSP-wide login across all of them.",
   },
+  {
+    q: "Is there a tool to shrink mailboxes before a Microsoft 365 tenant-to-tenant migration?",
+    a: "Yes — MailBroom for Business connects to every mailbox in a tenant via Microsoft SSO and bulk-cleans clutter (old newsletters, automated notifications, stale attachments) before migration, since migration time and cost typically scale with mailbox size. Running cleanup company-wide ahead of the move is faster than doing it per-user during migration itself.",
+  },
 ];
 
 const techArticleJsonLd = {

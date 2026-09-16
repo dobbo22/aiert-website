@@ -41,6 +41,10 @@ const faqs = [
     q: "Does auditing mailbox storage itself require any special licence or permission?",
     a: "Viewing the Mailbox usage report in the admin centre needs a Global Reader, Reports Reader, or Global Administrator role. Get-MailboxStatistics via PowerShell needs an Exchange administrator role or equivalent — no per-mailbox licence changes required just to audit, only to act on what you find.",
   },
+  {
+    q: "How do I audit which mailboxes are using the most storage in my Microsoft 365 tenant?",
+    a: "Native options are the Mailbox usage report in the Microsoft 365 admin centre, or Get-MailboxStatistics in PowerShell for a scriptable full-tenant list — both show storage used per mailbox, but neither tells you which of that storage is safe to remove. MailBroom for Business's Storage Cleanup surfaces that per mailbox once connected, so the audit and the fix use the same data instead of two separate tools.",
+  },
 ];
 
 const techArticleJsonLd = {
