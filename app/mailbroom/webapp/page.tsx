@@ -80,6 +80,22 @@ const softwareApplicationJsonLd = {
     priceCurrency: "GBP",
     url: "https://mailbroom.app#pricing",
   },
+  // `review` (singular), not `aggregateRating` — this is one named external
+  // review, not an aggregate of many; aggregateRating for a single source
+  // would misrepresent it.
+  review: {
+    "@type": "Review",
+    reviewRating: {
+      "@type": "Rating",
+      ratingValue: "4.5",
+      bestRating: "5",
+    },
+    author: {
+      "@type": "Organization",
+      name: "TheBusinessDive",
+    },
+    url: "https://thebusinessdive.com/mailbroom-review",
+  },
   publisher: {
     "@type": "Organization",
     name: "AIERT Ltd",

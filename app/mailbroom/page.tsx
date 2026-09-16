@@ -23,6 +23,40 @@ export const metadata: Metadata = {
   },
 };
 
+// SoftwareApplication schema with a sourced third-party review — lets
+// Google/AI engines surface the rating directly. `review` (singular), not
+// `aggregateRating`, since this is one named external review, not an
+// aggregate of many — using aggregateRating for a single source would
+// misrepresent it.
+const softwareApplicationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "MailBroom",
+  applicationCategory: "UtilitiesApplication",
+  operatingSystem: "iOS",
+  url: "https://ios.mailbroom.app",
+  description:
+    "MailBroom connects to any IMAP email account and uses AI to classify, bulk-delete, unsubscribe, and organise emails — 100% privately on your device.",
+  review: {
+    "@type": "Review",
+    reviewRating: {
+      "@type": "Rating",
+      ratingValue: "4.5",
+      bestRating: "5",
+    },
+    author: {
+      "@type": "Organization",
+      name: "TheBusinessDive",
+    },
+    url: "https://thebusinessdive.com/mailbroom-review",
+  },
+  publisher: {
+    "@type": "Organization",
+    name: "AIERT Ltd",
+    url: "https://www.aiert.co.uk",
+  },
+};
+
 const freeVsPro = [
   { feature: "Scan & AI-classify emails", free: true, pro: true },
   { feature: "View & read emails", free: true, pro: true },
@@ -63,6 +97,10 @@ function PhoneFrame({ src, alt }: { src: string; alt: string }) {
 export default function MailBroomPage() {
   return (
     <div className="min-h-screen hero-gradient grid-bg">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationJsonLd) }}
+      />
 
       {/* ── NAV ─────────────────────────────────────────── */}
       <nav className="nav-glass sticky top-0 z-50">
@@ -134,6 +172,16 @@ export default function MailBroomPage() {
                 </div>
               ))}
             </div>
+
+            <a
+              href="https://thebusinessdive.com/mailbroom-review"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 mt-6 text-sm text-mist hover:text-white transition-colors"
+            >
+              <span className="text-gold font-bold">★ 4.5/5</span>
+              <span>Reviewed by TheBusinessDive →</span>
+            </a>
           </div>
 
           <div className="flex justify-center">

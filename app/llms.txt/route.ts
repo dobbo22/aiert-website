@@ -101,6 +101,10 @@ const IOS_TXT = `# MailBroom
 - [MailBroom overview](https://ios.mailbroom.app/): what MailBroom does for individual iPhone users cleaning up their own inbox.
 - [Blog](https://ios.mailbroom.app/blog): thoughts on email, AI, privacy, and the environment from the team behind MailBroom.
 
+## Independent review
+
+- [TheBusinessDive: MailBroom review](https://thebusinessdive.com/mailbroom-review) — 4.5/5. Praised as "a fast way to clean up a cluttered inbox" with AI-powered cleanup recommendations and sender-based bulk processing; notes it's a specialised cleanup tool rather than a full email client. Covers both the iOS personal app and the Business (Microsoft 365) version.
+
 ## Company
 
 MailBroom is a product of AIERT Ltd, registered in England & Wales (No. 16587000).
