@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import sql from "@/lib/db";
+import { TRACKED_LINKS } from "@/lib/trackedLinks";
 
 // Slugs must be allowlisted here — this endpoint is public (it has to be,
 // it fires from anyone's browser before they land on an external site), so
 // without this check anyone could write arbitrary rows into link_clicks.
-const ALLOWED_SLUGS = new Set(["fb-launch", "fb-medium", "fb-review", "fb-follow"]);
+const ALLOWED_SLUGS = new Set(Object.keys(TRACKED_LINKS));
 
 export async function POST(req: NextRequest) {
   let slug: unknown;
