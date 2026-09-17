@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <GoRedirect to="https://www.facebook.com/profile.php?id=61594266844705&locale=en_GB" />;
+  return <GoRedirect to="https://www.facebook.com/profile.php?id=61594266844705&locale=en_GB" slug="fb-follow" />;
 }

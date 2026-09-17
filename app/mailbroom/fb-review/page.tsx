@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <GoRedirect to="https://thebusinessdive.com/mailbroom-review" />;
+  return <GoRedirect to="https://thebusinessdive.com/mailbroom-review" slug="fb-review" />;
 }

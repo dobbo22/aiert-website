@@ -2,15 +2,24 @@
 
 import { useEffect } from "react";
 
-// Renders on ios.mailbroom.app so @vercel/analytics (mounted in the root
-// layout) logs a pageview for this exact path before we hand off — that
-// pageview count is the click-through number for whichever link used it.
-// A plain server-side redirect() would 307 before the client script ever
-// loads, so the click would never be counted.
-export default function GoRedirect({ to }: { to: string }) {
+// Renders on ios.mailbroom.app so we get a chance to log the click (via
+// sendBeacon, fire-and-forget) before handing off to the external site.
+// A plain server-side redirect() would 307 before any client JS ran, so
+// neither the analytics pageview nor this beacon would ever fire.
+export default function GoRedirect({ to, slug }: { to: string; slug: string }) {
   useEffect(() => {
+    try {
+      const body = JSON.stringify({ slug });
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon("/api/track-click", new Blob([body], { type: "application/json" }));
+      } else {
+        fetch("/api/track-click", { method: "POST", body, keepalive: true });
+      }
+    } catch {
+      // Tracking is best-effort — never block the redirect on it.
+    }
     window.location.replace(to);
-  }, [to]);
+  }, [to, slug]);
 
   return (
     <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>

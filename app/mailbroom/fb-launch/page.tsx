@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <GoRedirect to="https://apps.apple.com/gb/app/mailbroom/id6766489663" />;
+  return <GoRedirect to="https://apps.apple.com/gb/app/mailbroom/id6766489663" slug="fb-launch" />;
 }

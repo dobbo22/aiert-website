@@ -9,6 +9,7 @@ const TABS = [
   { href: "/admin/social/instagram", label: "Instagram" },
   { href: "/admin/social/threads", label: "Threads" },
   { href: "/admin/social/linkedin", label: "LinkedIn", badge: "Soon" },
+  { href: "/admin/social/links", label: "Link Clicks" },
 ];
 
 export default function TabNav() {
