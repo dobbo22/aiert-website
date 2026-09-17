@@ -117,8 +117,13 @@ const nextConfig: NextConfig = {
         // IndexNow key file is excluded too — Bing's verification fetch
         // expects it at the literal root path exactly as generated in
         // Bing Webmaster Tools, not rewritten under /mailbroom/webapp/.
+        // api/ is excluded too — API routes live at the top-level
+        // app/api/ tree, not nested under app/mailbroom/webapp/, so
+        // rewriting mailbroom.app/api/* to /mailbroom/webapp/api/* just
+        // 404s. This silently broke the Trial Request form's submit
+        // (fetch("/api/mailbroom/trial-request")) until caught here.
         {
-          source: "/:path((?!_next/|sitemap\\.xml|robots\\.txt|llms\\.txt|mailbroom-icon\\.png|09d90e3ec75e4e3c93a57c014df8764a\\.txt).*)",
+          source: "/:path((?!_next/|api/|sitemap\\.xml|robots\\.txt|llms\\.txt|mailbroom-icon\\.png|09d90e3ec75e4e3c93a57c014df8764a\\.txt).*)",
           has: [{ type: "host", value: MAILBROOM_APEX_HOST }],
           destination: "/mailbroom/webapp/:path*",
         },
@@ -129,9 +134,13 @@ const nextConfig: NextConfig = {
         // mailbroom.app — one key can be reused across multiple hosts
         // as long as it's hosted at each host's own root, so it's the
         // same physical public/ file, just excluded from this rewrite
-        // too rather than a second key file.
+        // too rather than a second key file. api/ is excluded too —
+        // API routes live at the top-level app/api/ tree, not nested
+        // under app/mailbroom/, so rewriting ios.mailbroom.app/api/*
+        // to /mailbroom/api/* just 404s (caught this via the fb-*
+        // click-tracking beacon silently failing in production).
         {
-          source: "/:path((?!_next/|sitemap\\.xml|robots\\.txt|llms\\.txt|mailbroom-icon\\.png|09d90e3ec75e4e3c93a57c014df8764a\\.txt).*)",
+          source: "/:path((?!_next/|api/|sitemap\\.xml|robots\\.txt|llms\\.txt|mailbroom-icon\\.png|09d90e3ec75e4e3c93a57c014df8764a\\.txt).*)",
           has: [{ type: "host", value: "ios.mailbroom.app" }],
           destination: "/mailbroom/:path*",
         },
