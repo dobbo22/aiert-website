@@ -190,7 +190,7 @@ export default function ArticlePage() {
           </p>
           <div className="mt-4 flex flex-col sm:flex-row gap-4">
             <a
-              href="https://apps.apple.com/app/mailbroom/id6744036741"
+              href="https://apps.apple.com/gb/app/mailbroom/id6766489663"
               target="_blank"
               rel="noopener noreferrer"
               className="btn-gold px-6 py-3 rounded-full text-sm font-bold text-center"

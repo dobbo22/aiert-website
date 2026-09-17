@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <GoRedirect to="https://apps.apple.com/gb/app/mailbroom" />;
+  return <GoRedirect to="https://apps.apple.com/gb/app/mailbroom/id6766489663" />;
 }

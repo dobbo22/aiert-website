@@ -78,7 +78,7 @@ export default function MailBroomAffiliatesPage() {
             <a href="mailto:enquiries@aiert.co.uk" className="hover:text-white transition-colors font-medium">Contact</a>
           </div>
           <a
-            href="https://apps.apple.com/gb/app/mailbroom"
+            href="https://apps.apple.com/gb/app/mailbroom/id6766489663"
             target="_blank"
             rel="noopener noreferrer"
             className="btn-gold px-6 py-3 rounded-full text-base hidden md:block"

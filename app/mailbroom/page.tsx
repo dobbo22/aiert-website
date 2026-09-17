@@ -148,7 +148,7 @@ export default function MailBroomPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <a
-                href="https://apps.apple.com/gb/app/mailbroom"
+                href="https://apps.apple.com/gb/app/mailbroom/id6766489663"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-gold px-8 py-4 rounded-full text-base inline-flex items-center gap-2 justify-center"
@@ -781,7 +781,7 @@ export default function MailBroomPage() {
 
         <div className="text-center">
           <a
-            href="https://apps.apple.com/gb/app/mailbroom"
+            href="https://apps.apple.com/gb/app/mailbroom/id6766489663"
             target="_blank"
             rel="noopener noreferrer"
             className="btn-gold px-8 py-4 rounded-full text-base inline-flex items-center gap-2"
@@ -990,7 +990,7 @@ export default function MailBroomPage() {
           Try before you buy with free actions · Upgrade to Pro when you reach your limits · Your emails never leave your phone.
         </p>
         <a
-          href="https://apps.apple.com/gb/app/mailbroom"
+          href="https://apps.apple.com/gb/app/mailbroom/id6766489663"
           target="_blank"
           rel="noopener noreferrer"
           className="btn-gold px-10 py-5 rounded-full text-lg inline-flex items-center gap-3"
