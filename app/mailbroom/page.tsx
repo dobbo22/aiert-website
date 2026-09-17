@@ -191,6 +191,20 @@ export default function MailBroomPage() {
               >
                 <span>Rated on G2 →</span>
               </a>
+              <a
+                href="https://www.producthunt.com/products/mailbroom/mailbroom?utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-mailbroom"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1252479&theme=light"
+                  alt="MailBroom - Clean up your inbox in minutes, not hours | Product Hunt"
+                  width={200}
+                  height={43}
+                />
+              </a>
             </div>
           </div>
 
