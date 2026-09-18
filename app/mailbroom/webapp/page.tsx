@@ -261,6 +261,7 @@ export default async function MailBroomWebAppPage() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-sm text-cloud hover:text-white transition-colors"
               >
+                <span className="text-gold font-bold">★ 4.5/5</span>
                 <span>Rated on G2 →</span>
               </a>
             </div>
@@ -410,11 +411,11 @@ export default async function MailBroomWebAppPage() {
           <div className="flex justify-center">
             <div className="relative">
               <div className="absolute -inset-10 rounded-full blur-3xl opacity-20 bg-cyan-500" />
-              <div className="card-glass rounded-3xl p-8 max-w-sm w-full text-center">
-                <div className="text-5xl mb-4">🔍</div>
-                <div className="text-cloud font-bold">1,240 emails ready to sweep</div>
-                <div className="text-cloud text-sm mt-1">across 38 senders</div>
-              </div>
+              <img
+                src="/mailbroom/smart-delete.png"
+                alt="MailBroom Smart Sweep — senders ranked by email volume with bulk delete and unsubscribe actions"
+                className="relative rounded-3xl shadow-2xl max-w-xs w-full"
+              />
             </div>
           </div>
         </div>
