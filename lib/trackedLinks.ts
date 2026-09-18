@@ -38,4 +38,9 @@ export const TRACKED_LINKS: Record<string, TrackedLink> = {
   "launch-llama": { label: "Launch Llama Directory", to: "https://ios.mailbroom.app" },
   "remote-tools": { label: "Remote Tools", to: "https://ios.mailbroom.app" },
   "toolfinder": { label: "ToolFinder", to: "https://ios.mailbroom.app" },
+
+  // LinkedIn "Software as a Service (SaaS) 2024" group post — IT Director
+  // trial pitch, two separate links in the same post body.
+  "li-saas-trial": { label: "LinkedIn SaaS group post → Trial signup", to: "https://mailbroom.app/trial" },
+  "li-saas-roi": { label: "LinkedIn SaaS group post → ROI calculator", to: "https://mailbroom.app/roi" },
 };
