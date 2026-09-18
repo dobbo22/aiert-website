@@ -134,6 +134,8 @@ export default function OutreachRow({ id, name, platform, contact, reach, conten
           <td colSpan={8}>
             <ComposeEmail
               to={contact!}
+              name={name}
+              contentFocus={contentFocus}
               onSent={() => {
                 setComposing(false);
                 saveUpdate(currentStatus === "Not sent" ? "Sent" : currentStatus, currentNotes);
@@ -169,9 +171,40 @@ function toPlainText(text: string): string {
   return text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_m, label, url) => `${label} (${url})`);
 }
 
-function ComposeEmail({ to, onSent }: { to: string; onSent: () => void }) {
-  const [subject, setSubject] = useState("");
-  const [message, setMessage] = useState("");
+function firstName(name: string): string {
+  return name.replace(/\(.*\)/, "").trim().split(" ")[0] || "there";
+}
+
+function draftTemplate(name: string, contentFocus: string | null): { subject: string; message: string } {
+  const focus = contentFocus ? contentFocus.toLowerCase() : "your content";
+  return {
+    subject: "MailBroom — an inbox cleanup tool for your audience",
+    message: `Hi ${firstName(name)},
+
+I really enjoy your content on ${focus} — thought MailBroom might be a genuine fit given what you post about. I run MailBroom, an app that cleans up messy inboxes fast: bulk sender-based sweeps, storage cleanup, all processed on-device so nothing leaves the phone.
+
+Two versions depending on what fits your audience best: an [iOS app](https://apps.apple.com/gb/app/mailbroom/id6766489663) for personal inboxes, and a [Microsoft 365 web app](https://business.mailbroom.app) for teams/businesses on Outlook.
+
+Happy to set you up with free Pro access on either, no strings attached — I'd love your honest take on it either way. If it's not a fit, no worries at all.
+
+Thanks for the content — genuinely good stuff.`,
+  };
+}
+
+function ComposeEmail({
+  to,
+  name,
+  contentFocus,
+  onSent,
+}: {
+  to: string;
+  name: string;
+  contentFocus: string | null;
+  onSent: () => void;
+}) {
+  const initial = draftTemplate(name, contentFocus);
+  const [subject, setSubject] = useState(initial.subject);
+  const [message, setMessage] = useState(initial.message);
 
   function handleOpenInOutlook() {
     if (!subject.trim() || !message.trim()) return;
