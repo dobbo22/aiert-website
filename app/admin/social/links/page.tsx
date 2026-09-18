@@ -2,7 +2,25 @@ import sql from "@/lib/db";
 import { TRACKED_LINKS } from "@/lib/trackedLinks";
 
 type ClickCount = { slug: string; count: string };
-type RecentClick = { slug: string; clicked_at: string };
+type RecentClick = {
+  slug: string;
+  clicked_at: string;
+  country: string | null;
+  ip_truncated: string | null;
+  user_agent: string | null;
+};
+
+// Just enough to distinguish "a person" from "a bot/crawler/preview fetch"
+// in the recent-clicks list — not a full UA parser.
+function browserFromUserAgent(ua: string | null): string {
+  if (!ua) return "Unknown";
+  if (/bot|crawler|spider|facebookexternalhit|LinkedInBot/i.test(ua)) return "Bot/crawler";
+  if (/Edg\//.test(ua)) return "Edge";
+  if (/Chrome\//.test(ua)) return "Chrome";
+  if (/Safari\//.test(ua) && !/Chrome\//.test(ua)) return "Safari";
+  if (/Firefox\//.test(ua)) return "Firefox";
+  return "Other";
+}
 
 export default async function LinkClicksPage() {
   let counts: ClickCount[] = [];
@@ -17,7 +35,7 @@ export default async function LinkClicksPage() {
     `) as ClickCount[];
 
     recent = (await sql`
-      SELECT slug, clicked_at
+      SELECT slug, clicked_at, country, ip_truncated, user_agent
       FROM link_clicks
       ORDER BY clicked_at DESC
       LIMIT 20
@@ -55,9 +73,10 @@ export default async function LinkClicksPage() {
 
       <p className="admin-mailbroom-note">
         Each row is one tracked redirect (ios.mailbroom.app/fb-* for the personal launch
-        post, ios.mailbroom.app/go/[slug] for directory submissions) — it logs a click
-        before forwarding to the real destination. Counts are since tracking was set up,
-        not historical.
+        post, [ios|www].mailbroom.app/go/[slug] elsewhere) — it logs a click before
+        forwarding to the real destination. Counts are since tracking was set up, not
+        historical. IP addresses are anonymized before storage (last octet/64 bits
+        zeroed) — only country, truncated IP, and browser family are kept, no raw IP.
       </p>
 
       <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "1.25rem" }}>
@@ -92,6 +111,9 @@ export default async function LinkClicksPage() {
             <div key={i} className="social-post-card">
               <div className="social-post-meta">
                 <span>{new Date(r.clicked_at).toLocaleString()}</span>
+                <span>{r.country ?? "Unknown location"}</span>
+                <span>{browserFromUserAgent(r.user_agent)}</span>
+                {r.ip_truncated && <span style={{ opacity: 0.5 }}>{r.ip_truncated}</span>}
               </div>
               <p className="social-post-message">{TRACKED_LINKS[r.slug]?.label ?? r.slug}</p>
             </div>
