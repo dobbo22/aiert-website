@@ -50,13 +50,16 @@ export async function listRepliesFrom(email: string): Promise<MailboxMessage[]> 
   const url = new URL("https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages");
   url.searchParams.set("$filter", `from/emailAddress/address eq '${email.replace(/'/g, "''")}'`);
   url.searchParams.set("$select", "subject,bodyPreview,receivedDateTime,webLink,from");
-  url.searchParams.set("$orderby", "receivedDateTime desc");
   url.searchParams.set("$top", "10");
+  // No $orderby — Graph rejects combining it with a nested-property $filter
+  // ("restriction or sort order is too complex") without extra ConsistencyLevel
+  // headers, so sort client-side instead.
 
   const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
   const json = await res.json();
   if (!res.ok) throw new Error(json?.error?.message || `Graph inbox lookup failed (${res.status})`);
-  return json.value ?? [];
+  const messages = (json.value ?? []) as MailboxMessage[];
+  return messages.sort((a, b) => b.receivedDateTime.localeCompare(a.receivedDateTime));
 }
 
 export async function sendMailbroomEmail(params: { to: string; subject: string; bodyHtml: string }): Promise<void> {
