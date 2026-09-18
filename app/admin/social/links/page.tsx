@@ -25,7 +25,6 @@ function browserFromUserAgent(ua: string | null): string {
 export default async function LinkClicksPage() {
   let counts: ClickCount[] = [];
   let recent: RecentClick[] = [];
-  let debugError: string | null = null;
 
   try {
     counts = (await sql`
@@ -34,20 +33,16 @@ export default async function LinkClicksPage() {
       GROUP BY slug
       ORDER BY COUNT(*) DESC
     `) as ClickCount[];
-  } catch {
-    // Table is created lazily on the first real click via /api/track-click —
-    // until then, this is just "no clicks yet", not a real error.
-  }
 
-  try {
     recent = (await sql`
       SELECT slug, clicked_at, country, ip_truncated, user_agent
       FROM link_clicks
       ORDER BY clicked_at DESC
       LIMIT 20
     `) as RecentClick[];
-  } catch (err) {
-    debugError = err instanceof Error ? err.message : String(err);
+  } catch {
+    // Table is created lazily on the first real click via /api/track-click —
+    // until then, this is just "no clicks yet", not a real error.
   }
 
   const countBySlug = new Map(counts.map((c) => [c.slug, Number(c.count)]));
@@ -126,12 +121,11 @@ export default async function LinkClicksPage() {
         </>
       )}
 
-      {recent.length === 0 && !debugError && (
+      {recent.length === 0 && (
         <p className="admin-mailbroom-note" style={{ marginTop: "1rem" }}>
           No clicks recorded yet.
         </p>
       )}
-      {debugError && <p className="social-compose-error">DEBUG: {debugError}</p>}
     </div>
   );
 }
