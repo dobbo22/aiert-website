@@ -153,39 +153,40 @@ export default function OutreachRow({ id, name, platform, contact, reach, conten
   );
 }
 
+const MAILBROOM_SIGNATURE_PLAIN = [
+  "",
+  "",
+  "Martin Dobson",
+  "Founder, MailBroom",
+  "iOS App: https://apps.apple.com/gb/app/mailbroom/id6766489663",
+  "Microsoft 365: https://business.mailbroom.app",
+  "https://mailbroom.app",
+].join("\n");
+
+// Converts [text](url) markdown-style links to plain "text (url)" for a
+// mailto: body, since mailto has no rich text — it's plain text only.
+function toPlainText(text: string): string {
+  return text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_m, label, url) => `${label} (${url})`);
+}
+
 function ComposeEmail({ to, onSent }: { to: string; onSent: () => void }) {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
-  const [sending, setSending] = useState(false);
-  const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
 
-  async function handleSend() {
-    if (!subject.trim() || !message.trim()) {
-      setResult({ ok: false, text: "Subject and message are required" });
-      return;
-    }
-    setSending(true);
-    setResult(null);
-    const res = await fetch("/api/admin/outreach/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ to, subject, message }),
-    });
-    const json = await res.json();
-    if (res.ok) {
-      setResult({ ok: true, text: "Sent from martin@mailbroom.app." });
-      onSent();
-    } else {
-      setResult({ ok: false, text: json.error ?? "Send failed" });
-    }
-    setSending(false);
+  function handleOpenInOutlook() {
+    if (!subject.trim() || !message.trim()) return;
+    const body = toPlainText(message) + MAILBROOM_SIGNATURE_PLAIN;
+    const url = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = url;
+    onSent();
   }
 
   return (
     <div className="outreach-panel card-glass">
       <div className="outreach-panel-label">
-        To: {to} — sending from martin@mailbroom.app. A MailBroom signature (logo + app links) is
-        appended automatically — no need to sign off in the message.
+        To: {to} — opens a draft in your Outlook client to send manually (Graph API sends to
+        Gmail addresses get blocked by Microsoft's outbound spam protection on this tenant — see
+        notes). A plain-text MailBroom signature is appended automatically.
       </div>
       <input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Subject" />
       <textarea
@@ -193,10 +194,14 @@ function ComposeEmail({ to, onSent }: { to: string; onSent: () => void }) {
         onChange={(e) => setMessage(e.target.value)}
         placeholder="Message — supports [link text](https://url) markdown-style links"
       />
-      <button type="button" className="outreach-btn outreach-btn-primary" onClick={handleSend} disabled={sending}>
-        {sending ? "Sending…" : "Send"}
+      <button
+        type="button"
+        className="outreach-btn outreach-btn-primary"
+        onClick={handleOpenInOutlook}
+        disabled={!subject.trim() || !message.trim()}
+      >
+        Open in Outlook
       </button>
-      {result && <p className={result.ok ? "outreach-status-ok" : "outreach-status-error"}>{result.text}</p>}
     </div>
   );
 }
