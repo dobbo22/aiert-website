@@ -62,8 +62,35 @@ export async function listRepliesFrom(email: string): Promise<MailboxMessage[]> 
   return messages.sort((a, b) => b.receivedDateTime.localeCompare(a.receivedDateTime));
 }
 
+// Kept as a plain function (not a template literal with backticks inside
+// the calling file) so it renders consistently across email clients —
+// table-based layout, inline styles, no external CSS.
+export function mailbroomSignatureHtml(): string {
+  return `
+<table cellpadding="0" cellspacing="0" style="margin-top:28px;border-top:1px solid #e2e8f0;padding-top:16px;font-family:Arial,Helvetica,sans-serif;">
+  <tr>
+    <td style="vertical-align:top;padding-right:14px;">
+      <img src="https://mailbroom.app/mailbroom-icon.png" width="42" height="42" style="border-radius:9px;display:block;" alt="MailBroom" />
+    </td>
+    <td style="vertical-align:top;font-size:13px;color:#333333;line-height:1.5;">
+      <div style="font-weight:bold;font-size:14px;color:#111111;">Martin Dobson</div>
+      <div style="color:#666666;">Founder, MailBroom</div>
+      <div style="margin-top:8px;">
+        <a href="https://apps.apple.com/gb/app/mailbroom/id6766489663" style="color:#b45309;text-decoration:none;font-weight:600;">iOS App</a>
+        <span style="color:#cccccc;">&nbsp;·&nbsp;</span>
+        <a href="https://business.mailbroom.app" style="color:#b45309;text-decoration:none;font-weight:600;">Microsoft 365</a>
+        <span style="color:#cccccc;">&nbsp;·&nbsp;</span>
+        <a href="https://mailbroom.app" style="color:#b45309;text-decoration:none;font-weight:600;">mailbroom.app</a>
+      </div>
+    </td>
+  </tr>
+</table>`.trim();
+}
+
 export async function sendMailbroomEmail(params: { to: string; subject: string; bodyHtml: string }): Promise<void> {
   const accessToken = await getAccessToken();
+
+  const fullBody = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1a1a1a;line-height:1.6;">${params.bodyHtml}${mailbroomSignatureHtml()}</div>`;
 
   const res = await fetch(GRAPH_SEND_MAIL_URL, {
     method: "POST",
@@ -74,7 +101,7 @@ export async function sendMailbroomEmail(params: { to: string; subject: string; 
     body: JSON.stringify({
       message: {
         subject: params.subject,
-        body: { contentType: "HTML", content: params.bodyHtml },
+        body: { contentType: "HTML", content: fullBody },
         toRecipients: [{ emailAddress: { address: params.to } }],
       },
       saveToSentItems: true,

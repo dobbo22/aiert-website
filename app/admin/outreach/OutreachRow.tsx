@@ -183,7 +183,10 @@ function ComposeEmail({ to, onSent }: { to: string; onSent: () => void }) {
 
   return (
     <div className="outreach-panel card-glass">
-      <div className="outreach-panel-label">To: {to} — sending from martin@mailbroom.app</div>
+      <div className="outreach-panel-label">
+        To: {to} — sending from martin@mailbroom.app. A MailBroom signature (logo + app links) is
+        appended automatically — no need to sign off in the message.
+      </div>
       <input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Subject" />
       <textarea
         value={message}
