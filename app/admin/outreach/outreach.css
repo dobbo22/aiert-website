@@ -1,0 +1,169 @@
+.outreach-add-form {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.75rem;
+  padding: 1rem 1.25rem;
+  border-radius: 10px;
+}
+
+.outreach-add-form input {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(45, 55, 72, 0.6);
+  border-radius: 6px;
+  color: #e2e8f0;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+.outreach-add-form input:focus {
+  outline: none;
+  border-color: rgba(251, 191, 36, 0.5);
+}
+
+.outreach-row-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.outreach-panel {
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  margin: 0.5rem 0;
+}
+
+.outreach-panel-label {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-bottom: 0.6rem;
+}
+
+.outreach-panel input,
+.outreach-panel textarea {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(45, 55, 72, 0.6);
+  border-radius: 6px;
+  color: #e2e8f0;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.85rem;
+  font-family: inherit;
+  margin-bottom: 0.6rem;
+}
+
+.outreach-panel input:focus,
+.outreach-panel textarea:focus {
+  outline: none;
+  border-color: rgba(251, 191, 36, 0.5);
+}
+
+.outreach-panel textarea {
+  min-height: 150px;
+  resize: vertical;
+}
+
+.outreach-status-ok {
+  color: #34d399;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+}
+
+.outreach-status-error {
+  color: #f87171;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+}
+
+.outreach-reply {
+  background: rgba(45, 55, 72, 0.3);
+  border-radius: 6px;
+  padding: 0.7rem 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
+.outreach-reply:last-child {
+  margin-bottom: 0;
+}
+
+.outreach-reply-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-bottom: 0.3rem;
+}
+
+.outreach-reply-meta a {
+  color: #94a3b8;
+}
+
+.outreach-reply-subject {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-bottom: 0.2rem;
+}
+
+.outreach-reply-preview {
+  font-size: 0.8rem;
+  color: #cbd5e1;
+}
+
+.outreach-empty {
+  color: #64748b;
+  font-size: 0.82rem;
+  padding: 0.5rem 0;
+}
+
+.outreach-notes-display {
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  font-size: 0.82rem;
+  cursor: pointer;
+  text-decoration: underline dotted;
+  padding: 0;
+  text-align: left;
+}
+
+.outreach-status-select {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(45, 55, 72, 0.6);
+  border-radius: 6px;
+  color: #e2e8f0;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.82rem;
+}
+
+.outreach-btn {
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  color: #e2e8f0;
+  border-radius: 6px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.outreach-btn:hover {
+  background: rgba(148, 163, 184, 0.22);
+}
+
+.outreach-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.outreach-btn-primary {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  border: none;
+  color: #0b0f1a;
+  font-weight: 700;
+}
+
+.outreach-btn-primary:hover {
+  background: linear-gradient(135deg, #fcd34d, #fbbf24);
+}

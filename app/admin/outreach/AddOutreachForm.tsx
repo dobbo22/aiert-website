@@ -41,47 +41,47 @@ export default function AddOutreachForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "1.5rem" }}>
+    <form onSubmit={handleSubmit} className="outreach-add-form card-glass">
       <input
         type="text"
         required
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="Name / handle"
-        style={{ flex: "1 1 160px", padding: "0.5rem" }}
+        style={{ flex: "1 1 160px" }}
       />
       <input
         type="text"
         value={platform}
         onChange={(e) => setPlatform(e.target.value)}
         placeholder="Platform (e.g. TikTok, Email)"
-        style={{ flex: "1 1 140px", padding: "0.5rem" }}
+        style={{ flex: "1 1 140px" }}
       />
       <input
         type="text"
         value={contact}
         onChange={(e) => setContact(e.target.value)}
         placeholder="Contact (email / link)"
-        style={{ flex: "1 1 180px", padding: "0.5rem" }}
+        style={{ flex: "1 1 180px" }}
       />
       <input
         type="text"
         value={reach}
         onChange={(e) => setReach(e.target.value)}
         placeholder="Reach (e.g. 166K followers, 266K avg views)"
-        style={{ flex: "1 1 220px", padding: "0.5rem" }}
+        style={{ flex: "1 1 220px" }}
       />
       <input
         type="text"
         value={contentFocus}
         onChange={(e) => setContentFocus(e.target.value)}
         placeholder="Content focus"
-        style={{ flex: "1 1 200px", padding: "0.5rem" }}
+        style={{ flex: "1 1 200px" }}
       />
-      <button type="submit" className="admin-invite-btn" disabled={state === "saving"}>
+      <button type="submit" className="outreach-btn outreach-btn-primary" disabled={state === "saving"}>
         {state === "saving" ? "Adding…" : "Add contact"}
       </button>
-      {error && <p style={{ color: "red", width: "100%", margin: 0 }}>{error}</p>}
+      {error && <p className="outreach-status-error" style={{ width: "100%", margin: 0 }}>{error}</p>}
     </form>
   );
 }

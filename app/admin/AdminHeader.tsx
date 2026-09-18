@@ -7,6 +7,7 @@ import LogoutButton from "./mailbroom/LogoutButton";
 const SECTIONS = [
   { href: "/admin/social", label: "Social" },
   { href: "/admin/marketing", label: "Marketing" },
+  { href: "/admin/outreach", label: "Outreach" },
   { href: "/admin/mailbroom", label: "Reviewers" },
 ];
 

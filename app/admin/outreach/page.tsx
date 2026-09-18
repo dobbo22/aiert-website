@@ -2,10 +2,11 @@ import { cookies } from "next/headers";
 import sql from "@/lib/db";
 import { isValidAdminSession, COOKIE_NAME } from "@/lib/mailbroomAdminAuth";
 import LoginForm from "../mailbroom/LoginForm";
-import LogoutButton from "../mailbroom/LogoutButton";
+import AdminHeader from "../AdminHeader";
 import AddOutreachForm from "./AddOutreachForm";
 import OutreachRow from "./OutreachRow";
 import "../mailbroom/admin.css";
+import "./outreach.css";
 
 export const metadata = {
   title: "Influencer Outreach — Admin",
@@ -55,60 +56,77 @@ export default async function OutreachAdminPage() {
     ORDER BY sent_at DESC NULLS LAST, created_at DESC
   `) as Row[];
 
+  const repliedCount = rows.filter((r) => r.status.startsWith("Replied") || r.status === "Confirmed" || r.status === "Posted").length;
+  const sentCount = rows.filter((r) => r.status !== "Not sent").length;
+
   return (
-    <div className="admin-page">
-      <div className="admin-header">
-        <h1 className="admin-title">Influencer Outreach</h1>
-        <p className="admin-updated">
-          {rows.length} contact{rows.length === 1 ? "" : "s"} tracked
+    <div className="min-h-screen hero-gradient grid-bg">
+      <AdminHeader />
+      <div className="admin-page">
+        <h1 className="admin-title" style={{ marginBottom: "0.5rem" }}>
+          Influencer Outreach
+        </h1>
+        <p className="admin-mailbroom-note">
+          Creator/influencer contacts for MailBroom — send and track replies directly from
+          martin@mailbroom.app via Microsoft Graph.
         </p>
-        <LogoutButton />
-      </div>
 
-      <p className="admin-mailbroom-note">
-        Tracks influencer/creator outreach for MailBroom — who&apos;s been contacted, reach, and reply status.
-      </p>
+        <div className="admin-stats">
+          <div className="admin-stat">
+            <span className="admin-stat-value">{rows.length}</span>
+            <span className="admin-stat-label">Total contacts</span>
+          </div>
+          <div className="admin-stat">
+            <span className="admin-stat-value">{sentCount}</span>
+            <span className="admin-stat-label">Contacted</span>
+          </div>
+          <div className="admin-stat">
+            <span className="admin-stat-value">{repliedCount}</span>
+            <span className="admin-stat-label">Replied</span>
+          </div>
+        </div>
 
-      <AddOutreachForm />
+        <AddOutreachForm />
 
-      <div className="admin-table-wrap">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Platform</th>
-              <th>Contact</th>
-              <th>Reach</th>
-              <th>Sent</th>
-              <th>Status</th>
-              <th>Notes</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <OutreachRow
-                key={r.id}
-                id={r.id}
-                name={r.name}
-                platform={r.platform}
-                contact={r.contact}
-                reach={r.reach}
-                contentFocus={r.content_focus}
-                status={r.status}
-                notes={r.notes}
-                sentAt={r.sent_at}
-              />
-            ))}
-            {rows.length === 0 && (
+        <div className="admin-table-wrap">
+          <table className="admin-table">
+            <thead>
               <tr>
-                <td colSpan={8} className="admin-empty-cell">
-                  No contacts yet.
-                </td>
+                <th>Name</th>
+                <th>Platform</th>
+                <th>Contact</th>
+                <th>Reach</th>
+                <th>Sent</th>
+                <th>Status</th>
+                <th>Notes</th>
+                <th></th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <OutreachRow
+                  key={r.id}
+                  id={r.id}
+                  name={r.name}
+                  platform={r.platform}
+                  contact={r.contact}
+                  reach={r.reach}
+                  contentFocus={r.content_focus}
+                  status={r.status}
+                  notes={r.notes}
+                  sentAt={r.sent_at}
+                />
+              ))}
+              {rows.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="admin-empty-cell">
+                    No contacts yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
