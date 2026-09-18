@@ -15,7 +15,8 @@
     "linkedin:post": "node scripts/linkedin-post.mjs",
     "facebook:post": "node scripts/facebook-post.mjs",
     "facebook:refresh-token": "node scripts/facebook-refresh-token.mjs",
-    "instagram:post": "node scripts/instagram-post.mjs"
+    "instagram:post": "node scripts/instagram-post.mjs",
+    "mailbroom-graph:auth": "node scripts/mailbroom-graph-auth.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
