@@ -25,7 +25,7 @@ export default async function SocialOverviewPage() {
           <span className="admin-stat-label">Comments (last 5 posts)</span>
         </div>
         <div className="admin-stat">
-          <span className="admin-stat-value">3 / 4</span>
+          <span className="admin-stat-value">3 / 5</span>
           <span className="admin-stat-label">Platforms wired up</span>
         </div>
       </div>
@@ -33,7 +33,8 @@ export default async function SocialOverviewPage() {
       <p className="admin-mailbroom-note">
         Facebook, Instagram, and Threads are live — compose posts and manage comments
         under their tabs. LinkedIn is a placeholder until Community Management API
-        access is approved.
+        access is approved. Reddit is built but needs a one-time <code>npm run reddit:auth</code>{" "}
+        run to connect an account — see the Reddit tab for setup steps.
       </p>
 
       {error && <p className="social-compose-error">{error}</p>}
