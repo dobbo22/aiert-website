@@ -17,6 +17,45 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "gmail-storage-full",
+    date: "September 2026",
+    readTime: "6 min read",
+    icon: "📦",
+    tag: "How-To",
+    tagColor: "text-teal",
+    tagBg: "bg-teal/10 border-teal/20",
+    title: "Gmail Storage Full? Clean It Up Without a Sketchy App",
+    excerpt:
+      "What's actually filling up your Gmail storage, how to find the real space-users, and how to clear it without handing your inbox to a cloud-based cleaner.",
+    author: "Martin Dobson",
+  },
+  {
+    slug: "clean-up-promotional-emails-without-third-party-access",
+    date: "September 2026",
+    readTime: "7 min read",
+    icon: "🔐",
+    tag: "How-To",
+    tagColor: "text-teal",
+    tagBg: "bg-teal/10 border-teal/20",
+    title: "How to Clean Up 10,000 Promotional Emails Without Giving a Third Party Access to Your Gmail",
+    excerpt:
+      "A practical, step-by-step way to bulk-delete thousands of promotional emails — without a cloud service reading what's inside them.",
+    author: "Martin Dobson",
+  },
+  {
+    slug: "mailbroom-vs-unroll-me",
+    date: "September 2026",
+    readTime: "6 min read",
+    icon: "🔍",
+    tag: "Comparison",
+    tagColor: "text-teal",
+    tagBg: "bg-teal/10 border-teal/20",
+    title: "MailBroom vs Unroll.me: Privacy Comparison",
+    excerpt:
+      "Unroll.me is free because your inbox data is the product. MailBroom charges a small subscription because it isn't. Here's the real difference in how each one works.",
+    author: "Martin Dobson",
+  },
+  {
     slug: "your-emails-are-costing-the-planet",
     date: "June 2026",
     readTime: "6 min read",

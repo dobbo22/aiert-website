@@ -71,10 +71,26 @@ export default function Home() {
           <span className="gold-text">meets Everyday Productivity</span>
         </h1>
 
-        <p className="text-lg md:text-xl max-w-2xl mx-auto mb-10 text-mist leading-relaxed">
+        <p className="text-lg md:text-xl max-w-2xl mx-auto mb-6 text-mist leading-relaxed">
           AIERT Ltd is a UK-based AI company building intelligent tools that give people back their time
           — starting with MailBroom, private on-device AI that clears an overflowing inbox in minutes.
         </p>
+
+        {/* Same App Store privacy-label trust signal as the MailBroom landing page,
+            kept here so a visitor evaluating AIERT as a company (not just the app)
+            sees the same verifiable claim, not a paraphrase of it. */}
+        <a
+          href="https://apps.apple.com/gb/app/mailbroom/id6766489663"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-3 mb-10 px-4 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+        >
+          <span className="text-2xl" aria-hidden="true">🔒</span>
+          <span className="text-left">
+            <span className="block text-sm font-semibold text-cloud">App Store Privacy Label: &ldquo;Data Not Collected&rdquo;</span>
+            <span className="block text-xs text-mist">Verified on the App Store — every AIERT product is built on-device first</span>
+          </span>
+        </a>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           {/* ShareQuest CTA — commented out for now, replaced with MailBroom

@@ -135,17 +135,36 @@ export default function MailBroomPage() {
               iOS App · Available on the App Store
             </div>
             <h1 className="text-5xl md:text-6xl font-black tracking-tight leading-tight mb-6">
-              <span className="text-cloud">Clean your inbox</span>
+              <span className="text-cloud">Your email never</span>
               <br />
-              <span className="gold-text">with AI.</span>
+              <span className="gold-text">leaves your device.</span>
             </h1>
-            <p className="text-lg text-mist leading-relaxed mb-8 max-w-lg">
+            <p className="text-lg text-mist leading-relaxed mb-6 max-w-lg">
               MailBroom connects to any IMAP email account and uses AI to classify,
-              bulk-delete, unsubscribe, and organise your emails — 100% privately on your device.
-              Sweep Mode guides you through your inbox one sender at a time — colour-coded
-              cards suggest the right action instantly, clearing thousands of emails in minutes.
-              Your emails never leave your phone.
+              bulk-delete, unsubscribe, and organise your emails — with every scan and
+              every decision made by an on-device model, not a server. Sweep Mode guides
+              you through your inbox one sender at a time — colour-coded cards suggest
+              the right action instantly, clearing thousands of emails in minutes.
             </p>
+
+            {/* App Store privacy label trust signal — quotes Apple's own "Data Not
+                Collected" nutrition-label wording (verifiable on the App Store listing
+                itself) rather than a self-made claim, which is what makes it credible
+                to a privacy-conscious visitor deciding whether to trust an inbox app
+                with IMAP access. */}
+            <a
+              href="https://apps.apple.com/gb/app/mailbroom/id6766489663"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-3 mb-8 px-4 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+            >
+              <span className="text-2xl" aria-hidden="true">🔒</span>
+              <span className="text-left">
+                <span className="block text-sm font-semibold text-cloud">App Store Privacy Label: &ldquo;Data Not Collected&rdquo;</span>
+                <span className="block text-xs text-mist">Verified on the App Store — see MailBroom&apos;s privacy details</span>
+              </span>
+            </a>
+
             <div className="flex flex-col sm:flex-row gap-4">
               <a
                 href="https://apps.apple.com/gb/app/mailbroom/id6766489663"
