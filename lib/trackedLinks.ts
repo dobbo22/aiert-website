@@ -43,4 +43,9 @@ export const TRACKED_LINKS: Record<string, TrackedLink> = {
   // trial pitch, two separate links in the same post body.
   "li-saas-trial": { label: "LinkedIn SaaS group post → Trial signup", to: "https://mailbroom.app/trial" },
   "li-saas-roi": { label: "LinkedIn SaaS group post → ROI calculator", to: "https://mailbroom.app/roi" },
+
+  // X (Twitter) product-drop replies — one slug reused across any reply to
+  // a "drop your product below" style post, since these are one-off
+  // engagement replies rather than a single named campaign.
+  "x-product-drop": { label: "X reply → App Store", to: "https://apps.apple.com/gb/app/mailbroom/id6766489663" },
 };
