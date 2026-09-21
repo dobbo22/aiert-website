@@ -46,6 +46,10 @@ export const TRACKED_LINKS: Record<string, TrackedLink> = {
 
   // X (Twitter) product-drop replies — one slug reused across any reply to
   // a "drop your product below" style post, since these are one-off
-  // engagement replies rather than a single named campaign.
-  "x-product-drop": { label: "X reply → App Store", to: "https://apps.apple.com/gb/app/mailbroom/id6766489663" },
+  // engagement replies rather than a single named campaign. Two separate
+  // slugs — the consumer iOS app and the M365 SaaS product are different
+  // products with different buyers, so they get their own reply links
+  // (and separate click counts in the admin panel) rather than sharing one.
+  "x-product-drop": { label: "X reply → App Store (MailBroom iOS)", to: "https://apps.apple.com/gb/app/mailbroom/id6766489663" },
+  "x-product-drop-saas": { label: "X reply → MailBroom for Business (trial signup)", to: "https://mailbroom.app/trial" },
 };
