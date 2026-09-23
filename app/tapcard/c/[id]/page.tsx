@@ -5,7 +5,7 @@ import CompanyLogo from "../../CompanyLogo";
 
 // TODO: real App Store id once TapCard is live in App Store Connect.
 const TAPCARD_APP_STORE_URL = "https://apps.apple.com/app/tapcard";
-const MAILBROOM_APP_STORE_URL = "https://apps.apple.com/app/mailbroom/id6744036741";
+const MAILBROOM_APP_STORE_URL = "https://apps.apple.com/app/mailbroom/id6766489663";
 const POWERSEARCH_APP_STORE_URL = "https://apps.apple.com/us/app/powersearch/id6807772868";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
