@@ -15,6 +15,35 @@ export interface TapCardRecord {
 
 type TapCardInput = Omit<TapCardRecord, "id" | "photo_url"> & { photo_url?: string | null };
 
+// Self-healing schema: Vercel's DATABASE_URL is a hidden "Secret" env var,
+// so it can't be read out to run scripts/migrate-tapcard.mjs against
+// production from outside the running app — the app creates its own table
+// on first use instead. Cheap (IF NOT EXISTS) and cached per warm instance.
+let schemaReady: Promise<unknown> | null = null;
+function ensureSchema(): Promise<unknown> {
+  if (!schemaReady) {
+    schemaReady = sql`
+      CREATE TABLE IF NOT EXISTS tapcard_cards (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL DEFAULT '',
+        title TEXT NOT NULL DEFAULT '',
+        company TEXT NOT NULL DEFAULT '',
+        phone TEXT NOT NULL DEFAULT '',
+        email TEXT NOT NULL DEFAULT '',
+        website TEXT NOT NULL DEFAULT '',
+        linkedin_url TEXT NOT NULL DEFAULT '',
+        photo_url TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )
+    `.catch((err) => {
+      schemaReady = null; // let the next call retry rather than caching a failure
+      throw err;
+    });
+  }
+  return schemaReady;
+}
+
 export function newCardId(): string {
   // URL-safe, unguessable — this id is the only thing standing between a
   // card and the public internet (see the plan's privacy section: no auth,
@@ -23,6 +52,7 @@ export function newCardId(): string {
 }
 
 export async function createCard(input: TapCardInput): Promise<string> {
+  await ensureSchema();
   const id = newCardId();
   await sql`
     INSERT INTO tapcard_cards (id, name, title, company, phone, email, website, linkedin_url, photo_url)
@@ -32,6 +62,7 @@ export async function createCard(input: TapCardInput): Promise<string> {
 }
 
 export async function updateCard(id: string, input: TapCardInput): Promise<boolean> {
+  await ensureSchema();
   const rows = await sql`
     UPDATE tapcard_cards
     SET name = ${input.name}, title = ${input.title}, company = ${input.company},
@@ -46,11 +77,13 @@ export async function updateCard(id: string, input: TapCardInput): Promise<boole
 }
 
 export async function getCard(id: string): Promise<TapCardRecord | null> {
+  await ensureSchema();
   const rows = (await sql`SELECT * FROM tapcard_cards WHERE id = ${id}`) as TapCardRecord[];
   return rows[0] ?? null;
 }
 
 export async function deleteCard(id: string): Promise<boolean> {
+  await ensureSchema();
   const rows = await sql`DELETE FROM tapcard_cards WHERE id = ${id} RETURNING id`;
   return rows.length > 0;
 }
