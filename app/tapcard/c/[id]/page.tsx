@@ -84,20 +84,20 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
           className="mt-4 flex items-center gap-3 rounded-xl border border-slate px-4 py-3 text-cloud"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/tapcard-icon.png" alt="" className="h-8 w-8 rounded-lg" />
+          <img src="https://www.aiert.co.uk/tapcard-icon.png" alt="" className="h-8 w-8 rounded-lg" />
           <span>Get TapCard — make your own free card →</span>
         </a>
 
         <div className="mt-8 space-y-3">
           <PromoCard
-            iconSrc="/mailbroom-icon.png"
+            iconSrc="https://www.aiert.co.uk/mailbroom-icon.png"
             headline="Also drowning in old email?"
             body="MailBroom, from the same developer, looks at your mailbox and suggests what's safe to delete, save, or organise — in bulk, not one at a time."
             ctaLabel="Get MailBroom"
             href={MAILBROOM_APP_STORE_URL}
           />
           <PromoCard
-            iconSrc="/powersearch-icon.png"
+            iconSrc="https://www.aiert.co.uk/powersearch-icon.png"
             headline="Need to find someone's business email?"
             body="PowerSearch, also from Aiert Ltd, finds verified corporate email addresses across your accounts in seconds."
             ctaLabel="Get PowerSearch"
