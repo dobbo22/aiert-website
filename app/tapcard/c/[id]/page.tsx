@@ -32,33 +32,41 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
   if (!card) notFound();
 
   const contactLines = [
-    { label: card.phone, href: `tel:${card.phone}` },
-    { label: card.email, href: `mailto:${card.email}` },
-    { label: card.website, href: normalizeUrl(card.website) },
-    { label: card.linkedin_url, href: normalizeUrl(card.linkedin_url) },
+    { label: card.phone, href: `tel:${card.phone}`, icon: "📞" },
+    { label: card.email, href: `mailto:${card.email}`, icon: "✉️" },
+    { label: card.website, href: normalizeUrl(card.website), icon: "🌐" },
+    { label: card.linkedin_url, href: normalizeUrl(card.linkedin_url), icon: "🔗" },
   ].filter((line) => line.label);
 
   return (
     <main className="min-h-screen flex flex-col items-center px-4 py-12">
       <div className="w-full max-w-sm">
-        <div className="rounded-2xl bg-steel p-6 text-center">
-          {card.photo_url && (
+        {/* Same navy-to-purple gradient as the app icon and the iOS card view */}
+        <div className="rounded-3xl bg-gradient-to-br from-[#1A2138] to-[#422975] p-6 text-center shadow-xl">
+          {card.photo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={card.photo_url}
               alt={card.name}
-              className="mx-auto mb-4 h-24 w-24 rounded-full object-cover"
+              className="mx-auto mb-4 h-24 w-24 rounded-full border-2 border-white/50 object-cover"
             />
+          ) : (
+            <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full border-2 border-white/50 bg-white/15 text-4xl text-white">
+              🙂
+            </div>
           )}
-          <h1 className="text-xl font-semibold text-cloud">{card.name}</h1>
+          <h1 className="text-xl font-semibold text-white">{card.name}</h1>
           {(card.title || card.company) && (
-            <p className="mt-1 text-cloud">{[card.title, card.company].filter(Boolean).join(" · ")}</p>
+            <p className="mt-1 text-white">{[card.title, card.company].filter(Boolean).join(" · ")}</p>
           )}
 
           <div className="mt-5 space-y-2 text-left">
             {contactLines.map((line) => (
-              <a key={line.label} href={line.href} className="block text-cloud underline">
-                {line.label}
+              <a key={line.label} href={line.href} className="flex items-center gap-3 text-white">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/15 text-sm">
+                  {line.icon}
+                </span>
+                <span className="underline">{line.label}</span>
               </a>
             ))}
           </div>
@@ -73,19 +81,23 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
 
         <a
           href={TAPCARD_APP_STORE_URL}
-          className="mt-4 block w-full rounded-xl border border-slate px-4 py-3 text-center text-cloud"
+          className="mt-4 flex items-center gap-3 rounded-xl border border-slate px-4 py-3 text-cloud"
         >
-          Get TapCard — make your own free card →
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/tapcard-icon.png" alt="" className="h-8 w-8 rounded-lg" />
+          <span>Get TapCard — make your own free card →</span>
         </a>
 
         <div className="mt-8 space-y-3">
           <PromoCard
+            iconSrc="/mailbroom-icon.png"
             headline="Also drowning in old email?"
             body="MailBroom, from the same developer, looks at your mailbox and suggests what's safe to delete, save, or organise — in bulk, not one at a time."
             ctaLabel="Get MailBroom"
             href={MAILBROOM_APP_STORE_URL}
           />
           <PromoCard
+            iconSrc="/powersearch-icon.png"
             headline="Need to find someone's business email?"
             body="PowerSearch, also from Aiert Ltd, finds verified corporate email addresses across your accounts in seconds."
             ctaLabel="Get PowerSearch"
@@ -101,11 +113,27 @@ function normalizeUrl(value: string): string {
   return /^https?:\/\//i.test(value) ? value : `https://${value}`;
 }
 
-function PromoCard({ headline, body, ctaLabel, href }: { headline: string; body: string; ctaLabel: string; href: string }) {
+function PromoCard({
+  iconSrc,
+  headline,
+  body,
+  ctaLabel,
+  href,
+}: {
+  iconSrc: string;
+  headline: string;
+  body: string;
+  ctaLabel: string;
+  href: string;
+}) {
   return (
     <div className="rounded-xl bg-charcoal p-4">
-      <p className="font-semibold text-cloud">{headline}</p>
-      <p className="mt-1 text-sm text-cloud">{body}</p>
+      <div className="flex items-center gap-3">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={iconSrc} alt="" className="h-7 w-7 rounded-[7px]" />
+        <p className="font-semibold text-cloud">{headline}</p>
+      </div>
+      <p className="mt-2 text-sm text-cloud">{body}</p>
       <a href={href} className="mt-2 inline-block text-sm font-semibold text-teal">
         {ctaLabel} →
       </a>
