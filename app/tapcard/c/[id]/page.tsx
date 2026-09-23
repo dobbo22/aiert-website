@@ -46,6 +46,11 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
       <div className="w-full max-w-sm">
         {/* Same navy-to-purple gradient as the app icon and the iOS card view */}
         <div className="rounded-3xl bg-gradient-to-br from-[#1A2138] to-[#422975] p-6 text-center shadow-xl">
+          {card.label && (
+            <span className="mb-3 inline-block rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
+              {card.label}
+            </span>
+          )}
           {card.photo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img

@@ -3,6 +3,8 @@ import { createCard, updateCard } from "@/lib/tapcardDb";
 
 interface CardBody {
   id?: string;
+  label?: string;
+  groupingID?: string;
   name?: string;
   title?: string;
   company?: string;
@@ -14,6 +16,8 @@ interface CardBody {
 
 function sanitize(body: CardBody) {
   return {
+    label: (body.label ?? "").trim().slice(0, 60),
+    grouping_id: (body.groupingID ?? "").trim().slice(0, 100),
     name: (body.name ?? "").trim().slice(0, 200),
     title: (body.title ?? "").trim().slice(0, 200),
     company: (body.company ?? "").trim().slice(0, 200),

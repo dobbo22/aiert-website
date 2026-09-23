@@ -3,6 +3,8 @@ import crypto from "crypto";
 
 export interface TapCardRecord {
   id: string;
+  label: string;
+  grouping_id: string;
   name: string;
   title: string;
   company: string;
@@ -19,6 +21,9 @@ type TapCardInput = Omit<TapCardRecord, "id" | "photo_url"> & { photo_url?: stri
 // so it can't be read out to run scripts/migrate-tapcard.mjs against
 // production from outside the running app — the app creates its own table
 // on first use instead. Cheap (IF NOT EXISTS) and cached per warm instance.
+// The ADD COLUMN IF NOT EXISTS covers evolving the schema later without a
+// separate migration step, same reasoning — label/grouping_id were added
+// after the table already existed in production.
 let schemaReady: Promise<unknown> | null = null;
 function ensureSchema(): Promise<unknown> {
   if (!schemaReady) {
@@ -36,10 +41,13 @@ function ensureSchema(): Promise<unknown> {
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
       )
-    `.catch((err) => {
-      schemaReady = null; // let the next call retry rather than caching a failure
-      throw err;
-    });
+    `
+      .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS label TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS grouping_id TEXT NOT NULL DEFAULT ''`)
+      .catch((err) => {
+        schemaReady = null; // let the next call retry rather than caching a failure
+        throw err;
+      });
   }
   return schemaReady;
 }
@@ -55,8 +63,8 @@ export async function createCard(input: TapCardInput): Promise<string> {
   await ensureSchema();
   const id = newCardId();
   await sql`
-    INSERT INTO tapcard_cards (id, name, title, company, phone, email, website, linkedin_url, photo_url)
-    VALUES (${id}, ${input.name}, ${input.title}, ${input.company}, ${input.phone}, ${input.email}, ${input.website}, ${input.linkedin_url}, ${input.photo_url ?? null})
+    INSERT INTO tapcard_cards (id, label, grouping_id, name, title, company, phone, email, website, linkedin_url, photo_url)
+    VALUES (${id}, ${input.label}, ${input.grouping_id}, ${input.name}, ${input.title}, ${input.company}, ${input.phone}, ${input.email}, ${input.website}, ${input.linkedin_url}, ${input.photo_url ?? null})
   `;
   return id;
 }
@@ -65,7 +73,7 @@ export async function updateCard(id: string, input: TapCardInput): Promise<boole
   await ensureSchema();
   const rows = await sql`
     UPDATE tapcard_cards
-    SET name = ${input.name}, title = ${input.title}, company = ${input.company},
+    SET label = ${input.label}, grouping_id = ${input.grouping_id}, name = ${input.name}, title = ${input.title}, company = ${input.company},
         phone = ${input.phone}, email = ${input.email}, website = ${input.website},
         linkedin_url = ${input.linkedin_url},
         photo_url = COALESCE(${input.photo_url ?? null}, photo_url),

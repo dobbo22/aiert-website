@@ -64,11 +64,18 @@ function buildPassJson(card: TapCardRecord, shareURL: string): object {
     teamIdentifier: TEAM_IDENTIFIER,
     organizationName: "TapCard",
     serialNumber: card.id,
-    description: `${card.name || "TapCard"}'s business card`,
+    description: `${card.name || "TapCard"}'s ${card.label ? card.label.toLowerCase() : "business"} card`,
     foregroundColor: "rgb(226, 232, 240)",
     backgroundColor: "rgb(11, 15, 26)",
     labelColor: "rgb(196, 165, 255)",
-    logoText: "TapCard",
+    // Distinguishes multiple passes for the same person in Wallet's list —
+    // without this, a Business and Personal pass both just say "TapCard".
+    logoText: card.label ? `TapCard · ${card.label}` : "TapCard",
+    // Passes sharing the same passTypeIdentifier + groupingIdentifier get
+    // visually stacked together in Wallet (the same mechanism used for
+    // connecting-flight boarding passes) — so a device's Business and
+    // Personal pass appear as a related set, not two unrelated entries.
+    ...(card.grouping_id ? { groupingIdentifier: card.grouping_id } : {}),
     generic: {
       primaryFields: card.name ? [{ key: "name", label: "NAME", value: card.name }] : [],
       secondaryFields: [card.title, card.company].filter(Boolean).length
