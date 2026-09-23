@@ -36,6 +36,7 @@ export default function Home() {
             <a href="#about" className="hover:text-white transition-colors font-medium">About</a>
             <a href="#products" className="hover:text-white transition-colors font-medium">Products</a>
             <a href="/mailbroom" className="hover:text-white transition-colors font-medium">MailBroom</a>
+            <a href="/powersearch" className="hover:text-white transition-colors font-medium">PowerSearch</a>
             <a href="#technology" className="hover:text-white transition-colors font-medium">Technology</a>
             <a href="#contact" className="hover:text-white transition-colors font-medium">Contact</a>
           </div>
@@ -290,6 +291,95 @@ export default function Home() {
                   <div key={stat.label} className="stat-green rounded-xl px-5 py-4">
                     <div className="text-xs mb-1 text-mist">{stat.label}</div>
                     <div className="font-semibold text-sq-green">{stat.value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* PowerSearch */}
+          <div className="card-teal-accent rounded-3xl p-8 md:p-12 mb-8">
+            <div className="grid md:grid-cols-2 gap-10 items-center">
+              <div>
+                <div className="badge-teal inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-6">
+                  📱 iOS App
+                </div>
+                <h3 className="text-3xl font-black mb-4 text-cloud">PowerSearch</h3>
+                <p className="mb-6 text-cloud leading-relaxed">
+                  Multi-account email finder for iPhone. Connect Gmail, iCloud, Microsoft 365, or any
+                  IMAP account and search across every one of them at once to find that one old email
+                  — headers sync on-device, bodies are only ever fetched live, never stored.
+                </p>
+                <ul className="space-y-3 mb-8">
+                  {[
+                    "Search across every connected account at once",
+                    "On-device header sync — email bodies never stored",
+                    "Flag or forward straight from a result",
+                    "No server, no tracking",
+                  ].map((f) => (
+                    <li key={f} className="flex items-center gap-3 text-sm text-cloud">
+                      <span className="text-teal">✓</span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <a
+                  href="/powersearch"
+                  className="btn-outline inline-block px-7 py-3 rounded-full text-sm"
+                >
+                  Learn More →
+                </a>
+              </div>
+              <div className="flex flex-col gap-4">
+                {[
+                  { label: "Works With", value: "Gmail · Outlook · iCloud · Any IMAP" },
+                  { label: "Privacy", value: "On-Device Search · No Server" },
+                  { label: "Platform", value: "iOS 17.0+" },
+                ].map((stat) => (
+                  <div key={stat.label} className="stat-teal rounded-xl px-5 py-4">
+                    <div className="text-xs mb-1 text-cloud">{stat.label}</div>
+                    <div className="font-semibold text-teal">{stat.value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* TapCard */}
+          <div className="card-gold-accent rounded-3xl p-8 md:p-12 mb-8">
+            <div className="grid md:grid-cols-2 gap-10 items-center">
+              <div>
+                <div className="badge-gold inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-6">
+                  📱 iOS App · Coming Soon
+                </div>
+                <h3 className="text-3xl font-black mb-4 text-cloud">TapCard</h3>
+                <p className="mb-6 text-cloud leading-relaxed">
+                  Free digital business card. Share your details by QR code, Apple Wallet pass, or a
+                  link — anyone can view and save your contact, even without the app.
+                </p>
+                <ul className="space-y-3 mb-8">
+                  {[
+                    "QR code and Apple Wallet pass sharing",
+                    "A clean shareable link for anyone without the app",
+                    "Save Contact in one tap — no login required",
+                    "Completely free",
+                  ].map((f) => (
+                    <li key={f} className="flex items-center gap-3 text-sm text-cloud">
+                      <span className="text-gold">✓</span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="flex flex-col gap-4">
+                {[
+                  { label: "Sharing", value: "QR Code · Apple Wallet · Link" },
+                  { label: "Privacy", value: "Shared Only When You Choose To" },
+                  { label: "Price", value: "Free" },
+                ].map((stat) => (
+                  <div key={stat.label} className="stat-gold rounded-xl px-5 py-4">
+                    <div className="text-xs mb-1 text-cloud">{stat.label}</div>
+                    <div className="font-semibold gold-text">{stat.value}</div>
                   </div>
                 ))}
               </div>

@@ -1,0 +1,151 @@
+import forge from "node-forge";
+import JSZip from "jszip";
+import fs from "node:fs/promises";
+import path from "node:path";
+import crypto from "node:crypto";
+import type { TapCardRecord } from "@/lib/tapcardDb";
+
+const PASS_TYPE_IDENTIFIER = "pass.com.mailbroom.tapcard";
+const TEAM_IDENTIFIER = "ATMHQQQQ5S";
+
+// Static-snapshot passes only for MVP — no webServiceURL/authenticationToken,
+// so a pass never live-updates after a card edit (see the plan: APNs-based
+// push updates were explicitly deferred as unnecessary complexity for a
+// lead-gen app). Re-adding the pass after an edit is the only way to
+// refresh it.
+//
+// NOTE — certificate expiry: the Pass Type ID certificate used here expires
+// 2027-10-23 (see the "TapCard" cert in the Apple Developer portal under
+// Certificates). A silently expired cert breaks pass generation with no
+// obvious symptom until someone tries to add a pass — put a reminder
+// somewhere durable before that date.
+let cachedCredentials: { cert: forge.pki.Certificate; key: forge.pki.PrivateKey; wwdr: forge.pki.Certificate } | null = null;
+
+function loadCredentials() {
+  if (cachedCredentials) return cachedCredentials;
+
+  const p12Base64 = process.env.TAPCARD_PASS_P12_BASE64;
+  const p12Password = process.env.TAPCARD_PASS_P12_PASSWORD;
+  const wwdrBase64 = process.env.TAPCARD_WWDR_CERT_BASE64;
+  if (!p12Base64 || !p12Password || !wwdrBase64) {
+    throw new Error("Missing TAPCARD_PASS_P12_BASE64 / TAPCARD_PASS_P12_PASSWORD / TAPCARD_WWDR_CERT_BASE64");
+  }
+
+  const p12Der = forge.util.decode64(p12Base64);
+  const p12Asn1 = forge.asn1.fromDer(p12Der);
+  const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, false, p12Password);
+
+  const certBags = p12.getBags({ bagType: forge.pki.oids.certBag });
+  const keyBags = p12.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag });
+  const cert = certBags[forge.pki.oids.certBag]?.[0]?.cert;
+  const key = keyBags[forge.pki.oids.pkcs8ShroudedKeyBag]?.[0]?.key;
+  if (!cert || !key) throw new Error("Could not extract certificate/key from TAPCARD_PASS_P12_BASE64");
+
+  const wwdrDer = forge.util.decode64(wwdrBase64);
+  const wwdr = forge.pki.certificateFromAsn1(forge.asn1.fromDer(wwdrDer));
+
+  cachedCredentials = { cert, key, wwdr };
+  return cachedCredentials;
+}
+
+function buildPassJson(card: TapCardRecord, shareURL: string): object {
+  const auxiliaryFields: { key: string; label: string; value: string }[] = [];
+  const backFields: { key: string; label: string; value: string }[] = [];
+
+  if (card.phone) auxiliaryFields.push({ key: "phone", label: "PHONE", value: card.phone });
+  if (card.email) auxiliaryFields.push({ key: "email", label: "EMAIL", value: card.email });
+  if (card.website) backFields.push({ key: "website", label: "WEBSITE", value: card.website });
+  if (card.linkedin_url) backFields.push({ key: "linkedin", label: "LINKEDIN", value: card.linkedin_url });
+  backFields.push({ key: "view", label: "VIEW ONLINE", value: shareURL });
+
+  return {
+    formatVersion: 1,
+    passTypeIdentifier: PASS_TYPE_IDENTIFIER,
+    teamIdentifier: TEAM_IDENTIFIER,
+    organizationName: "TapCard",
+    serialNumber: card.id,
+    description: `${card.name || "TapCard"}'s business card`,
+    foregroundColor: "rgb(226, 232, 240)",
+    backgroundColor: "rgb(11, 15, 26)",
+    generic: {
+      primaryFields: card.name ? [{ key: "name", label: "NAME", value: card.name }] : [],
+      secondaryFields: [card.title, card.company].filter(Boolean).length
+        ? [{ key: "role", label: "ROLE", value: [card.title, card.company].filter(Boolean).join(" · ") }]
+        : [],
+      auxiliaryFields,
+      backFields,
+    },
+    barcodes: [
+      {
+        message: shareURL,
+        format: "PKBarcodeFormatQR",
+        messageEncoding: "iso-8859-1",
+      },
+    ],
+  };
+}
+
+async function loadPassAssets(): Promise<Record<string, Buffer>> {
+  const dir = path.join(process.cwd(), "lib/tapcardPassAssets");
+  const filenames = ["icon.png", "icon@2x.png", "icon@3x.png"];
+  const entries = await Promise.all(
+    filenames.map(async (name) => [name, await fs.readFile(path.join(dir, name))] as const)
+  );
+  return Object.fromEntries(entries);
+}
+
+function sha1Hex(buffer: Buffer): string {
+  return crypto.createHash("sha1").update(buffer).digest("hex");
+}
+
+/// PKCS#7 detached signature over manifest.json, per Apple's pass signing
+/// spec — the .p12's certificate + private key sign it, with the WWDR
+/// intermediate certificate included so devices can verify the chain.
+function signManifest(manifestBuffer: Buffer): Buffer {
+  const { cert, key, wwdr } = loadCredentials();
+
+  const p7 = forge.pkcs7.createSignedData();
+  p7.content = forge.util.createBuffer(manifestBuffer.toString("binary"));
+  p7.addCertificate(cert);
+  p7.addCertificate(wwdr);
+  // @types/node-forge's signer/attribute types don't quite match what forge
+  // accepts at runtime (a forge private key object, and a Date for
+  // signingTime) — both work fine in practice, hence the casts.
+  p7.addSigner({
+    key: key as unknown as string,
+    certificate: cert,
+    digestAlgorithm: forge.pki.oids.sha256,
+    authenticatedAttributes: [
+      { type: forge.pki.oids.contentType, value: forge.pki.oids.data },
+      { type: forge.pki.oids.messageDigest },
+      { type: forge.pki.oids.signingTime, value: new Date() as unknown as string },
+    ],
+  });
+  p7.sign({ detached: true });
+
+  const der = forge.asn1.toDer(p7.toAsn1()).getBytes();
+  return Buffer.from(der, "binary");
+}
+
+export async function buildPkpass(card: TapCardRecord, shareURL: string): Promise<Buffer> {
+  const assets = await loadPassAssets();
+  const passJsonBuffer = Buffer.from(JSON.stringify(buildPassJson(card, shareURL)), "utf-8");
+
+  const files: Record<string, Buffer> = { "pass.json": passJsonBuffer, ...assets };
+
+  const manifest: Record<string, string> = {};
+  for (const [name, buffer] of Object.entries(files)) {
+    manifest[name] = sha1Hex(buffer);
+  }
+  const manifestBuffer = Buffer.from(JSON.stringify(manifest), "utf-8");
+  const signatureBuffer = signManifest(manifestBuffer);
+
+  const zip = new JSZip();
+  for (const [name, buffer] of Object.entries(files)) {
+    zip.file(name, buffer);
+  }
+  zip.file("manifest.json", manifestBuffer);
+  zip.file("signature", signatureBuffer);
+
+  return zip.generateAsync({ type: "nodebuffer" });
+}
