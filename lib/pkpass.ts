@@ -67,6 +67,8 @@ function buildPassJson(card: TapCardRecord, shareURL: string): object {
     description: `${card.name || "TapCard"}'s business card`,
     foregroundColor: "rgb(226, 232, 240)",
     backgroundColor: "rgb(11, 15, 26)",
+    labelColor: "rgb(196, 165, 255)",
+    logoText: "TapCard",
     generic: {
       primaryFields: card.name ? [{ key: "name", label: "NAME", value: card.name }] : [],
       secondaryFields: [card.title, card.company].filter(Boolean).length
@@ -87,7 +89,7 @@ function buildPassJson(card: TapCardRecord, shareURL: string): object {
 
 async function loadPassAssets(): Promise<Record<string, Buffer>> {
   const dir = path.join(process.cwd(), "lib/tapcardPassAssets");
-  const filenames = ["icon.png", "icon@2x.png", "icon@3x.png"];
+  const filenames = ["icon.png", "icon@2x.png", "icon@3x.png", "logo.png", "logo@2x.png", "logo@3x.png"];
   const entries = await Promise.all(
     filenames.map(async (name) => [name, await fs.readFile(path.join(dir, name))] as const)
   );
