@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCard } from "@/lib/tapcardDb";
+import CompanyLogo from "../../CompanyLogo";
 
 // TODO: real App Store id once TapCard is live in App Store Connect.
 const TAPCARD_APP_STORE_URL = "https://apps.apple.com/app/tapcard";
@@ -38,6 +39,8 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
     { label: card.linkedin_url, href: normalizeUrl(card.linkedin_url), icon: "🔗" },
   ].filter((line) => line.label);
 
+  const companyDomain = card.website ? extractDomain(card.website) : null;
+
   return (
     <main className="min-h-screen flex flex-col items-center px-4 py-12">
       <div className="w-full max-w-sm">
@@ -57,7 +60,10 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
           )}
           <h1 className="text-xl font-semibold text-white">{card.name}</h1>
           {(card.title || card.company) && (
-            <p className="mt-1 text-white">{[card.title, card.company].filter(Boolean).join(" · ")}</p>
+            <p className="mt-1 flex items-center justify-center gap-2 text-white">
+              {companyDomain && <CompanyLogo domain={companyDomain} />}
+              <span>{[card.title, card.company].filter(Boolean).join(" · ")}</span>
+            </p>
           )}
 
           <div className="mt-5 space-y-2 text-left">
@@ -111,6 +117,14 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
 
 function normalizeUrl(value: string): string {
   return /^https?:\/\//i.test(value) ? value : `https://${value}`;
+}
+
+function extractDomain(website: string): string | null {
+  try {
+    return new URL(normalizeUrl(website)).hostname.replace(/^www\./, "");
+  } catch {
+    return null;
+  }
 }
 
 function PromoCard({
