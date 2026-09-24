@@ -25,9 +25,8 @@ export default function Home() {
       <nav className="nav-glass sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-8 py-5 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="nav-logo-icon w-11 h-11 rounded-lg flex items-center justify-center font-black text-base">
-              AI
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/aiert-logo.png" alt="AIERT" className="w-11 h-11 rounded-lg" />
             <span className="font-bold text-2xl tracking-tight text-cloud">
               AIERT<span className="text-sm font-normal ml-1 text-mist">Ltd</span>
             </span>
@@ -498,9 +497,8 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-6 py-12">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <div className="nav-logo-icon w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs">
-                AI
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/aiert-logo.png" alt="AIERT" className="w-8 h-8 rounded-lg" />
               <div>
                 <div className="font-bold text-cloud">AIERT Ltd</div>
                 <div className="text-xs text-mist">Registered in England &amp; Wales · No. 16587000</div>
