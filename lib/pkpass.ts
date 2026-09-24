@@ -78,9 +78,10 @@ function buildPassJson(card: TapCardRecord, shareURL: string): object {
     foregroundColor: "rgb(226, 232, 240)",
     backgroundColor: "rgb(11, 15, 26)",
     labelColor: "rgb(196, 165, 255)",
-    // Distinguishes multiple passes for the same person in Wallet's list —
-    // without this, a Business and Personal pass both just say "TapCard".
-    logoText: card.label ? `TapCard · ${card.label}` : "TapCard",
+    // No logoText — the logo image itself is now the company's own favicon
+    // (see buildLogo), which sits in the same header row as the COMPANY
+    // field, so the two already read as "favicon next to company name"
+    // without needing any text label here.
     // Passes sharing the same passTypeIdentifier + groupingIdentifier get
     // visually stacked together in Wallet (the same mechanism used for
     // connecting-flight boarding passes) — so a device's Business and
@@ -111,6 +112,33 @@ async function fetchImageBuffer(url: string): Promise<Buffer | null> {
   } catch {
     return null;
   }
+}
+
+function extractDomain(website: string): string | null {
+  try {
+    const prefixed = /^https?:\/\//i.test(website) ? website : `https://${website}`;
+    const host = new URL(prefixed).hostname;
+    return host.replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+}
+
+/// The pass's logo image (top-left, same header row as the COMPANY field)
+/// — the company's own favicon when the card has a website, so it reads as
+/// "favicon next to company name"; falls back to TapCard's own static logo
+/// (lib/tapcardPassAssets) when there's no website to resolve one from.
+/// Square, not circular — Wallet's logo slot renders as a plain rect (only
+/// thumbnailImage needs a manual circular mask), matching how the static
+/// fallback logo was built (lib/tapcardPassAssets, via `sips -Z`).
+async function buildCompanyLogo(card: TapCardRecord): Promise<Buffer | null> {
+  const domain = card.website ? extractDomain(card.website) : null;
+  if (!domain) return null;
+  const faviconBuffer = await fetchImageBuffer(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`);
+  if (!faviconBuffer) return null;
+  // White background — favicons are often a dark glyph on transparency,
+  // which would otherwise vanish against the pass's own dark background.
+  return sharp(faviconBuffer).resize(128, 128, { fit: "contain", background: "#fff" }).flatten({ background: "#fff" }).png().toBuffer();
 }
 
 /// Just the profile photo, cropped to a circle — Wallet's thumbnailImage
@@ -183,6 +211,21 @@ export async function buildPkpass(card: TapCardRecord, shareURL: string): Promis
   const passJsonBuffer = Buffer.from(JSON.stringify(buildPassJson(card, shareURL)), "utf-8");
 
   const files: Record<string, Buffer> = { "pass.json": passJsonBuffer, ...assets };
+
+  // Company favicon overrides the static TapCard logo when resolvable —
+  // falls back to the bundled asset already in `files` (from loadPassAssets)
+  // if there's no website or the favicon fetch fails.
+  const companyLogo = await buildCompanyLogo(card);
+  if (companyLogo) {
+    const [logo1x, logo2x, logo3x] = await Promise.all([
+      sharp(companyLogo).resize(50, 50).png().toBuffer(),
+      sharp(companyLogo).resize(100, 100).png().toBuffer(),
+      sharp(companyLogo).resize(150, 150).png().toBuffer(),
+    ]);
+    files["logo.png"] = logo1x;
+    files["logo@2x.png"] = logo2x;
+    files["logo@3x.png"] = logo3x;
+  }
 
   // thumbnail.png (+ @2x/@3x) is picked up by Wallet purely by filename
   // convention, same as icon/logo — no pass.json field needed. Skipped
