@@ -9,11 +9,16 @@ const MAILBROOM_APEX_HOST = "^mailbroom\\.app$";
 
 const nextConfig: NextConfig = {
   // sharp (TapCard Wallet pass thumbnail compositing) ships a native
-  // libvips binary — bundling it with the rest of the function (the
-  // default) drops that .so file, producing ERR_DLOPEN_FAILED at runtime.
-  // Marking it external tells Next.js to leave it out of the bundle and
-  // let Vercel's own file tracing include the native binary correctly.
+  // libvips binary. serverExternalPackages alone wasn't enough — Next's
+  // own file tracing still failed to pick up the actual .so file, 500ing
+  // with ERR_DLOPEN_FAILED on every request that touched it. Scoped to
+  // just this one route (not a global '/*' key) so the other ~100 routes
+  // in this site don't all inherit sharp's native binaries in their own
+  // trace — one function already sits right at Vercel's size limit.
   serverExternalPackages: ["sharp"],
+  outputFileTracingIncludes: {
+    "/api/tapcard/cards/\\[id\\]/pass": ["node_modules/@img/**/*", "node_modules/sharp/**/*"],
+  },
   async redirects() {
     return [
       // business.mailbroom.app is retired as a content host — mailbroom.app
