@@ -30,7 +30,8 @@
     "nodemailer": "^9.0.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "resend": "^6.14.0"
+    "resend": "^6.14.0",
+    "sharp": "^0.35.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

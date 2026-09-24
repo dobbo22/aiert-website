@@ -1,5 +1,6 @@
 import forge from "node-forge";
 import JSZip from "jszip";
+import sharp from "sharp";
 import fs from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
@@ -94,6 +95,85 @@ function buildPassJson(card: TapCardRecord, shareURL: string): object {
   };
 }
 
+function extractDomain(website: string): string | null {
+  try {
+    const prefixed = /^https?:\/\//i.test(website) ? website : `https://${website}`;
+    const host = new URL(prefixed).hostname;
+    return host.replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+}
+
+async function fetchImageBuffer(url: string): Promise<Buffer | null> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    return Buffer.from(await res.arrayBuffer());
+  } catch {
+    return null;
+  }
+}
+
+/// Composites the company favicon + profile photo into a single square
+/// image for the pass's thumbnail slot — mirrors the same "favicon to the
+/// left, photo to the right" layout as the in-app card view, since
+/// PassKit has no way to place two separate images side by side itself.
+/// Built as one SVG (each source image clipped to a circle) rather than
+/// raw pixel math — sharp rasterizes SVG natively, which keeps the
+/// circular-crop logic simple. Returns null if there's nothing to show
+/// (no photo and no resolvable domain) so buildPkpass can skip the
+/// thumbnail files entirely rather than shipping blank ones.
+async function buildThumbnail(card: TapCardRecord): Promise<Buffer | null> {
+  const domain = card.website ? extractDomain(card.website) : null;
+  const [photoBufferRaw, faviconBufferRaw] = await Promise.all([
+    card.photo_url ? fetchImageBuffer(card.photo_url) : Promise.resolve(null),
+    domain ? fetchImageBuffer(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`) : Promise.resolve(null),
+  ]);
+  if (!photoBufferRaw && !faviconBufferRaw) return null;
+
+  // Normalize both to PNG before embedding — the photo is whatever the
+  // uploader's device produced (usually JPEG), and labeling it image/png in
+  // the data URI below (an earlier bug) made the SVG renderer silently drop
+  // it rather than error, since the bytes didn't match the declared type.
+  const [photoBuffer, faviconBuffer] = await Promise.all([
+    photoBufferRaw ? sharp(photoBufferRaw).png().toBuffer() : Promise.resolve(null),
+    faviconBufferRaw ? sharp(faviconBufferRaw).png().toBuffer() : Promise.resolve(null),
+  ]);
+
+  const toDataUri = (buffer: Buffer) => `data:image/png;base64,${buffer.toString("base64")}`;
+  const size = 300;
+  const cy = size / 2;
+  const bothPresent = Boolean(photoBuffer && faviconBuffer);
+  // Equal-sized circles with a real gap between them (mirrors the in-app
+  // card view's 92pt-avatar / 92pt-favicon / 12pt-gap layout) — the
+  // previous radii overlapped the two circles and let the photo one spill
+  // past the canvas edge.
+  const r = bothPresent ? 70 : 130;
+  const faviconCX = bothPresent ? r : size / 2;
+  const photoCX = bothPresent ? size - r : size / 2;
+  const photoR = r;
+  const faviconR = r;
+
+  let svgBody = `<rect width="${size}" height="${size}" fill="none"/>`;
+  if (faviconBuffer) {
+    svgBody += `
+      <clipPath id="favicon-clip"><circle cx="${faviconCX}" cy="${cy}" r="${faviconR}"/></clipPath>
+      <circle cx="${faviconCX}" cy="${cy}" r="${faviconR + 4}" fill="white"/>
+      <image href="${toDataUri(faviconBuffer)}" x="${faviconCX - faviconR}" y="${cy - faviconR}" width="${faviconR * 2}" height="${faviconR * 2}" clip-path="url(#favicon-clip)" preserveAspectRatio="xMidYMid slice"/>
+    `;
+  }
+  if (photoBuffer) {
+    svgBody += `
+      <clipPath id="photo-clip"><circle cx="${photoCX}" cy="${cy}" r="${photoR}"/></clipPath>
+      <image href="${toDataUri(photoBuffer)}" x="${photoCX - photoR}" y="${cy - photoR}" width="${photoR * 2}" height="${photoR * 2}" clip-path="url(#photo-clip)" preserveAspectRatio="xMidYMid slice"/>
+    `;
+  }
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">${svgBody}</svg>`;
+
+  return sharp(Buffer.from(svg)).png().toBuffer();
+}
+
 async function loadPassAssets(): Promise<Record<string, Buffer>> {
   const dir = path.join(process.cwd(), "lib/tapcardPassAssets");
   const filenames = ["icon.png", "icon@2x.png", "icon@3x.png", "logo.png", "logo@2x.png", "logo@3x.png"];
@@ -141,6 +221,21 @@ export async function buildPkpass(card: TapCardRecord, shareURL: string): Promis
   const passJsonBuffer = Buffer.from(JSON.stringify(buildPassJson(card, shareURL)), "utf-8");
 
   const files: Record<string, Buffer> = { "pass.json": passJsonBuffer, ...assets };
+
+  // thumbnail.png (+ @2x/@3x) is picked up by Wallet purely by filename
+  // convention, same as icon/logo — no pass.json field needed. Skipped
+  // entirely when there's neither a photo nor a resolvable favicon.
+  const thumbnailBase = await buildThumbnail(card);
+  if (thumbnailBase) {
+    const [thumb1x, thumb2x, thumb3x] = await Promise.all([
+      sharp(thumbnailBase).resize(90, 90).png().toBuffer(),
+      sharp(thumbnailBase).resize(180, 180).png().toBuffer(),
+      sharp(thumbnailBase).resize(270, 270).png().toBuffer(),
+    ]);
+    files["thumbnail.png"] = thumb1x;
+    files["thumbnail@2x.png"] = thumb2x;
+    files["thumbnail@3x.png"] = thumb3x;
+  }
 
   const manifest: Record<string, string> = {};
   for (const [name, buffer] of Object.entries(files)) {
