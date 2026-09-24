@@ -125,8 +125,8 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
           />
           <PromoCard
             iconSrc="https://www.aiert.co.uk/powersearch-icon.png"
-            headline="Need to find someone's business email?"
-            body="PowerSearch, also from Aiert Ltd, finds verified corporate email addresses across your accounts in seconds."
+            headline="Need to find an old email fast?"
+            body="PowerSearch, also from Aiert Ltd, searches every connected account at once — great for finding that one email with your tickets, a contract, or a receipt buried months ago."
             ctaLabel="Get PowerSearch"
             href={POWERSEARCH_APP_STORE_URL}
           />
