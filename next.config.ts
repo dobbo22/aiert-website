@@ -8,6 +8,12 @@ const AIERT_HOST = "(www\\.)?aiert\\.co\\.uk";
 const MAILBROOM_APEX_HOST = "^mailbroom\\.app$";
 
 const nextConfig: NextConfig = {
+  // sharp (TapCard Wallet pass thumbnail compositing) ships a native
+  // libvips binary — bundling it with the rest of the function (the
+  // default) drops that .so file, producing ERR_DLOPEN_FAILED at runtime.
+  // Marking it external tells Next.js to leave it out of the bundle and
+  // let Vercel's own file tracing include the native binary correctly.
+  serverExternalPackages: ["sharp"],
   async redirects() {
     return [
       // business.mailbroom.app is retired as a content host — mailbroom.app
