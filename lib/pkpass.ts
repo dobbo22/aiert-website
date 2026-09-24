@@ -50,11 +50,24 @@ function loadCredentials() {
 }
 
 function buildPassJson(card: TapCardRecord, shareURL: string): object {
+  // Front-of-pass fields go label-less — a phone number, an email, a job
+  // title all read as exactly what they are without a caption, and Wallet
+  // already renders everything in San Francisco regardless (there's no
+  // font-family control in the pass format at all, only which size tier —
+  // primary/secondary/auxiliary — a field sits in). Back-of-pass fields
+  // keep their labels since that's a plainer list context.
+  const secondaryFields: { key: string; label: string; value: string }[] = [];
   const auxiliaryFields: { key: string; label: string; value: string }[] = [];
   const backFields: { key: string; label: string; value: string }[] = [];
 
-  if (card.phone) auxiliaryFields.push({ key: "phone", label: "PHONE", value: card.phone });
-  if (card.email) auxiliaryFields.push({ key: "email", label: "EMAIL", value: card.email });
+  // Name alone in secondaryFields (medium size, own row) rather than
+  // primaryFields (Wallet's largest tier, no way to shrink it further) —
+  // was rendering oversized for what's meant to be a compact card.
+  if (card.name) secondaryFields.push({ key: "name", label: "", value: card.name });
+  const role = [card.title, card.company].filter(Boolean).join(" · ");
+  if (role) auxiliaryFields.push({ key: "role", label: "", value: role });
+  if (card.phone) auxiliaryFields.push({ key: "phone", label: "", value: card.phone });
+  if (card.email) auxiliaryFields.push({ key: "email", label: "", value: card.email });
   if (card.website) backFields.push({ key: "website", label: "WEBSITE", value: card.website });
   if (card.linkedin_url) backFields.push({ key: "linkedin", label: "LINKEDIN", value: card.linkedin_url });
   backFields.push({ key: "view", label: "VIEW ONLINE", value: shareURL });
@@ -78,10 +91,8 @@ function buildPassJson(card: TapCardRecord, shareURL: string): object {
     // Personal pass appear as a related set, not two unrelated entries.
     ...(card.grouping_id ? { groupingIdentifier: card.grouping_id } : {}),
     generic: {
-      primaryFields: card.name ? [{ key: "name", label: "NAME", value: card.name }] : [],
-      secondaryFields: [card.title, card.company].filter(Boolean).length
-        ? [{ key: "role", label: "ROLE", value: [card.title, card.company].filter(Boolean).join(" · ") }]
-        : [],
+      primaryFields: [],
+      secondaryFields,
       auxiliaryFields,
       backFields,
     },
