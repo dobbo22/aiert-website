@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getCard } from "@/lib/tapcardDb";
+import { after } from "next/server";
+import { getCard, incrementViewCount } from "@/lib/tapcardDb";
 import CompanyLogo from "../../CompanyLogo";
 
 // TODO: real App Store id once TapCard is live in App Store Connect.
@@ -32,12 +33,17 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
   const card = await getCard(id);
   if (!card) notFound();
 
+  // Counted here rather than via a client-side beacon so it also captures
+  // link previews / crawlers minus render — acceptable for a rough "how many
+  // times has this been opened" number, not a precise unique-visitor metric.
+  after(() => incrementViewCount(id));
+
   const contactLines = [
-    { label: card.phone, href: `tel:${card.phone}`, icon: "📞" },
-    { label: card.email, href: `mailto:${card.email}`, icon: "✉️" },
-    { label: card.website, href: normalizeUrl(card.website), icon: "🌐" },
-    { label: card.linkedin_url, href: normalizeUrl(card.linkedin_url), icon: "🔗" },
-  ].filter((line) => line.label);
+    { action: "Call me", value: card.phone, href: `tel:${card.phone}`, icon: "📞", iconBg: "#22C55E" },
+    { action: "Email me", value: card.email, href: `mailto:${card.email}`, icon: "✉️", iconBg: "#A855F7" },
+    { action: "Visit my site", value: card.website, href: normalizeUrl(card.website), icon: "🌐", iconBg: "#3B82F6" },
+    { action: "Follow my LinkedIn", value: card.linkedin_url, href: normalizeUrl(card.linkedin_url), icon: "🔗", iconBg: "#0A66C2" },
+  ].filter((line) => line.value);
 
   const companyDomain = card.website ? extractDomain(card.website) : null;
 
@@ -71,23 +77,33 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
             </p>
           )}
 
-          <div className="mt-5 space-y-2 text-left">
-            {contactLines.map((line) => (
-              <a key={line.label} href={line.href} className="flex items-center gap-3 text-white">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/15 text-sm">
-                  {line.icon}
-                </span>
-                <span className="underline">{line.label}</span>
-              </a>
-            ))}
-          </div>
-
           <a
             href={`/c/${id}/vcard`}
-            className="mt-6 inline-block w-full rounded-xl bg-gold px-4 py-3 font-semibold text-deep-space"
+            className="mt-5 inline-block w-full rounded-xl bg-gold px-4 py-3 font-semibold text-deep-space"
           >
             Save Contact
           </a>
+
+          <div className="mt-5 space-y-2 text-left">
+            {contactLines.map((line) => (
+              <a
+                key={line.action}
+                href={line.href}
+                className="flex items-center gap-3 rounded-xl bg-white/10 px-3 py-2.5"
+              >
+                <span
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-white/30 text-base"
+                  style={{ backgroundColor: line.iconBg }}
+                >
+                  {line.icon}
+                </span>
+                <span className="flex min-w-0 flex-col">
+                  <span className="text-sm font-semibold text-white">{line.action}</span>
+                  <span className="truncate text-sm text-white">{line.value}</span>
+                </span>
+              </a>
+            ))}
+          </div>
         </div>
 
         <a
