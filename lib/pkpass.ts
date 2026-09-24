@@ -50,25 +50,21 @@ function loadCredentials() {
 }
 
 function buildPassJson(card: TapCardRecord, shareURL: string): object {
-  // Front-of-pass fields go label-less — a phone number, an email, a job
-  // title all read as exactly what they are without a caption, and Wallet
-  // already renders everything in San Francisco regardless (there's no
-  // font-family control in the pass format at all, only which size tier —
-  // primary/secondary/auxiliary — a field sits in). Back-of-pass fields
-  // keep their labels since that's a plainer list context.
+  // Standard Wallet generic-pass grid: company in the header (top-right,
+  // alongside the logo), name as the prominent headline, then a proper
+  // two-column WEBSITE/PHONE row, TITLE/EMAIL below that, matching the
+  // reference layout — small caps labels above each value, not the
+  // label-less version tried previously.
+  const headerFields: { key: string; label: string; value: string }[] = [];
   const secondaryFields: { key: string; label: string; value: string }[] = [];
   const auxiliaryFields: { key: string; label: string; value: string }[] = [];
   const backFields: { key: string; label: string; value: string }[] = [];
 
-  // Name alone in secondaryFields (medium size, own row) rather than
-  // primaryFields (Wallet's largest tier, no way to shrink it further) —
-  // was rendering oversized for what's meant to be a compact card.
-  if (card.name) secondaryFields.push({ key: "name", label: "", value: card.name });
-  const role = [card.title, card.company].filter(Boolean).join(" · ");
-  if (role) auxiliaryFields.push({ key: "role", label: "", value: role });
-  if (card.phone) auxiliaryFields.push({ key: "phone", label: "", value: card.phone });
-  if (card.email) auxiliaryFields.push({ key: "email", label: "", value: card.email });
-  if (card.website) backFields.push({ key: "website", label: "WEBSITE", value: card.website });
+  if (card.company) headerFields.push({ key: "company", label: "COMPANY", value: card.company });
+  if (card.website) secondaryFields.push({ key: "website", label: "WEBSITE", value: card.website });
+  if (card.phone) secondaryFields.push({ key: "phone", label: "PHONE", value: card.phone });
+  if (card.title) auxiliaryFields.push({ key: "title", label: "TITLE", value: card.title });
+  if (card.email) auxiliaryFields.push({ key: "email", label: "EMAIL", value: card.email });
   if (card.linkedin_url) backFields.push({ key: "linkedin", label: "LINKEDIN", value: card.linkedin_url });
   backFields.push({ key: "view", label: "VIEW ONLINE", value: shareURL });
 
@@ -91,7 +87,8 @@ function buildPassJson(card: TapCardRecord, shareURL: string): object {
     // Personal pass appear as a related set, not two unrelated entries.
     ...(card.grouping_id ? { groupingIdentifier: card.grouping_id } : {}),
     generic: {
-      primaryFields: [],
+      headerFields,
+      primaryFields: card.name ? [{ key: "name", label: "NAME", value: card.name }] : [],
       secondaryFields,
       auxiliaryFields,
       backFields,
@@ -106,16 +103,6 @@ function buildPassJson(card: TapCardRecord, shareURL: string): object {
   };
 }
 
-function extractDomain(website: string): string | null {
-  try {
-    const prefixed = /^https?:\/\//i.test(website) ? website : `https://${website}`;
-    const host = new URL(prefixed).hostname;
-    return host.replace(/^www\./, "");
-  } catch {
-    return null;
-  }
-}
-
 async function fetchImageBuffer(url: string): Promise<Buffer | null> {
   try {
     const res = await fetch(url);
@@ -126,63 +113,27 @@ async function fetchImageBuffer(url: string): Promise<Buffer | null> {
   }
 }
 
-/// Composites the company favicon + profile photo into a single square
-/// image for the pass's thumbnail slot — mirrors the same "favicon to the
-/// left, photo to the right" layout as the in-app card view, since
-/// PassKit has no way to place two separate images side by side itself.
-/// Built as one SVG (each source image clipped to a circle) rather than
-/// raw pixel math — sharp rasterizes SVG natively, which keeps the
-/// circular-crop logic simple. Returns null if there's nothing to show
-/// (no photo and no resolvable domain) so buildPkpass can skip the
-/// thumbnail files entirely rather than shipping blank ones.
+/// Just the profile photo, cropped to a circle — Wallet's thumbnailImage
+/// renders exactly the pixels given (no automatic circular mask the way an
+/// avatar view does), so the mask has to be applied here for the clean
+/// circular photo the reference layout shows. (An earlier version also
+/// merged in the company favicon side-by-side via a hand-built SVG; dropped
+/// after the reference layout the user pointed at showed a single plain
+/// photo, and it had already been the source of three separate bugs for a
+/// secondary flourish.)
 async function buildThumbnail(card: TapCardRecord): Promise<Buffer | null> {
-  const domain = card.website ? extractDomain(card.website) : null;
-  const [photoBufferRaw, faviconBufferRaw] = await Promise.all([
-    card.photo_url ? fetchImageBuffer(card.photo_url) : Promise.resolve(null),
-    domain ? fetchImageBuffer(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`) : Promise.resolve(null),
-  ]);
-  if (!photoBufferRaw && !faviconBufferRaw) return null;
+  if (!card.photo_url) return null;
+  const photoBufferRaw = await fetchImageBuffer(card.photo_url);
+  if (!photoBufferRaw) return null;
 
-  // Normalize both to PNG before embedding — the photo is whatever the
-  // uploader's device produced (usually JPEG), and labeling it image/png in
-  // the data URI below (an earlier bug) made the SVG renderer silently drop
-  // it rather than error, since the bytes didn't match the declared type.
-  const [photoBuffer, faviconBuffer] = await Promise.all([
-    photoBufferRaw ? sharp(photoBufferRaw).png().toBuffer() : Promise.resolve(null),
-    faviconBufferRaw ? sharp(faviconBufferRaw).png().toBuffer() : Promise.resolve(null),
-  ]);
-
-  const toDataUri = (buffer: Buffer) => `data:image/png;base64,${buffer.toString("base64")}`;
   const size = 300;
-  const cy = size / 2;
-  const bothPresent = Boolean(photoBuffer && faviconBuffer);
-  // Equal-sized circles with a real gap between them (mirrors the in-app
-  // card view's 92pt-avatar / 92pt-favicon / 12pt-gap layout) — the
-  // previous radii overlapped the two circles and let the photo one spill
-  // past the canvas edge.
-  const r = bothPresent ? 70 : 130;
-  const faviconCX = bothPresent ? r : size / 2;
-  const photoCX = bothPresent ? size - r : size / 2;
-  const photoR = r;
-  const faviconR = r;
+  const squared = await sharp(photoBufferRaw).resize(size, size, { fit: "cover" }).png().toBuffer();
+  const circleMask = Buffer.from(`<svg width="${size}" height="${size}"><circle cx="${size / 2}" cy="${size / 2}" r="${size / 2}" fill="#fff"/></svg>`);
 
-  let svgBody = `<rect width="${size}" height="${size}" fill="none"/>`;
-  if (faviconBuffer) {
-    svgBody += `
-      <clipPath id="favicon-clip"><circle cx="${faviconCX}" cy="${cy}" r="${faviconR}"/></clipPath>
-      <circle cx="${faviconCX}" cy="${cy}" r="${faviconR + 4}" fill="white"/>
-      <image href="${toDataUri(faviconBuffer)}" x="${faviconCX - faviconR}" y="${cy - faviconR}" width="${faviconR * 2}" height="${faviconR * 2}" clip-path="url(#favicon-clip)" preserveAspectRatio="xMidYMid slice"/>
-    `;
-  }
-  if (photoBuffer) {
-    svgBody += `
-      <clipPath id="photo-clip"><circle cx="${photoCX}" cy="${cy}" r="${photoR}"/></clipPath>
-      <image href="${toDataUri(photoBuffer)}" x="${photoCX - photoR}" y="${cy - photoR}" width="${photoR * 2}" height="${photoR * 2}" clip-path="url(#photo-clip)" preserveAspectRatio="xMidYMid slice"/>
-    `;
-  }
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">${svgBody}</svg>`;
-
-  return sharp(Buffer.from(svg)).png().toBuffer();
+  return sharp(squared)
+    .composite([{ input: circleMask, blend: "dest-in" }])
+    .png()
+    .toBuffer();
 }
 
 async function loadPassAssets(): Promise<Record<string, Buffer>> {
