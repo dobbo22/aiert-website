@@ -13,9 +13,11 @@ export interface TapCardRecord {
   website: string;
   linkedin_url: string;
   photo_url: string | null;
+  view_count: number;
+  save_count: number;
 }
 
-type TapCardInput = Omit<TapCardRecord, "id" | "photo_url"> & { photo_url?: string | null };
+type TapCardInput = Omit<TapCardRecord, "id" | "photo_url" | "view_count" | "save_count"> & { photo_url?: string | null };
 
 // Self-healing schema: Vercel's DATABASE_URL is a hidden "Secret" env var,
 // so it can't be read out to run scripts/migrate-tapcard.mjs against
@@ -44,6 +46,8 @@ function ensureSchema(): Promise<unknown> {
     `
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS label TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS grouping_id TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS view_count INTEGER NOT NULL DEFAULT 0`)
+      .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS save_count INTEGER NOT NULL DEFAULT 0`)
       .catch((err) => {
         schemaReady = null; // let the next call retry rather than caching a failure
         throw err;
@@ -94,4 +98,17 @@ export async function deleteCard(id: string): Promise<boolean> {
   await ensureSchema();
   const rows = await sql`DELETE FROM tapcard_cards WHERE id = ${id} RETURNING id`;
   return rows.length > 0;
+}
+
+// Fire-and-forget from the public page/vcard routes (see app/tapcard/c/[id]) —
+// callers wrap these in next/server's after() so the visitor's response isn't
+// held up by the write, and a failed increment never breaks the page itself.
+export async function incrementViewCount(id: string): Promise<void> {
+  await ensureSchema();
+  await sql`UPDATE tapcard_cards SET view_count = view_count + 1 WHERE id = ${id}`;
+}
+
+export async function incrementSaveCount(id: string): Promise<void> {
+  await ensureSchema();
+  await sql`UPDATE tapcard_cards SET save_count = save_count + 1 WHERE id = ${id}`;
 }
