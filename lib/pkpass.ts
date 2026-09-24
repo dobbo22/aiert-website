@@ -63,8 +63,11 @@ function buildPassJson(card: TapCardRecord, shareURL: string): object {
   if (card.company) headerFields.push({ key: "company", label: "COMPANY", value: card.company });
   if (card.website) secondaryFields.push({ key: "website", label: "WEBSITE", value: card.website });
   if (card.phone) secondaryFields.push({ key: "phone", label: "PHONE", value: card.phone });
-  if (card.title) auxiliaryFields.push({ key: "title", label: "TITLE", value: card.title });
+  // EMAIL alone, not sharing its row with TITLE — the reference layout
+  // shows just one field in that row, spacious rather than cramped. Title
+  // still lives on the back of the pass rather than being dropped outright.
   if (card.email) auxiliaryFields.push({ key: "email", label: "EMAIL", value: card.email });
+  if (card.title) backFields.push({ key: "title", label: "TITLE", value: card.title });
   if (card.linkedin_url) backFields.push({ key: "linkedin", label: "LINKEDIN", value: card.linkedin_url });
   backFields.push({ key: "view", label: "VIEW ONLINE", value: shareURL });
 
@@ -212,19 +215,28 @@ export async function buildPkpass(card: TapCardRecord, shareURL: string): Promis
 
   const files: Record<string, Buffer> = { "pass.json": passJsonBuffer, ...assets };
 
-  // Company favicon overrides the static TapCard logo when resolvable —
-  // falls back to the bundled asset already in `files` (from loadPassAssets)
-  // if there's no website or the favicon fetch fails.
+  // Company favicon overrides the static TapCard logo AND icon when
+  // resolvable — falls back to the bundled assets already in `files` (from
+  // loadPassAssets) if there's no website or the favicon fetch fails. icon
+  // is what Wallet uses for notifications/lock-screen/Watch contexts, not
+  // just the visible header logo — both were still showing TapCard's own
+  // branding until now.
   const companyLogo = await buildCompanyLogo(card);
   if (companyLogo) {
-    const [logo1x, logo2x, logo3x] = await Promise.all([
+    const [logo1x, logo2x, logo3x, icon1x, icon2x, icon3x] = await Promise.all([
       sharp(companyLogo).resize(50, 50).png().toBuffer(),
       sharp(companyLogo).resize(100, 100).png().toBuffer(),
       sharp(companyLogo).resize(150, 150).png().toBuffer(),
+      sharp(companyLogo).resize(29, 29).png().toBuffer(),
+      sharp(companyLogo).resize(58, 58).png().toBuffer(),
+      sharp(companyLogo).resize(87, 87).png().toBuffer(),
     ]);
     files["logo.png"] = logo1x;
     files["logo@2x.png"] = logo2x;
     files["logo@3x.png"] = logo3x;
+    files["icon.png"] = icon1x;
+    files["icon@2x.png"] = icon2x;
+    files["icon@3x.png"] = icon3x;
   }
 
   // thumbnail.png (+ @2x/@3x) is picked up by Wallet purely by filename
