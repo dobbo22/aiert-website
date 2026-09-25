@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createCard, updateCard } from "@/lib/tapcardDb";
+import { countRecentCreates, createCard, getCard, updateCard } from "@/lib/tapcardDb";
+import { canEdit, clientIpHash, hashSecret, readEditToken } from "@/lib/tapcardAuth";
 
 interface CardBody {
   id?: string;
@@ -63,12 +64,14 @@ function sanitize(body: CardBody) {
   };
 }
 
-// No auth: the id returned here is an unguessable token the iOS app stores
-// locally and treats as its write credential (see lib/tapcardDb.ts). This
-// is TapCard's whole security model for MVP — acceptable for a free,
-// no-login lead-gen app with no sensitive data beyond what's on a printed
-// business card, but not a pattern to copy for anything more sensitive.
+// No accounts: each card has a secret edit token that only the owner's app
+// holds (see lib/tapcardAuth.ts). Creating a card sets it; updating needs it.
+const MAX_CREATES_PER_HOUR = 20;
+
 export async function POST(req: NextRequest) {
+  const token = readEditToken(req);
+  if (!token) return NextResponse.json({ error: "edit token required" }, { status: 401 });
+
   const body = (await req.json()) as CardBody;
   if (!body.name?.trim()) {
     return NextResponse.json({ error: "name is required" }, { status: 400 });
@@ -76,13 +79,23 @@ export async function POST(req: NextRequest) {
   const fields = sanitize(body);
 
   if (body.id) {
-    const updated = await updateCard(body.id, fields);
-    if (updated) return NextResponse.json({ id: body.id });
+    const existing = await getCard(body.id);
+    if (existing) {
+      if (!(await canEdit(existing, token))) {
+        return NextResponse.json({ error: "forbidden" }, { status: 403 });
+      }
+      await updateCard(body.id, fields);
+      return NextResponse.json({ id: body.id });
+    }
     // Falls through to create — an id the iOS app has locally but that no
     // longer exists server-side (e.g. after a "Stop sharing" delete)
     // should re-create rather than 404, so re-sharing just works.
   }
 
-  const id = await createCard(fields);
+  const ipHash = clientIpHash(req);
+  if ((await countRecentCreates(ipHash)) >= MAX_CREATES_PER_HOUR) {
+    return NextResponse.json({ error: "too many cards created, try again later" }, { status: 429 });
+  }
+  const id = await createCard(fields, hashSecret(token), ipHash);
   return NextResponse.json({ id });
 }

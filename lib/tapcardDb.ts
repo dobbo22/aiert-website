@@ -18,11 +18,14 @@ export interface TapCardRecord {
   facebook_is_page: boolean;
   tiktok_url: string;
   photo_url: string | null;
+  /// SHA-256 of the app's secret edit token — see lib/tapcardAuth.ts. Null
+  /// only for cards shared before tokens existed, until the app claims them.
+  edit_token_hash: string | null;
   view_count: number;
   save_count: number;
 }
 
-type TapCardInput = Omit<TapCardRecord, "id" | "photo_url" | "view_count" | "save_count"> & { photo_url?: string | null };
+type TapCardInput = Omit<TapCardRecord, "id" | "photo_url" | "edit_token_hash" | "view_count" | "save_count"> & { photo_url?: string | null };
 
 // Self-healing schema: Vercel's DATABASE_URL is a hidden "Secret" env var,
 // so it can't be read out to run scripts/migrate-tapcard.mjs against
@@ -58,6 +61,8 @@ function ensureSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS facebook_url TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS tiktok_url TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS facebook_is_page BOOLEAN NOT NULL DEFAULT false`)
+      .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS edit_token_hash TEXT`)
+      .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS creator_ip_hash TEXT NOT NULL DEFAULT ''`)
       .catch((err) => {
         schemaReady = null; // let the next call retry rather than caching a failure
         throw err;
@@ -73,14 +78,16 @@ export function newCardId(): string {
   return crypto.randomBytes(16).toString("base64url");
 }
 
-export async function createCard(input: TapCardInput): Promise<string> {
+export async function createCard(input: TapCardInput, editTokenHash: string, creatorIpHash: string): Promise<string> {
   await ensureSchema();
   const id = newCardId();
   await sql`
     INSERT INTO tapcard_cards (id, label, grouping_id, name, title, company, phone, email, website, linkedin_url,
-                               twitter_url, instagram_url, facebook_url, facebook_is_page, tiktok_url, photo_url)
+                               twitter_url, instagram_url, facebook_url, facebook_is_page, tiktok_url, photo_url,
+                               edit_token_hash, creator_ip_hash)
     VALUES (${id}, ${input.label}, ${input.grouping_id}, ${input.name}, ${input.title}, ${input.company}, ${input.phone}, ${input.email}, ${input.website}, ${input.linkedin_url},
-            ${input.twitter_url}, ${input.instagram_url}, ${input.facebook_url}, ${input.facebook_is_page}, ${input.tiktok_url}, ${input.photo_url ?? null})
+            ${input.twitter_url}, ${input.instagram_url}, ${input.facebook_url}, ${input.facebook_is_page}, ${input.tiktok_url}, ${input.photo_url ?? null},
+            ${editTokenHash}, ${creatorIpHash})
   `;
   return id;
 }
@@ -107,6 +114,28 @@ export async function getCard(id: string): Promise<TapCardRecord | null> {
   await ensureSchema();
   const rows = (await sql`SELECT * FROM tapcard_cards WHERE id = ${id}`) as TapCardRecord[];
   return rows[0] ?? null;
+}
+
+/// Only sets the hash when there isn't one yet (a card shared before edit
+/// tokens existed) — the first token-bearing request claims it. Returns
+/// false if another request claimed it first.
+export async function claimEditToken(id: string, editTokenHash: string): Promise<boolean> {
+  await ensureSchema();
+  const rows = await sql`
+    UPDATE tapcard_cards SET edit_token_hash = ${editTokenHash}
+    WHERE id = ${id} AND edit_token_hash IS NULL
+    RETURNING id
+  `;
+  return rows.length > 0;
+}
+
+export async function countRecentCreates(creatorIpHash: string): Promise<number> {
+  await ensureSchema();
+  const rows = (await sql`
+    SELECT count(*)::int AS n FROM tapcard_cards
+    WHERE creator_ip_hash = ${creatorIpHash} AND created_at > now() - interval '1 hour'
+  `) as { n: number }[];
+  return rows[0]?.n ?? 0;
 }
 
 export async function deleteCard(id: string): Promise<boolean> {
