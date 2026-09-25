@@ -12,6 +12,10 @@ export interface TapCardRecord {
   email: string;
   website: string;
   linkedin_url: string;
+  twitter_url: string;
+  instagram_url: string;
+  facebook_url: string;
+  tiktok_url: string;
   photo_url: string | null;
   view_count: number;
   save_count: number;
@@ -48,6 +52,10 @@ function ensureSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS grouping_id TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS view_count INTEGER NOT NULL DEFAULT 0`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS save_count INTEGER NOT NULL DEFAULT 0`)
+      .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS twitter_url TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS instagram_url TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS facebook_url TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS tiktok_url TEXT NOT NULL DEFAULT ''`)
       .catch((err) => {
         schemaReady = null; // let the next call retry rather than caching a failure
         throw err;
@@ -67,8 +75,10 @@ export async function createCard(input: TapCardInput): Promise<string> {
   await ensureSchema();
   const id = newCardId();
   await sql`
-    INSERT INTO tapcard_cards (id, label, grouping_id, name, title, company, phone, email, website, linkedin_url, photo_url)
-    VALUES (${id}, ${input.label}, ${input.grouping_id}, ${input.name}, ${input.title}, ${input.company}, ${input.phone}, ${input.email}, ${input.website}, ${input.linkedin_url}, ${input.photo_url ?? null})
+    INSERT INTO tapcard_cards (id, label, grouping_id, name, title, company, phone, email, website, linkedin_url,
+                               twitter_url, instagram_url, facebook_url, tiktok_url, photo_url)
+    VALUES (${id}, ${input.label}, ${input.grouping_id}, ${input.name}, ${input.title}, ${input.company}, ${input.phone}, ${input.email}, ${input.website}, ${input.linkedin_url},
+            ${input.twitter_url}, ${input.instagram_url}, ${input.facebook_url}, ${input.tiktok_url}, ${input.photo_url ?? null})
   `;
   return id;
 }
@@ -80,6 +90,8 @@ export async function updateCard(id: string, input: TapCardInput): Promise<boole
     SET label = ${input.label}, grouping_id = ${input.grouping_id}, name = ${input.name}, title = ${input.title}, company = ${input.company},
         phone = ${input.phone}, email = ${input.email}, website = ${input.website},
         linkedin_url = ${input.linkedin_url},
+        twitter_url = ${input.twitter_url}, instagram_url = ${input.instagram_url},
+        facebook_url = ${input.facebook_url}, tiktok_url = ${input.tiktok_url},
         photo_url = COALESCE(${input.photo_url ?? null}, photo_url),
         updated_at = now()
     WHERE id = ${id}

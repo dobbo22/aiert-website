@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { after } from "next/server";
 import { getCard, incrementViewCount } from "@/lib/tapcardDb";
 import CompanyLogo from "../../CompanyLogo";
+import ContactIcon, { type ContactIconName } from "../../ContactIcon";
 
 // TODO: real App Store id once TapCard is live in App Store Connect.
 const TAPCARD_APP_STORE_URL = "https://apps.apple.com/app/tapcard";
@@ -38,71 +39,103 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
   // times has this been opened" number, not a precise unique-visitor metric.
   after(() => incrementViewCount(id));
 
-  const contactLines = [
-    { action: "Call me", value: card.phone, href: `tel:${card.phone}`, icon: "📞", iconBg: "#22C55E" },
-    { action: "Email me", value: card.email, href: `mailto:${card.email}`, icon: "✉️", iconBg: "#A855F7" },
-    { action: "Visit my site", value: card.website, href: normalizeUrl(card.website), icon: "🌐", iconBg: "#3B82F6" },
-    { action: "Follow my LinkedIn", value: card.linkedin_url, href: normalizeUrl(card.linkedin_url), icon: "🔗", iconBg: "#0A66C2" },
-  ].filter((line) => line.value);
+  const contactLines: { action: string; value: string; href: string; icon: ContactIconName; iconBg: string }[] = [
+    { action: "Call me", value: card.phone, href: `tel:${card.phone}`, icon: "phone", iconBg: "#22C55E" },
+    { action: "Email me", value: card.email, href: `mailto:${card.email}`, icon: "mail", iconBg: "#A855F7" },
+    { action: "Visit my site", value: card.website, href: normalizeUrl(card.website), icon: "globe", iconBg: "#3B82F6" },
+    { action: "Follow my LinkedIn", value: card.linkedin_url, href: normalizeUrl(card.linkedin_url), icon: "linkedin", iconBg: "#0A66C2" },
+    { action: "Follow me on X", value: card.twitter_url, href: normalizeUrl(card.twitter_url), icon: "x", iconBg: "#000000" },
+    {
+      action: "Follow my Instagram",
+      value: card.instagram_url,
+      href: normalizeUrl(card.instagram_url),
+      icon: "instagram",
+      iconBg: "linear-gradient(45deg, #FEDA75, #FA7E1E, #D62976, #962FBF, #4F5BD5)",
+    },
+    { action: "Find me on Facebook", value: card.facebook_url, href: normalizeUrl(card.facebook_url), icon: "facebook", iconBg: "#0866FF" },
+    { action: "Follow my TikTok", value: card.tiktok_url, href: normalizeUrl(card.tiktok_url), icon: "tiktok", iconBg: "#000000" },
+  ];
+  const visibleLines = contactLines.filter((line) => line.value);
 
   const companyDomain = card.website ? extractDomain(card.website) : null;
 
   return (
     <main className="min-h-screen flex flex-col items-center px-4 py-12">
       <div className="w-full max-w-sm">
-        {/* Same navy-to-purple gradient as the app icon and the iOS card view */}
-        <div className="rounded-3xl bg-gradient-to-br from-[#1A2138] to-[#422975] p-6 text-center shadow-xl">
-          {card.label && (
-            <span className="mb-3 inline-block rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
-              {card.label}
-            </span>
-          )}
-          {card.photo_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={card.photo_url}
-              alt={card.name}
-              className="mx-auto mb-4 h-24 w-24 rounded-full border-2 border-white/50 object-cover"
-            />
-          ) : (
-            <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full border-2 border-white/50 bg-white/15 text-4xl text-white">
-              🙂
+        <div className="overflow-hidden rounded-3xl bg-[#111318] text-center shadow-xl ring-1 ring-white/10">
+          {/* Cover banner: the card's own photo blurred out behind it, or
+              the app icon's navy-to-purple gradient when there's no photo. */}
+          <div className="relative h-36 overflow-hidden bg-gradient-to-br from-[#1A2138] to-[#422975]">
+            {card.photo_url && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={card.photo_url}
+                alt=""
+                className="absolute inset-0 h-full w-full scale-125 object-cover blur-2xl"
+              />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#111318]" />
+            {card.label && (
+              <span className="absolute left-4 top-4 rounded-full bg-black/40 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
+                {card.label}
+              </span>
+            )}
+          </div>
+
+          <div className="relative -mt-16 px-5 pb-6">
+            <div className="relative mx-auto h-28 w-28">
+              {card.photo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={card.photo_url}
+                  alt={card.name}
+                  className="h-28 w-28 rounded-full object-cover ring-4 ring-[#111318]"
+                />
+              ) : (
+                <div className="flex h-28 w-28 items-center justify-center rounded-full bg-white/15 text-5xl text-white ring-4 ring-[#111318]">
+                  🙂
+                </div>
+              )}
+              {companyDomain && (
+                <span className="absolute -bottom-1 -right-1 rounded-full bg-white p-1 ring-4 ring-[#111318]">
+                  <CompanyLogo domain={companyDomain} />
+                </span>
+              )}
             </div>
-          )}
-          <h1 className="text-xl font-semibold text-white">{card.name}</h1>
-          {(card.title || card.company) && (
-            <p className="mt-1 flex items-center justify-center gap-2 text-white">
-              {companyDomain && <CompanyLogo domain={companyDomain} />}
-              <span>{[card.title, card.company].filter(Boolean).join(" · ")}</span>
-            </p>
-          )}
 
-          <a
-            href={`/c/${id}/vcard`}
-            className="mt-5 inline-block w-full rounded-xl bg-gold px-4 py-3 font-semibold text-deep-space"
-          >
-            Save Contact
-          </a>
+            <h1 className="mt-4 text-2xl font-bold text-white">{card.name}</h1>
+            {(card.title || card.company) && (
+              <p className="mt-1 text-sm text-white">{[card.title, card.company].filter(Boolean).join(" · ")}</p>
+            )}
 
-          <div className="mt-5 space-y-2 text-left">
-            {contactLines.map((line) => (
-              <a
-                key={line.action}
-                href={line.href}
-                className="flex items-center gap-3 rounded-xl bg-white/10 px-3 py-2.5"
-              >
-                <span
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-white/30 text-base"
-                  style={{ backgroundColor: line.iconBg }}
+            <a
+              href={`/c/${id}/vcard`}
+              className="mt-5 inline-block w-full rounded-xl bg-white px-4 py-3 font-semibold text-[#111318]"
+            >
+              Save Contact
+            </a>
+
+            <div className="mt-5 space-y-2 text-left">
+              {visibleLines.map((line) => (
+                <a
+                  key={line.action}
+                  href={line.href}
+                  className="flex items-center gap-3 rounded-2xl bg-white/[0.07] px-3 py-2.5 transition-colors hover:bg-white/[0.12]"
                 >
-                  {line.icon}
-                </span>
-                <span className="flex min-w-0 flex-col">
-                  <span className="text-sm font-semibold text-white">{line.action}</span>
-                  <span className="truncate text-sm text-white">{line.value}</span>
-                </span>
-              </a>
-            ))}
+                  {/* ring keeps the black X/TikTok tiles visible on the dark row */}
+                  <span
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1 ring-white/15"
+                    style={{ background: line.iconBg }}
+                  >
+                    <ContactIcon name={line.icon} />
+                  </span>
+                  <span className="flex min-w-0 flex-col">
+                    <span className="text-sm font-semibold text-white">{line.action}</span>
+                    <span className="truncate text-sm text-white">{displayUrl(line.value)}</span>
+                  </span>
+                </a>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -138,6 +171,11 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
 
 function normalizeUrl(value: string): string {
   return /^https?:\/\//i.test(value) ? value : `https://${value}`;
+}
+
+// Display only — the href keeps the full URL. Harmless on phone/email.
+function displayUrl(value: string): string {
+  return value.replace(/^https?:\/\/(www\.)?/i, "");
 }
 
 function extractDomain(website: string): string | null {

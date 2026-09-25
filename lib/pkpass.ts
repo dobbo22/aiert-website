@@ -69,6 +69,10 @@ function buildPassJson(card: TapCardRecord, shareURL: string): object {
   if (card.email) auxiliaryFields.push({ key: "email", label: "EMAIL", value: card.email });
   if (card.title) backFields.push({ key: "title", label: "TITLE", value: card.title });
   if (card.linkedin_url) backFields.push({ key: "linkedin", label: "LINKEDIN", value: card.linkedin_url });
+  if (card.twitter_url) backFields.push({ key: "twitter", label: "X", value: card.twitter_url });
+  if (card.instagram_url) backFields.push({ key: "instagram", label: "INSTAGRAM", value: card.instagram_url });
+  if (card.facebook_url) backFields.push({ key: "facebook", label: "FACEBOOK", value: card.facebook_url });
+  if (card.tiktok_url) backFields.push({ key: "tiktok", label: "TIKTOK", value: card.tiktok_url });
   backFields.push({ key: "view", label: "VIEW ONLINE", value: shareURL });
 
   return {

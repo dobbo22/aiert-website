@@ -23,6 +23,10 @@ export function buildVCard(card: TapCardRecord): string {
   if (card.email) lines.push(`EMAIL:${escapeVCardText(card.email)}`);
   if (card.website) lines.push(`URL:${escapeVCardText(card.website)}`);
   if (card.linkedin_url) lines.push(`X-SOCIALPROFILE;TYPE=linkedin:${escapeVCardText(card.linkedin_url)}`);
+  if (card.twitter_url) lines.push(`X-SOCIALPROFILE;TYPE=twitter:${escapeVCardText(card.twitter_url)}`);
+  if (card.instagram_url) lines.push(`X-SOCIALPROFILE;TYPE=instagram:${escapeVCardText(card.instagram_url)}`);
+  if (card.facebook_url) lines.push(`X-SOCIALPROFILE;TYPE=facebook:${escapeVCardText(card.facebook_url)}`);
+  if (card.tiktok_url) lines.push(`X-SOCIALPROFILE;TYPE=tiktok:${escapeVCardText(card.tiktok_url)}`);
   if (card.photo_url) lines.push(`PHOTO;VALUE=URL:${escapeVCardText(card.photo_url)}`);
 
   lines.push("END:VCARD");

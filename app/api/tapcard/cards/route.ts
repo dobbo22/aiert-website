@@ -12,6 +12,10 @@ interface CardBody {
   email?: string;
   website?: string;
   linkedInURL?: string;
+  twitterURL?: string;
+  instagramURL?: string;
+  facebookURL?: string;
+  tiktokURL?: string;
 }
 
 function sanitize(body: CardBody) {
@@ -25,6 +29,10 @@ function sanitize(body: CardBody) {
     email: (body.email ?? "").trim().slice(0, 200),
     website: (body.website ?? "").trim().slice(0, 300),
     linkedin_url: (body.linkedInURL ?? "").trim().slice(0, 300),
+    twitter_url: (body.twitterURL ?? "").trim().slice(0, 300),
+    instagram_url: (body.instagramURL ?? "").trim().slice(0, 300),
+    facebook_url: (body.facebookURL ?? "").trim().slice(0, 300),
+    tiktok_url: (body.tiktokURL ?? "").trim().slice(0, 300),
   };
 }
 
