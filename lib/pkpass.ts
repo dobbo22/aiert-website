@@ -49,18 +49,24 @@ function loadCredentials() {
   return cachedCredentials;
 }
 
+// Same rule as the iOS app: only a card named "Personal" counts as personal.
+function isPersonalCard(card: TapCardRecord): boolean {
+  return /personal/i.test(card.label);
+}
+
 function buildPassJson(card: TapCardRecord, shareURL: string): object {
-  // Standard Wallet generic-pass grid: company in the header (top-right,
-  // alongside the logo), name as the prominent headline, then a proper
-  // two-column WEBSITE/PHONE row, TITLE/EMAIL below that, matching the
-  // reference layout — small caps labels above each value, not the
-  // label-less version tried previously.
+  const personal = isPersonalCard(card);
+  // Standard Wallet generic-pass grid. The top strip (logo, logoText,
+  // header field) is all that shows when passes are stacked in Wallet, so
+  // it carries what tells cards apart: company logo + company name on the
+  // left, the card's own name ("Business", "Consulting"…) on the right.
+  // Then the person's name as the headline, WEBSITE/PHONE, and EMAIL.
   const headerFields: { key: string; label: string; value: string }[] = [];
   const secondaryFields: { key: string; label: string; value: string }[] = [];
   const auxiliaryFields: { key: string; label: string; value: string }[] = [];
   const backFields: { key: string; label: string; value: string }[] = [];
 
-  if (card.company) headerFields.push({ key: "company", label: "COMPANY", value: card.company });
+  if (card.label) headerFields.push({ key: "card", label: "CARD", value: card.label });
   if (card.website) secondaryFields.push({ key: "website", label: "WEBSITE", value: card.website });
   if (card.phone) secondaryFields.push({ key: "phone", label: "PHONE", value: card.phone });
   // EMAIL alone in its row — spacious rather than cramped. The job title
@@ -80,15 +86,17 @@ function buildPassJson(card: TapCardRecord, shareURL: string): object {
     organizationName: "TapCard",
     serialNumber: card.id,
     description: `${card.name || "TapCard"}'s ${card.label ? card.label.toLowerCase() : "business"} card`,
-    // Same near-black as the public card page and the in-app card (#111318),
-    // with white values. Generic passes only take a solid background colour.
+    // Business cards use the same near-black as the public card page and
+    // in-app card (#111318); a Personal card uses the brand purple (#422975)
+    // so the two are distinguishable at a glance in the Wallet stack.
+    // Generic passes only take a solid background colour.
     foregroundColor: "rgb(255, 255, 255)",
-    backgroundColor: "rgb(17, 19, 24)",
-    labelColor: "rgb(196, 165, 255)",
-    // No logoText — the logo image itself is now the company's own favicon
-    // (see buildLogo), which sits in the same header row as the COMPANY
-    // field, so the two already read as "favicon next to company name"
-    // without needing any text label here.
+    backgroundColor: personal ? "rgb(66, 41, 117)" : "rgb(17, 19, 24)",
+    labelColor: personal ? "rgb(221, 214, 254)" : "rgb(196, 165, 255)",
+    // Next to the logo (company favicon, see buildCompanyLogo): the company
+    // name, so two business cards read as different companies; a card with
+    // no company falls back to the person's name.
+    logoText: card.company || card.name,
     // Passes sharing the same passTypeIdentifier + groupingIdentifier get
     // visually stacked together in Wallet (the same mechanism used for
     // connecting-flight boarding passes) — so a device's Business and
