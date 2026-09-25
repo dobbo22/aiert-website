@@ -193,6 +193,22 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
             href={POWERSEARCH_APP_STORE_URL}
           />
         </div>
+
+        {/* Apple guideline 1.2: public user content needs a way to report it. */}
+        <p className="mt-8 text-center text-xs text-cloud">
+          <a
+            href={`mailto:enquiries@aiert.co.uk?subject=${encodeURIComponent(`Report TapCard ${id}`)}&body=${encodeURIComponent(
+              `Card: https://tapcard.aiert.co.uk/c/${id}\n\nWhat's wrong with this card?\n`,
+            )}`}
+            className="underline"
+          >
+            Report this card
+          </a>
+          {" · "}
+          <a href="/privacy" className="underline">
+            Privacy
+          </a>
+        </p>
       </div>
     </main>
   );

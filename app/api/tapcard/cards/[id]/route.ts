@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { put } from "@vercel/blob";
+import { del, put } from "@vercel/blob";
 import { deleteCard, getCard, updateCard } from "@/lib/tapcardDb";
 import { canEdit, readEditToken } from "@/lib/tapcardAuth";
 
@@ -17,6 +17,9 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
   await deleteCard(id);
+  // The photo lives at its own public Blob URL — without this it stayed
+  // reachable after "Stop sharing". Best-effort: the card itself is gone.
+  if (existing.photo_url) await del(existing.photo_url).catch(() => {});
   return NextResponse.json({ ok: true });
 }
 
@@ -42,5 +45,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const blob = await put(`tapcard/${id}-${Date.now()}`, file, { access: "public" });
   await updateCard(id, { ...existing, photo_url: blob.url });
+  // Each upload gets a new URL, so remove the photo it replaced.
+  if (existing.photo_url) await del(existing.photo_url).catch(() => {});
   return NextResponse.json({ url: blob.url });
 }
