@@ -19,6 +19,31 @@ interface CardBody {
   tiktokURL?: string;
 }
 
+// Same rules as the iOS app's SocialProfileLink: a bare handle ("@Aiert")
+// becomes a profile URL, a scheme-less URL gets https://. Covers cards
+// shared by app builds that didn't normalize before sending.
+const SOCIAL_PROFILES = {
+  linkedin: { base: "https://www.linkedin.com/in/", domains: ["linkedin.com"] },
+  x: { base: "https://x.com/", domains: ["x.com", "twitter.com"] },
+  instagram: { base: "https://www.instagram.com/", domains: ["instagram.com"] },
+  facebook: { base: "https://www.facebook.com/", domains: ["facebook.com", "fb.com"] },
+  tiktok: { base: "https://www.tiktok.com/@", domains: ["tiktok.com"] },
+};
+
+function socialUrl(raw: string | undefined, platform: keyof typeof SOCIAL_PROFILES): string {
+  const value = (raw ?? "").trim();
+  if (!value) return "";
+  const { base, domains } = SOCIAL_PROFILES[platform];
+  let url: string;
+  if (/^https?:\/\//i.test(value)) url = value;
+  else if (value.includes("/") || domains.some((d) => value.toLowerCase().includes(d))) url = `https://${value}`;
+  else {
+    const handle = value.replace(/^[@\s]+|\s+$/g, "");
+    url = handle ? base + handle : "";
+  }
+  return url.slice(0, 300);
+}
+
 function sanitize(body: CardBody) {
   return {
     label: (body.label ?? "").trim().slice(0, 60),
@@ -29,12 +54,12 @@ function sanitize(body: CardBody) {
     phone: (body.phone ?? "").trim().slice(0, 60),
     email: (body.email ?? "").trim().slice(0, 200),
     website: (body.website ?? "").trim().slice(0, 300),
-    linkedin_url: (body.linkedInURL ?? "").trim().slice(0, 300),
-    twitter_url: (body.twitterURL ?? "").trim().slice(0, 300),
-    instagram_url: (body.instagramURL ?? "").trim().slice(0, 300),
-    facebook_url: (body.facebookURL ?? "").trim().slice(0, 300),
+    linkedin_url: socialUrl(body.linkedInURL, "linkedin"),
+    twitter_url: socialUrl(body.twitterURL, "x"),
+    instagram_url: socialUrl(body.instagramURL, "instagram"),
+    facebook_url: socialUrl(body.facebookURL, "facebook"),
     facebook_is_page: body.facebookIsPage === true,
-    tiktok_url: (body.tiktokURL ?? "").trim().slice(0, 300),
+    tiktok_url: socialUrl(body.tiktokURL, "tiktok"),
   };
 }
 
