@@ -43,19 +43,22 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
     { action: "Call me", value: card.phone, href: `tel:${card.phone}`, icon: "phone", iconBg: "#22C55E" },
     { action: "Email me", value: card.email, href: `mailto:${card.email}`, icon: "mail", iconBg: "#A855F7" },
     { action: "Visit my site", value: card.website, href: normalizeUrl(card.website), icon: "globe", iconBg: "#3B82F6" },
-    { action: "Follow my LinkedIn", value: card.linkedin_url, href: normalizeUrl(card.linkedin_url), icon: "linkedin", iconBg: "#0A66C2" },
-    { action: "Follow me on X", value: card.twitter_url, href: normalizeUrl(card.twitter_url), icon: "x", iconBg: "#000000" },
+  ];
+  const visibleLines = contactLines.filter((line) => line.value);
+
+  const socialLinks: { name: string; value: string; icon: ContactIconName; iconBg: string }[] = [
+    { name: "LinkedIn", value: card.linkedin_url, icon: "linkedin", iconBg: "#0A66C2" },
+    { name: "X", value: card.twitter_url, icon: "x", iconBg: "#000000" },
     {
-      action: "Follow my Instagram",
+      name: "Instagram",
       value: card.instagram_url,
-      href: normalizeUrl(card.instagram_url),
       icon: "instagram",
       iconBg: "linear-gradient(45deg, #FEDA75, #FA7E1E, #D62976, #962FBF, #4F5BD5)",
     },
-    { action: "Find me on Facebook", value: card.facebook_url, href: normalizeUrl(card.facebook_url), icon: "facebook", iconBg: "#0866FF" },
-    { action: "Follow my TikTok", value: card.tiktok_url, href: normalizeUrl(card.tiktok_url), icon: "tiktok", iconBg: "#000000" },
+    { name: card.facebook_is_page ? "Facebook Page" : "Facebook", value: card.facebook_url, icon: "facebook", iconBg: "#0866FF" },
+    { name: "TikTok", value: card.tiktok_url, icon: "tiktok", iconBg: "#000000" },
   ];
-  const visibleLines = contactLines.filter((line) => line.value);
+  const visibleSocials = socialLinks.filter((link) => link.value);
 
   const companyDomain = card.website ? extractDomain(card.website) : null;
 
@@ -136,6 +139,32 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
                 </a>
               ))}
             </div>
+
+            {visibleSocials.length > 0 && (
+              <div className="mt-6">
+                <p className="text-xs font-semibold uppercase tracking-wider text-white">Follow me</p>
+                <div className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-3">
+                  {visibleSocials.map((link) => (
+                    <a
+                      key={link.name}
+                      href={normalizeUrl(link.value)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex w-16 flex-col items-center gap-1.5"
+                    >
+                      {/* ring keeps the black X/TikTok tiles visible on the dark card */}
+                      <span
+                        className="flex h-14 w-14 items-center justify-center rounded-2xl ring-1 ring-white/15 transition-transform hover:scale-105"
+                        style={{ background: link.iconBg }}
+                      >
+                        <ContactIcon name={link.icon} large />
+                      </span>
+                      <span className="text-xs leading-tight text-white">{link.name}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

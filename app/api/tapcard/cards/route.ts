@@ -15,6 +15,7 @@ interface CardBody {
   twitterURL?: string;
   instagramURL?: string;
   facebookURL?: string;
+  facebookIsPage?: boolean;
   tiktokURL?: string;
 }
 
@@ -32,6 +33,7 @@ function sanitize(body: CardBody) {
     twitter_url: (body.twitterURL ?? "").trim().slice(0, 300),
     instagram_url: (body.instagramURL ?? "").trim().slice(0, 300),
     facebook_url: (body.facebookURL ?? "").trim().slice(0, 300),
+    facebook_is_page: body.facebookIsPage === true,
     tiktok_url: (body.tiktokURL ?? "").trim().slice(0, 300),
   };
 }

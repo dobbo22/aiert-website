@@ -13,26 +13,27 @@ const BRAND_PATHS = {
 
 export type ContactIconName = keyof typeof BRAND_PATHS | "linkedin" | "phone" | "mail" | "globe";
 
-export default function ContactIcon({ name }: { name: ContactIconName }) {
+export default function ContactIcon({ name, large = false }: { name: ContactIconName; large?: boolean }) {
+  const size = large ? "h-7 w-7" : "h-5 w-5";
   switch (name) {
     case "linkedin":
-      return <span className="text-lg font-bold leading-none text-white">in</span>;
+      return <span className={`${large ? "text-2xl" : "text-lg"} font-bold leading-none text-white`}>in</span>;
     case "phone":
       return (
-        <LineIcon>
+        <LineIcon size={size}>
           <path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384" />
         </LineIcon>
       );
     case "mail":
       return (
-        <LineIcon>
+        <LineIcon size={size}>
           <path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7" />
           <rect x="2" y="4" width="20" height="16" rx="2" />
         </LineIcon>
       );
     case "globe":
       return (
-        <LineIcon>
+        <LineIcon size={size}>
           <circle cx="12" cy="12" r="10" />
           <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
           <path d="M2 12h20" />
@@ -40,18 +41,18 @@ export default function ContactIcon({ name }: { name: ContactIconName }) {
       );
     default:
       return (
-        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="white" aria-hidden="true">
+        <svg viewBox="0 0 24 24" className={size} fill="white" aria-hidden="true">
           <path d={BRAND_PATHS[name]} />
         </svg>
       );
   }
 }
 
-function LineIcon({ children }: { children: React.ReactNode }) {
+function LineIcon({ size, children }: { size: string; children: React.ReactNode }) {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="h-5 w-5"
+      className={size}
       fill="none"
       stroke="white"
       strokeWidth={2}
