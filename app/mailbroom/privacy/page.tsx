@@ -41,6 +41,18 @@ const sections = [
     body: "MailBroom includes an on-device AI model that learns from your inbox over time. It trains entirely on your device using your own email data — no email content, training data, or model weights are ever sent to any server. The model is stored in your app's private local storage and is permanently deleted if you reset scan history or uninstall the app.",
   },
   {
+    icon: "🤖",
+    title: "MailBroom for Android",
+    list: [
+      "Everything above about your emails applies equally on Android: MailBroom connects directly from your phone to your mail server over TLS, and no email content, credentials or classification results are sent to AIERT Ltd or any third party.",
+      "Credentials — On Android, your email passwords and app passwords are stored using Android's encrypted storage (EncryptedSharedPreferences, backed by the Android Keystore), not the iOS Keychain.",
+      "On-device classification — The Android app classifies emails on your device using sender memory, a Naive Bayes model and local rules. The CreateML and Apple Intelligence layers described above are iOS-only.",
+      "Gmail — MailBroom for Android signs in to Gmail with an app password over IMAP. It does not use Google sign-in or request access to your Google account.",
+      "Subscriptions — MailBroom Pro on Android is billed through Google Play. AIERT Ltd does not receive your payment details; manage or cancel it in Google Play → Payments & subscriptions.",
+      "Notifications — Scan-complete and daily-digest notifications are generated on your device.",
+    ],
+  },
+  {
     icon: "💳",
     title: "Subscriptions & Billing",
     body: "MailBroom Pro is an auto-renewable subscription managed entirely by Apple through the App Store. AIERT Ltd does not receive or store any payment card details. All billing queries should be directed to Apple Support.",
@@ -112,7 +124,7 @@ export default function MailBroomPrivacyPage() {
           Privacy Policy
         </h1>
         <p className="text-mist text-base">
-          Last updated: 30 April 2026 &nbsp;·&nbsp; AIERT Ltd
+          Last updated: 25 September 2026 &nbsp;·&nbsp; AIERT Ltd
         </p>
         <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal/10 border border-teal/20 text-teal text-sm font-medium">
           <span>📵</span> Your emails never leave your device
