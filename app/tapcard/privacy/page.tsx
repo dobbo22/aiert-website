@@ -38,6 +38,12 @@ export default function TapCardPrivacyPage() {
           contact; TapCard does not get access to the rest of your address book. Photos you choose are handled the
           same way, through the system photo picker.
         </p>
+        <p className="mt-3">
+          If you tap <strong>Add missing details to my contact</strong>, TapCard asks for Contacts access (on iOS 18
+          and later you can allow just your own contact), shows you which details from your card are missing from
+          that contact, and adds only the ones you tick. It never removes or changes anything already in the
+          contact, and this all happens on your iPhone. Nothing from your contacts is sent to us.
+        </p>
       </section>
 
       <section>
