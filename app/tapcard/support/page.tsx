@@ -37,8 +37,12 @@ export default function TapCardSupportPage() {
       </section>
 
       <section>
-        <h2>Business and Personal cards</h2>
-        <p>Swipe the card on the main screen to switch between cards. Each one is shared separately and has its own QR code.</p>
+        <h2>More than one card</h2>
+        <p>
+          Tap <strong>+</strong> to add another card (for example a second business), and swipe on the main screen to
+          switch between them. Each card has its own name, link, QR code and Wallet pass. To remove one, open it,
+          tap Edit, then <strong>Delete card</strong>. That also stops sharing it.
+        </p>
       </section>
 
       <section>
