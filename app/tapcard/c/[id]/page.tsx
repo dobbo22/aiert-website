@@ -5,8 +5,8 @@ import { getCard, incrementViewCount } from "@/lib/tapcardDb";
 import CompanyLogo from "../../CompanyLogo";
 import ContactIcon, { type ContactIconName } from "../../ContactIcon";
 
-// TODO: real App Store id once TapCard is live in App Store Connect.
-const TAPCARD_APP_STORE_URL = "https://apps.apple.com/app/tapcard";
+// App Store Connect record "TapCard: Digital Business Card" (id 6816003159).
+const TAPCARD_APP_STORE_URL = "https://apps.apple.com/app/id6816003159";
 const MAILBROOM_APP_STORE_URL = "https://apps.apple.com/app/mailbroom/id6766489663";
 const POWERSEARCH_APP_STORE_URL = "https://apps.apple.com/us/app/powersearch/id6807772868";
 
