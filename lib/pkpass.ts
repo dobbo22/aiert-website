@@ -63,11 +63,9 @@ function buildPassJson(card: TapCardRecord, shareURL: string): object {
   if (card.company) headerFields.push({ key: "company", label: "COMPANY", value: card.company });
   if (card.website) secondaryFields.push({ key: "website", label: "WEBSITE", value: card.website });
   if (card.phone) secondaryFields.push({ key: "phone", label: "PHONE", value: card.phone });
-  // EMAIL alone, not sharing its row with TITLE — the reference layout
-  // shows just one field in that row, spacious rather than cramped. Title
-  // still lives on the back of the pass rather than being dropped outright.
+  // EMAIL alone in its row — spacious rather than cramped. The job title
+  // is the label above the name instead (see primaryFields), as DBC does.
   if (card.email) auxiliaryFields.push({ key: "email", label: "EMAIL", value: card.email });
-  if (card.title) backFields.push({ key: "title", label: "TITLE", value: card.title });
   if (card.linkedin_url) backFields.push({ key: "linkedin", label: "LINKEDIN", value: card.linkedin_url });
   if (card.twitter_url) backFields.push({ key: "twitter", label: "X", value: card.twitter_url });
   if (card.instagram_url) backFields.push({ key: "instagram", label: "INSTAGRAM", value: card.instagram_url });
@@ -82,8 +80,10 @@ function buildPassJson(card: TapCardRecord, shareURL: string): object {
     organizationName: "TapCard",
     serialNumber: card.id,
     description: `${card.name || "TapCard"}'s ${card.label ? card.label.toLowerCase() : "business"} card`,
-    foregroundColor: "rgb(226, 232, 240)",
-    backgroundColor: "rgb(11, 15, 26)",
+    // Same near-black as the public card page and the in-app card (#111318),
+    // with white values. Generic passes only take a solid background colour.
+    foregroundColor: "rgb(255, 255, 255)",
+    backgroundColor: "rgb(17, 19, 24)",
     labelColor: "rgb(196, 165, 255)",
     // No logoText — the logo image itself is now the company's own favicon
     // (see buildLogo), which sits in the same header row as the COMPANY
@@ -96,7 +96,7 @@ function buildPassJson(card: TapCardRecord, shareURL: string): object {
     ...(card.grouping_id ? { groupingIdentifier: card.grouping_id } : {}),
     generic: {
       headerFields,
-      primaryFields: card.name ? [{ key: "name", label: "NAME", value: card.name }] : [],
+      primaryFields: card.name ? [{ key: "name", label: (card.title || "Name").toUpperCase(), value: card.name }] : [],
       secondaryFields,
       auxiliaryFields,
       backFields,
