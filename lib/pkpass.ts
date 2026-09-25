@@ -51,14 +51,14 @@ function loadCredentials() {
 
 /// True when one name contains the other, ignoring case, spaces and
 /// punctuation — e.g. card "Hobart Capital" vs company "Hobart Capital Ltd".
-function sameName(a: string, b: string): boolean {
+export function sameName(a: string, b: string): boolean {
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
   const x = norm(a), y = norm(b);
   return !!x && !!y && (x.includes(y) || y.includes(x));
 }
 
 // Same rule as the iOS app: only a card named "Personal" counts as personal.
-function isPersonalCard(card: TapCardRecord): boolean {
+export function isPersonalCard(card: TapCardRecord): boolean {
   return /personal/i.test(card.label);
 }
 
