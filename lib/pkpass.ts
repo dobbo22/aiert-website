@@ -49,6 +49,14 @@ function loadCredentials() {
   return cachedCredentials;
 }
 
+/// True when one name contains the other, ignoring case, spaces and
+/// punctuation — e.g. card "Hobart Capital" vs company "Hobart Capital Ltd".
+function sameName(a: string, b: string): boolean {
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const x = norm(a), y = norm(b);
+  return !!x && !!y && (x.includes(y) || y.includes(x));
+}
+
 // Same rule as the iOS app: only a card named "Personal" counts as personal.
 function isPersonalCard(card: TapCardRecord): boolean {
   return /personal/i.test(card.label);
@@ -66,12 +74,20 @@ function buildPassJson(card: TapCardRecord, shareURL: string): object {
   const auxiliaryFields: { key: string; label: string; value: string }[] = [];
   const backFields: { key: string; label: string; value: string }[] = [];
 
-  if (card.label) headerFields.push({ key: "card", label: "CARD", value: card.label });
+  // Only when it adds something: a card named after its own company ("Hobart
+  // Capital" at Hobart Capital) showed the name twice and squeezed the
+  // company name next to the logo into "Hobart…".
+  if (card.label && !sameName(card.label, card.company)) {
+    headerFields.push({ key: "card", label: "CARD", value: card.label });
+  }
   if (card.website) secondaryFields.push({ key: "website", label: "WEBSITE", value: card.website });
   if (card.phone) secondaryFields.push({ key: "phone", label: "PHONE", value: card.phone });
   // EMAIL alone in its row — spacious rather than cramped. The job title
   // is the label above the name instead (see primaryFields), as DBC does.
   if (card.email) auxiliaryFields.push({ key: "email", label: "EMAIL", value: card.email });
+  // Wallet truncates long titles in the label above the name; the back
+  // always has the full title.
+  if (card.title) backFields.push({ key: "title", label: "JOB TITLE", value: card.title });
   if (card.linkedin_url) backFields.push({ key: "linkedin", label: "LINKEDIN", value: card.linkedin_url });
   if (card.twitter_url) backFields.push({ key: "twitter", label: "X", value: card.twitter_url });
   if (card.instagram_url) backFields.push({ key: "instagram", label: "INSTAGRAM", value: card.instagram_url });
