@@ -139,7 +139,7 @@ function buildObject(card: TapCardRecord, classId: string, issuerId: string, sha
         ...socials.filter(([, url]) => url).map(([name, url]) => ({ uri: url, description: name, id: name.toLowerCase().replace(/\W/g, "") })),
       ],
     },
-    barcode: { type: "QR_CODE", value: shareURL, alternateText: "" },
+    barcode: { type: "QR_CODE", value: shareURL, alternateText: "Scan to save my contact" },
     ...(card.grouping_id ? { groupingInfo: { groupingId: card.grouping_id } } : {}),
   };
 }
