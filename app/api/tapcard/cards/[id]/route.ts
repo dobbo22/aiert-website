@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { del, put } from "@vercel/blob";
-import { deleteCard, getCard, updateCard } from "@/lib/tapcardDb";
+import { deleteCard, getCard, publicCardJSON, updateCard } from "@/lib/tapcardDb";
 import { canEdit, readEditToken } from "@/lib/tapcardAuth";
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+
+// The same details the public /c/[id] page shows, as JSON — lets the app
+// show a scanned card natively (and save it) when the link opens TapCard.
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const card = await getCard(id);
+  if (!card) return NextResponse.json({ error: "not found" }, { status: 404 });
+  return NextResponse.json(publicCardJSON(card));
+}
 
 // "Stop sharing" — the delete/revoke control called for in the plan's
 // privacy section. Once deleted, the id 404s everywhere (public page,

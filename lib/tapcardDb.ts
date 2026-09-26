@@ -63,6 +63,19 @@ function ensureSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS facebook_is_page BOOLEAN NOT NULL DEFAULT false`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS edit_token_hash TEXT`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS creator_ip_hash TEXT NOT NULL DEFAULT ''`)
+      // "Send your card back": a receiver's app returning its own (already
+      // public) card to the card it scanned. Only the two ids are stored —
+      // the returned details are read live from tapcard_cards, so nothing is
+      // copied, and a "Stop sharing" on either side makes it disappear.
+      .then(() => sql`
+        CREATE TABLE IF NOT EXISTS tapcard_exchanges (
+          id BIGSERIAL PRIMARY KEY,
+          to_card_id TEXT NOT NULL,
+          from_card_id TEXT NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          UNIQUE (to_card_id, from_card_id)
+        )
+      `)
       .catch((err) => {
         schemaReady = null; // let the next call retry rather than caching a failure
         throw err;
@@ -141,6 +154,7 @@ export async function countRecentCreates(creatorIpHash: string): Promise<number>
 export async function deleteCard(id: string): Promise<boolean> {
   await ensureSchema();
   const rows = await sql`DELETE FROM tapcard_cards WHERE id = ${id} RETURNING id`;
+  await sql`DELETE FROM tapcard_exchanges WHERE to_card_id = ${id} OR from_card_id = ${id}`;
   return rows.length > 0;
 }
 
@@ -155,4 +169,71 @@ export async function incrementViewCount(id: string): Promise<void> {
 export async function incrementSaveCount(id: string): Promise<void> {
   await ensureSchema();
   await sql`UPDATE tapcard_cards SET save_count = save_count + 1 WHERE id = ${id}`;
+}
+
+/// The card fields anyone with the link can already see on the public page —
+/// never the edit-token hash, IP hash or counts. Keys match the iOS app's
+/// BusinessCard so it can decode them directly.
+export function publicCardJSON(card: TapCardRecord) {
+  return {
+    id: card.id,
+    label: card.label,
+    name: card.name,
+    title: card.title,
+    company: card.company,
+    phone: card.phone,
+    email: card.email,
+    website: card.website,
+    linkedInURL: card.linkedin_url,
+    twitterURL: card.twitter_url,
+    instagramURL: card.instagram_url,
+    facebookURL: card.facebook_url,
+    facebookIsPage: card.facebook_is_page,
+    tiktokURL: card.tiktok_url,
+    photoURL: card.photo_url,
+  };
+}
+
+/// Re-sending the same card just refreshes the timestamp, so it's delivered
+/// once rather than piling up duplicates.
+export async function addExchange(toCardId: string, fromCardId: string): Promise<void> {
+  await ensureSchema();
+  // Normally a row lives only until the owner's app collects it (see
+  // deleteExchanges). One that's never collected — the app was deleted —
+  // is purged after 30 days rather than kept forever.
+  await sql`DELETE FROM tapcard_exchanges WHERE created_at < now() - interval '30 days'`;
+  await sql`
+    INSERT INTO tapcard_exchanges (to_card_id, from_card_id) VALUES (${toCardId}, ${fromCardId})
+    ON CONFLICT (to_card_id, from_card_id) DO UPDATE SET created_at = now()
+  `;
+}
+
+export async function countRecentExchangesFrom(fromCardId: string): Promise<number> {
+  await ensureSchema();
+  const rows = (await sql`
+    SELECT count(*)::int AS n FROM tapcard_exchanges
+    WHERE from_card_id = ${fromCardId} AND created_at > now() - interval '1 hour'
+  `) as { n: number }[];
+  return rows[0]?.n ?? 0;
+}
+
+/// Cards sent back to `toCardId` that its owner's app hasn't collected yet.
+export async function listExchanges(toCardId: string): Promise<{ exchangeId: number; card: TapCardRecord }[]> {
+  await ensureSchema();
+  const rows = (await sql`
+    SELECT e.id AS exchange_id, c.* FROM tapcard_exchanges e
+    JOIN tapcard_cards c ON c.id = e.from_card_id
+    WHERE e.to_card_id = ${toCardId}
+    ORDER BY e.created_at
+    LIMIT 100
+  `) as (TapCardRecord & { exchange_id: string | number })[];
+  return rows.map(({ exchange_id, ...card }) => ({ exchangeId: Number(exchange_id), card }));
+}
+
+/// The app acknowledges what it has stored, so the server keeps nothing
+/// once the card has been delivered.
+export async function deleteExchanges(toCardId: string, exchangeIds: number[]): Promise<void> {
+  if (exchangeIds.length === 0) return;
+  await ensureSchema();
+  await sql`DELETE FROM tapcard_exchanges WHERE to_card_id = ${toCardId} AND id = ANY(${exchangeIds})`;
 }

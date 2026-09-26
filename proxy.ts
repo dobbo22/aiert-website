@@ -9,6 +9,19 @@ import type { NextRequest } from "next/server";
 // showing tapcard.aiert.co.uk, only the internal routing changes.
 export function proxy(request: NextRequest) {
   const host = request.headers.get("host") || "";
+
+  // TapCard's Universal Links file (see app/api/tapcard/aasa) — on both the
+  // TapCard subdomain and www.aiert.co.uk, whose /tapcard/c/* is the same
+  // card page. Not on the mailbroom.app hosts.
+  if (
+    request.nextUrl.pathname === "/.well-known/apple-app-site-association" &&
+    (host.startsWith("tapcard.") || /^(www\.)?aiert\.co\.uk$/.test(host.split(":")[0]))
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/api/tapcard/aasa";
+    return NextResponse.rewrite(url);
+  }
+
   if (!host.startsWith("tapcard.")) {
     return NextResponse.next();
   }

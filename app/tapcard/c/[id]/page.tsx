@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { after } from "next/server";
 import { getCard, incrementViewCount } from "@/lib/tapcardDb";
 import CompanyLogo from "../../CompanyLogo";
@@ -9,6 +10,12 @@ import ContactIcon, { type ContactIconName } from "../../ContactIcon";
 const TAPCARD_APP_STORE_URL = "https://apps.apple.com/app/id6816003159";
 const MAILBROOM_APP_STORE_URL = "https://apps.apple.com/app/mailbroom/id6766489663";
 const POWERSEARCH_APP_STORE_URL = "https://apps.apple.com/us/app/powersearch/id6807772868";
+const TAPCARD_ORIGIN = "https://tapcard.aiert.co.uk";
+
+// "Send your card back" needs TapCard 1.1 (Universal Links + the send-back
+// screen). Keep this off until 1.1 is live on the App Store — with 1.0, a
+// receiver who installs the app would have no way to send their card.
+const SEND_BACK_ENABLED = false;
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -20,6 +27,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     title,
     description: `${card.name}'s digital business card, made with TapCard.`,
     robots: { index: false, follow: false },
+    // Safari's Smart App Banner: "Open" hands this card to the app when it's
+    // installed (the app shows it and offers to send a card back), "Get"
+    // when it isn't.
+    itunes: SEND_BACK_ENABLED ? { appId: "6816003159", appArgument: `${TAPCARD_ORIGIN}/c/${id}` } : undefined,
   };
 }
 
@@ -29,10 +40,28 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 // MailBroom/PowerSearch cross-promo before (or alongside) saving the
 // contact. Server component: reads straight from Postgres, no client JS
 // needed for the core "view a card" path.
-export default async function CardPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function CardPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ send?: string }>;
+}) {
   const { id } = await params;
+  const { send } = await searchParams;
   const card = await getCard(id);
   if (!card) notFound();
+
+  // This page is served on tapcard.aiert.co.uk and, identically, at
+  // www.aiert.co.uk/tapcard/c/[id]. iOS only opens an app from a link to a
+  // *different* domain than the page you're on, so "Send your card back"
+  // points at whichever host this isn't: with TapCard installed the tap
+  // opens the app; without it, the page reloads with ?send=1 and explains.
+  const host = (await headers()).get("host") ?? "";
+  const sendBackHref = host.startsWith("tapcard.")
+    ? `https://www.aiert.co.uk/tapcard/c/${id}?send=1`
+    : `${TAPCARD_ORIGIN}/c/${id}?send=1`;
+  const firstName = card.name.split(/\s+/)[0] || card.name;
 
   // Counted here rather than via a client-side beacon so it also captures
   // link previews / crawlers minus render — acceptable for a rough "how many
@@ -112,11 +141,39 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
             )}
 
             <a
-              href={`/c/${id}/vcard`}
+              href={`${TAPCARD_ORIGIN}/c/${id}/vcard`}
               className="mt-5 inline-block w-full rounded-xl bg-white px-4 py-3 font-semibold text-[#111318]"
             >
               Save Contact
             </a>
+
+            {SEND_BACK_ENABLED && (
+              <a
+                href={sendBackHref}
+                className="mt-2 inline-block w-full rounded-xl px-4 py-3 font-semibold text-white ring-1 ring-white/30"
+              >
+                Send {firstName} your card
+              </a>
+            )}
+
+            {SEND_BACK_ENABLED && send === "1" && (
+              <div className="mt-3 rounded-2xl bg-white/[0.07] p-4 text-left text-sm text-white">
+                <p className="font-semibold">Send your card back with TapCard (free)</p>
+                <ol className="mt-2 list-decimal space-y-1 pl-5">
+                  <li>Get TapCard from the App Store.</li>
+                  <li>Make your card in the app.</li>
+                  <li>
+                    Come back to this page and tap <span className="font-semibold">Send {firstName} your card</span> again.
+                  </li>
+                </ol>
+                <a
+                  href={TAPCARD_APP_STORE_URL}
+                  className="mt-3 inline-block w-full rounded-xl bg-white px-4 py-2.5 text-center font-semibold text-[#111318]"
+                >
+                  Get TapCard
+                </a>
+              </div>
+            )}
 
             <div className="mt-5 space-y-2 text-left">
               {visibleLines.map((line) => (
@@ -205,7 +262,7 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
             Report this card
           </a>
           {" · "}
-          <a href="/privacy" className="underline">
+          <a href={`${TAPCARD_ORIGIN}/privacy`} className="underline">
             Privacy
           </a>
         </p>
