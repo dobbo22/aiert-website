@@ -17,14 +17,14 @@ export function GET(req: Request) {
   const prefix = host.startsWith("tapcard.") ? "" : "/tapcard";
   return NextResponse.json({
     applinks: {
+      // The older appID/paths format (same as MailBroom's app.mailbroom.app
+      // file) — the newer appIDs/components form wasn't opening the app.
+      apps: [],
       details: [
         {
-          appIDs: [APP_ID],
-          components: [
-            // The vCard download must stay a plain web download.
-            { "/": `${prefix}/c/*/*`, exclude: true },
-            { "/": `${prefix}/c/*` },
-          ],
+          appID: APP_ID,
+          // The vCard download must stay a plain web download.
+          paths: [`NOT ${prefix}/c/*/*`, `${prefix}/c/*`],
         },
       ],
     },
