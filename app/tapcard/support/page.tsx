@@ -29,6 +29,33 @@ export default function TapCardSupportPage() {
       </section>
 
       <section>
+        <h2>Cards people share with you</h2>
+        <ul>
+          <li>
+            With TapCard installed, scanning someone&apos;s TapCard QR code with your Camera, or tapping their link,
+            opens their card in the app. Tap <strong>Save &amp; send my card</strong> to save them and send yours
+            back, or <strong>Just save</strong>.
+          </li>
+          <li>
+            Saved cards are in the <strong>Contacts</strong> tab, grouped by which of your cards you swapped (for
+            example Business or Personal). Open one to call, email, send your card or move it to another group.
+          </li>
+          <li>
+            Cards are also saved to your iPhone&apos;s Contacts. To keep them in TapCard only, tap the gear in the
+            Contacts tab and turn off <strong>Also save to iPhone Contacts</strong>.
+          </li>
+          <li>
+            When someone sends their card back to you, it appears in Contacts the next time you open TapCard, marked
+            New.
+          </li>
+          <li>
+            Don&apos;t want someone&apos;s card? Open it and use the <strong>…</strong> menu to{" "}
+            <strong>Block</strong> them (anything else they send is ignored) or <strong>Report card</strong>.
+          </li>
+        </ul>
+      </section>
+
+      <section>
         <h2>Social links</h2>
         <p>
           Type a full link or just your handle. For example, <strong>@yourname</strong> in the X field becomes

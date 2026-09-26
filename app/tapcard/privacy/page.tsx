@@ -11,13 +11,14 @@ export const metadata: Metadata = {
 // all three need updating.
 export default function TapCardPrivacyPage() {
   return (
-    <DocPage title="Privacy Policy" updated="25 September 2026">
+    <DocPage title="Privacy Policy" updated="26 September 2026">
       <section>
         <h2>Summary</h2>
         <p>
           TapCard has no accounts, no advertising, no analytics and no tracking. Your card stays on your iPhone
           until you tap <strong>Share my card</strong>. Sharing publishes a copy at a private link so other people can
-          view and save it, and <strong>Stop sharing</strong> deletes that copy from our servers.
+          view and save it, and <strong>Stop sharing</strong> deletes that copy from our servers. Cards other people
+          share with you are kept on your iPhone, in the app and, if you choose, in your Contacts.
         </p>
       </section>
 
@@ -71,11 +72,49 @@ export default function TapCardPrivacyPage() {
       </section>
 
       <section>
+        <h2>Cards other people share with you</h2>
+        <p>
+          When you open someone&apos;s TapCard link or scan their QR code with TapCard installed, the app downloads
+          the details shown on their card page so you can see and save them. Saved cards are kept on your iPhone,
+          in the app&apos;s Contacts tab. You can remove them at any time.
+        </p>
+        <p className="mt-3">
+          With <strong>Also save to iPhone Contacts</strong> switched on (it is on unless you turn it off in the
+          Contacts tab), TapCard also saves each card you receive to your iPhone&apos;s Contacts. It asks for
+          Contacts access the first time. To avoid duplicates it looks, on your iPhone, for a contact with the same
+          email or phone number and adds only missing details to it. It never removes anything from your contacts,
+          and nothing from your contacts is sent to us. If you don&apos;t allow access, cards stay in TapCard only.
+        </p>
+      </section>
+
+      <section>
+        <h2>Sending your card back</h2>
+        <p>
+          When you tap <strong>Send my card</strong> on someone&apos;s card, TapCard shares the card you chose (if it
+          isn&apos;t already shared) and tells our server which of your cards to deliver to theirs. We store only
+          those two card links, not a second copy of your details. The other person&apos;s app collects it the next
+          time it opens, and we then delete that record straight away. A record that is never collected is deleted
+          after 30 days, and it is also deleted if either card stops being shared.
+        </p>
+        <p className="mt-3">
+          Once delivered, the other person keeps a copy of your card on their iPhone (and possibly in their
+          contacts), just as if they had saved it from your card page. Stopping sharing later can&apos;t remove
+          copies other people have already saved.
+        </p>
+        <p className="mt-3">
+          Only the app that owns a card can send it, and the number of sends per card each hour is limited. If
+          someone sends you a card you don&apos;t want, use <strong>Block</strong> on their card in the Contacts
+          tab and anything else they send is ignored, or <strong>Report card</strong> to tell us about it.
+        </p>
+      </section>
+
+      <section>
         <h2>Who can see a shared card</h2>
         <p>
           Anyone who has the link, scans the QR code or has the Wallet pass can see the card and save it as a
           contact. The link is long and random, and the page asks search engines not to index it, but it is not
-          password protected, so only share it with people you are happy to give those details to.
+          password protected, so only share it with people you are happy to give those details to. Anyone with your
+          link can also send you their own card, which appears in your Contacts tab.
         </p>
         <p className="mt-3">
           The card page counts how many times it has been opened and saved, and those two numbers are shown to you
@@ -106,7 +145,8 @@ export default function TapCardPrivacyPage() {
         <p>
           A shared card stays online until you tap <strong>Stop sharing</strong> in the app. That permanently deletes
           it from our database and deletes its photo, and the link, QR code and Wallet pass stop working. When you
-          replace a card&apos;s photo, the old one is deleted. Deleting the app does not delete a card that is still
+          replace a card&apos;s photo, the old one is deleted. Stopping sharing also deletes any cards sent back to
+          that card that haven&apos;t been collected yet. Deleting the app does not delete a card that is still
           shared, so stop sharing first, or email us with the card&apos;s link and we will delete it.
         </p>
       </section>
