@@ -23,8 +23,12 @@ export function GET(req: Request) {
       details: [
         {
           appID: APP_ID,
-          // The vCard download must stay a plain web download.
-          paths: [`NOT ${prefix}/c/*/*`, `${prefix}/c/*`],
+          // The vCard download must stay a plain web download. Apple's legacy
+          // "paths" wildcard can span "/", so a loose "*/*" exclude also
+          // swallows plain single-segment card links — confirmed on-device
+          // via swcd's log (`Inputs blocked by pattern {"exclude":true}` on
+          // a plain /c/<id> link). Match the literal /vcard suffix instead.
+          paths: [`NOT ${prefix}/c/*/vcard`, `${prefix}/c/*`],
         },
       ],
     },
