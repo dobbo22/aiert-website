@@ -101,6 +101,14 @@ function buildObject(card: TapCardRecord, classId: string, issuerId: string, sha
   const logoUri = domain
     ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`
     : "https://www.aiert.co.uk/tapcard-icon.png";
+  // Banner across the top of the pass (1032x812, Google's recommended size),
+  // same idea as the blurred-photo/brand-gradient banner used on the public
+  // card page, the in-app card and the Apple pass equivalent. The photo
+  // variant is generated on request by wallet-hero/route.ts.
+  const origin = new URL(shareURL).origin;
+  const heroUri = card.photo_url
+    ? `${origin}/api/cards/${card.id}/wallet-hero`
+    : "https://www.aiert.co.uk/tapcard-wallet-hero.png";
   const text = (id: string, header: string, body: string) => (body ? [{ id, header, body }] : []);
   const socials: [string, string][] = [
     ["LinkedIn", card.linkedin_url],
@@ -121,6 +129,7 @@ function buildObject(card: TapCardRecord, classId: string, issuerId: string, sha
     // card's own name when it adds something — "Aiert · Business",
     // "Martin Dobson · Personal" — so several cards are easy to tell apart.
     logo: { sourceUri: { uri: logoUri }, contentDescription: localized(owner) },
+    heroImage: { sourceUri: { uri: heroUri }, contentDescription: localized(owner) },
     cardTitle: localized(card.label && !sameName(card.label, owner) ? `${owner} · ${card.label}` : owner),
     // Job title above the name, as on the Apple pass.
     ...(card.title ? { subheader: localized(card.title) } : {}),
