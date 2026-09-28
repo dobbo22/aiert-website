@@ -77,8 +77,13 @@ function buildClass(classId: string) {
     id: classId,
     classTemplateInfo: {
       cardTemplateOverride: {
+        // One field per row, full width. There's no font-size control in the
+        // Wallet API — pairing phone/email side by side (twoItems) halved
+        // their width and wrapped values like phone numbers onto two lines
+        // at Wallet's default text size. Matches how website was already shown.
         cardRowTemplateInfos: [
-          { twoItems: { startItem: field("phone"), endItem: field("email") } },
+          { oneItem: { item: field("phone") } },
+          { oneItem: { item: field("email") } },
           { oneItem: { item: field("website") } },
         ],
       },
