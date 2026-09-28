@@ -5,6 +5,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
 import type { TapCardRecord } from "@/lib/tapcardDb";
+import { findSiteIcon } from "@/lib/siteIcon";
 
 const PASS_TYPE_IDENTIFIER = "pass.com.mailbroom.tapcard";
 const TEAM_IDENTIFIER = "ATMHQQQQ5S";
@@ -165,7 +166,8 @@ function extractDomain(website: string): string | null {
 async function buildCompanyLogo(card: TapCardRecord): Promise<Buffer | null> {
   const domain = card.website ? extractDomain(card.website) : null;
   if (!domain) return null;
-  const faviconBuffer = await fetchImageBuffer(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`);
+  // sharp can't decode .ico, so ask for a PNG/JPEG/WebP/GIF.
+  const faviconBuffer = (await findSiteIcon(domain, { allowIco: false }))?.bytes;
   if (!faviconBuffer) return null;
   // White background — favicons are often a dark glyph on transparency,
   // which would otherwise vanish against the pass's own dark background.

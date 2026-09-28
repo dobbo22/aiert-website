@@ -104,7 +104,7 @@ function buildObject(card: TapCardRecord, classId: string, issuerId: string, sha
   const personal = isPersonalCard(card);
   const domain = card.website ? companyDomain(card.website) : null;
   const logoUri = domain
-    ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`
+    ? `https://tapcard.aiert.co.uk/api/favicon?domain=${encodeURIComponent(domain)}&noico=1`
     : "https://www.aiert.co.uk/tapcard-icon.png";
   // Banner across the top of the pass (1032x812, Google's recommended size),
   // same idea as the blurred-photo/brand-gradient banner used on the public
