@@ -22,6 +22,13 @@ export function proxy(request: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
+  // Same idea for Android App Links (see app/api/tapcard/assetlinks).
+  if (request.nextUrl.pathname === "/.well-known/assetlinks.json" && host.startsWith("tapcard.")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/api/tapcard/assetlinks";
+    return NextResponse.rewrite(url);
+  }
+
   if (!host.startsWith("tapcard.")) {
     return NextResponse.next();
   }
