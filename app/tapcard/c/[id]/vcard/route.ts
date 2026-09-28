@@ -12,15 +12,15 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const vcf = buildVCard(card);
   const filename = (card.name || "contact").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
-  // "inline" (not "attachment"), tried as a fix for Android Chrome: with
-  // attachment it always shows a "Choose where to download" dialog and then
-  // saves silently with no prompt to actually import the card, unlike iOS
-  // Safari which opens the native Add Contact screen immediately either way.
-  // text/x-vcard is what older Android intent-filters for vCard match on.
+  // Tried "inline" + text/x-vcard here as a fix for Android Chrome's
+  // "Choose where to download" dialog (unlike iOS Safari, which opens the
+  // native Add Contact screen immediately) — tested live, no effect: Chrome
+  // shows the identical dialog either way, so reverted to the standard,
+  // broadly-compatible attachment disposition.
   return new NextResponse(vcf, {
     headers: {
-      "Content-Type": "text/x-vcard; charset=utf-8",
-      "Content-Disposition": `inline; filename="${filename}.vcf"`,
+      "Content-Type": "text/vcard; charset=utf-8",
+      "Content-Disposition": `attachment; filename="${filename}.vcf"`,
     },
   });
 }
