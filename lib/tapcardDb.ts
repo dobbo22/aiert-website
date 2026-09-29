@@ -23,9 +23,17 @@ export interface TapCardRecord {
   edit_token_hash: string | null;
   view_count: number;
   save_count: number;
+  /// Wallet pass design: "artwork" (default), "photo" or "brand" — lib/tapcardPassArt.ts.
+  pass_style: string;
+  updated_at: Date | string;
 }
 
-type TapCardInput = Omit<TapCardRecord, "id" | "photo_url" | "edit_token_hash" | "view_count" | "save_count"> & { photo_url?: string | null };
+/// pass_style is optional: app builds that predate it don't send one, and
+/// an update without it keeps the card's current style.
+type TapCardInput = Omit<TapCardRecord, "id" | "photo_url" | "edit_token_hash" | "view_count" | "save_count" | "pass_style" | "updated_at"> & {
+  photo_url?: string | null;
+  pass_style?: string;
+};
 
 // Self-healing schema: Vercel's DATABASE_URL is a hidden "Secret" env var,
 // so it can't be read out to run scripts/migrate-tapcard.mjs against
@@ -63,6 +71,7 @@ function ensureSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS facebook_is_page BOOLEAN NOT NULL DEFAULT false`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS edit_token_hash TEXT`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS creator_ip_hash TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS pass_style TEXT NOT NULL DEFAULT 'artwork'`)
       // "Send your card back": a receiver's app returning its own (already
       // public) card to the card it scanned. Only the two ids are stored —
       // the returned details are read live from tapcard_cards, so nothing is
@@ -97,10 +106,10 @@ export async function createCard(input: TapCardInput, editTokenHash: string, cre
   await sql`
     INSERT INTO tapcard_cards (id, label, grouping_id, name, title, company, phone, email, website, linkedin_url,
                                twitter_url, instagram_url, facebook_url, facebook_is_page, tiktok_url, photo_url,
-                               edit_token_hash, creator_ip_hash)
+                               edit_token_hash, creator_ip_hash, pass_style)
     VALUES (${id}, ${input.label}, ${input.grouping_id}, ${input.name}, ${input.title}, ${input.company}, ${input.phone}, ${input.email}, ${input.website}, ${input.linkedin_url},
             ${input.twitter_url}, ${input.instagram_url}, ${input.facebook_url}, ${input.facebook_is_page}, ${input.tiktok_url}, ${input.photo_url ?? null},
-            ${editTokenHash}, ${creatorIpHash})
+            ${editTokenHash}, ${creatorIpHash}, ${input.pass_style ?? "artwork"})
   `;
   return id;
 }
@@ -116,6 +125,7 @@ export async function updateCard(id: string, input: TapCardInput): Promise<boole
         facebook_url = ${input.facebook_url}, facebook_is_page = ${input.facebook_is_page},
         tiktok_url = ${input.tiktok_url},
         photo_url = COALESCE(${input.photo_url ?? null}, photo_url),
+        pass_style = COALESCE(${input.pass_style ?? null}, pass_style),
         updated_at = now()
     WHERE id = ${id}
     RETURNING id

@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import type { TapCardRecord } from "@/lib/tapcardDb";
-import { isPersonalCard, sameName } from "@/lib/pkpass";
+import { isPersonalCard, sameName } from "@/lib/tapcardPassStyle";
 
 // Google Wallet version of the Apple pass (lib/pkpass.ts), for Android.
 // A Generic pass per shared card: object id `${issuer}.${cardId}`, all under
@@ -106,14 +106,13 @@ function buildObject(card: TapCardRecord, classId: string, issuerId: string, sha
   const logoUri = domain
     ? `https://tapcard.aiert.co.uk/api/favicon?domain=${encodeURIComponent(domain)}&noico=1`
     : "https://www.aiert.co.uk/tapcard-icon.png";
-  // Banner across the top of the pass (1032x812, Google's recommended size),
-  // same idea as the blurred-photo/brand-gradient banner used on the public
-  // card page, the in-app card and the Apple pass equivalent. The photo
-  // variant is generated on request by wallet-hero/route.ts.
+  // Banner (1032x336, Google's hero size) in the card's chosen Wallet style —
+  // the same artwork/photo/brand picture as the Apple strip, drawn by
+  // wallet-hero/route.ts. `v` changes with every card update, so Google
+  // fetches the new banner instead of reusing its cached copy.
   const origin = new URL(shareURL).origin;
-  const heroUri = card.photo_url
-    ? `${origin}/api/cards/${card.id}/wallet-hero`
-    : "https://www.aiert.co.uk/tapcard-wallet-hero.png";
+  const version = new Date(card.updated_at).getTime() || 0;
+  const heroUri = `${origin}/api/cards/${card.id}/wallet-hero?v=${version}`;
   const text = (id: string, header: string, body: string) => (body ? [{ id, header, body }] : []);
   const socials: [string, string][] = [
     ["LinkedIn", card.linkedin_url],
@@ -164,6 +163,17 @@ async function upsert(sa: ServiceAccount, kind: "genericClass" | "genericObject"
   if (insert.status !== 409) throw new Error(`${kind} insert -> ${insert.status}: ${await insert.text()}`);
   const update = await walletApi(sa, "PUT", `/${kind}/${encodeURIComponent(resource.id)}`, resource);
   if (!update.ok) throw new Error(`${kind} update -> ${update.status}: ${await update.text()}`);
+}
+
+/// Pushes a card's current details and style to its pass if one was ever
+/// created — Google updates it on people's phones. Cards never added to
+/// Google Wallet have no object (404), and nothing is created for them.
+export async function refreshGoogleWalletPass(card: TapCardRecord, shareURL: string): Promise<void> {
+  if (!process.env.GOOGLE_WALLET_ISSUER_ID) return;
+  const { issuerId, sa, classId } = config();
+  const object = buildObject(card, classId, issuerId, shareURL);
+  const res = await walletApi(sa, "PUT", `/genericObject/${encodeURIComponent(object.id)}`, object);
+  if (!res.ok && res.status !== 404) throw new Error(`genericObject refresh -> ${res.status}: ${await res.text()}`);
 }
 
 let classReady: Promise<void> | null = null;

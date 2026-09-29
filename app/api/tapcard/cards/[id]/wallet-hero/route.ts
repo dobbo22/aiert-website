@@ -1,34 +1,26 @@
-import { NextResponse } from "next/server";
-import sharp from "sharp";
+import { NextRequest, NextResponse } from "next/server";
 import { getCard } from "@/lib/tapcardDb";
+import { renderBanner } from "@/lib/tapcardPassArt";
+import { parsePassStyle } from "@/lib/tapcardPassStyle";
 
-// heroImage for the Google Wallet pass (lib/googleWallet.ts) — a 1032x812
-// banner, same idea as the blurred-photo banner on the public card page and
-// the in-app card: the person's photo, softly blurred, filling the width.
-// Cards with no photo use the static brand-gradient PNG instead (see
-// googleWallet.ts), so this route only ever runs for cards that have one.
-//
-// The URL is stable per card (no per-upload token), so it's cached with a
-// short max-age; Wallet re-fetches images periodically rather than once.
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+// The card's Wallet banner, in its chosen style (lib/tapcardPassArt.ts):
+// - default: Google Wallet heroImage, 1032x336, no text (Google shows the
+//   name and title as pass text).
+// - ?apple=1: the Apple strip at 2x, name drawn in — what the apps show as
+//   previews in their Wallet style picker, with ?style= to preview each one.
+// The card and style are public (they're on the card page), so no auth.
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const card = await getCard(id);
-  if (!card?.photo_url) return NextResponse.json({ error: "no photo" }, { status: 404 });
+  if (!card) return NextResponse.json({ error: "not found" }, { status: 404 });
 
-  const photoRes = await fetch(card.photo_url);
-  if (!photoRes.ok) return NextResponse.json({ error: "photo unavailable" }, { status: 502 });
-  const photoBuffer = Buffer.from(await photoRes.arrayBuffer());
+  const apple = req.nextUrl.searchParams.get("apple") === "1";
+  const style = parsePassStyle(req.nextUrl.searchParams.get("style"));
+  const png = await renderBanner(card, apple
+    ? { width: 750, height: 288, withText: true, style }
+    : { width: 1032, height: 336, withText: false, style });
 
-  const hero = await sharp(photoBuffer)
-    .resize(1032, 812, { fit: "cover" })
-    .blur(28)
-    // Slight darken so a bright photo doesn't wash out; matches the fade
-    // used on the public card page banner.
-    .modulate({ brightness: 0.85 })
-    .png()
-    .toBuffer();
-
-  return new NextResponse(new Uint8Array(hero), {
+  return new NextResponse(new Uint8Array(png), {
     headers: {
       "Content-Type": "image/png",
       "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",

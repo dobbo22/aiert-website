@@ -15,9 +15,18 @@ const nextConfig: NextConfig = {
   // just this one route (not a global '/*' key) so the other ~100 routes
   // in this site don't all inherit sharp's native binaries in their own
   // trace — one function already sits right at Vercel's size limit.
-  serverExternalPackages: ["sharp"],
+  // resvg (lib/tapcardPassArt: pass text in the Sora font) is native too,
+  // and the fonts and artwork it reads live in lib/tapcardPassAssets.
+  serverExternalPackages: ["sharp", "@resvg/resvg-js"],
   outputFileTracingIncludes: {
-    "/api/tapcard/cards/\\[id\\]/pass": ["node_modules/@img/**/*", "node_modules/sharp/**/*"],
+    "/api/tapcard/cards/\\[id\\]/pass": [
+      "node_modules/@img/**/*", "node_modules/sharp/**/*",
+      "node_modules/@resvg/**/*", "lib/tapcardPassAssets/**/*",
+    ],
+    "/api/tapcard/cards/\\[id\\]/wallet-hero": [
+      "node_modules/@img/**/*", "node_modules/sharp/**/*",
+      "node_modules/@resvg/**/*", "lib/tapcardPassAssets/**/*",
+    ],
   },
   async redirects() {
     return [

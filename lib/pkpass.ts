@@ -6,6 +6,8 @@ import path from "node:path";
 import crypto from "node:crypto";
 import type { TapCardRecord } from "@/lib/tapcardDb";
 import { findSiteIcon } from "@/lib/siteIcon";
+import { renderBanner, renderLogoLockup } from "@/lib/tapcardPassArt";
+import { isPersonalCard, sameName } from "@/lib/tapcardPassStyle";
 
 const PASS_TYPE_IDENTIFIER = "pass.com.mailbroom.tapcard";
 const TEAM_IDENTIFIER = "ATMHQQQQ5S";
@@ -50,26 +52,14 @@ function loadCredentials() {
   return cachedCredentials;
 }
 
-/// True when one name contains the other, ignoring case, spaces and
-/// punctuation — e.g. card "Hobart Capital" vs company "Hobart Capital Ltd".
-export function sameName(a: string, b: string): boolean {
-  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
-  const x = norm(a), y = norm(b);
-  return !!x && !!y && (x.includes(y) || y.includes(x));
-}
-
-// Same rule as the iOS app: only a card named "Personal" counts as personal.
-export function isPersonalCard(card: TapCardRecord): boolean {
-  return /personal/i.test(card.label);
-}
-
 function buildPassJson(card: TapCardRecord, shareURL: string): object {
   const personal = isPersonalCard(card);
-  // Standard Wallet generic-pass grid. The top strip (logo, logoText,
-  // header field) is all that shows when passes are stacked in Wallet, so
-  // it carries what tells cards apart: company logo + company name on the
-  // left, the card's own name ("Business", "Consulting"…) on the right.
-  // Then the person's name as the headline, WEBSITE/PHONE, and EMAIL.
+  // Store-card layout, like loyalty cards: header logo (TapCard mark +
+  // company icon + company name, drawn by renderLogoLockup) with the card's
+  // own name ("Business", "Consulting"…) on the right; then the strip picture
+  // with photo, name and title drawn in Sora (renderBanner); then
+  // WEBSITE/PHONE and EMAIL as Wallet text. Store cards take up to four of
+  // those fields in total.
   const headerFields: { key: string; label: string; value: string }[] = [];
   const secondaryFields: { key: string; label: string; value: string }[] = [];
   const auxiliaryFields: { key: string; label: string; value: string }[] = [];
@@ -83,12 +73,13 @@ function buildPassJson(card: TapCardRecord, shareURL: string): object {
   }
   if (card.website) secondaryFields.push({ key: "website", label: "WEBSITE", value: card.website });
   if (card.phone) secondaryFields.push({ key: "phone", label: "PHONE", value: card.phone });
-  // EMAIL alone in its row — spacious rather than cramped. The job title
-  // is the label above the name instead (see primaryFields), as DBC does.
+  // EMAIL alone in its row — spacious rather than cramped.
   if (card.email) auxiliaryFields.push({ key: "email", label: "EMAIL", value: card.email });
-  // Wallet truncates long titles in the label above the name; the back
-  // always has the full title.
+  // Name and title are pictures in the strip, so they're also here as text
+  // for VoiceOver and copying.
+  if (card.name) backFields.push({ key: "name", label: "NAME", value: card.name });
   if (card.title) backFields.push({ key: "title", label: "JOB TITLE", value: card.title });
+  if (card.company) backFields.push({ key: "company", label: "COMPANY", value: card.company });
   if (card.linkedin_url) backFields.push({ key: "linkedin", label: "LINKEDIN", value: card.linkedin_url });
   if (card.twitter_url) backFields.push({ key: "twitter", label: "X", value: card.twitter_url });
   if (card.instagram_url) backFields.push({ key: "instagram", label: "INSTAGRAM", value: card.instagram_url });
@@ -105,23 +96,15 @@ function buildPassJson(card: TapCardRecord, shareURL: string): object {
     description: `${card.name || "TapCard"}'s ${card.label ? card.label.toLowerCase() : "business"} card`,
     // Business cards use the same near-black as the public card page and
     // in-app card (#111318); a Personal card uses the brand purple (#422975)
-    // so the two are distinguishable at a glance in the Wallet stack.
-    // Generic passes only take a solid background colour.
+    // so the two are distinguishable at a glance in Wallet. No logoText: the
+    // company name is part of the header logo image. No groupingIdentifier:
+    // Wallet only groups boarding passes and event tickets.
     foregroundColor: "rgb(255, 255, 255)",
     backgroundColor: personal ? "rgb(66, 41, 117)" : "rgb(17, 19, 24)",
     labelColor: personal ? "rgb(221, 214, 254)" : "rgb(196, 165, 255)",
-    // Next to the logo (company favicon, see buildCompanyLogo): the company
-    // name, so two business cards read as different companies; a card with
-    // no company falls back to the person's name.
-    logoText: card.company || card.name,
-    // Passes sharing the same passTypeIdentifier + groupingIdentifier get
-    // visually stacked together in Wallet (the same mechanism used for
-    // connecting-flight boarding passes) — so a device's Business and
-    // Personal pass appear as a related set, not two unrelated entries.
-    ...(card.grouping_id ? { groupingIdentifier: card.grouping_id } : {}),
-    generic: {
+    storeCard: {
       headerFields,
-      primaryFields: card.name ? [{ key: "name", label: (card.title || "Name").toUpperCase(), value: card.name }] : [],
+      primaryFields: [],
       secondaryFields,
       auxiliaryFields,
       backFields,
@@ -136,16 +119,6 @@ function buildPassJson(card: TapCardRecord, shareURL: string): object {
   };
 }
 
-async function fetchImageBuffer(url: string): Promise<Buffer | null> {
-  try {
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    return Buffer.from(await res.arrayBuffer());
-  } catch {
-    return null;
-  }
-}
-
 function extractDomain(website: string): string | null {
   try {
     const prefixed = /^https?:\/\//i.test(website) ? website : `https://${website}`;
@@ -156,45 +129,21 @@ function extractDomain(website: string): string | null {
   }
 }
 
-/// The pass's logo image (top-left, same header row as the COMPANY field)
-/// — the company's own favicon when the card has a website, so it reads as
-/// "favicon next to company name"; falls back to TapCard's own static logo
-/// (lib/tapcardPassAssets) when there's no website to resolve one from.
-/// Square, not circular — Wallet's logo slot renders as a plain rect (only
-/// thumbnailImage needs a manual circular mask), matching how the static
-/// fallback logo was built (lib/tapcardPassAssets, via `sips -Z`).
-async function buildCompanyLogo(card: TapCardRecord): Promise<Buffer | null> {
+/// The company's own icon from its website (lib/siteIcon), or null.
+async function companyIcon(card: TapCardRecord): Promise<Buffer | null> {
   const domain = card.website ? extractDomain(card.website) : null;
   if (!domain) return null;
   // sharp can't decode .ico, so ask for a PNG/JPEG/WebP/GIF.
-  const faviconBuffer = (await findSiteIcon(domain, { allowIco: false }))?.bytes;
-  if (!faviconBuffer) return null;
-  // White background — favicons are often a dark glyph on transparency,
-  // which would otherwise vanish against the pass's own dark background.
-  return sharp(faviconBuffer).resize(128, 128, { fit: "contain", background: "#fff" }).flatten({ background: "#fff" }).png().toBuffer();
+  return (await findSiteIcon(domain, { allowIco: false }))?.bytes ?? null;
 }
 
-/// Just the profile photo, cropped to a circle — Wallet's thumbnailImage
-/// renders exactly the pixels given (no automatic circular mask the way an
-/// avatar view does), so the mask has to be applied here for the clean
-/// circular photo the reference layout shows. (An earlier version also
-/// merged in the company favicon side-by-side via a hand-built SVG; dropped
-/// after the reference layout the user pointed at showed a single plain
-/// photo, and it had already been the source of three separate bugs for a
-/// secondary flourish.)
-async function buildThumbnail(card: TapCardRecord): Promise<Buffer | null> {
-  if (!card.photo_url) return null;
-  const photoBufferRaw = await fetchImageBuffer(card.photo_url);
-  if (!photoBufferRaw) return null;
-
-  const size = 300;
-  const squared = await sharp(photoBufferRaw).resize(size, size, { fit: "cover" }).png().toBuffer();
-  const circleMask = Buffer.from(`<svg width="${size}" height="${size}"><circle cx="${size / 2}" cy="${size / 2}" r="${size / 2}" fill="#fff"/></svg>`);
-
-  return sharp(squared)
-    .composite([{ input: circleMask, blend: "dest-in" }])
-    .png()
-    .toBuffer();
+/// Picture at 3x, plus the 2x and 1x copies Wallet expects.
+async function scaled(base: Buffer, name: string, width1x: number, height1x: number): Promise<Record<string, Buffer>> {
+  const [one, two] = await Promise.all([
+    sharp(base).resize(width1x, height1x).png().toBuffer(),
+    sharp(base).resize(width1x * 2, height1x * 2).png().toBuffer(),
+  ]);
+  return { [`${name}.png`]: one, [`${name}@2x.png`]: two, [`${name}@3x.png`]: base };
 }
 
 async function loadPassAssets(): Promise<Record<string, Buffer>> {
@@ -245,44 +194,22 @@ export async function buildPkpass(card: TapCardRecord, shareURL: string): Promis
 
   const files: Record<string, Buffer> = { "pass.json": passJsonBuffer, ...assets };
 
-  // Company favicon overrides the static TapCard logo AND icon when
-  // resolvable — falls back to the bundled assets already in `files` (from
-  // loadPassAssets) if there's no website or the favicon fetch fails. icon
-  // is what Wallet uses for notifications/lock-screen/Watch contexts, not
-  // just the visible header logo — both were still showing TapCard's own
-  // branding until now.
-  const companyLogo = await buildCompanyLogo(card);
-  if (companyLogo) {
-    const [logo1x, logo2x, logo3x, icon1x, icon2x, icon3x] = await Promise.all([
-      sharp(companyLogo).resize(50, 50).png().toBuffer(),
-      sharp(companyLogo).resize(100, 100).png().toBuffer(),
-      sharp(companyLogo).resize(150, 150).png().toBuffer(),
-      sharp(companyLogo).resize(29, 29).png().toBuffer(),
-      sharp(companyLogo).resize(58, 58).png().toBuffer(),
-      sharp(companyLogo).resize(87, 87).png().toBuffer(),
-    ]);
-    files["logo.png"] = logo1x;
-    files["logo@2x.png"] = logo2x;
-    files["logo@3x.png"] = logo3x;
-    files["icon.png"] = icon1x;
-    files["icon@2x.png"] = icon2x;
-    files["icon@3x.png"] = icon3x;
+  const icon = await companyIcon(card);
+  // Lock-screen/notification icon: the company icon when there is one, on
+  // white (favicons are often a dark glyph on transparency); otherwise the
+  // bundled TapCard icon already in `files`.
+  if (icon) {
+    const square = await sharp(icon).resize(87, 87, { fit: "contain", background: "#fff" }).flatten({ background: "#fff" }).png().toBuffer();
+    Object.assign(files, await scaled(square, "icon", 29, 29));
   }
 
-  // thumbnail.png (+ @2x/@3x) is picked up by Wallet purely by filename
-  // convention, same as icon/logo — no pass.json field needed. Skipped
-  // entirely when there's neither a photo nor a resolvable favicon.
-  const thumbnailBase = await buildThumbnail(card);
-  if (thumbnailBase) {
-    const [thumb1x, thumb2x, thumb3x] = await Promise.all([
-      sharp(thumbnailBase).resize(90, 90).png().toBuffer(),
-      sharp(thumbnailBase).resize(180, 180).png().toBuffer(),
-      sharp(thumbnailBase).resize(270, 270).png().toBuffer(),
-    ]);
-    files["thumbnail.png"] = thumb1x;
-    files["thumbnail@2x.png"] = thumb2x;
-    files["thumbnail@3x.png"] = thumb3x;
-  }
+  // Header logo (up to 160x50 pt) and the strip (375x144 pt), drawn at 3x.
+  const [lockup, strip] = await Promise.all([
+    renderLogoLockup(card, icon, 150),
+    renderBanner(card, { width: 1125, height: 432, withText: true }),
+  ]);
+  const lockupWidth1x = Math.round(((await sharp(lockup).metadata()).width ?? 480) / 3);
+  Object.assign(files, await scaled(lockup, "logo", lockupWidth1x, 50), await scaled(strip, "strip", 375, 144));
 
   const manifest: Record<string, string> = {};
   for (const [name, buffer] of Object.entries(files)) {

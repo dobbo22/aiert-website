@@ -1,6 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { countRecentCreates, createCard, getCard, updateCard } from "@/lib/tapcardDb";
 import { canEdit, clientIpHash, hashSecret, readEditToken } from "@/lib/tapcardAuth";
+import { parsePassStyle } from "@/lib/tapcardPassStyle";
+import { refreshGoogleWalletPass } from "@/lib/googleWallet";
 
 interface CardBody {
   id?: string;
@@ -18,6 +20,7 @@ interface CardBody {
   facebookURL?: string;
   facebookIsPage?: boolean;
   tiktokURL?: string;
+  passStyle?: string;
 }
 
 // Same rules as the iOS app's SocialProfileLink: a bare handle ("@Aiert")
@@ -61,6 +64,7 @@ function sanitize(body: CardBody) {
     facebook_url: socialUrl(body.facebookURL, "facebook"),
     facebook_is_page: body.facebookIsPage === true,
     tiktok_url: socialUrl(body.tiktokURL, "tiktok"),
+    pass_style: parsePassStyle(body.passStyle),
   };
 }
 
@@ -85,6 +89,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "forbidden" }, { status: 403 });
       }
       await updateCard(body.id, fields);
+      // A pass already saved in Google Wallet picks up the change (Apple
+      // passes are fixed once added — the app offers to re-add instead).
+      after(async () => {
+        const card = await getCard(body.id!);
+        if (card) await refreshGoogleWalletPass(card, `https://tapcard.aiert.co.uk/c/${card.id}`).catch(() => {});
+      });
       return NextResponse.json({ id: body.id });
     }
     // Falls through to create — an id the iOS app has locally but that no
