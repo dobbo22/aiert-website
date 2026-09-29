@@ -142,6 +142,28 @@ export async function renderBanner(card: TapCardRecord, opts: BannerOptions): Pr
   return sharp(renderSvg(svg)).png({ compressionLevel: 9 }).toBuffer();
 }
 
+/// Google Wallet's round logo (list view and card corner), 660px square:
+/// the company icon on white when it's big enough to stay sharp, else the
+/// company's initials in gold Sora on navy — tiny favicons blown up to this
+/// size just blur.
+export async function renderRoundLogo(card: TapCardRecord, companyIcon: Buffer | null): Promise<Buffer> {
+  const S = 660;
+  const iconWidth = companyIcon ? (await sharp(companyIcon).metadata()).width ?? 0 : 0;
+  if (companyIcon && iconWidth >= 128) {
+    const inner = Math.round(S * 0.62);
+    const icon = await sharp(companyIcon).resize(inner, inner, { fit: "contain", background: "#fff" }).flatten({ background: "#fff" }).png().toBuffer();
+    return sharp({ create: { width: S, height: S, channels: 3, background: "#fff" } })
+      .composite([{ input: icon, gravity: "centre" }]).png().toBuffer();
+  }
+  const letters = initials(card.company || card.name || "TapCard");
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}">
+    <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1a2138"/><stop offset="1" stop-color="#422975"/></linearGradient></defs>
+    <rect width="${S}" height="${S}" fill="url(#g)"/>
+    <text x="${S / 2}" y="${S / 2 + S * 0.13}" text-anchor="middle" font-family="Sora" font-weight="700" font-size="${S * 0.36}" fill="${GOLD}">${esc(letters)}</text>
+  </svg>`;
+  return renderSvg(svg);
+}
+
 /// Apple header logo, `height` px tall: TapCard mark | company icon tile +
 /// company name in gold Sora. Width varies with the name, capped at 3.2×
 /// height (Wallet's 160×50 pt logo slot).
@@ -161,7 +183,10 @@ export async function renderLogoLockup(card: TapCardRecord, companyIcon: Buffer 
   parts.push(`<rect x="${x}" y="${H * 0.25}" width="${Math.max(2, H * 0.02)}" height="${H * 0.5}" fill="rgba(255,255,255,0.28)"/>`);
   x += Math.max(2, H * 0.02) + gapA;
 
-  if (companyIcon) {
+  // Tiny favicons (often 32px) blur at this size — leave them out and give
+  // the name the room instead.
+  const iconWidth = companyIcon ? (await sharp(companyIcon).metadata()).width ?? 0 : 0;
+  if (companyIcon && iconWidth >= 96) {
     const inner = Math.round(tile * 0.76);
     const iconPng = await sharp(companyIcon).resize(inner * 2, inner * 2, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 0 } }).png().toBuffer();
     parts.push(`<rect x="${x}" y="${(H - tile) / 2}" width="${tile}" height="${tile}" rx="${tile * 0.26}" fill="#fff"/>
@@ -171,7 +196,7 @@ export async function renderLogoLockup(card: TapCardRecord, companyIcon: Buffer 
 
   // Legal suffixes go first — the header has room for about a dozen letters.
   const wordText = (card.company || card.name || "TapCard").replace(/[\s,]+(ltd\.?|limited|llc|inc\.?|plc|gmbh|l\.?l\.?p\.?)$/i, "");
-  const word = fitText(wordText, 700, H * 0.46, H * 0.26, maxW - x, 0.04);
+  const word = fitText(wordText, 700, H * 0.46, H * 0.22, maxW - x, 0.04);
   parts.push(`<text x="${x}" y="${H / 2 + word.size * 0.36}" font-family="Sora" font-weight="700" font-size="${word.size}" letter-spacing="${word.size * 0.04}" fill="${GOLD}">${esc(word.text)}</text>`);
   x += word.width;
 

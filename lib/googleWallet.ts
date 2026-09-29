@@ -69,50 +69,36 @@ async function walletApi(sa: ServiceAccount, method: string, path: string, body?
   });
 }
 
-// Card rows under the name: phone | email, then website — same order as the
-// Apple pass. Rows whose fields are missing on a card are simply hidden.
+// Exactly one row on the front: phone | email. With a single row Google puts
+// the hero banner above it instead of at the very bottom (where it fell off
+// the screen), and the whole pass fits on one screen. Website and socials
+// are in the pass details (text modules and links). Without any rows Google
+// would show the text modules as default rows instead.
 function buildClass(classId: string) {
   const field = (id: string) => ({ firstValue: { fields: [{ fieldPath: `object.textModulesData['${id}']` }] } });
   return {
     id: classId,
     classTemplateInfo: {
       cardTemplateOverride: {
-        // One field per row, full width. There's no font-size control in the
-        // Wallet API — pairing phone/email side by side (twoItems) halved
-        // their width and wrapped values like phone numbers onto two lines
-        // at Wallet's default text size. Matches how website was already shown.
-        cardRowTemplateInfos: [
-          { oneItem: { item: field("phone") } },
-          { oneItem: { item: field("email") } },
-          { oneItem: { item: field("website") } },
-        ],
+        cardRowTemplateInfos: [{ twoItems: { startItem: field("phone"), endItem: field("email") } }],
       },
     },
   };
 }
 
-function companyDomain(website: string): string | null {
-  try {
-    const prefixed = /^https?:\/\//i.test(website) ? website : `https://${website}`;
-    return new URL(prefixed).hostname.replace(/^www\./, "");
-  } catch {
-    return null;
-  }
-}
-
 function buildObject(card: TapCardRecord, classId: string, issuerId: string, shareURL: string) {
   const personal = isPersonalCard(card);
-  const domain = card.website ? companyDomain(card.website) : null;
-  const logoUri = domain
-    ? `https://tapcard.aiert.co.uk/api/favicon?domain=${encodeURIComponent(domain)}&noico=1`
-    : "https://www.aiert.co.uk/tapcard-icon.png";
-  // Banner (1032x336, Google's hero size) in the card's chosen Wallet style —
-  // the same artwork/photo/brand picture as the Apple strip, drawn by
-  // wallet-hero/route.ts. `v` changes with every card update, so Google
-  // fetches the new banner instead of reusing its cached copy.
+  // Pictures drawn by wallet-hero and wallet-logo (lib/tapcardPassArt): the
+  // banner (1032x336) in the card's Wallet style, the wide header logo
+  // (TapCard mark + company icon + name, as on the Apple pass — on Android it
+  // replaces the round logo and title), and a crisp round logo for list
+  // views. `v` changes with every card update, so Google fetches new images
+  // instead of reusing its cached copies.
   const origin = new URL(shareURL).origin;
   const version = new Date(card.updated_at).getTime() || 0;
   const heroUri = `${origin}/api/cards/${card.id}/wallet-hero?v=${version}`;
+  const logoUri = `${origin}/api/cards/${card.id}/wallet-logo?v=${version}`;
+  const wideLogoUri = `${origin}/api/cards/${card.id}/wallet-logo?wide=1&v=${version}`;
   const text = (id: string, header: string, body: string) => (body ? [{ id, header, body }] : []);
   const socials: [string, string][] = [
     ["LinkedIn", card.linkedin_url],
@@ -133,6 +119,7 @@ function buildObject(card: TapCardRecord, classId: string, issuerId: string, sha
     // card's own name when it adds something — "Aiert · Business",
     // "Martin Dobson · Personal" — so several cards are easy to tell apart.
     logo: { sourceUri: { uri: logoUri }, contentDescription: localized(owner) },
+    wideLogo: { sourceUri: { uri: wideLogoUri }, contentDescription: localized(owner) },
     heroImage: { sourceUri: { uri: heroUri }, contentDescription: localized(owner) },
     cardTitle: localized(card.label && !sameName(card.label, owner) ? `${owner} · ${card.label}` : owner),
     // Job title above the name, as on the Apple pass.

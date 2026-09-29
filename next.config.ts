@@ -27,6 +27,10 @@ const nextConfig: NextConfig = {
       "node_modules/@img/**/*", "node_modules/sharp/**/*",
       "node_modules/@resvg/**/*", "lib/tapcardPassAssets/**/*",
     ],
+    "/api/tapcard/cards/\\[id\\]/wallet-logo": [
+      "node_modules/@img/**/*", "node_modules/sharp/**/*",
+      "node_modules/@resvg/**/*", "lib/tapcardPassAssets/**/*",
+    ],
   },
   async redirects() {
     return [
