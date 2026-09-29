@@ -126,20 +126,24 @@ function buildObject(card: TapCardRecord, classId: string, issuerId: string, sha
     ...(card.title ? { subheader: localized(card.title) } : {}),
     header: localized(card.name),
     hexBackgroundColor: personal ? "#422975" : "#111318",
+    // Only what the front row shows; Google also lists these under the card,
+    // so everything else is a tappable link below rather than repeated text.
     textModulesData: [
       ...text("phone", "Phone", card.phone),
       ...text("email", "Email", card.email),
-      ...text("website", "Website", card.website),
     ],
+    // Each action names its value ("Call 020…"), so the details list holds
+    // every way to reach them once, in the order people use them.
     linksModuleData: {
       uris: [
-        { uri: shareURL, description: "View card online", id: "view" },
-        ...(card.phone ? [{ uri: `tel:${card.phone.replace(/\s/g, "")}`, description: "Call", id: "call" }] : []),
-        ...(card.email ? [{ uri: `mailto:${card.email}`, description: "Email", id: "email" }] : []),
+        ...(card.phone ? [{ uri: `tel:${card.phone.replace(/\s/g, "")}`, description: `Call ${card.phone}`, id: "call" }] : []),
+        ...(card.email ? [{ uri: `mailto:${card.email}`, description: `Email ${card.email}`, id: "email" }] : []),
+        ...(card.website ? [{ uri: /^https?:\/\//i.test(card.website) ? card.website : `https://${card.website}`, description: card.website.replace(/^https?:\/\//i, ""), id: "website" }] : []),
         ...socials.filter(([, url]) => url).map(([name, url]) => ({ uri: url, description: name, id: name.toLowerCase().replace(/\W/g, "") })),
+        { uri: shareURL, description: "View card online", id: "view" },
       ],
     },
-    barcode: { type: "QR_CODE", value: shareURL, alternateText: "Scan to save my contact" },
+    barcode: { type: "QR_CODE", value: shareURL },
     ...(card.grouping_id ? { groupingInfo: { groupingId: card.grouping_id } } : {}),
   };
 }
