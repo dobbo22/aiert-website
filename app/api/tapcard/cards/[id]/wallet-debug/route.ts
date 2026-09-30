@@ -30,10 +30,15 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const API = "https://walletobjects.googleapis.com/walletobjects/v1";
   const objectId = `${issuerId}.${id}`;
   const classId = `${issuerId}.tapcard_card_v1`;
-  const [objRes, classRes] = await Promise.all([
+  const [objRes, classRes, issuerRes] = await Promise.all([
     fetch(`${API}/genericObject/${encodeURIComponent(objectId)}`, { headers: { Authorization: `Bearer ${access_token}` } }),
     fetch(`${API}/genericClass/${encodeURIComponent(classId)}`, { headers: { Authorization: `Bearer ${access_token}` } }),
+    fetch(`${API}/issuer/${encodeURIComponent(issuerId)}`, { headers: { Authorization: `Bearer ${access_token}` } }),
   ]);
-  const [obj, cls] = await Promise.all([objRes.json(), classRes.json()]);
-  return NextResponse.json({ objectStatus: objRes.status, object: obj, classStatus: classRes.status, class: cls });
+  const [obj, cls, issuer] = await Promise.all([objRes.json(), classRes.json(), issuerRes.json()]);
+  return NextResponse.json({
+    objectStatus: objRes.status, object: obj,
+    classStatus: classRes.status, class: cls,
+    issuerStatus: issuerRes.status, issuer,
+  });
 }
