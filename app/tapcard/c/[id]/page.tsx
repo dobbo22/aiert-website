@@ -45,10 +45,10 @@ export default async function CardPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ send?: string }>;
+  searchParams: Promise<{ send?: string; via?: string }>;
 }) {
   const { id } = await params;
-  const { send } = await searchParams;
+  const { send, via } = await searchParams;
   const card = await getCard(id);
   if (!card) notFound();
 
@@ -57,11 +57,24 @@ export default async function CardPage({
   // *different* domain than the page you're on, so "Send your card back"
   // points at whichever host this isn't: with TapCard installed the tap
   // opens the app; without it, the page reloads with ?send=1 and explains.
-  const host = (await headers()).get("host") ?? "";
+  const requestHeaders = await headers();
+  const host = requestHeaders.get("host") ?? "";
   const sendBackHref = host.startsWith("tapcard.")
     ? `https://www.aiert.co.uk/tapcard/c/${id}?send=1`
     : `${TAPCARD_ORIGIN}/c/${id}?send=1`;
   const firstName = card.name.split(/\s+/)[0] || card.name;
+
+  // QR codes point at /s/[id] (see ../../s/[id]/page.tsx), which renders
+  // this page with via=qr. iPhone Camera's "Open in app" handoff for a
+  // Universal Link sometimes launches TapCard without the URL, so /s/ isn't
+  // a Universal Link: Camera always opens Safari, and this button — a real
+  // tap on a link to the other host — is what opens the app. Without the
+  // app installed, the tap just loads the same card page. Android opens /s/
+  // links in the app directly, so this only shows if that didn't happen.
+  const openInAppHref =
+    /android/i.test(requestHeaders.get("user-agent") ?? "") || !host.startsWith("tapcard.")
+      ? `${TAPCARD_ORIGIN}/c/${id}`
+      : `https://www.aiert.co.uk/tapcard/c/${id}`;
 
   // Counted here rather than via a client-side beacon so it also captures
   // link previews / crawlers minus render — acceptable for a rough "how many
@@ -138,6 +151,15 @@ export default async function CardPage({
             <h1 className="mt-4 text-2xl font-bold text-white">{card.name}</h1>
             {(card.title || card.company) && (
               <p className="mt-1 text-sm text-white">{[card.title, card.company].filter(Boolean).join(" · ")}</p>
+            )}
+
+            {via === "qr" && (
+              <a
+                href={openInAppHref}
+                className="mt-5 inline-block w-full rounded-xl bg-teal px-4 py-3 font-semibold text-[#111318]"
+              >
+                Have TapCard? Open in the app
+              </a>
             )}
 
             <a
