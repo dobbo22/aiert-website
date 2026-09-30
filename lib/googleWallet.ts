@@ -16,7 +16,14 @@ import { isPersonalCard, sameName } from "@/lib/tapcardPassStyle";
 // accounts can save these passes.
 
 const API = "https://walletobjects.googleapis.com/walletobjects/v1";
-const CLASS_SUFFIX = "tapcard_card_v1";
+// v2: the v1 class's schema was mutated several times (row layout changed
+// repeatedly, image fields added) and every pass under it — old and freshly
+// created alike — started failing with a generic "Unable to load this pass"
+// in the Wallet app, despite the REST API reporting the class/object/issuer
+// as fully valid. A fresh class ID is the practical fix for a Wallet class
+// stuck in a bad state; there's nothing here to migrate since every existing
+// v1 pass was already broken.
+const CLASS_SUFFIX = "tapcard_card_v2";
 
 interface ServiceAccount {
   client_email: string;
