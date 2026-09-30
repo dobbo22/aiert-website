@@ -10,7 +10,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const card = await getCard(id);
   if (!card) return NextResponse.json({ error: "not found" }, { status: 404 });
   try {
-    const url = await googleWalletSaveUrl(card, `https://tapcard.aiert.co.uk/c/${id}`);
+    const url = await googleWalletSaveUrl(card, `https://tapcard.aiert.co.uk/s/${id}`);
     return NextResponse.redirect(url, 302);
   } catch (err) {
     console.error("google wallet", err);

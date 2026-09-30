@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
       // passes are fixed once added — the app offers to re-add instead).
       after(async () => {
         const card = await getCard(body.id!);
-        if (card) await refreshGoogleWalletPass(card, `https://tapcard.aiert.co.uk/c/${card.id}`).catch(() => {});
+        if (card) await refreshGoogleWalletPass(card, `https://tapcard.aiert.co.uk/s/${card.id}`).catch(() => {});
       });
       return NextResponse.json({ id: body.id });
     }

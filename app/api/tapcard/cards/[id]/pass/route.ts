@@ -7,7 +7,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const card = await getCard(id);
   if (!card) return NextResponse.json({ error: "not found" }, { status: 404 });
 
-  const shareURL = `https://tapcard.aiert.co.uk/c/${id}`;
+  const shareURL = `https://tapcard.aiert.co.uk/s/${id}`;
   const pkpass = await buildPkpass(card, shareURL);
 
   return new NextResponse(new Uint8Array(pkpass), {
