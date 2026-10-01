@@ -211,7 +211,8 @@ export async function inviteCardImage(person: InviteCardPerson): Promise<ImageRe
     {
       width: WIDTH,
       height,
-      headers: { "Cache-Control": "public, max-age=86400, s-maxage=86400" },
+      // Short, so a re-sent invite picks up edited details.
+      headers: { "Cache-Control": "public, max-age=300, s-maxage=300" },
     },
   );
 }

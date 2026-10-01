@@ -104,7 +104,7 @@ Martin`;
 // preview shows a picture of their own card (see app/tapcard/get/[token]).
 export const DEFAULT_WHATSAPP_TEMPLATE = `Hi {firstName}, it's Martin Dobson — [personalise here: e.g. we worked together at BT].
 
-Have you ever been asked for your business card and not had one with you, or run out? 📇
+Have you ever been asked for your business card and not had one with you, or run out?
 
 I've built an app called *TapCard* to solve exactly that. It keeps your business card on your phone, and in your Apple Wallet, ready to share with a QR code or a link. When you swap details, their info saves straight into your contacts — no typing, no running out of cards.
 
