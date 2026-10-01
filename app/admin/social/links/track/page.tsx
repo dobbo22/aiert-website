@@ -1,5 +1,6 @@
 import sql from "@/lib/db";
 import { campaignToken, ensureInviteSchema, playStoreLive } from "@/lib/tapcardInvites";
+import ResetSendButton from "./ResetSendButton";
 import StoreStatsInput from "./StoreStatsInput";
 
 type ChannelRow = {
@@ -15,6 +16,7 @@ type ChannelRow = {
 type CampaignRow = { campaign: string; channel: string; sent: number | null; clicked: number | null; ios_clicks: number; android_clicks: number; desktop_clicks: number };
 type StoreRow = { campaign_token: string; store: string; installs: number };
 type SendRow = {
+  id: number;
   name: string;
   channel: string;
   sent_at: string;
@@ -83,7 +85,7 @@ export default async function TrackInvitesPage() {
       `,
       sql`SELECT campaign_token, store, installs FROM tapcard_invite_store_stats`,
       sql`
-        SELECT c.name, s.channel, s.sent_at, s.delivered_at, s.opened_at, s.bounced_at,
+        SELECT s.id, c.name, s.channel, s.sent_at, s.delivered_at, s.opened_at, s.bounced_at,
                s.first_click_at, s.click_count, s.last_platform,
                COUNT(DISTINCT COALESCE(k.visitor_id, k.fingerprint, k.id::text)) FILTER (WHERE k.is_forward)::int AS forwarded_people,
                COUNT(DISTINCT COALESCE(k.visitor_id, k.fingerprint, k.id::text)) FILTER (WHERE k.source = 'share')::int AS shared_people
@@ -275,7 +277,7 @@ export default async function TrackInvitesPage() {
           <thead>
             <tr>
               <th>Name</th><th>Medium</th><th>Sent</th><th>Delivered</th><th>Opened</th><th>Clicked</th><th>Clicks</th>
-              <th>Device</th><th>Forwarded to</th><th>Passed on to</th>
+              <th>Device</th><th>Forwarded to</th><th>Passed on to</th><th></th>
             </tr>
           </thead>
           <tbody>
@@ -291,10 +293,11 @@ export default async function TrackInvitesPage() {
                 <td>{s.last_platform ? DEVICE[s.last_platform] ?? "" : ""}</td>
                 <td>{s.forwarded_people ? `${s.forwarded_people} ${s.forwarded_people === 1 ? "person" : "people"}` : ""}</td>
                 <td>{s.shared_people ? `${s.shared_people} ${s.shared_people === 1 ? "person" : "people"}` : ""}</td>
+                <td><ResetSendButton sendId={s.id} name={s.name} /></td>
               </tr>
             ))}
             {sends.length === 0 && (
-              <tr><td colSpan={10} className="admin-empty-cell">Nothing sent yet.</td></tr>
+              <tr><td colSpan={11} className="admin-empty-cell">Nothing sent yet.</td></tr>
             )}
           </tbody>
         </table>
