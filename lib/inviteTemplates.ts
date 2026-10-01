@@ -22,6 +22,21 @@ export const HOW_IT_WORKS_URL = "https://tapcard.aiert.co.uk/how-it-works";
 /// he knows each person. Send is blocked while it's still there.
 export const PERSONAL_NOTE_MARKER = /\[personali[sz]e here[^\]]*\]/i;
 
+/// Ready-made lines for the personal note (the Send tab's "How you know
+/// them" menu). "" means leave the note out altogether.
+export const PERSONAL_NOTE_PRESETS: { id: string; label: string; text: string }[] = [
+  { id: "none", label: "Don't add anything", text: "" },
+  { id: "westhouse", label: "Head of Trading at Westhouse", text: "we were in contact when I was Head of Trading at Westhouse" },
+  { id: "natwest", label: "Head of Trading at NatWest", text: "we were in contact when I was Head of Trading at NatWest" },
+];
+
+/// Puts a personal note in place of "[personalise here…]". An empty note
+/// removes the marker together with the " — " before it.
+export function applyPersonalNote(message: string, note: string): string {
+  if (!note.trim()) return message.replace(/\s*—\s*\[personali[sz]e here[^\]]*\]|\s*\[personali[sz]e here[^\]]*\]/i, "");
+  return message.replace(PERSONAL_NOTE_MARKER, note.trim());
+}
+
 // Email formatting: a blank line starts a new paragraph, lines starting
 // "- " are bullets, **bold**, and [label](url) links. The {link} and
 // {androidLink} links are drawn as buttons, and a paragraph that is just
@@ -59,7 +74,7 @@ P.S. Drowning in old email? My other apps can help: [MailBroom](https://tapcard.
 // LinkedIn / Messenger: plain text (no formatting in either), shorter, and
 // no "writing from my work email" line — it's coming from Martin's own
 // profile, to people he's already connected to.
-export const DEFAULT_SOCIAL_TEMPLATE = `Hi {firstName}, [personalise here: e.g. great to see the new role]
+export const DEFAULT_SOCIAL_TEMPLATE = `Hi {firstName}, Martin Dobson here — [personalise here: e.g. great to see the new role].
 
 Have you ever been asked for your business card and not had one with you, or run out?
 

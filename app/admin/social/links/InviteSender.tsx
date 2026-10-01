@@ -10,7 +10,9 @@ import {
   DEFAULT_WHATSAPP_TEMPLATE,
   type InviteChannel,
   PERSONAL_NOTE_MARKER,
+  PERSONAL_NOTE_PRESETS,
   type SocialChannel,
+  applyPersonalNote,
   personalise,
   whatsappNumber,
 } from "@/lib/inviteTemplates";
@@ -99,6 +101,8 @@ export default function InviteSender({
   const [waTemplate, setWaTemplate] = useState(DEFAULT_WHATSAPP_TEMPLATE);
   const [socialTemplate, setSocialTemplate] = useState(DEFAULT_SOCIAL_TEMPLATE);
   const [drafts, setDrafts] = useState<Record<number, Draft>>({});
+  // "How you know them" per person: a preset id, or "custom" with typed text.
+  const [notes, setNotes] = useState<Record<number, { choice: string; text: string }>>({});
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("not-invited");
@@ -155,12 +159,64 @@ export default function InviteSender({
   const selectedWithMobile = selectedContacts.filter((c) => whatsappNumber(c.phone) && !c.do_not_contact);
   const selectedReachable = selectedContacts.filter((c) => !c.do_not_contact);
 
+  function noteText(contact: SenderContact): string | null {
+    const note = notes[contact.id];
+    if (!note) return null;
+    if (note.choice === "custom") return note.text.trim() || null;
+    return PERSONAL_NOTE_PRESETS.find((p) => p.id === note.choice)?.text ?? null;
+  }
+
   function messageFor(contact: SenderContact, kind: MessageKind): string {
     const draft = drafts[contact.id]?.[kind];
-    if (draft != null) return draft;
-    const template = kind === "email" ? emailTemplate : kind === "social" ? socialTemplate : waTemplate;
     // {link} stays as a placeholder — the server swaps in this person's tracked link.
-    return personalise(template, contact, "{link}", "{shareLink}", "{androidLink}").replaceAll("{fromEmail}", emailFromAddress);
+    const text =
+      draft ??
+      personalise(kind === "email" ? emailTemplate : kind === "social" ? socialTemplate : waTemplate, contact, "{link}", "{shareLink}", "{androidLink}").replaceAll(
+        "{fromEmail}",
+        emailFromAddress,
+      );
+    const note = noteText(contact);
+    return note == null ? text : applyPersonalNote(text, note);
+  }
+
+  function chooseNote(contact: SenderContact, choice: string, text = notes[contact.id]?.text ?? "") {
+    const d = drafts[contact.id];
+    // A hand-edited message no longer has the marker for the note to fill,
+    // so picking a different note starts again from the template.
+    const edited = [d?.email, d?.social].some((t) => t != null && !PERSONAL_NOTE_MARKER.test(t));
+    if (edited && notes[contact.id]?.choice !== choice) {
+      if (!confirm("Use this note instead of your edited message? Your edits to the message will be lost.")) return;
+      setDrafts((all) => ({ ...all, [contact.id]: { ...all[contact.id], email: undefined, social: undefined } }));
+    }
+    setNotes((n) => ({ ...n, [contact.id]: { choice, text } }));
+  }
+
+  function notePicker(contact: SenderContact) {
+    const note = notes[contact.id];
+    return (
+      <div className="invite-profile">
+        <span>How you know them</span>
+        <select value={note?.choice ?? ""} onChange={(e) => chooseNote(contact, e.target.value)}>
+          <option value="" disabled>
+            Choose…
+          </option>
+          {PERSONAL_NOTE_PRESETS.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.label}
+            </option>
+          ))}
+          <option value="custom">Type my own…</option>
+        </select>
+        {note?.choice === "custom" && (
+          <input
+            autoFocus
+            placeholder="e.g. we met at the Leeds fintech dinner"
+            value={note.text}
+            onChange={(e) => setNotes((n) => ({ ...n, [contact.id]: { choice: "custom", text: e.target.value } }))}
+          />
+        )}
+      </div>
+    );
   }
 
   /// The message still has the "[personalise here…]" line in it.
@@ -664,6 +720,7 @@ export default function InviteSender({
                       />
                     </div>
                   </div>
+                  {notePicker(focused)}
                   <div className="social-tabs invite-mail-tabs">
                     <button className={`social-tab ${emailView === "preview" ? "social-tab-active" : ""}`} onClick={() => setEmailView("preview")}>
                       Preview
@@ -711,6 +768,7 @@ export default function InviteSender({
                       </div>
                     );
                   })()}
+                  {notePicker(focused)}
                   <textarea
                     rows={14}
                     value={messageFor(focused, "social")}
@@ -720,13 +778,8 @@ export default function InviteSender({
               )}
               {previewChannel !== "whatsapp" && needsPersonalNote(focused, kindFor(previewChannel)) && (
                 <p className="social-compose-error">
-                  {previewChannel === "email" ? (
-                    <>Click <strong>Edit message</strong> and replace</>
-                  ) : (
-                    <>Replace</>
-                  )}{" "}
-                  the [personalise here…] bit with a line for {focused.first_name || focused.name} (or delete it).
-                  {previewChannel === "email" ? " Send" : " Copy & open"} unlocks once it&apos;s gone.
+                  Choose <strong>How you know them</strong> for {focused.first_name || focused.name} (or edit the
+                  [personalise here…] bit yourself).{previewChannel === "email" ? " Send" : " Copy & open"} unlocks once it&apos;s filled in.
                 </p>
               )}
               <small>

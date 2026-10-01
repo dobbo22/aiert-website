@@ -95,3 +95,5 @@
 .invite-mail-tabs { margin: 0; padding: 0.4rem 0.6rem 0; border-top: 1px solid rgba(148, 163, 184, 0.2); }
 .invite-mail-body { display: block; width: 100%; height: 440px; border: 0; background: #ffffff; }
 .invite-mail textarea { border: 0; border-radius: 0; }
+.invite-mail > .invite-profile { padding: 0.5rem 0.75rem 0; margin-bottom: 0; }
+.invite-profile select { max-width: 100%; }
