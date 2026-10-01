@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   DEFAULT_CAMPAIGN,
@@ -101,8 +101,24 @@ export default function InviteSender({
   const [waTemplate, setWaTemplate] = useState(DEFAULT_WHATSAPP_TEMPLATE);
   const [socialTemplate, setSocialTemplate] = useState(DEFAULT_SOCIAL_TEMPLATE);
   const [drafts, setDrafts] = useState<Record<number, Draft>>({});
-  // "How you know them" per person: a preset id, or "custom" with typed text.
+  // "How you know them" per person: a preset id, or "custom" (typed straight
+  // into the message, over the [personalise here…] marker).
   const [notes, setNotes] = useState<Record<number, { choice: string; text: string }>>({});
+  const messageRef = useRef<HTMLTextAreaElement>(null);
+  // Bumped to open the message editor with the marker selected, ready to type over.
+  const [selectMarker, setSelectMarker] = useState(0);
+  useEffect(() => {
+    if (!selectMarker) return;
+    const el = messageRef.current;
+    if (!el) return;
+    el.focus();
+    const m = el.value.match(PERSONAL_NOTE_MARKER);
+    if (m?.index != null) {
+      el.setSelectionRange(m.index, m.index + m[0].length);
+      // Bring the selection into view on long messages.
+      el.scrollTop = Math.max(0, (el.value.slice(0, m.index).split("\n").length - 3) * 20);
+    }
+  }, [selectMarker]);
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("not-invited");
@@ -162,7 +178,7 @@ export default function InviteSender({
   function noteText(contact: SenderContact): string | null {
     const note = notes[contact.id];
     if (!note) return null;
-    if (note.choice === "custom") return note.text.trim() || null;
+    if (note.choice === "custom") return null;
     return PERSONAL_NOTE_PRESETS.find((p) => p.id === note.choice)?.text ?? null;
   }
 
@@ -189,6 +205,10 @@ export default function InviteSender({
       setDrafts((all) => ({ ...all, [contact.id]: { ...all[contact.id], email: undefined, social: undefined } }));
     }
     setNotes((n) => ({ ...n, [contact.id]: { choice, text } }));
+    if (choice === "custom") {
+      setEmailView("edit");
+      setSelectMarker((t) => t + 1);
+    }
   }
 
   function notePicker(contact: SenderContact) {
@@ -208,12 +228,12 @@ export default function InviteSender({
           <option value="custom">Type my own…</option>
         </select>
         {note?.choice === "custom" && (
-          <input
-            autoFocus
-            placeholder="e.g. we met at the Leeds fintech dinner"
-            value={note.text}
-            onChange={(e) => setNotes((n) => ({ ...n, [contact.id]: { choice: "custom", text: e.target.value } }))}
-          />
+          <small>
+            Type over the selected [personalise here…] in the message.{" "}
+            <button className="invite-link-btn" onClick={() => { setEmailView("edit"); setSelectMarker((t) => t + 1); }}>
+              Show me
+            </button>
+          </small>
         )}
       </div>
     );
@@ -761,6 +781,7 @@ export default function InviteSender({
                     <iframe className="invite-mail-body" title="Email preview" sandbox="" srcDoc={previewHtml(focused)} />
                   ) : (
                     <textarea
+                      ref={messageRef}
                       rows={14}
                       value={messageFor(focused, "email")}
                       onChange={(e) => setDrafts((d) => ({ ...d, [focused.id]: { ...d[focused.id], email: e.target.value } }))}
@@ -798,6 +819,7 @@ export default function InviteSender({
                   })()}
                   {notePicker(focused)}
                   <textarea
+                    ref={messageRef}
                     rows={14}
                     value={messageFor(focused, "social")}
                     onChange={(e) => setDrafts((d) => ({ ...d, [focused.id]: { ...d[focused.id], social: e.target.value } }))}
