@@ -101,6 +101,8 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
   const [socialQueue, setSocialQueue] = useState<{ channel: SocialChannel; ids: number[] } | null>(null);
   const [uncopied, setUncopied] = useState<string | null>(null);
   const [profileInput, setProfileInput] = useState<{ id: number; value: string } | null>(null);
+  // A corrected "To" address being typed; saved to the contact on Save or Send.
+  const [emailInput, setEmailInput] = useState<{ id: number; value: string } | null>(null);
   // Emails are never sent in bulk: ticked people go into this queue and each
   // one is shown (as the email will look) for checking and personalising
   // before Send. At most DAILY_EMAIL_LIMIT a day (UK time), enforced by the
@@ -257,13 +259,38 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
     }
   }
 
+  /// Saves a corrected email address to the contact. Returns false if it
+  /// was rejected (the message is shown).
+  async function saveEmail(contact: SenderContact, value: string): Promise<boolean> {
+    const res = await fetch("/api/admin/invites/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: contact.id, email: value }),
+    });
+    if (!res.ok) {
+      setStatus({ text: (await res.json().catch(() => ({}))).error ?? "Couldn't save that address", error: true });
+      return false;
+    }
+    setEmailInput(null);
+    router.refresh();
+    return true;
+  }
+
+  const pendingEmail = (contact: SenderContact) =>
+    emailInput?.id === contact.id && emailInput.value.trim() !== contact.email ? emailInput.value.trim() : null;
+
   async function sendOneEmail(contact: SenderContact) {
     setBusy(true);
+    const corrected = pendingEmail(contact);
+    if (corrected != null && !(await saveEmail(contact, corrected))) {
+      setBusy(false);
+      return;
+    }
     const result = await postSend(contact, "email");
     setBusy(false);
     if (result.ok) {
       setEmailsToday((n) => n + 1);
-      setStatus({ text: `Sent to ${contact.name}.` });
+      setStatus({ text: `Sent to ${contact.name}${corrected ? ` at ${corrected}` : ""}.` });
       advanceEmailQueue(contact.id);
     } else if (result.skipped) {
       setStatus({ text: `${contact.name} was already emailed for "${campaign}". Skipped.` });
@@ -605,7 +632,25 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
                 <div className="invite-mail">
                   <div className="invite-mail-head">
                     <div><span>From</span>{INVITE_EMAIL_FROM_DISPLAY}</div>
-                    <div><span>To</span>{focused.name} &lt;{focused.email || "no email address"}&gt;</div>
+                    <div className="invite-mail-subject">
+                      <span>To</span>
+                      <input
+                        type="email"
+                        placeholder="No email address: type one"
+                        value={emailInput?.id === focused.id ? emailInput.value : focused.email}
+                        onChange={(e) => setEmailInput({ id: focused.id, value: e.target.value })}
+                      />
+                      {pendingEmail(focused) != null && (
+                        <button
+                          className="invite-link-btn"
+                          onClick={async () => {
+                            if (await saveEmail(focused, pendingEmail(focused)!)) setStatus({ text: `Saved ${focused.name}'s email address.` });
+                          }}
+                        >
+                          Save
+                        </button>
+                      )}
+                    </div>
                     <div className="invite-mail-subject">
                       <span>Subject</span>
                       <input
@@ -687,10 +732,10 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
                 {previewChannel === "email" ? (
                   <button
                     className="social-post-btn"
-                    disabled={busy || !focused.email || focused.do_not_contact || emailsToday >= DAILY_EMAIL_LIMIT || needsPersonalNote(focused)}
+                    disabled={busy || !(pendingEmail(focused) ?? focused.email) || focused.do_not_contact || emailsToday >= DAILY_EMAIL_LIMIT || needsPersonalNote(focused)}
                     onClick={() => sendOneEmail(focused)}
                   >
-                    {!focused.email
+                    {!(pendingEmail(focused) ?? focused.email)
                       ? "No email address"
                       : emailsToday >= DAILY_EMAIL_LIMIT
                         ? "Daily limit reached"
@@ -698,7 +743,9 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
                           ? "Personalise first"
                           : busy
                             ? "Sending…"
-                            : "Send this email"}
+                            : pendingEmail(focused)
+                              ? "Save address & send"
+                              : "Send this email"}
                   </button>
                 ) : previewChannel === "linkedin" || previewChannel === "messenger" ? (
                   <button
