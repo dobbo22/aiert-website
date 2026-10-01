@@ -309,6 +309,27 @@ export default function InviteSender({
     setStatus({ text: `${ids.length} email${ids.length === 1 ? "" : "s"} queued. Check each one, then press Send.` });
   }
 
+  /// After a send: untick them, forget their edits, and (unless a queue
+  /// moves on to the next person) clear the preview and refresh the list,
+  /// so they drop out of "Not invited yet".
+  function finishContact(id: number, keepFocus = false) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    const without = <T,>(all: Record<number, T>) => {
+      const next = { ...all };
+      delete next[id];
+      return next;
+    };
+    setDrafts(without);
+    setNotes(without);
+    setEmailInput(null);
+    if (!keepFocus) setFocusedId((f) => (f === id ? null : f));
+    router.refresh();
+  }
+
   function advanceEmailQueue(fromId: number) {
     const next = emailQueue.filter((id) => id !== fromId);
     setEmailQueue(next);
@@ -316,6 +337,7 @@ export default function InviteSender({
       setFocusedId(next[0]);
       setEmailView("preview");
     } else {
+      setFocusedId(null);
       router.refresh();
     }
   }
@@ -352,6 +374,7 @@ export default function InviteSender({
     if (result.ok) {
       setEmailsToday((n) => n + 1);
       setStatus({ text: `Sent to ${contact.name}${corrected ? ` at ${corrected}` : ""}.` });
+      finishContact(contact.id);
       advanceEmailQueue(contact.id);
     } else if (result.skipped) {
       setStatus({ text: `${contact.name} was already emailed for "${campaign}". Skipped.` });
@@ -371,6 +394,7 @@ export default function InviteSender({
       if (win) win.location.href = result.waUrl;
       else window.location.href = result.waUrl;
       setStatus({ text: `WhatsApp opened for ${contact.name}. Press Send in WhatsApp.` });
+      finishContact(contact.id);
       return true;
     }
     win?.close();
@@ -423,15 +447,17 @@ export default function InviteSender({
         return;
       }
       if (win) win.location.href = r.openUrl;
+      if (!win) window.open(r.openUrl, "_blank");
       if (await copied) {
         setStatus({ text: `Message for ${contact.name} copied. Paste it into ${SOCIAL_LABEL[channel]} and press Send.` });
+        finishContact(contact.id);
+        advanceSocialQueue(contact.id);
       } else {
+        // Keep them on screen so the message can be copied from the box;
+        // Skip in the queue bar moves on.
         setUncopied(r.text ?? "");
         setStatus({ text: "Couldn't copy automatically: copy the message from the box below.", error: true });
       }
-      if (!win) window.open(r.openUrl, "_blank");
-      advanceSocialQueue(contact.id);
-      if (!socialQueue) router.refresh();
     })();
   }
 

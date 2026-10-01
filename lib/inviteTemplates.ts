@@ -101,6 +101,12 @@ Free download: {link}
 
 Know someone who'd like it? Pass it on: {shareLink}`;
 
+/// The name to greet them by: just the first word, since contact cards often
+/// keep middle names or initials in the first-name field ("Martin CJ").
+export function firstNameOf(contact: { name?: string | null; first_name?: string | null }): string {
+  return (contact.first_name || contact.name || "").trim().split(/\s+/)[0] || "";
+}
+
 export function personalise(
   template: string,
   contact: { name: string; first_name: string; company: string },
@@ -111,7 +117,7 @@ export function personalise(
   return template
     .replaceAll("{howItWorksLink}", HOW_IT_WORKS_URL)
     .replaceAll("{androidLink}", androidLink)
-    .replaceAll("{firstName}", contact.first_name || contact.name.split(/\s+/)[0] || "there")
+    .replaceAll("{firstName}", firstNameOf(contact) || "there")
     .replaceAll("{name}", contact.name || "there")
     .replaceAll("{company}", contact.company || "")
     .replaceAll("{shareLink}", shareLink)

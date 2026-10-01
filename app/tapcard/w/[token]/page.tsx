@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { firstNameOf } from "@/lib/inviteTemplates";
 import { getSendByToken } from "@/lib/tapcardInvites";
 import WaitlistCard from "../../WaitlistCard";
 
@@ -17,7 +18,7 @@ export default async function AndroidWaitlistInvitePage({
   const { token } = await params;
   const { done, error } = await searchParams;
   const send = await getSendByToken(token).catch(() => null);
-  const firstName = send?.first_name || send?.name?.split(/\s+/)[0];
+  const firstName = send ? firstNameOf(send) : "";
   return (
     <WaitlistCard
       heading={firstName ? `${firstName}, want TapCard on Android?` : "Want TapCard on Android?"}

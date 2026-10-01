@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import { firstNameOf } from "@/lib/inviteTemplates";
 import { appStoreUrl, getSendByToken, platformFromUserAgent, playStoreLive, playStoreUrl } from "@/lib/tapcardInvites";
 
 const TITLE = "A free gift: TapCard, the business card swapper";
@@ -37,7 +38,7 @@ export default async function InviteLandingPage({
   const channel = shared ? "share" : (send?.channel ?? "unknown");
   const platform = platformFromUserAgent((await headers()).get("user-agent") ?? "");
 
-  const firstName = shared ? null : send?.first_name || send?.name?.split(/\s+/)[0];
+  const firstName = shared || !send ? null : firstNameOf(send);
   const androidPending = platform === "android" && !playStoreLive();
 
   return (
