@@ -256,7 +256,9 @@ export default function InviteSender({
         allowRepeat,
       }),
     });
+    // A timeout or crash can come back as an HTML page rather than JSON.
     const json = await res.json().catch(() => ({}));
+    if (!res.ok && !json.error) json.error = `the server didn't answer properly (HTTP ${res.status}). Check Track invites before sending again`;
     return { ok: res.ok, ...json } as {
       ok: boolean;
       error?: string;

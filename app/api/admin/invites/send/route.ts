@@ -29,7 +29,21 @@ import {
 // Items stay in Outlook. TAPCARD_INVITE_EMAIL_VIA=resend switches to Resend
 // (with delivery/bounce webhooks) — see lib/inviteEmailRoute.ts.
 
+// Sending can wait on Outlook/Resend; don't let a slow reply cut it off.
+export const maxDuration = 30;
+
+// Any unexpected failure comes back as JSON with its message, so the Send tab
+// can show what went wrong instead of "undefined".
 export async function POST(req: Request) {
+  try {
+    return await handleSend(req);
+  } catch (err) {
+    console.error("TapCard invite send failed", err);
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Send failed" }, { status: 500 });
+  }
+}
+
+async function handleSend(req: Request) {
   if (!(await isAdminRequest())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json().catch(() => null);
