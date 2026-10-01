@@ -104,3 +104,6 @@
 .invite-details-field input { font-size: 0.85rem; }
 .invite-details-actions { grid-column: 1 / -1; display: flex; gap: 0.6rem; align-items: center; }
 @media (max-width: 640px) { .invite-details { grid-template-columns: 1fr; padding-left: 0; } }
+.invite-details-ok { color: #6ee7b7; font-size: 0.8rem; }
+.invite-details-error { color: #fca5a5; font-size: 0.8rem; }
+.invite-details-unsaved { color: #fbbf24; font-size: 0.8rem; }

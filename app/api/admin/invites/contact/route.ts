@@ -86,6 +86,8 @@ export async function POST(req: Request) {
         phone_edited = phone_edited OR phone <> ${d.phone}
       WHERE id = ${id}
     `;
+    // Sent back so the form shows exactly what was stored.
+    return NextResponse.json({ ok: true, details: d });
   } else if (body.action === "delete") {
     await sql`DELETE FROM tapcard_invite_contacts WHERE id = ${id}`;
   } else if (body.action === "email-bounced") {

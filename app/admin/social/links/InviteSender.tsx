@@ -768,7 +768,7 @@ export default function InviteSender({
                   </span>
                   {focusedId === c.id && (
                     <ContactDetailsForm
-                      key={`${c.id}-${c.name}-${c.email}-${c.phone}-${c.website}`}
+                      key={c.id}
                       contact={c}
                       onSaved={(name) => {
                         setEmailInput(null);
@@ -1041,7 +1041,7 @@ function ContactDetailsForm({
   onSaved: (name: string) => void;
   onError: (message: string) => void;
 }) {
-  const initial = {
+  const fromContact = {
     name: contact.name,
     firstName: contact.first_name,
     title: contact.title ?? "",
@@ -1054,9 +1054,13 @@ function ContactDetailsForm({
     xUrl: contact.x_url ?? "",
     instagramUrl: contact.instagram_url ?? "",
   };
-  const [d, setD] = useState(initial);
+  // What's saved: the contact as loaded, then whatever the server confirms
+  // (so the form never jumps back to old values while the list refreshes).
+  const [saved, setSaved] = useState(fromContact);
+  const [d, setD] = useState(fromContact);
   const [saving, setSaving] = useState(false);
-  const changed = JSON.stringify(d) !== JSON.stringify(initial);
+  const [note, setNote] = useState<{ text: string; error?: boolean } | null>(null);
+  const changed = JSON.stringify(d) !== JSON.stringify(saved);
   const field = (key: keyof typeof d, label: string, placeholder = "", type = "text") => (
     <label className="invite-details-field">
       <span>{label}</span>
@@ -1066,14 +1070,26 @@ function ContactDetailsForm({
 
   async function save() {
     setSaving(true);
+    setNote(null);
     const res = await fetch("/api/admin/invites/contact", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: contact.id, action: "details", details: d }),
     });
+    const json = await res.json().catch(() => ({}));
     setSaving(false);
-    if (res.ok) onSaved(d.name);
-    else onError((await res.json().catch(() => ({}))).error ?? "Couldn't save those details");
+    if (res.ok && json.details) {
+      // The server tidies some values (website → https://domain, @handle → link).
+      const clean = { ...d, ...json.details };
+      setSaved(clean);
+      setD(clean);
+      setNote({ text: "Saved ✓ — their card picture now uses these details." });
+      onSaved(clean.name);
+    } else {
+      const text = json.error ?? `Couldn't save (HTTP ${res.status})`;
+      setNote({ text, error: true });
+      onError(text);
+    }
   }
 
   return (
@@ -1094,10 +1110,12 @@ function ContactDetailsForm({
           {saving ? "Saving…" : "Save details"}
         </button>
         {changed && (
-          <button className="invite-link-btn" onClick={() => setD(initial)}>
+          <button className="invite-link-btn" onClick={() => setD(saved)}>
             Undo changes
           </button>
         )}
+        {note && <span className={note.error ? "invite-details-error" : "invite-details-ok"}>{note.text}</span>}
+        {changed && !saving && <span className="invite-details-unsaved">Not saved yet</span>}
       </div>
     </div>
   );
