@@ -47,7 +47,7 @@ This is Martin Dobson — [personalise here: e.g. we worked together at BT]. I'm
 
 Have you ever been in a situation where someone asked for your business card, and you didn't have one with you or had run out?
 
-I've built a free app called TapCard to solve exactly that. It keeps your business card on your phone, ready to share instantly with a QR code or a link. When you swap details, their info saves straight into your contacts — no typing, no running out of cards.
+I've built an app called TapCard to solve exactly that. It keeps your business card on your phone in the TapCard app, and also in your Apple Wallet for easy access. Share it instantly with a QR code or a link, and when you swap details, their info saves straight into your contacts — no typing, no running out of cards.
 
 Here's what a TapCard looks like:
 
