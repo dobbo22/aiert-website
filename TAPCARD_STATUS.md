@@ -74,6 +74,12 @@ Never `vercel --prod` from the Mac folder (it has personal files in it).
   `/how-it-works`, `/android-waitlist`.
 - Track invites: per medium, forwards, top spreaders, clicks vs installs, Android waitlist,
   founder places, every invite with **Reset**; Send tab has **Email bounced**.
+- WhatsApp message mirrors the email (`DEFAULT_WHATSAPP_TEMPLATE`); its first link's preview
+  (`app/tapcard/get/[token]` metadata) shows the recipient's own card picture.
+- Clicking a contact opens an inline **details form** (name, job title, company, website,
+  email, mobile, LinkedIn/X/Instagram/Facebook) → feeds the card picture (logo from website,
+  "Title · Company", Follow-me icons). `details_edited`/`email_edited`/`phone_edited` keep
+  edits over re-imports. To/Mobile can also be corrected in the Email/WhatsApp tabs.
 
 ## Email / Microsoft 365
 
