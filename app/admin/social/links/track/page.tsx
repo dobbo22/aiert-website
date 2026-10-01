@@ -207,7 +207,7 @@ export default async function TrackInvitesPage() {
       <p className="admin-mailbroom-note">
         {ladder ? (
           <>
-            <strong>{ladder.counted.toLocaleString("en-GB")}</strong> people counted in the iPhone app ·{" "}
+            <strong>{ladder.counted.toLocaleString("en-GB")}</strong> people counted in the apps (iPhone and Android) ·{" "}
             <strong>{ladder.freePlacesLeft.toLocaleString("en-GB")}</strong> of {FREE_PLACES.toLocaleString("en-GB")} free
             founder places left · a newcomer now pays <strong>{ladder.nextPrice}</strong> for life. Counted when someone
             opens a version of the app with the founder check.

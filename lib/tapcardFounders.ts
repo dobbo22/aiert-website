@@ -1,9 +1,11 @@
 import crypto from "crypto";
 import sql from "@/lib/db";
 
-// TapCard's "first 1,000 free for life" ladder. The app sends Apple's signed
-// AppTransaction (who downloaded it, and when) on launch; each Apple ID is
-// counted once, in order. Places 1–1,000 are founders (free for life);
+// TapCard's "first 1,000 free for life" ladder, shared by iPhone and
+// Android. The iPhone app sends Apple's signed AppTransaction (who
+// downloaded it, and when) on launch; the Android app, which has no signed
+// equivalent, sends a random install id kept in its (Google-backed-up)
+// preferences. Each person is counted once, in order. Places 1–1,000 are founders (free for life);
 // after that, sharing a card needs a one-off lifetime unlock whose price
 // steps up £1 per 1,000 people, from £0.99 to £4.99, then £9.99 from the
 // 10,001st person. Each person keeps the price that was current when they
@@ -68,7 +70,11 @@ function ensureSchema() {
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         last_seen_at TIMESTAMPTZ NOT NULL DEFAULT now()
       )
-    `.catch((err) => {
+    `
+      // Hashed, truncated IP of unverified (Android) claims — only to stop
+      // one connection minting free places by faking installs.
+      .then(() => sql`ALTER TABLE tapcard_app_claims ADD COLUMN IF NOT EXISTS ip_hash TEXT`)
+      .catch((err) => {
       schemaReady = null;
       throw err;
     });
@@ -139,13 +145,42 @@ export async function claimPlace(app: AppTransactionPayload): Promise<FounderSta
   // and the original download time (to the millisecond) does the job.
   const identity = app.appTransactionId ?? `${app.originalPurchaseDate ?? ""}`;
   if (!identity) throw new Error("No transaction identity");
-  const claimKey = crypto.createHash("sha256").update(`ios|${environment}|${identity}`).digest("hex");
   const originalAt = app.originalPurchaseDate ? new Date(app.originalPurchaseDate) : null;
+  return claim("ios", environment, identity, originalAt, null);
+}
 
+const ANDROID_NEW_CLAIMS_PER_IP_PER_DAY = 5;
+
+/// Android: counts this install id. Unverified, so new places are limited
+/// per connection (a household or office still gets a few).
+export async function claimAndroidPlace(installId: string, debug: boolean, ip: string): Promise<FounderStatus> {
+  if (!/^[A-Za-z0-9-]{16,64}$/.test(installId)) throw new Error("Bad install id");
+  const ipHash = ip ? crypto.createHash("sha256").update(`tapcard-claim|${ip}`).digest("hex").slice(0, 32) : null;
+  return claim("android", debug ? "Sandbox" : "Production", installId, null, ipHash);
+}
+
+async function claim(
+  platform: "ios" | "android",
+  environment: string,
+  identity: string,
+  originalAt: Date | null,
+  ipHash: string | null,
+): Promise<FounderStatus> {
+  const claimKey = crypto.createHash("sha256").update(`${platform}|${environment}|${identity}`).digest("hex");
   await ensureSchema();
+  if (ipHash) {
+    const existing = (await sql`SELECT 1 FROM tapcard_app_claims WHERE claim_key = ${claimKey}`) as unknown[];
+    if (existing.length === 0) {
+      const recent = (await sql`
+        SELECT COUNT(*)::int AS n FROM tapcard_app_claims
+        WHERE ip_hash = ${ipHash} AND created_at > now() - interval '1 day'
+      `) as { n: number }[];
+      if ((recent[0]?.n ?? 0) >= ANDROID_NEW_CLAIMS_PER_IP_PER_DAY) throw new Error("Too many new installs from this connection today");
+    }
+  }
   const inserted = (await sql`
-    INSERT INTO tapcard_app_claims (claim_key, platform, environment, original_purchase_at)
-    VALUES (${claimKey}, 'ios', ${environment}, ${originalAt})
+    INSERT INTO tapcard_app_claims (claim_key, platform, environment, original_purchase_at, ip_hash)
+    VALUES (${claimKey}, ${platform}, ${environment}, ${originalAt}, ${ipHash})
     ON CONFLICT (claim_key) DO UPDATE SET last_seen_at = now()
     RETURNING id, place, tier
   `) as { id: number; place: number | null; tier: number | null }[];
