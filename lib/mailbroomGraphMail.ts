@@ -87,10 +87,13 @@ export function mailbroomSignatureHtml(): string {
 </table>`.trim();
 }
 
-export async function sendMailbroomEmail(params: { to: string; subject: string; bodyHtml: string }): Promise<void> {
+/// `signatureHtml` replaces the MailBroom signature; pass "" when the body
+/// already ends with its own (TapCard invites — lib/inviteEmail.ts).
+export async function sendMailbroomEmail(params: { to: string; subject: string; bodyHtml: string; signatureHtml?: string }): Promise<void> {
   const accessToken = await getAccessToken();
 
-  const fullBody = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1a1a1a;line-height:1.6;">${params.bodyHtml}${mailbroomSignatureHtml()}</div>`;
+  const signature = params.signatureHtml ?? mailbroomSignatureHtml();
+  const fullBody = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1a1a1a;line-height:1.6;">${params.bodyHtml}${signature}</div>`;
 
   const res = await fetch(GRAPH_SEND_MAIL_URL, {
     method: "POST",

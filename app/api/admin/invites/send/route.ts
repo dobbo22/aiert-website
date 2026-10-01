@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import sql from "@/lib/db";
 import { isAdminRequest } from "@/lib/adminRequest";
+import { DAILY_EMAIL_LIMIT, inviteEmailHtml } from "@/lib/inviteEmail";
+import { sendMailbroomEmail } from "@/lib/mailbroomGraphMail";
 import {
   INVITE_CHANNELS,
   INVITE_LINK_ORIGIN,
@@ -15,29 +17,23 @@ import {
   whatsappNumber,
 } from "@/lib/tapcardInvites";
 
-const FROM = process.env.TAPCARD_INVITE_FROM || "Martin Dobson <martin@aiert.co.uk>";
-const REPLY_TO = process.env.TAPCARD_INVITE_REPLY_TO || "Martin@aiert.co.uk";
+// Invite emails go out from martin@mailbroom.app through Microsoft Graph by
+// default: a real Microsoft 365 mailbox sending one-to-one mail is far less
+// likely to land in junk than a bulk email service, and replies and Sent
+// Items stay in Outlook. TAPCARD_INVITE_EMAIL_VIA=resend switches back to
+// Resend (from aiert.co.uk, with delivery/bounce webhooks).
+const VIA_RESEND = process.env.TAPCARD_INVITE_EMAIL_VIA === "resend";
+const RESEND_FROM = process.env.TAPCARD_INVITE_FROM || "Martin Dobson <martin@aiert.co.uk>";
+const RESEND_REPLY_TO = process.env.TAPCARD_INVITE_REPLY_TO || "Martin@aiert.co.uk";
 
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
-
-// Plain, personal-looking email (this is one person writing to someone they
-// know, not a newsletter): the message as typed, the tracked link made
-// clickable, a "Get TapCard free" button, an open pixel and an unsubscribe.
-function emailHtml(text: string, link: string, passOnLink: string, token: string): string {
-  const linkify = (html: string, url: string) =>
-    html.replaceAll(escapeHtml(url), `<a href="${url}" style="color:#0f766e;">${escapeHtml(url)}</a>`);
-  const paragraphs = escapeHtml(text)
-    .split(/\n{2,}/)
-    .map((p) => `<p style="margin:0 0 14px;">${linkify(linkify(p.replace(/\n/g, "<br>"), link), passOnLink)}</p>`)
-    .join("");
-  return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.55;color:#1f2937;max-width:560px;">
-${paragraphs}
-<p style="margin:22px 0;"><a href="${link}" style="display:inline-block;background:#111318;color:#ffffff;text-decoration:none;font-weight:bold;padding:12px 22px;border-radius:10px;">Get TapCard free</a></p>
-<p style="margin:28px 0 0;font-size:12px;color:#9ca3af;">You're getting this because you're in Martin Dobson's contacts. <a href="${INVITE_LINK_ORIGIN}/u/${token}" style="color:#9ca3af;">Don't send me these</a></p>
-<img src="${INVITE_LINK_ORIGIN}/api/invite-open/${token}" width="1" height="1" alt="" style="display:block;border:0;" />
-</div>`;
+/// Invite emails already sent today (UK time), for the daily limit.
+async function emailsSentToday(): Promise<number> {
+  const rows = (await sql`
+    SELECT COUNT(*)::int AS n FROM tapcard_invite_sends
+    WHERE channel = 'email'
+      AND sent_at >= (date_trunc('day', now() AT TIME ZONE 'Europe/London') AT TIME ZONE 'Europe/London')
+  `) as { n: number }[];
+  return rows[0]?.n ?? 0;
 }
 
 export async function POST(req: Request) {
@@ -73,6 +69,15 @@ export async function POST(req: Request) {
   const waNumber = channel === "whatsapp" ? whatsappNumber(contact.phone) : null;
   if (channel === "email" && !contact.email) return NextResponse.json({ error: "No email address" }, { status: 400 });
   if (channel === "whatsapp" && !waNumber) return NextResponse.json({ error: "No usable mobile number" }, { status: 400 });
+  if (channel === "email") {
+    const sentToday = await emailsSentToday();
+    if (sentToday >= DAILY_EMAIL_LIMIT) {
+      return NextResponse.json(
+        { error: `Today's limit of ${DAILY_EMAIL_LIMIT} emails is reached. Carry on tomorrow.`, limitReached: true },
+        { status: 429 },
+      );
+    }
+  }
 
   const token = newInviteToken();
   const link = inviteLink(token);
@@ -88,23 +93,33 @@ export async function POST(req: Request) {
   const sendId = inserted[0].id;
 
   if (channel === "email") {
-    const { data, error } = await new Resend(process.env.RESEND_API_KEY).emails.send({
-      from: FROM,
-      to: contact.email,
-      replyTo: REPLY_TO,
-      subject,
-      text: `${message}\n\n--\nDon't want these? ${INVITE_LINK_ORIGIN}/u/${token}`,
-      html: emailHtml(message, link, passOnLink, token),
-      headers: {
-        "List-Unsubscribe": `<${INVITE_LINK_ORIGIN}/api/unsubscribe/${token}>`,
-        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-      },
-    });
-    if (error || !data) {
+    const unsubscribeUrl = `${INVITE_LINK_ORIGIN}/u/${token}`;
+    const html = inviteEmailHtml({ text: message, link, passOnLink, unsubscribeUrl });
+    try {
+      if (VIA_RESEND) {
+        const { data, error } = await new Resend(process.env.RESEND_API_KEY).emails.send({
+          from: RESEND_FROM,
+          to: contact.email,
+          replyTo: RESEND_REPLY_TO,
+          subject,
+          text: `${message}\n\n--\nDon't want these? ${unsubscribeUrl}`,
+          html,
+          headers: {
+            "List-Unsubscribe": `<${INVITE_LINK_ORIGIN}/api/unsubscribe/${token}>`,
+            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+          },
+        });
+        if (error || !data) throw new Error(error?.message ?? "Email send failed");
+        await sql`UPDATE tapcard_invite_sends SET resend_id = ${data.id} WHERE id = ${sendId}`;
+      } else {
+        // Graph only allows custom X- headers, so no List-Unsubscribe header
+        // here — the "Don't send me these" link in the body does that job.
+        await sendMailbroomEmail({ to: contact.email, subject, bodyHtml: html, signatureHtml: "" });
+      }
+    } catch (err) {
       await sql`DELETE FROM tapcard_invite_sends WHERE id = ${sendId}`;
-      return NextResponse.json({ error: error?.message ?? "Email send failed" }, { status: 502 });
+      return NextResponse.json({ error: err instanceof Error ? err.message : "Email send failed" }, { status: 502 });
     }
-    await sql`UPDATE tapcard_invite_sends SET resend_id = ${data.id} WHERE id = ${sendId}`;
     return NextResponse.json({ ok: true, link });
   }
 

@@ -11,6 +11,7 @@ import {
   personalise,
   whatsappNumber,
 } from "@/lib/inviteTemplates";
+import { DAILY_EMAIL_LIMIT, INVITE_EMAIL_FROM_DISPLAY, inviteEmailHtml } from "@/lib/inviteEmail";
 import { parseVcards } from "@/lib/vcardImport";
 
 export type SenderContact = {
@@ -27,14 +28,15 @@ export type SenderContact = {
 };
 
 type Filter = "all" | "not-invited" | "has-email" | "has-mobile" | "clicked";
-type Draft = { email?: string; whatsapp?: string };
+type Draft = { email?: string; whatsapp?: string; subject?: string };
 
 const IMPORT_CHUNK = 500;
-const EMAIL_GAP_MS = 600; // stays under Resend's default 2 requests/second
+// Stand-ins for the person's real links in the email preview — the server
+// creates the actual tracked links when it sends.
+const PREVIEW_LINK = "https://tapcard.aiert.co.uk/i/xxxxxxxx";
+const PREVIEW_SHARE_LINK = "https://tapcard.aiert.co.uk/p/xxxxxxxx";
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-export default function InviteSender({ contacts }: { contacts: SenderContact[] }) {
+export default function InviteSender({ contacts, emailsSentToday }: { contacts: SenderContact[]; emailsSentToday: number }) {
   const router = useRouter();
 
   const [campaign, setCampaign] = useState(DEFAULT_CAMPAIGN);
@@ -51,6 +53,13 @@ export default function InviteSender({ contacts }: { contacts: SenderContact[] }
   const [allowRepeat, setAllowRepeat] = useState(false);
 
   const [waQueue, setWaQueue] = useState<number[]>([]);
+  // Emails are never sent in bulk: ticked people go into this queue and each
+  // one is shown (as the email will look) for checking and personalising
+  // before Send. At most DAILY_EMAIL_LIMIT a day (UK time), enforced by the
+  // server too.
+  const [emailQueue, setEmailQueue] = useState<number[]>([]);
+  const [emailsToday, setEmailsToday] = useState(emailsSentToday);
+  const [emailView, setEmailView] = useState<"preview" | "edit">("preview");
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<{ text: string; error?: boolean } | null>(null);
 
@@ -87,6 +96,21 @@ export default function InviteSender({ contacts }: { contacts: SenderContact[] }
     return personalise(channel === "email" ? emailTemplate : waTemplate, contact, "{link}", "{shareLink}");
   }
 
+  function subjectFor(contact: SenderContact): string {
+    return drafts[contact.id]?.subject ?? personalise(subject, contact, "{link}", "{shareLink}");
+  }
+
+  function previewHtml(contact: SenderContact): string {
+    let text = messageFor(contact, "email");
+    if (!text.includes("{link}")) text += "\n\n{link}"; // as the server does
+    return inviteEmailHtml({
+      text: text.replaceAll("{shareLink}", PREVIEW_SHARE_LINK).replaceAll("{link}", PREVIEW_LINK),
+      link: PREVIEW_LINK,
+      passOnLink: PREVIEW_SHARE_LINK,
+      unsubscribeUrl: "#",
+    });
+  }
+
   async function postSend(contact: SenderContact, channel: InviteChannel) {
     const res = await fetch("/api/admin/invites/send", {
       method: "POST",
@@ -95,13 +119,21 @@ export default function InviteSender({ contacts }: { contacts: SenderContact[] }
         contactId: contact.id,
         channel,
         campaign,
-        subject,
+        subject: subjectFor(contact),
         message: messageFor(contact, channel === "email" ? "email" : "whatsapp"),
         allowRepeat,
       }),
     });
     const json = await res.json().catch(() => ({}));
-    return { ok: res.ok, ...json } as { ok: boolean; error?: string; skipped?: boolean; waUrl?: string; link?: string; text?: string };
+    return { ok: res.ok, ...json } as {
+      ok: boolean;
+      error?: string;
+      skipped?: boolean;
+      limitReached?: boolean;
+      waUrl?: string;
+      link?: string;
+      text?: string;
+    };
   }
 
   async function importFile(file: File) {
@@ -133,26 +165,48 @@ export default function InviteSender({ contacts }: { contacts: SenderContact[] }
     }
   }
 
-  async function sendEmails(list: SenderContact[]) {
-    setBusy(true);
-    let sent = 0;
-    let skipped = 0;
-    const failures: string[] = [];
-    for (const [i, contact] of list.entries()) {
-      setStatus({ text: `Emailing ${i + 1} of ${list.length}: ${contact.name}…` });
-      const result = await postSend(contact, "email");
-      if (result.ok) sent++;
-      else if (result.skipped) skipped++;
-      else failures.push(`${contact.name}: ${result.error}`);
-      if (i < list.length - 1) await sleep(EMAIL_GAP_MS);
+  function startEmailQueue(list: SenderContact[]) {
+    const room = Math.max(0, DAILY_EMAIL_LIMIT - emailsToday);
+    const ids = list.slice(0, room).map((c) => c.id);
+    setEmailQueue(ids);
+    if (ids.length) {
+      setFocusedId(ids[0]);
+      setPreviewChannel("email");
+      setEmailView("preview");
     }
+    setStatus(
+      list.length > room
+        ? { text: `Only ${room} more email${room === 1 ? "" : "s"} allowed today, so ${room} queued. Send the rest tomorrow.`, error: room === 0 }
+        : { text: `${ids.length} email${ids.length === 1 ? "" : "s"} queued. Check each one, then press Send.` },
+    );
+  }
+
+  function advanceEmailQueue(fromId: number) {
+    const next = emailQueue.filter((id) => id !== fromId);
+    setEmailQueue(next);
+    if (next.length) {
+      setFocusedId(next[0]);
+      setEmailView("preview");
+    } else {
+      router.refresh();
+    }
+  }
+
+  async function sendOneEmail(contact: SenderContact) {
+    setBusy(true);
+    const result = await postSend(contact, "email");
     setBusy(false);
-    setStatus({
-      text: [`Sent ${sent} email${sent === 1 ? "" : "s"}.`, skipped ? `${skipped} skipped (already invited).` : "", ...failures].filter(Boolean).join(" "),
-      error: failures.length > 0,
-    });
-    setSelected(new Set());
-    router.refresh();
+    if (result.ok) {
+      setEmailsToday((n) => n + 1);
+      setStatus({ text: `Sent to ${contact.name}.` });
+      advanceEmailQueue(contact.id);
+    } else if (result.skipped) {
+      setStatus({ text: `${contact.name} was already emailed for "${campaign}". Skipped.` });
+      advanceEmailQueue(contact.id);
+    } else {
+      if (result.limitReached) setEmailQueue([]);
+      setStatus({ text: `${contact.name}: ${result.error}`, error: true });
+    }
   }
 
   // WhatsApp can't be sent by a server from a personal account, so each one
@@ -205,6 +259,7 @@ export default function InviteSender({ contacts }: { contacts: SenderContact[] }
   }
 
   const queueHead = waQueue.length ? byId.get(waQueue[0]) : undefined;
+  const emailHead = emailQueue.length ? byId.get(emailQueue[0]) : undefined;
 
   return (
     <div className="invite-sender">
@@ -253,6 +308,24 @@ export default function InviteSender({ contacts }: { contacts: SenderContact[] }
       </section>
 
       {status && <p className={status.error ? "social-compose-error" : "social-compose-success"}>{status.text}</p>}
+
+      <p className="invite-quota">
+        Emails today: <strong>{emailsToday}</strong> of {DAILY_EMAIL_LIMIT}, from {INVITE_EMAIL_FROM_DISPLAY} (UK day)
+      </p>
+
+      {emailHead && (
+        <div className="invite-queue invite-queue-email">
+          <span>
+            Email {emailQueue.length} to go. Checking: <strong>{emailHead.name}</strong>, shown on the right.
+          </span>
+          <button className="invite-link-btn" onClick={() => advanceEmailQueue(emailHead.id)}>
+            Skip
+          </button>
+          <button className="invite-link-btn" onClick={() => { setEmailQueue([]); router.refresh(); }}>
+            Stop
+          </button>
+        </div>
+      )}
 
       {queueHead && (
         <div className="invite-queue">
@@ -306,12 +379,10 @@ export default function InviteSender({ contacts }: { contacts: SenderContact[] }
               <span>{selected.size} selected</span>
               <button
                 className="social-post-btn"
-                disabled={busy || selectedWithEmail.length === 0}
-                onClick={() => {
-                  if (confirm(`Send the email to ${selectedWithEmail.length} people now?`)) sendEmails(selectedWithEmail);
-                }}
+                disabled={busy || selectedWithEmail.length === 0 || emailsToday >= DAILY_EMAIL_LIMIT}
+                onClick={() => startEmailQueue(selectedWithEmail)}
               >
-                Email {selectedWithEmail.length}
+                Review &amp; email {Math.min(selectedWithEmail.length, Math.max(0, DAILY_EMAIL_LIMIT - emailsToday))} one by one
               </button>
               <button
                 className="social-post-btn invite-wa-btn"
@@ -364,21 +435,56 @@ export default function InviteSender({ contacts }: { contacts: SenderContact[] }
                   </button>
                 ))}
               </div>
-              {previewChannel === "email" && <p className="invite-subject">Subject: {personalise(subject, focused, "{link}", "{shareLink}")}</p>}
-              <textarea
-                rows={14}
-                value={messageFor(focused, previewChannel)}
-                onChange={(e) => setDrafts((d) => ({ ...d, [focused.id]: { ...d[focused.id], [previewChannel]: e.target.value } }))}
-              />
-              <small>Edits here are just for {focused.first_name || focused.name}. {"{link}"} becomes their tracked link, {"{shareLink}"} their pass-it-on link.</small>
+              {previewChannel === "email" ? (
+                <div className="invite-mail">
+                  <div className="invite-mail-head">
+                    <div><span>From</span>{INVITE_EMAIL_FROM_DISPLAY}</div>
+                    <div><span>To</span>{focused.name} &lt;{focused.email || "no email address"}&gt;</div>
+                    <div className="invite-mail-subject">
+                      <span>Subject</span>
+                      <input
+                        value={subjectFor(focused)}
+                        onChange={(e) => setDrafts((d) => ({ ...d, [focused.id]: { ...d[focused.id], subject: e.target.value } }))}
+                      />
+                    </div>
+                  </div>
+                  <div className="social-tabs invite-mail-tabs">
+                    <button className={`social-tab ${emailView === "preview" ? "social-tab-active" : ""}`} onClick={() => setEmailView("preview")}>
+                      Preview
+                    </button>
+                    <button className={`social-tab ${emailView === "edit" ? "social-tab-active" : ""}`} onClick={() => setEmailView("edit")}>
+                      Edit message
+                    </button>
+                  </div>
+                  {emailView === "preview" ? (
+                    <iframe className="invite-mail-body" title="Email preview" sandbox="" srcDoc={previewHtml(focused)} />
+                  ) : (
+                    <textarea
+                      rows={14}
+                      value={messageFor(focused, "email")}
+                      onChange={(e) => setDrafts((d) => ({ ...d, [focused.id]: { ...d[focused.id], email: e.target.value } }))}
+                    />
+                  )}
+                </div>
+              ) : (
+                <textarea
+                  rows={14}
+                  value={messageFor(focused, "whatsapp")}
+                  onChange={(e) => setDrafts((d) => ({ ...d, [focused.id]: { ...d[focused.id], whatsapp: e.target.value } }))}
+                />
+              )}
+              <small>
+                Changes here are just for {focused.first_name || focused.name}. {"{link}"} becomes their tracked link and{" "}
+                {"{shareLink}"} their pass-it-on link{previewChannel === "email" ? " (shown as xxxxxxxx in the preview)" : ""}.
+              </small>
               <div className="invite-actions">
                 {previewChannel === "email" ? (
                   <button
                     className="social-post-btn"
-                    disabled={busy || !focused.email || focused.do_not_contact}
-                    onClick={() => sendEmails([focused])}
+                    disabled={busy || !focused.email || focused.do_not_contact || emailsToday >= DAILY_EMAIL_LIMIT}
+                    onClick={() => sendOneEmail(focused)}
                   >
-                    {focused.email ? "Send email" : "No email address"}
+                    {!focused.email ? "No email address" : emailsToday >= DAILY_EMAIL_LIMIT ? "Daily limit reached" : busy ? "Sending…" : "Send this email"}
                   </button>
                 ) : (
                   <button

@@ -73,3 +73,19 @@
 .invite-good { color: #6ee7b7; }
 .invite-bad { color: #fca5a5; }
 .invite-footnote { margin-top: 1.5rem; }
+
+.invite-quota { color: #94a3b8; font-size: 0.82rem; margin: 0 0 0.75rem; }
+.invite-quota strong { color: #e2e8f0; }
+.invite-queue-email { border-color: rgba(147, 197, 253, 0.45); }
+
+.invite-mail { border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 8px; overflow: hidden; margin-top: 0.6rem; }
+.invite-mail-head { background: rgba(255, 255, 255, 0.04); padding: 0.6rem 0.75rem; font-size: 0.82rem; color: #e2e8f0; display: flex; flex-direction: column; gap: 0.3rem; }
+.invite-mail-head span { display: inline-block; width: 4.2rem; color: #94a3b8; }
+.invite-mail-subject { display: flex; align-items: center; }
+.invite-mail-subject input {
+  flex: 1; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 5px; color: #f1f5f9; padding: 0.3rem 0.45rem; font-size: 0.85rem; font-family: inherit;
+}
+.invite-mail-tabs { margin: 0; padding: 0.4rem 0.6rem 0; border-top: 1px solid rgba(148, 163, 184, 0.2); }
+.invite-mail-body { display: block; width: 100%; height: 440px; border: 0; background: #ffffff; }
+.invite-mail textarea { border: 0; border-radius: 0; }
