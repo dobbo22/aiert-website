@@ -14,7 +14,7 @@ import {
   personalise,
   whatsappNumber,
 } from "@/lib/inviteTemplates";
-import { DAILY_EMAIL_LIMIT, INVITE_EMAIL_FROM_DISPLAY, inviteEmailHtml } from "@/lib/inviteEmail";
+import { INVITE_EMAIL_FROM_DISPLAY, inviteEmailHtml } from "@/lib/inviteEmail";
 import { parseLinkedinConnections } from "@/lib/linkedinImport";
 import { parseVcards } from "@/lib/vcardImport";
 
@@ -106,8 +106,7 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
   const [emailInput, setEmailInput] = useState<{ id: number; value: string } | null>(null);
   // Emails are never sent in bulk: ticked people go into this queue and each
   // one is shown (as the email will look) for checking and personalising
-  // before Send. At most DAILY_EMAIL_LIMIT a day (UK time), enforced by the
-  // server too.
+  // before Send.
   const [emailQueue, setEmailQueue] = useState<number[]>([]);
   const [emailsToday, setEmailsToday] = useState(emailsSentToday);
   const [emailView, setEmailView] = useState<"preview" | "edit">("preview");
@@ -195,7 +194,6 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
       ok: boolean;
       error?: string;
       skipped?: boolean;
-      limitReached?: boolean;
       waUrl?: string;
       openUrl?: string;
       link?: string;
@@ -234,19 +232,14 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
   }
 
   function startEmailQueue(list: SenderContact[]) {
-    const room = Math.max(0, DAILY_EMAIL_LIMIT - emailsToday);
-    const ids = list.slice(0, room).map((c) => c.id);
+    const ids = list.map((c) => c.id);
     setEmailQueue(ids);
     if (ids.length) {
       setFocusedId(ids[0]);
       setPreviewChannel("email");
       setEmailView("preview");
     }
-    setStatus(
-      list.length > room
-        ? { text: `Only ${room} more email${room === 1 ? "" : "s"} allowed today, so ${room} queued. Send the rest tomorrow.`, error: room === 0 }
-        : { text: `${ids.length} email${ids.length === 1 ? "" : "s"} queued. Check each one, then press Send.` },
-    );
+    setStatus({ text: `${ids.length} email${ids.length === 1 ? "" : "s"} queued. Check each one, then press Send.` });
   }
 
   function advanceEmailQueue(fromId: number) {
@@ -297,7 +290,6 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
       setStatus({ text: `${contact.name} was already emailed for "${campaign}". Skipped.` });
       advanceEmailQueue(contact.id);
     } else {
-      if (result.limitReached) setEmailQueue([]);
       setStatus({ text: `${contact.name}: ${result.error}`, error: true });
     }
   }
@@ -478,7 +470,7 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
       {status && <p className={status.error ? "social-compose-error" : "social-compose-success"}>{status.text}</p>}
 
       <p className="invite-quota">
-        Emails today: <strong>{emailsToday}</strong> of {DAILY_EMAIL_LIMIT}, from {INVITE_EMAIL_FROM_DISPLAY} (UK day)
+        Emails today: <strong>{emailsToday}</strong>, from {INVITE_EMAIL_FROM_DISPLAY} (UK day)
       </p>
 
       {emailHead && (
@@ -563,10 +555,10 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
               <span>{selected.size} selected</span>
               <button
                 className="social-post-btn"
-                disabled={busy || selectedWithEmail.length === 0 || emailsToday >= DAILY_EMAIL_LIMIT}
+                disabled={busy || selectedWithEmail.length === 0}
                 onClick={() => startEmailQueue(selectedWithEmail)}
               >
-                Review &amp; email {Math.min(selectedWithEmail.length, Math.max(0, DAILY_EMAIL_LIMIT - emailsToday))} one by one
+                Review &amp; email {selectedWithEmail.length} one by one
               </button>
               <button
                 className="social-post-btn invite-wa-btn"
@@ -734,14 +726,12 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
                 {previewChannel === "email" ? (
                   <button
                     className="social-post-btn"
-                    disabled={busy || !(pendingEmail(focused) ?? focused.email) || focused.do_not_contact || emailsToday >= DAILY_EMAIL_LIMIT || needsPersonalNote(focused)}
+                    disabled={busy || !(pendingEmail(focused) ?? focused.email) || focused.do_not_contact || needsPersonalNote(focused)}
                     onClick={() => sendOneEmail(focused)}
                   >
                     {!(pendingEmail(focused) ?? focused.email)
                       ? "No email address"
-                      : emailsToday >= DAILY_EMAIL_LIMIT
-                        ? "Daily limit reached"
-                        : needsPersonalNote(focused)
+                      : needsPersonalNote(focused)
                           ? "Personalise first"
                           : busy
                             ? "Sending…"

@@ -35,7 +35,7 @@ export default async function SendInvitesPage() {
         Send TapCard to people in your contacts, each with their own tracked link
         (<code>tapcard.aiert.co.uk/i/…</code>), so the <strong>Track invites</strong> tab can
         show who clicked through. Emails go out one at a time from martin@mailbroom.app (Outlook),
-        at most 100 a day: tick people, press <strong>Review &amp; email</strong>, then check and
+        tick people, press <strong>Review &amp; email</strong>, then check and
         personalise each one before Send (Send stays locked until the [personalise here…] line is
         replaced). WhatsApp opens WhatsApp with the message ready, and you
         press Send there. LinkedIn and Messenger copy their message and open the person&apos;s profile or chat

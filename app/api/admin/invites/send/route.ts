@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import sql from "@/lib/db";
 import { isAdminRequest } from "@/lib/adminRequest";
-import { DAILY_EMAIL_LIMIT, inviteEmailHtml, inviteEmailText } from "@/lib/inviteEmail";
+import { inviteEmailHtml, inviteEmailText } from "@/lib/inviteEmail";
 import { sendMailbroomEmail } from "@/lib/mailbroomGraphMail";
 import {
   INVITE_CHANNELS,
@@ -30,16 +30,6 @@ import {
 const VIA_RESEND = process.env.TAPCARD_INVITE_EMAIL_VIA === "resend";
 const RESEND_FROM = process.env.TAPCARD_INVITE_FROM || "Martin Dobson <martin@aiert.co.uk>";
 const RESEND_REPLY_TO = process.env.TAPCARD_INVITE_REPLY_TO || "Martin@aiert.co.uk";
-
-/// Invite emails already sent today (UK time), for the daily limit.
-async function emailsSentToday(): Promise<number> {
-  const rows = (await sql`
-    SELECT COUNT(*)::int AS n FROM tapcard_invite_sends
-    WHERE channel = 'email' AND bounced_at IS NULL
-      AND sent_at >= (date_trunc('day', now() AT TIME ZONE 'Europe/London') AT TIME ZONE 'Europe/London')
-  `) as { n: number }[];
-  return rows[0]?.n ?? 0;
-}
 
 export async function POST(req: Request) {
   if (!(await isAdminRequest())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -77,15 +67,6 @@ export async function POST(req: Request) {
   const waNumber = channel === "whatsapp" ? whatsappNumber(contact.phone) : null;
   if (channel === "email" && !contact.email) return NextResponse.json({ error: "No email address" }, { status: 400 });
   if (channel === "whatsapp" && !waNumber) return NextResponse.json({ error: "No usable mobile number" }, { status: 400 });
-  if (channel === "email") {
-    const sentToday = await emailsSentToday();
-    if (sentToday >= DAILY_EMAIL_LIMIT) {
-      return NextResponse.json(
-        { error: `Today's limit of ${DAILY_EMAIL_LIMIT} emails is reached. Carry on tomorrow.`, limitReached: true },
-        { status: 429 },
-      );
-    }
-  }
 
   const token = newInviteToken();
   const link = inviteLink(token);

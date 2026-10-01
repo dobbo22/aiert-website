@@ -2,7 +2,6 @@
 // exactly this as the preview before each email is sent, and the send route
 // uses it for the real thing (sent from martin@mailbroom.app via Graph).
 
-export const DAILY_EMAIL_LIMIT = 100;
 export const INVITE_EMAIL_FROM_DISPLAY = "Martin Dobson <martin@mailbroom.app>";
 
 function escapeHtml(s: string): string {
