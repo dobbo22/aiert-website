@@ -14,7 +14,7 @@ import {
   personalise,
   whatsappNumber,
 } from "@/lib/inviteTemplates";
-import { INVITE_EMAIL_FROM_DISPLAY, inviteEmailHtml } from "@/lib/inviteEmail";
+import { inviteEmailHtml } from "@/lib/inviteEmail";
 import { parseLinkedinConnections } from "@/lib/linkedinImport";
 import { parseVcards } from "@/lib/vcardImport";
 
@@ -79,7 +79,18 @@ const PREVIEW_LINK = "https://tapcard.aiert.co.uk/i/xxxxxxxx";
 const PREVIEW_SHARE_LINK = "https://tapcard.aiert.co.uk/p/xxxxxxxx";
 const PREVIEW_ANDROID_LINK = "https://tapcard.aiert.co.uk/w/xxxxxxxx";
 
-export default function InviteSender({ contacts, emailsSentToday }: { contacts: SenderContact[]; emailsSentToday: number }) {
+export default function InviteSender({
+  contacts,
+  emailsSentToday,
+  emailFrom,
+  emailFromAddress,
+}: {
+  contacts: SenderContact[];
+  emailsSentToday: number;
+  /// Who invite emails currently come from (Outlook or Resend — lib/inviteEmailRoute.ts).
+  emailFrom: string;
+  emailFromAddress: string;
+}) {
   const router = useRouter();
 
   const [campaign, setCampaign] = useState(DEFAULT_CAMPAIGN);
@@ -149,7 +160,7 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
     if (draft != null) return draft;
     const template = kind === "email" ? emailTemplate : kind === "social" ? socialTemplate : waTemplate;
     // {link} stays as a placeholder — the server swaps in this person's tracked link.
-    return personalise(template, contact, "{link}", "{shareLink}", "{androidLink}");
+    return personalise(template, contact, "{link}", "{shareLink}", "{androidLink}").replaceAll("{fromEmail}", emailFromAddress);
   }
 
   /// The message still has the "[personalise here…]" line in it.
@@ -470,7 +481,7 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
       {status && <p className={status.error ? "social-compose-error" : "social-compose-success"}>{status.text}</p>}
 
       <p className="invite-quota">
-        Emails today: <strong>{emailsToday}</strong>, from {INVITE_EMAIL_FROM_DISPLAY} (UK day)
+        Emails today: <strong>{emailsToday}</strong>, from {emailFrom} (UK day)
       </p>
 
       {emailHead && (
@@ -625,7 +636,7 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
               {previewChannel === "email" ? (
                 <div className="invite-mail">
                   <div className="invite-mail-head">
-                    <div><span>From</span>{INVITE_EMAIL_FROM_DISPLAY}</div>
+                    <div><span>From</span>{emailFrom}</div>
                     <div className="invite-mail-subject">
                       <span>To</span>
                       <input

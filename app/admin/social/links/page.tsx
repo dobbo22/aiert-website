@@ -1,8 +1,10 @@
 import sql from "@/lib/db";
 import { ensureInviteSchema } from "@/lib/tapcardInvites";
+import { inviteEmailRoute } from "@/lib/inviteEmailRoute";
 import InviteSender, { type SenderContact } from "./InviteSender";
 
 export default async function SendInvitesPage() {
+  const route = inviteEmailRoute();
   let contacts: SenderContact[] = [];
   let emailsSentToday = 0;
   let error: string | null = null;
@@ -34,7 +36,7 @@ export default async function SendInvitesPage() {
       <p className="admin-mailbroom-note">
         Send TapCard to people in your contacts, each with their own tracked link
         (<code>tapcard.aiert.co.uk/i/…</code>), so the <strong>Track invites</strong> tab can
-        show who clicked through. Emails go out one at a time from martin@mailbroom.app (Outlook),
+        show who clicked through. Emails go out one at a time from {route.fromEmail} ({route.viaResend ? "Resend" : "Outlook"}):
         tick people, press <strong>Review &amp; email</strong>, then check and
         personalise each one before Send (Send stays locked until the [personalise here…] line is
         replaced). WhatsApp opens WhatsApp with the message ready, and you
@@ -48,7 +50,7 @@ export default async function SendInvitesPage() {
         lines starting <code>- </code> are bullets and <code>**bold**</code> is bold.
       </p>
       {error && <p className="social-compose-error">{error}</p>}
-      <InviteSender contacts={contacts} emailsSentToday={emailsSentToday} />
+      <InviteSender contacts={contacts} emailsSentToday={emailsSentToday} emailFrom={route.from} emailFromAddress={route.fromEmail} />
     </div>
   );
 }

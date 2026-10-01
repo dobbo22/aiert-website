@@ -27,7 +27,7 @@ export const PERSONAL_NOTE_MARKER = /\[personali[sz]e here[^\]]*\]/i;
 // {androidLink} links are drawn as buttons (see lib/inviteEmail.ts).
 export const DEFAULT_EMAIL_TEMPLATE = `Hi {firstName},
 
-This is Martin Dobson — [personalise here: e.g. we worked together at BT]. I'm writing from my work email (martin@mailbroom.app) in case you only have my old BT address.
+This is Martin Dobson — [personalise here: e.g. we worked together at BT]. I'm writing from my work email ({fromEmail}) in case you only have my old BT address.
 
 Have you ever been in a situation where someone asked for your business card, and you didn't have one with you or had run out?
 

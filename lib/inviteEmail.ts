@@ -1,8 +1,7 @@
 // Email body for TapCard invites. No server imports: the Send tab renders
 // exactly this as the preview before each email is sent, and the send route
-// uses it for the real thing (sent from martin@mailbroom.app via Graph).
+// uses it for the real thing (see lib/inviteEmailRoute.ts for the sender).
 
-export const INVITE_EMAIL_FROM_DISPLAY = "Martin Dobson <martin@mailbroom.app>";
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");

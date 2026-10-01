@@ -3,6 +3,7 @@ import { Resend } from "resend";
 import sql from "@/lib/db";
 import { isAdminRequest } from "@/lib/adminRequest";
 import { inviteEmailHtml, inviteEmailText } from "@/lib/inviteEmail";
+import { inviteEmailRoute } from "@/lib/inviteEmailRoute";
 import { sendMailbroomEmail } from "@/lib/mailbroomGraphMail";
 import {
   INVITE_CHANNELS,
@@ -25,11 +26,8 @@ import {
 // Invite emails go out from martin@mailbroom.app through Microsoft Graph by
 // default: a real Microsoft 365 mailbox sending one-to-one mail is far less
 // likely to land in junk than a bulk email service, and replies and Sent
-// Items stay in Outlook. TAPCARD_INVITE_EMAIL_VIA=resend switches back to
-// Resend (from aiert.co.uk, with delivery/bounce webhooks).
-const VIA_RESEND = process.env.TAPCARD_INVITE_EMAIL_VIA === "resend";
-const RESEND_FROM = process.env.TAPCARD_INVITE_FROM || "Martin Dobson <martin@aiert.co.uk>";
-const RESEND_REPLY_TO = process.env.TAPCARD_INVITE_REPLY_TO || "Martin@aiert.co.uk";
+// Items stay in Outlook. TAPCARD_INVITE_EMAIL_VIA=resend switches to Resend
+// (with delivery/bounce webhooks) — see lib/inviteEmailRoute.ts.
 
 export async function POST(req: Request) {
   if (!(await isAdminRequest())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -44,6 +42,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "contactId, channel, campaign and message are required" }, { status: 400 });
   }
   if (!messageTemplate.includes("{link}")) messageTemplate += "\n\n{link}";
+  const route = inviteEmailRoute();
+  messageTemplate = messageTemplate.replaceAll("{fromEmail}", route.fromEmail);
   if (PERSONAL_NOTE_MARKER.test(messageTemplate)) {
     return NextResponse.json({ error: "Replace the [personalise here…] line before sending" }, { status: 400 });
   }
@@ -86,11 +86,11 @@ export async function POST(req: Request) {
     const unsubscribeUrl = `${INVITE_LINK_ORIGIN}/u/${token}`;
     const html = inviteEmailHtml({ text: message, link, passOnLink, androidLink, unsubscribeUrl });
     try {
-      if (VIA_RESEND) {
+      if (route.viaResend) {
         const { data, error } = await new Resend(process.env.RESEND_API_KEY).emails.send({
-          from: RESEND_FROM,
+          from: route.from,
           to: contact.email,
-          replyTo: RESEND_REPLY_TO,
+          replyTo: route.replyTo,
           subject,
           text: `${inviteEmailText(message)}\n\n--\nDon't want these? ${unsubscribeUrl}`,
           html,
