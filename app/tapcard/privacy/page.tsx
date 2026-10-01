@@ -97,6 +97,15 @@ export default function TapCardPrivacyPage() {
       </section>
 
       <section>
+        <h2>Android waitlist</h2>
+        <p>
+          If you ask us to tell you when TapCard is on Android, we keep your email address (and, if you came from an
+          invite Martin sent you, a note of that invite) only to send you that one message. Ask us at
+          enquiries@aiert.co.uk and we&apos;ll delete it.
+        </p>
+      </section>
+
+      <section>
         <h2>Service providers</h2>
         <ul>
           <li>Vercel: hosts the TapCard website and API, and stores card photos.</li>

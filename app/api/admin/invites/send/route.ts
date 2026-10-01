@@ -2,13 +2,15 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import sql from "@/lib/db";
 import { isAdminRequest } from "@/lib/adminRequest";
-import { DAILY_EMAIL_LIMIT, inviteEmailHtml } from "@/lib/inviteEmail";
+import { DAILY_EMAIL_LIMIT, inviteEmailHtml, inviteEmailText } from "@/lib/inviteEmail";
 import { sendMailbroomEmail } from "@/lib/mailbroomGraphMail";
 import {
   INVITE_CHANNELS,
   INVITE_LINK_ORIGIN,
+  PERSONAL_NOTE_MARKER,
   type InviteChannel,
   type InviteContact,
+  androidWaitlistLink,
   ensureInviteSchema,
   inviteLink,
   newInviteToken,
@@ -49,6 +51,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "contactId, channel, campaign and message are required" }, { status: 400 });
   }
   if (!messageTemplate.includes("{link}")) messageTemplate += "\n\n{link}";
+  if (PERSONAL_NOTE_MARKER.test(messageTemplate)) {
+    return NextResponse.json({ error: "Replace the [personalise here…] line before sending" }, { status: 400 });
+  }
 
   await ensureInviteSchema();
   const contact = ((await sql`
@@ -82,7 +87,8 @@ export async function POST(req: Request) {
   const token = newInviteToken();
   const link = inviteLink(token);
   const passOnLink = shareLink(token);
-  const message = personalise(messageTemplate, contact, link, passOnLink);
+  const androidLink = androidWaitlistLink(token);
+  const message = personalise(messageTemplate, contact, link, passOnLink, androidLink);
   const subject = personalise(subjectTemplate || "A free gift for you: TapCard", contact, link);
 
   const inserted = (await sql`
@@ -94,7 +100,7 @@ export async function POST(req: Request) {
 
   if (channel === "email") {
     const unsubscribeUrl = `${INVITE_LINK_ORIGIN}/u/${token}`;
-    const html = inviteEmailHtml({ text: message, link, passOnLink, unsubscribeUrl });
+    const html = inviteEmailHtml({ text: message, link, passOnLink, androidLink, unsubscribeUrl });
     try {
       if (VIA_RESEND) {
         const { data, error } = await new Resend(process.env.RESEND_API_KEY).emails.send({
@@ -102,7 +108,7 @@ export async function POST(req: Request) {
           to: contact.email,
           replyTo: RESEND_REPLY_TO,
           subject,
-          text: `${message}\n\n--\nDon't want these? ${unsubscribeUrl}`,
+          text: `${inviteEmailText(message)}\n\n--\nDon't want these? ${unsubscribeUrl}`,
           html,
           headers: {
             "List-Unsubscribe": `<${INVITE_LINK_ORIGIN}/api/unsubscribe/${token}>`,

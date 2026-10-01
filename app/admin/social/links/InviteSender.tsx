@@ -8,6 +8,7 @@ import {
   DEFAULT_EMAIL_TEMPLATE,
   DEFAULT_WHATSAPP_TEMPLATE,
   type InviteChannel,
+  PERSONAL_NOTE_MARKER,
   personalise,
   whatsappNumber,
 } from "@/lib/inviteTemplates";
@@ -35,6 +36,7 @@ const IMPORT_CHUNK = 500;
 // creates the actual tracked links when it sends.
 const PREVIEW_LINK = "https://tapcard.aiert.co.uk/i/xxxxxxxx";
 const PREVIEW_SHARE_LINK = "https://tapcard.aiert.co.uk/p/xxxxxxxx";
+const PREVIEW_ANDROID_LINK = "https://tapcard.aiert.co.uk/w/xxxxxxxx";
 
 export default function InviteSender({ contacts, emailsSentToday }: { contacts: SenderContact[]; emailsSentToday: number }) {
   const router = useRouter();
@@ -93,7 +95,12 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
     const draft = drafts[contact.id]?.[channel];
     if (draft != null) return draft;
     // {link} stays as a placeholder — the server swaps in this person's tracked link.
-    return personalise(channel === "email" ? emailTemplate : waTemplate, contact, "{link}", "{shareLink}");
+    return personalise(channel === "email" ? emailTemplate : waTemplate, contact, "{link}", "{shareLink}", "{androidLink}");
+  }
+
+  /// The email still has the "[personalise here…]" line in it.
+  function needsPersonalNote(contact: SenderContact): boolean {
+    return PERSONAL_NOTE_MARKER.test(messageFor(contact, "email"));
   }
 
   function subjectFor(contact: SenderContact): string {
@@ -104,9 +111,13 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
     let text = messageFor(contact, "email");
     if (!text.includes("{link}")) text += "\n\n{link}"; // as the server does
     return inviteEmailHtml({
-      text: text.replaceAll("{shareLink}", PREVIEW_SHARE_LINK).replaceAll("{link}", PREVIEW_LINK),
+      text: text
+        .replaceAll("{shareLink}", PREVIEW_SHARE_LINK)
+        .replaceAll("{androidLink}", PREVIEW_ANDROID_LINK)
+        .replaceAll("{link}", PREVIEW_LINK),
       link: PREVIEW_LINK,
       passOnLink: PREVIEW_SHARE_LINK,
+      androidLink: PREVIEW_ANDROID_LINK,
       unsubscribeUrl: "#",
     });
   }
@@ -473,18 +484,32 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
                   onChange={(e) => setDrafts((d) => ({ ...d, [focused.id]: { ...d[focused.id], whatsapp: e.target.value } }))}
                 />
               )}
+              {previewChannel === "email" && needsPersonalNote(focused) && (
+                <p className="social-compose-error">
+                  Click <strong>Edit message</strong> and replace the highlighted [personalise here…] bit with a line
+                  about how you know {focused.first_name || focused.name} (or delete it). Send unlocks once it&apos;s gone.
+                </p>
+              )}
               <small>
                 Changes here are just for {focused.first_name || focused.name}. {"{link}"} becomes their tracked link and{" "}
-                {"{shareLink}"} their pass-it-on link{previewChannel === "email" ? " (shown as xxxxxxxx in the preview)" : ""}.
+                {"{shareLink}"} their pass-it-on link, {"{androidLink}"} their &quot;tell me when it&apos;s on Android&quot; link{previewChannel === "email" ? " (shown as xxxxxxxx in the preview)" : ""}.
               </small>
               <div className="invite-actions">
                 {previewChannel === "email" ? (
                   <button
                     className="social-post-btn"
-                    disabled={busy || !focused.email || focused.do_not_contact || emailsToday >= DAILY_EMAIL_LIMIT}
+                    disabled={busy || !focused.email || focused.do_not_contact || emailsToday >= DAILY_EMAIL_LIMIT || needsPersonalNote(focused)}
                     onClick={() => sendOneEmail(focused)}
                   >
-                    {!focused.email ? "No email address" : emailsToday >= DAILY_EMAIL_LIMIT ? "Daily limit reached" : busy ? "Sending…" : "Send this email"}
+                    {!focused.email
+                      ? "No email address"
+                      : emailsToday >= DAILY_EMAIL_LIMIT
+                        ? "Daily limit reached"
+                        : needsPersonalNote(focused)
+                          ? "Personalise first"
+                          : busy
+                            ? "Sending…"
+                            : "Send this email"}
                   </button>
                 ) : (
                   <button

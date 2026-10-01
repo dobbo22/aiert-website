@@ -55,9 +55,17 @@ export default async function InviteLandingPage({
         <p className="mt-3 font-semibold">Always be prepared.</p>
 
         {androidPending ? (
-          <p className="mt-6 rounded-xl bg-white/10 px-4 py-3 text-sm">
-            TapCard for Android is with Google Play for review and will be available very soon.
-          </p>
+          <>
+            <p className="mt-6 rounded-xl bg-white/10 px-4 py-3 text-sm">
+              TapCard for Android is with Google Play for review and will be available very soon.
+            </p>
+            <a
+              href={send && !shared ? `/w/${token}` : "/android-waitlist"}
+              className="mt-3 inline-block w-full rounded-xl bg-white px-4 py-3 font-semibold text-[#111318]"
+            >
+              Tell me when it&apos;s ready
+            </a>
+          </>
         ) : (
           <>
             <a

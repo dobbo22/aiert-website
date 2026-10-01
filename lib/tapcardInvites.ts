@@ -18,7 +18,9 @@ export {
   DEFAULT_EMAIL_SUBJECT,
   DEFAULT_EMAIL_TEMPLATE,
   DEFAULT_WHATSAPP_TEMPLATE,
+  HOW_IT_WORKS_URL,
   INVITE_CHANNELS,
+  PERSONAL_NOTE_MARKER,
   personalise,
   whatsappNumber,
 } from "@/lib/inviteTemplates";
@@ -99,6 +101,20 @@ export function ensureInviteSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_invite_clicks ADD COLUMN IF NOT EXISTS fingerprint TEXT`)
       .then(() => sql`ALTER TABLE tapcard_invite_clicks ADD COLUMN IF NOT EXISTS is_forward BOOLEAN NOT NULL DEFAULT false`)
       .then(() => sql`ALTER TABLE tapcard_invite_clicks ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'direct'`)
+      // "Tell me when TapCard is on Android": one row per person (dedupe_key
+      // is c:<contact id> from an invite link, or e:<email> from the public
+      // form), with notified_at set once they've been told.
+      .then(() => sql`
+        CREATE TABLE IF NOT EXISTS tapcard_android_waitlist (
+          id SERIAL PRIMARY KEY,
+          dedupe_key TEXT NOT NULL UNIQUE,
+          contact_id INTEGER REFERENCES tapcard_invite_contacts(id) ON DELETE CASCADE,
+          send_id INTEGER REFERENCES tapcard_invite_sends(id) ON DELETE SET NULL,
+          email TEXT NOT NULL DEFAULT '',
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          notified_at TIMESTAMPTZ
+        )
+      `)
       .catch((err) => {
         schemaReady = null;
         throw err;
@@ -125,6 +141,27 @@ export function shareLink(token: string): string {
 }
 
 export type InviteSource = "direct" | "share";
+
+/// "Tell me when TapCard is on Android" in the email: same token, so a
+/// sign-up is tied to the person it was sent to.
+export function androidWaitlistLink(token: string): string {
+  return `${INVITE_LINK_ORIGIN}/w/${token}`;
+}
+
+/// Adds someone to the Android waitlist. Returns false for a bad email.
+export async function joinAndroidWaitlist(entry: { email: string; contactId?: number; sendId?: number }): Promise<boolean> {
+  const email = entry.email.trim().toLowerCase().slice(0, 200);
+  if (!entry.contactId && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return false;
+  await ensureInviteSchema();
+  const key = entry.contactId ? `c:${entry.contactId}` : `e:${email}`;
+  await sql`
+    INSERT INTO tapcard_android_waitlist (dedupe_key, contact_id, send_id, email)
+    VALUES (${key}, ${entry.contactId ?? null}, ${entry.sendId ?? null}, ${email})
+    ON CONFLICT (dedupe_key) DO UPDATE
+      SET email = CASE WHEN EXCLUDED.email <> '' THEN EXCLUDED.email ELSE tapcard_android_waitlist.email END
+  `;
+  return true;
+}
 
 
 /// App Store campaign token (ct=, max 40 chars) — what App Store Connect →
@@ -239,9 +276,9 @@ export async function recordInviteClick(
 export async function getSendByToken(token: string) {
   await ensureInviteSchema();
   const rows = (await sql`
-    SELECT s.id, s.channel, s.campaign, s.contact_id, c.first_name, c.name
+    SELECT s.id, s.channel, s.campaign, s.contact_id, c.first_name, c.name, c.email
     FROM tapcard_invite_sends s JOIN tapcard_invite_contacts c ON c.id = s.contact_id
     WHERE s.token = ${token}
-  `) as { id: number; channel: string; campaign: string; contact_id: number; first_name: string; name: string }[];
+  `) as { id: number; channel: string; campaign: string; contact_id: number; first_name: string; name: string; email: string }[];
   return rows[0] ?? null;
 }

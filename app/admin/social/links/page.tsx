@@ -35,11 +35,14 @@ export default async function SendInvitesPage() {
         (<code>tapcard.aiert.co.uk/i/…</code>), so the <strong>Track invites</strong> tab can
         show who clicked through. Emails go out one at a time from martin@mailbroom.app (Outlook),
         at most 100 a day: tick people, press <strong>Review &amp; email</strong>, then check and
-        personalise each one before Send. WhatsApp opens WhatsApp with the message ready, and you
+        personalise each one before Send (Send stays locked until the [personalise here…] line is
+        replaced). WhatsApp opens WhatsApp with the message ready, and you
         press Send there. Personalise with{" "}
         <code>{"{firstName}"}</code>, <code>{"{name}"}</code>, <code>{"{company}"}</code>,{" "}
-        <code>{"{link}"}</code> (their own link) and <code>{"{shareLink}"}</code> (a pass-it-on link:
-        clicks on it count as referrals by them).
+        <code>{"{link}"}</code> (their own link), <code>{"{shareLink}"}</code> (a pass-it-on link:
+        clicks on it count as referrals by them), <code>{"{androidLink}"}</code> (their &quot;tell me when it&apos;s on
+        Android&quot; link) and <code>{"{howItWorksLink}"}</code>. In emails, <code>[label](url)</code> makes a link,
+        lines starting <code>- </code> are bullets and <code>**bold**</code> is bold.
       </p>
       {error && <p className="social-compose-error">{error}</p>}
       <InviteSender contacts={contacts} emailsSentToday={emailsSentToday} />
