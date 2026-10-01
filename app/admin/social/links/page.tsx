@@ -10,7 +10,8 @@ export default async function SendInvitesPage() {
     await ensureInviteSchema();
     contacts = (await sql`
       SELECT c.id, c.name, c.first_name, c.email, c.phone, c.company, c.linkedin_url, c.facebook_url, c.do_not_contact,
-             COALESCE(array_agg(DISTINCT s.channel) FILTER (WHERE s.id IS NOT NULL), '{}') AS channels,
+             COALESCE(array_agg(DISTINCT s.channel) FILTER (WHERE s.id IS NOT NULL AND s.bounced_at IS NULL), '{}') AS channels,
+             COALESCE(BOOL_OR(s.bounced_at IS NOT NULL), false) AS bounced,
              MAX(s.sent_at) AS last_sent_at,
              COALESCE(BOOL_OR(s.first_click_at IS NOT NULL), false) AS clicked
       FROM tapcard_invite_contacts c
@@ -20,7 +21,7 @@ export default async function SendInvitesPage() {
     `) as SenderContact[];
     const today = (await sql`
       SELECT COUNT(*)::int AS n FROM tapcard_invite_sends
-      WHERE channel = 'email'
+      WHERE channel = 'email' AND bounced_at IS NULL
         AND sent_at >= (date_trunc('day', now() AT TIME ZONE 'Europe/London') AT TIME ZONE 'Europe/London')
     `) as { n: number }[];
     emailsSentToday = today[0]?.n ?? 0;

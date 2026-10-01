@@ -35,7 +35,7 @@ const RESEND_REPLY_TO = process.env.TAPCARD_INVITE_REPLY_TO || "Martin@aiert.co.
 async function emailsSentToday(): Promise<number> {
   const rows = (await sql`
     SELECT COUNT(*)::int AS n FROM tapcard_invite_sends
-    WHERE channel = 'email'
+    WHERE channel = 'email' AND bounced_at IS NULL
       AND sent_at >= (date_trunc('day', now() AT TIME ZONE 'Europe/London') AT TIME ZONE 'Europe/London')
   `) as { n: number }[];
   return rows[0]?.n ?? 0;
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
   if (!body?.allowRepeat) {
     const prior = (await sql`
       SELECT 1 FROM tapcard_invite_sends
-      WHERE contact_id = ${contactId} AND channel = ${channel} AND campaign = ${campaign} LIMIT 1
+      WHERE contact_id = ${contactId} AND channel = ${channel} AND campaign = ${campaign} AND bounced_at IS NULL LIMIT 1
     `) as unknown[];
     if (prior.length) return NextResponse.json({ error: "already-sent", skipped: true }, { status: 409 });
   }

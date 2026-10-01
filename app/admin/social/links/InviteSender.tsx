@@ -29,6 +29,7 @@ export type SenderContact = {
   facebook_url: string;
   do_not_contact: boolean;
   channels: string[];
+  bounced: boolean;
   last_sent_at: string | null;
   clicked: boolean;
 };
@@ -603,6 +604,7 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
                     {c.channels.map((ch) => (
                       <span key={ch} className="invite-badge">{ch === "link" ? "copied" : ch}</span>
                     ))}
+                    {c.bounced && !c.channels.includes("email") && <span className="invite-badge invite-badge-dnc">bounced</span>}
                     {c.clicked && <span className="invite-badge invite-badge-clicked">clicked</span>}
                   </span>
                 </li>
@@ -780,6 +782,20 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
                 <textarea className="invite-uncopied" rows={6} readOnly value={uncopied} onFocus={(e) => e.target.select()} />
               )}
               <div className="invite-actions invite-actions-minor">
+                {focused.channels.includes("email") && (
+                  <button
+                    className="invite-link-btn"
+                    onClick={() => {
+                      if (confirm(`Mark the email to ${focused.name} as bounced? They'll show as not invited, so you can fix the address and send again.`)) {
+                        updateContact(focused, { action: "email-bounced" });
+                        setEmailsToday((n) => Math.max(0, n - 1));
+                        setStatus({ text: `${focused.name}'s email marked as bounced.` });
+                      }
+                    }}
+                  >
+                    Email bounced
+                  </button>
+                )}
                 <label className="invite-check">
                   <input
                     type="checkbox"

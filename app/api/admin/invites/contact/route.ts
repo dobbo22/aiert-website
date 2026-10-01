@@ -4,7 +4,8 @@ import { isAdminRequest } from "@/lib/adminRequest";
 import { ensureInviteSchema, normaliseFacebookUrl, normaliseLinkedinUrl } from "@/lib/tapcardInvites";
 
 // Per-contact housekeeping from the Invites tab: mark do-not-contact, set
-// their LinkedIn / Facebook profile, correct their email address, or delete (which also removes their sends and clicks, via ON DELETE CASCADE).
+// their LinkedIn / Facebook profile, correct their email address, mark their
+// email as bounced, or delete (which also removes their sends and clicks, via ON DELETE CASCADE).
 export async function POST(req: Request) {
   if (!(await isAdminRequest())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -15,6 +16,14 @@ export async function POST(req: Request) {
   await ensureInviteSchema();
   if (body.action === "delete") {
     await sql`DELETE FROM tapcard_invite_contacts WHERE id = ${id}`;
+  } else if (body.action === "email-bounced") {
+    // The email came back undelivered (the Graph send itself succeeds; the
+    // bounce only arrives later in the mailbox). Marking it frees them to be
+    // emailed again, gives back today's quota, and shows on Track invites.
+    await sql`
+      UPDATE tapcard_invite_sends SET bounced_at = now()
+      WHERE contact_id = ${id} AND channel = 'email' AND bounced_at IS NULL
+    `;
   } else if (typeof body.doNotContact === "boolean") {
     await sql`UPDATE tapcard_invite_contacts SET do_not_contact = ${body.doNotContact} WHERE id = ${id}`;
   } else if (typeof body.email === "string") {
