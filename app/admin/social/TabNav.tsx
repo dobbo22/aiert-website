@@ -10,7 +10,7 @@ const TABS = [
   { href: "/admin/social/threads", label: "Threads" },
   { href: "/admin/social/linkedin", label: "LinkedIn", badge: "Soon" },
   { href: "/admin/social/reddit", label: "Reddit" },
-  { href: "/admin/social/links", label: "Link Clicks" },
+  { href: "/admin/social/links", label: "Links & Invites" },
 ];
 
 export default function TabNav() {
