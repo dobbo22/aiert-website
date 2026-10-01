@@ -1,0 +1,156 @@
+import { ImageResponse } from "next/og";
+import { findSiteIcon, normalizeDomain } from "@/lib/siteIcon";
+
+// "Here's what your TapCard could look like": a picture of the recipient's
+// own card, drawn like the app's Business card, from what's in Martin's
+// contacts — name, company, phone, email, and (for a company email address)
+// their website and company logo. Used in the invite email via {cardImage}.
+
+/// Email providers, not companies: no website row or logo for these.
+const PERSONAL_DOMAINS =
+  /^(gmail|googlemail|hotmail|outlook|live|msn|yahoo|ymail|icloud|me|mac|aol|btinternet|btopenworld|bt|sky|talktalk|tiscali|virginmedia|ntlworld|blueyonder|plus|orange|protonmail|proton|gmx|mail|yandex|fastmail|zoho|hey)\./;
+
+export function companyDomain(email: string): string | null {
+  const domain = normalizeDomain(email.split("@")[1] ?? "");
+  return domain && !PERSONAL_DOMAINS.test(domain) ? domain : null;
+}
+
+export type InviteCardPerson = { name: string; company: string; email: string; phone: string };
+
+const WIDTH = 560;
+
+function initials(name: string): string {
+  // First and last name ("Martin CJ Dobson" → MD).
+  const words = name.split(/\s+/).filter((w) => /^[A-Za-z]/.test(w));
+  if (words.length === 0) return "";
+  const picked = words.length > 1 ? [words[0], words[words.length - 1]] : [words[0]];
+  return picked.map((w) => w![0]!.toUpperCase()).join("");
+}
+
+async function logoDataUri(domain: string | null): Promise<string | null> {
+  if (!domain) return null;
+  // Satori can't draw .ico, and a slow site mustn't hold up the email.
+  const icon = await Promise.race([
+    findSiteIcon(domain, { allowIco: false }).catch(() => null),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), 6000)),
+  ]);
+  return icon ? `data:${icon.contentType};base64,${icon.bytes.toString("base64")}` : null;
+}
+
+type Icon = "phone" | "mail" | "globe";
+
+/// Drawn, not font glyphs: the card renderer's font has no symbols.
+function RowIcon({ icon }: { icon: Icon }) {
+  const stroke = { fill: "none", stroke: "#ffffff", strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24">
+      {/* Separate elements, not fragments: the renderer can't draw <></> inside an svg. */}
+      {icon === "phone" && (
+        <path {...stroke} d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z" />
+      )}
+      {icon === "mail" && <rect {...stroke} x="2" y="4" width="20" height="16" rx="2" />}
+      {icon === "mail" && <path {...stroke} d="M22 6l-10 7L2 6" />}
+      {icon === "globe" && <circle {...stroke} cx="12" cy="12" r="10" />}
+      {icon === "globe" && (
+        <path {...stroke} d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+      )}
+    </svg>
+  );
+}
+
+function Row({ color, label, value, icon }: { color: string; label: string; value: string; icon: Icon }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", background: "#1f2128", borderRadius: 18, padding: "14px 16px", marginTop: 12 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 52,
+          height: 52,
+          borderRadius: 14,
+          background: color,
+        }}
+      >
+        <RowIcon icon={icon} />
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", marginLeft: 16, overflow: "hidden" }}>
+        <div style={{ display: "flex", fontSize: 19, color: "#e5e7eb", fontWeight: 600 }}>{label}</div>
+        <div style={{ display: "flex", fontSize: 24, color: "#ffffff", marginTop: 2 }}>{value}</div>
+      </div>
+    </div>
+  );
+}
+
+export async function inviteCardImage(person: InviteCardPerson): Promise<ImageResponse> {
+  const domain = companyDomain(person.email);
+  const logo = await logoDataUri(domain);
+  const rows: { color: string; label: string; value: string; icon: Icon }[] = [];
+  if (person.phone) rows.push({ color: "#22c55e", label: "Call me", value: person.phone, icon: "phone" });
+  if (person.email) rows.push({ color: "#a855f7", label: "Email me", value: person.email, icon: "mail" });
+  if (domain) rows.push({ color: "#3b82f6", label: "Visit my site", value: domain, icon: "globe" });
+  const subtitle = person.company || (domain ? domain.split(".")[0]!.replace(/^./, (c) => c.toUpperCase()) : "");
+  const height = 330 + (subtitle ? 34 : 0) + rows.length * 92 + 70;
+
+  return new ImageResponse(
+    (
+      <div style={{ display: "flex", width: "100%", height: "100%", background: "#ffffff", padding: 10 }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            width: "100%",
+            height: "100%",
+            borderRadius: 36,
+            padding: "26px 28px",
+            background: "linear-gradient(180deg, #3b2a6b 0%, #16171c 22%, #111318 100%)",
+            fontFamily: "sans-serif",
+          }}
+        >
+          <div style={{ display: "flex" }}>
+            <div style={{ display: "flex", background: "#0b0c10", color: "#fff", fontSize: 17, fontWeight: 700, letterSpacing: 2, padding: "7px 16px", borderRadius: 999 }}>
+              BUSINESS
+            </div>
+          </div>
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 10 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 140,
+                height: 140,
+                borderRadius: 70,
+                background: logo ? "#ffffff" : "#3a3b42",
+                border: "6px solid #0b0c10",
+                overflow: "hidden",
+              }}
+            >
+              {logo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={logo} alt="" width={92} height={92} style={{ objectFit: "contain" }} />
+              ) : (
+                <div style={{ display: "flex", color: "#ffffff", fontSize: 52, fontWeight: 700 }}>{initials(person.name)}</div>
+              )}
+            </div>
+          </div>
+          <div style={{ display: "flex", justifyContent: "center", color: "#fff", fontSize: 40, fontWeight: 800, marginTop: 18 }}>{person.name}</div>
+          {subtitle && <div style={{ display: "flex", justifyContent: "center", color: "#e5e7eb", fontSize: 24, marginTop: 6 }}>{subtitle}</div>}
+          <div style={{ display: "flex", flexDirection: "column", marginTop: 20 }}>
+            {rows.map((r) => (
+              <Row key={r.label} {...r} />
+            ))}
+          </div>
+          <div style={{ display: "flex", justifyContent: "center", color: "#9ca3af", fontSize: 17, marginTop: "auto", paddingTop: 18 }}>
+            Made with TapCard
+          </div>
+        </div>
+      </div>
+    ),
+    {
+      width: WIDTH,
+      height,
+      headers: { "Cache-Control": "public, max-age=86400, s-maxage=86400" },
+    },
+  );
+}

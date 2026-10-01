@@ -40,7 +40,10 @@ function inline(raw: string): string {
 /// An example card (Alex Morgan, the made-up person from the App Store
 /// screenshots), shown where the message has a {cardImage} paragraph.
 export const CARD_IMAGE_URL = "https://www.aiert.co.uk/tapcard-email-card.png";
-const CARD_IMAGE_HTML = `<p style="margin:4px 0 18px;"><img src="${CARD_IMAGE_URL}" width="280" alt="An example TapCard: name, job, tap-to-call, email, website and social links" style="display:block;width:280px;max-width:100%;height:auto;border:0;border-radius:18px;"></p>`;
+/// Normally their own card instead (lib/inviteCardImage.tsx), via cardImageUrl.
+function cardImageHtml(url: string): string {
+  return `<p style="margin:4px 0 18px;"><img src="${escapeHtml(url)}" width="280" alt="A TapCard: name, company, tap-to-call, email and website" style="display:block;width:280px;max-width:100%;height:auto;border:0;border-radius:18px;"></p>`;
+}
 
 function button(url: string, label: string, primary: boolean): string {
   return `<p style="margin:4px 0 18px;"><a href="${escapeHtml(url)}" style="${primary ? PRIMARY_BUTTON : SECONDARY_BUTTON}">${escapeHtml(label)}</a></p>`;
@@ -85,6 +88,8 @@ export function inviteEmailHtml(params: {
   link: string;
   passOnLink: string;
   androidLink?: string;
+  /// Picture of their own card; the example card if not given.
+  cardImageUrl?: string;
   unsubscribeUrl: string;
 }): string {
   const buttonUrls = new Map<string, boolean>([[params.link, true]]);
@@ -95,7 +100,7 @@ export function inviteEmailHtml(params: {
     .trim()
     .split(/\n{2,}/)
     .map((raw) => {
-      if (raw.trim() === "{cardImage}") return CARD_IMAGE_HTML;
+      if (raw.trim() === "{cardImage}") return cardImageHtml(params.cardImageUrl ?? CARD_IMAGE_URL);
       // [label](their link) or [label](android link) → a button under the
       // paragraph's own words ("If you have an iPhone, you can use it today:").
       const buttons: string[] = [];

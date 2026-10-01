@@ -51,7 +51,7 @@ Have you ever been in a situation where someone asked for your business card, an
 
 I've built an app called TapCard to solve exactly that. It keeps your business card on your phone in the TapCard app, and also in your Apple Wallet for easy access. Share it instantly with a QR code or a link, and when you swap details, their info saves straight into your contacts — no typing, no running out of cards.
 
-Here's what a TapCard looks like:
+Here's what your TapCard could look like:
 
 {cardImage}
 

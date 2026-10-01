@@ -253,6 +253,8 @@ export default function InviteSender({
     return drafts[contact.id]?.subject ?? personalise(subject.replaceAll("{offerSubject}", offerSubject), contact, "{link}", "{shareLink}");
   }
 
+  // Shown in an iframe sandboxed with allow-same-origin (still no scripts)
+  // so the card picture loads with the admin login.
   function previewHtml(contact: SenderContact): string {
     let text = messageFor(contact, "email");
     if (!text.includes("{link}")) text += "\n\n{link}"; // as the server does
@@ -264,6 +266,7 @@ export default function InviteSender({
       link: PREVIEW_LINK,
       passOnLink: PREVIEW_SHARE_LINK,
       androidLink: PREVIEW_ANDROID_LINK,
+      cardImageUrl: `/api/admin/invites/card-preview/${contact.id}`,
       unsubscribeUrl: "#",
     });
   }
@@ -783,7 +786,7 @@ export default function InviteSender({
                     </button>
                   </div>
                   {emailView === "preview" ? (
-                    <iframe className="invite-mail-body" title="Email preview" sandbox="" srcDoc={previewHtml(focused)} />
+                    <iframe className="invite-mail-body" title="Email preview" sandbox="allow-same-origin" srcDoc={previewHtml(focused)} />
                   ) : (
                     <textarea
                       ref={messageRef}

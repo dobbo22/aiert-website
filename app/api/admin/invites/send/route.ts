@@ -102,7 +102,14 @@ async function handleSend(req: Request) {
 
   if (channel === "email") {
     const unsubscribeUrl = `${INVITE_LINK_ORIGIN}/u/${token}`;
-    const html = inviteEmailHtml({ text: message, link, passOnLink, androidLink, unsubscribeUrl });
+    const html = inviteEmailHtml({
+      text: message,
+      link,
+      passOnLink,
+      androidLink,
+      cardImageUrl: `${INVITE_LINK_ORIGIN}/api/invite-card/${token}`,
+      unsubscribeUrl,
+    });
     try {
       if (route.viaResend) {
         const { data, error } = await new Resend(process.env.RESEND_API_KEY).emails.send({
