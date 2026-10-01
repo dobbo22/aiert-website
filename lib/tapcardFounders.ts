@@ -5,20 +5,22 @@ import sql from "@/lib/db";
 // AppTransaction (who downloaded it, and when) on launch; each Apple ID is
 // counted once, in order. Places 1–1,000 are founders (free for life);
 // after that, sharing a card needs a one-off lifetime unlock whose price
-// steps up £1 per 1,000 people, from £0.99 to £4.99. Each person keeps the
-// price that was current when they were first counted.
+// steps up £1 per 1,000 people, from £0.99 to £4.99, then £9.99 from the
+// 10,001st person. Each person keeps the price that was current when they
+// were first counted.
 
 export const FREE_PLACES = 1000;
-export const TIER_SIZE = 1000;
 const BUNDLE_ID = "com.mailbroom.tapcard";
 
-/// One non-consumable in-app purchase per price step (App Store Connect).
+/// One non-consumable in-app purchase per price step (App Store Connect),
+/// each starting at the given place in the count.
 export const LIFETIME_TIERS = [
-  { productId: "com.mailbroom.tapcard.lifetime1", price: "£0.99" },
-  { productId: "com.mailbroom.tapcard.lifetime2", price: "£1.99" },
-  { productId: "com.mailbroom.tapcard.lifetime3", price: "£2.99" },
-  { productId: "com.mailbroom.tapcard.lifetime4", price: "£3.99" },
-  { productId: "com.mailbroom.tapcard.lifetime5", price: "£4.99" },
+  { fromPlace: 1001, productId: "com.mailbroom.tapcard.lifetime1", price: "£0.99" },
+  { fromPlace: 2001, productId: "com.mailbroom.tapcard.lifetime2", price: "£1.99" },
+  { fromPlace: 3001, productId: "com.mailbroom.tapcard.lifetime3", price: "£2.99" },
+  { fromPlace: 4001, productId: "com.mailbroom.tapcard.lifetime4", price: "£3.99" },
+  { fromPlace: 5001, productId: "com.mailbroom.tapcard.lifetime5", price: "£4.99" },
+  { fromPlace: 10001, productId: "com.mailbroom.tapcard.lifetime6", price: "£9.99" },
 ];
 
 /// Downloads before this moment are founders whatever their place (they
@@ -38,11 +40,17 @@ function freePlaces(environment: string): number {
   return Number.isFinite(n) && n >= 0 ? n : FREE_PLACES;
 }
 
-/// 0 = free (founder), 1–5 = LIFETIME_TIERS[tier - 1].
+/// 0 = free (founder), otherwise LIFETIME_TIERS[tier - 1]. A Sandbox count
+/// with fewer free places is shifted so its ladder starts at £0.99 too.
 export function tierForPlace(place: number, environment = "Production"): number {
   const free = freePlaces(environment);
   if (place <= free) return 0;
-  return Math.min(LIFETIME_TIERS.length, Math.floor((place - free - 1) / TIER_SIZE) + 1);
+  const effective = place + (FREE_PLACES - free);
+  let tier = 0;
+  LIFETIME_TIERS.forEach((t, i) => {
+    if (effective >= t.fromPlace) tier = i + 1;
+  });
+  return Math.max(1, tier);
 }
 
 let schemaReady: Promise<unknown> | null = null;
