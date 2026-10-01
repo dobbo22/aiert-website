@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import sql from "@/lib/db";
 import { findSiteIcon, normalizeDomain } from "@/lib/siteIcon";
 
 // "Here's what your TapCard could look like": a picture of the recipient's
@@ -55,14 +56,46 @@ function initials(name: string): string {
   return picked.map((w) => w![0]!.toUpperCase()).join("");
 }
 
+let logoTableReady: Promise<unknown> | null = null;
+function ensureLogoTable() {
+  logoTableReady ??= sql`
+    CREATE TABLE IF NOT EXISTS tapcard_logo_cache (
+      domain TEXT PRIMARY KEY,
+      data_uri TEXT,
+      fetched_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `.catch((err) => {
+    logoTableReady = null;
+    throw err;
+  });
+  return logoTableReady;
+}
+
+/// A company's logo as a data: URI, remembered for 30 days (including "no
+/// logo found") — fetching it from their site can take seconds, and
+/// WhatsApp gives up on a slow preview picture.
 async function logoDataUri(domain: string | null): Promise<string | null> {
   if (!domain) return null;
-  // Satori can't draw .ico, and a slow site mustn't hold up the email.
+  try {
+    await ensureLogoTable();
+    const cached = (await sql`
+      SELECT data_uri FROM tapcard_logo_cache WHERE domain = ${domain} AND fetched_at > now() - interval '30 days'
+    `) as { data_uri: string | null }[];
+    if (cached.length) return cached[0]!.data_uri;
+  } catch {
+    // No cache — fetch it anyway.
+  }
+  // Satori can't draw .ico, and a slow site mustn't hold up the picture.
   const icon = await Promise.race([
     findSiteIcon(domain, { allowIco: false }).catch(() => null),
     new Promise<null>((resolve) => setTimeout(() => resolve(null), 6000)),
   ]);
-  return icon ? `data:${icon.contentType};base64,${icon.bytes.toString("base64")}` : null;
+  const uri = icon ? `data:${icon.contentType};base64,${icon.bytes.toString("base64")}` : null;
+  await sql`
+    INSERT INTO tapcard_logo_cache (domain, data_uri) VALUES (${domain}, ${uri})
+    ON CONFLICT (domain) DO UPDATE SET data_uri = EXCLUDED.data_uri, fetched_at = now()
+  `.catch(() => {});
+  return uri;
 }
 
 type Icon = "phone" | "mail" | "globe";

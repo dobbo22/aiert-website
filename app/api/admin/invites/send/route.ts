@@ -138,6 +138,11 @@ async function handleSend(req: Request) {
     return NextResponse.json({ ok: true, link });
   }
 
+  // WhatsApp, LinkedIn and Messenger preview the link with a picture of
+  // their card, but only wait a few seconds for it. Draw it now (it's then
+  // in Vercel's cache) so it's ready when their preview fetcher asks.
+  await fetch(`${INVITE_LINK_ORIGIN}/api/invite-card/${token}`, { signal: AbortSignal.timeout(9000) }).catch(() => {});
+
   if (channel === "whatsapp") {
     return NextResponse.json({ ok: true, link, waUrl: `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}` });
   }
