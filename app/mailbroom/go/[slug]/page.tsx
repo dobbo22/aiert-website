@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const link = TRACKED_LINKS[slug];
-  if (!link) notFound();
+  if (!link || !link.to) notFound();
 
   return <GoRedirect to={link.to} slug={slug} />;
 }

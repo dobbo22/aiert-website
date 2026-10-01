@@ -92,7 +92,7 @@ export default async function LinkClicksPage() {
             <tr key={r.slug} style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
               <td style={{ padding: "0.5rem 0.75rem 0.5rem 0" }}>{r.label}</td>
               <td style={{ padding: "0.5rem 0.75rem", opacity: 0.6, fontSize: "0.85em" }}>
-                {r.slug.startsWith("fb-") ? `/${r.slug}` : `/go/${r.slug}`}
+                {TRACKED_LINKS[r.slug]?.inApp ? "tap in app" : r.slug.startsWith("fb-") ? `/${r.slug}` : `/go/${r.slug}`}
               </td>
               <td style={{ padding: "0.5rem 0 0.5rem 0.75rem", textAlign: "right", fontWeight: 600 }}>
                 {r.count}

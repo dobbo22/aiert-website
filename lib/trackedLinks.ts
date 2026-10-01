@@ -8,6 +8,11 @@
 export type TrackedLink = {
   label: string;
   to: string;
+  /// App Store id, for links that should carry App Store Connect campaign
+  /// attribution (pt=/ct=) — see appStoreCampaignUrl in /tapcard/go.
+  appStoreId?: string;
+  /// Logged by an app reporting a tap (/api/promo-event), not a redirect.
+  inApp?: boolean;
 };
 
 export const TRACKED_LINKS: Record<string, TrackedLink> = {
@@ -52,4 +57,15 @@ export const TRACKED_LINKS: Record<string, TrackedLink> = {
   // (and separate click counts in the admin panel) rather than sharing one.
   "x-product-drop": { label: "X reply → App Store (MailBroom iOS)", to: "https://apps.apple.com/gb/app/mailbroom/id6766489663" },
   "x-product-drop-saas": { label: "X reply → MailBroom for Business (trial signup)", to: "https://mailbroom.app/trial" },
+
+  // TapCard: the "Get TapCard" and cross-promo links on every shared card
+  // page (tapcard.aiert.co.uk/go/<slug>), and taps on the cross-promo cards
+  // inside the TapCard apps, reported anonymously by the app.
+  "tapcard-web-get-tapcard": { label: "TapCard card page → Get TapCard", to: "https://apps.apple.com/app/id6816003159", appStoreId: "6816003159" },
+  "tapcard-web-mailbroom": { label: "TapCard card page → MailBroom", to: "https://apps.apple.com/app/mailbroom/id6766489663", appStoreId: "6766489663" },
+  "tapcard-web-powersearch": { label: "TapCard card page → PowerSearch", to: "https://apps.apple.com/app/powersearch/id6807772868", appStoreId: "6807772868" },
+  "tapcard-app-ios-mailbroom": { label: "TapCard iPhone app → MailBroom promo tapped", to: "", inApp: true },
+  "tapcard-app-ios-powersearch": { label: "TapCard iPhone app → PowerSearch promo tapped", to: "", inApp: true },
+  "tapcard-app-android-mailbroom": { label: "TapCard Android app → MailBroom promo tapped", to: "", inApp: true },
+  "tapcard-app-android-powersearch": { label: "TapCard Android app → PowerSearch promo tapped", to: "", inApp: true },
 };

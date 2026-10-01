@@ -7,10 +7,12 @@ import CompanyLogo from "../../CompanyLogo";
 import ContactIcon, { type ContactIconName } from "../../ContactIcon";
 
 // App Store Connect record "TapCard: Digital Business Card" (id 6816003159).
-const TAPCARD_APP_STORE_URL = "https://apps.apple.com/app/id6816003159";
-const MAILBROOM_APP_STORE_URL = "https://apps.apple.com/app/mailbroom/id6766489663";
-const POWERSEARCH_APP_STORE_URL = "https://apps.apple.com/us/app/powersearch/id6807772868";
 const TAPCARD_ORIGIN = "https://tapcard.aiert.co.uk";
+// Through tapcard.aiert.co.uk/go/<slug> (app/tapcard/go), which counts the
+// click and adds App Store campaign attribution — see lib/trackedLinks.ts.
+const TAPCARD_APP_STORE_URL = `${TAPCARD_ORIGIN}/go/tapcard-web-get-tapcard`;
+const MAILBROOM_APP_STORE_URL = `${TAPCARD_ORIGIN}/go/tapcard-web-mailbroom`;
+const POWERSEARCH_APP_STORE_URL = `${TAPCARD_ORIGIN}/go/tapcard-web-powersearch`;
 
 // "Send your card back" needs TapCard 1.1 (Universal Links + the send-back
 // screen). Keep this off until 1.1 is live on the App Store — with 1.0, a

@@ -11,11 +11,12 @@ export const metadata: Metadata = {
 // all three need updating.
 export default function TapCardPrivacyPage() {
   return (
-    <DocPage title="Privacy Policy" updated="25 September 2026">
+    <DocPage title="Privacy Policy" updated="1 October 2026">
       <section>
         <h2>Summary</h2>
         <p>
-          TapCard has no accounts, no advertising, no analytics and no tracking. Your card stays on your iPhone
+          TapCard has no accounts, no advertising and no tracking, and its only analytics is an anonymous count of
+          taps on our own app promotions (see below). Your card stays on your iPhone
           until you tap <strong>Share my card</strong>. Sharing publishes a copy at a private link so other people can
           view and save it, and <strong>Stop sharing</strong> deletes that copy from our servers.
         </p>
@@ -80,6 +81,18 @@ export default function TapCardPrivacyPage() {
         <p className="mt-3">
           The card page counts how many times it has been opened and saved, and those two numbers are shown to you
           in the app. We do not record who viewed or saved it.
+        </p>
+      </section>
+
+      <section>
+        <h2>Counting interest in our other apps</h2>
+        <p>
+          When you tap the MailBroom or PowerSearch promotion inside TapCard, the app tells our server which one was
+          tapped and whether it was on iPhone or Android. It sends nothing else: not your card, your name or any
+          device identifier. Our server stores that with the approximate country, a shortened IP address (the last
+          part removed, so it can&apos;t identify you) and the app and system version, so we can count how many
+          people are interested. Taps on the TapCard, MailBroom and PowerSearch links on a shared card page are
+          counted the same way. None of this is linked to you or used to track you.
         </p>
       </section>
 
