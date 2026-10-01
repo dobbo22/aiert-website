@@ -6,13 +6,16 @@ import {
   DEFAULT_CAMPAIGN,
   DEFAULT_EMAIL_SUBJECT,
   DEFAULT_EMAIL_TEMPLATE,
+  DEFAULT_SOCIAL_TEMPLATE,
   DEFAULT_WHATSAPP_TEMPLATE,
   type InviteChannel,
   PERSONAL_NOTE_MARKER,
+  type SocialChannel,
   personalise,
   whatsappNumber,
 } from "@/lib/inviteTemplates";
 import { DAILY_EMAIL_LIMIT, INVITE_EMAIL_FROM_DISPLAY, inviteEmailHtml } from "@/lib/inviteEmail";
+import { parseLinkedinConnections } from "@/lib/linkedinImport";
 import { parseVcards } from "@/lib/vcardImport";
 
 export type SenderContact = {
@@ -22,14 +25,51 @@ export type SenderContact = {
   email: string;
   phone: string;
   company: string;
+  linkedin_url: string;
+  facebook_url: string;
   do_not_contact: boolean;
   channels: string[];
   last_sent_at: string | null;
   clicked: boolean;
 };
 
-type Filter = "all" | "not-invited" | "has-email" | "has-mobile" | "clicked";
-type Draft = { email?: string; whatsapp?: string; subject?: string };
+type Filter = "all" | "not-invited" | "has-email" | "has-mobile" | "has-linkedin" | "has-facebook" | "clicked";
+/// Which template a channel's message comes from: LinkedIn and Messenger share one.
+type MessageKind = "email" | "whatsapp" | "social";
+type Draft = { email?: string; whatsapp?: string; social?: string; subject?: string };
+type PreviewChannel = "email" | "whatsapp" | SocialChannel;
+
+const SOCIAL_LABEL: Record<SocialChannel, string> = { linkedin: "LinkedIn", messenger: "Messenger" };
+
+function kindFor(channel: InviteChannel): MessageKind {
+  if (channel === "email") return "email";
+  return channel === "linkedin" || channel === "messenger" ? "social" : "whatsapp";
+}
+
+/// Copies text that's still being fetched. The copy has to start inside the
+/// click (Safari refuses otherwise), so the clipboard is handed a promise.
+async function copyWhenReady(text: Promise<string | null>): Promise<boolean> {
+  try {
+    if (typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
+      const blob = text.then((t) => {
+        if (t == null) throw new Error("nothing to copy");
+        return new Blob([t], { type: "text/plain" });
+      });
+      await navigator.clipboard.write([new ClipboardItem({ "text/plain": blob })]);
+      return true;
+    }
+  } catch {
+    // fall through to writeText
+  }
+  const t = await text;
+  if (t == null) return false;
+  try {
+    await navigator.clipboard.writeText(t);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 const IMPORT_CHUNK = 500;
 // Stand-ins for the person's real links in the email preview — the server
@@ -45,16 +85,22 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
   const [subject, setSubject] = useState(DEFAULT_EMAIL_SUBJECT);
   const [emailTemplate, setEmailTemplate] = useState(DEFAULT_EMAIL_TEMPLATE);
   const [waTemplate, setWaTemplate] = useState(DEFAULT_WHATSAPP_TEMPLATE);
+  const [socialTemplate, setSocialTemplate] = useState(DEFAULT_SOCIAL_TEMPLATE);
   const [drafts, setDrafts] = useState<Record<number, Draft>>({});
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("not-invited");
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [focusedId, setFocusedId] = useState<number | null>(null);
-  const [previewChannel, setPreviewChannel] = useState<"email" | "whatsapp">("email");
+  const [previewChannel, setPreviewChannel] = useState<PreviewChannel>("email");
   const [allowRepeat, setAllowRepeat] = useState(false);
 
   const [waQueue, setWaQueue] = useState<number[]>([]);
+  // LinkedIn / Messenger: like the email queue, each person is shown in the
+  // preview panel to personalise, then "Copy & open" moves to the next.
+  const [socialQueue, setSocialQueue] = useState<{ channel: SocialChannel; ids: number[] } | null>(null);
+  const [uncopied, setUncopied] = useState<string | null>(null);
+  const [profileInput, setProfileInput] = useState<{ id: number; value: string } | null>(null);
   // Emails are never sent in bulk: ticked people go into this queue and each
   // one is shown (as the email will look) for checking and personalising
   // before Send. At most DAILY_EMAIL_LIMIT a day (UK time), enforced by the
@@ -70,7 +116,7 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
     return contacts.filter((c) => {
-      if (q && ![c.name, c.email, c.phone, c.company].some((v) => v.toLowerCase().includes(q))) return false;
+      if (q && ![c.name, c.email, c.phone, c.company, c.linkedin_url, c.facebook_url].some((v) => v.toLowerCase().includes(q))) return false;
       switch (filter) {
         case "not-invited":
           return c.channels.length === 0 && !c.do_not_contact;
@@ -78,6 +124,10 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
           return !!c.email;
         case "has-mobile":
           return !!whatsappNumber(c.phone);
+        case "has-linkedin":
+          return !!c.linkedin_url;
+        case "has-facebook":
+          return !!c.facebook_url;
         case "clicked":
           return c.clicked;
         default:
@@ -90,17 +140,19 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
   const selectedContacts = [...selected].map((id) => byId.get(id)).filter((c): c is SenderContact => !!c);
   const selectedWithEmail = selectedContacts.filter((c) => c.email && !c.do_not_contact);
   const selectedWithMobile = selectedContacts.filter((c) => whatsappNumber(c.phone) && !c.do_not_contact);
+  const selectedReachable = selectedContacts.filter((c) => !c.do_not_contact);
 
-  function messageFor(contact: SenderContact, channel: "email" | "whatsapp"): string {
-    const draft = drafts[contact.id]?.[channel];
+  function messageFor(contact: SenderContact, kind: MessageKind): string {
+    const draft = drafts[contact.id]?.[kind];
     if (draft != null) return draft;
+    const template = kind === "email" ? emailTemplate : kind === "social" ? socialTemplate : waTemplate;
     // {link} stays as a placeholder — the server swaps in this person's tracked link.
-    return personalise(channel === "email" ? emailTemplate : waTemplate, contact, "{link}", "{shareLink}", "{androidLink}");
+    return personalise(template, contact, "{link}", "{shareLink}", "{androidLink}");
   }
 
-  /// The email still has the "[personalise here…]" line in it.
-  function needsPersonalNote(contact: SenderContact): boolean {
-    return PERSONAL_NOTE_MARKER.test(messageFor(contact, "email"));
+  /// The message still has the "[personalise here…]" line in it.
+  function needsPersonalNote(contact: SenderContact, kind: MessageKind = "email"): boolean {
+    return PERSONAL_NOTE_MARKER.test(messageFor(contact, kind));
   }
 
   function subjectFor(contact: SenderContact): string {
@@ -131,7 +183,7 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
         channel,
         campaign,
         subject: subjectFor(contact),
-        message: messageFor(contact, channel === "email" ? "email" : "whatsapp"),
+        message: messageFor(contact, kindFor(channel)),
         allowRepeat,
       }),
     });
@@ -142,6 +194,7 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
       skipped?: boolean;
       limitReached?: boolean;
       waUrl?: string;
+      openUrl?: string;
       link?: string;
       text?: string;
     };
@@ -151,9 +204,10 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
     setBusy(true);
     setStatus({ text: `Reading ${file.name}…` });
     try {
-      const parsed = parseVcards(await file.text());
+      const text = await file.text();
+      const parsed = /\.csv$/i.test(file.name) ? parseLinkedinConnections(text) : parseVcards(text);
       if (parsed.length === 0) {
-        setStatus({ text: "No contacts with an email or phone number found in that file.", error: true });
+        setStatus({ text: "No contacts with an email, phone number or profile link found in that file.", error: true });
         return;
       }
       let done = 0;
@@ -240,6 +294,75 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
     return result.skipped ?? false;
   }
 
+  function startSocialQueue(channel: SocialChannel, list: SenderContact[]) {
+    const ids = list.map((c) => c.id);
+    setSocialQueue(ids.length ? { channel, ids } : null);
+    if (ids.length) {
+      setFocusedId(ids[0]);
+      setPreviewChannel(channel);
+    }
+    setStatus({ text: `${ids.length} queued for ${SOCIAL_LABEL[channel]}. Personalise each one, then Copy & open.` });
+  }
+
+  function advanceSocialQueue(fromId: number) {
+    if (!socialQueue) return;
+    const ids = socialQueue.ids.filter((id) => id !== fromId);
+    setSocialQueue(ids.length ? { ...socialQueue, ids } : null);
+    if (ids.length) setFocusedId(ids[0]);
+    else router.refresh();
+  }
+
+  // LinkedIn / Messenger: no way to send from a personal account, so the
+  // message (with its new tracked link) is copied and their profile or
+  // chat opened. Window and clipboard are both started inside the click.
+  function openSocial(contact: SenderContact, channel: SocialChannel) {
+    const win = window.open("about:blank", "_blank");
+    const result = postSend(contact, channel);
+    const copied = copyWhenReady(result.then((r) => (r.ok && r.text ? r.text : null)));
+    setUncopied(null);
+    setBusy(true);
+    (async () => {
+      const r = await result;
+      setBusy(false);
+      if (!r.ok || !r.openUrl) {
+        win?.close();
+        setStatus({
+          text: r.skipped
+            ? `${contact.name} already has a ${SOCIAL_LABEL[channel]} invite for "${campaign}". Tick "Allow repeat sends" to send again.`
+            : `${contact.name}: ${r.error}`,
+          error: true,
+        });
+        if (r.skipped) advanceSocialQueue(contact.id);
+        return;
+      }
+      if (win) win.location.href = r.openUrl;
+      if (await copied) {
+        setStatus({ text: `Message for ${contact.name} copied. Paste it into ${SOCIAL_LABEL[channel]} and press Send.` });
+      } else {
+        setUncopied(r.text ?? "");
+        setStatus({ text: "Couldn't copy automatically: copy the message from the box below.", error: true });
+      }
+      if (!win) window.open(r.openUrl, "_blank");
+      advanceSocialQueue(contact.id);
+      if (!socialQueue) router.refresh();
+    })();
+  }
+
+  async function saveProfile(contact: SenderContact, channel: SocialChannel, value: string) {
+    const res = await fetch("/api/admin/invites/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: contact.id, [channel === "linkedin" ? "linkedinUrl" : "facebookUrl"]: value }),
+    });
+    if (!res.ok) {
+      setStatus({ text: (await res.json().catch(() => ({}))).error ?? "Couldn't save that link", error: true });
+      return;
+    }
+    setProfileInput(null);
+    setStatus({ text: `Saved ${contact.name}'s ${channel === "linkedin" ? "LinkedIn" : "Facebook"} link.` });
+    router.refresh();
+  }
+
   async function copyLink(contact: SenderContact) {
     const result = await postSend(contact, "link");
     if (result.ok && result.text) {
@@ -271,16 +394,17 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
 
   const queueHead = waQueue.length ? byId.get(waQueue[0]) : undefined;
   const emailHead = emailQueue.length ? byId.get(emailQueue[0]) : undefined;
+  const socialHead = socialQueue ? byId.get(socialQueue.ids[0]) : undefined;
 
   return (
     <div className="invite-sender">
       <section className="social-compose invite-setup">
         <div className="invite-setup-row">
           <label className="invite-field">
-            <span>Import iCloud contacts (.vcf)</span>
+            <span>Import contacts (iCloud .vcf or LinkedIn .csv)</span>
             <input
               type="file"
-              accept=".vcf,text/vcard,text/x-vcard"
+              accept=".vcf,text/vcard,text/x-vcard,.csv,text/csv"
               disabled={busy}
               onChange={(e) => {
                 const file = e.target.files?.[0];
@@ -289,8 +413,9 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
               }}
             />
             <small>
-              iCloud.com → Contacts → select all (⌘A) → ⚙︎ → Export vCard. Re-import any time;
-              existing people are updated, not duplicated.
+              iCloud.com → Contacts → select all (⌘A) → ⚙︎ → Export vCard. LinkedIn → Settings → Data
+              privacy → Get a copy of your data → Connections, then import Connections.csv (matched to your
+              contacts by name). Re-import any time; existing people are updated, not duplicated.
             </small>
           </label>
           <label className="invite-field">
@@ -315,6 +440,10 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
             <span>WhatsApp message</span>
             <textarea rows={12} value={waTemplate} onChange={(e) => setWaTemplate(e.target.value)} />
           </label>
+          <label className="invite-field">
+            <span>LinkedIn / Messenger message</span>
+            <textarea rows={12} value={socialTemplate} onChange={(e) => setSocialTemplate(e.target.value)} />
+          </label>
         </div>
       </section>
 
@@ -333,6 +462,20 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
             Skip
           </button>
           <button className="invite-link-btn" onClick={() => { setEmailQueue([]); router.refresh(); }}>
+            Stop
+          </button>
+        </div>
+      )}
+
+      {socialQueue && socialHead && (
+        <div className="invite-queue invite-queue-email">
+          <span>
+            {SOCIAL_LABEL[socialQueue.channel]} {socialQueue.ids.length} to go. Now: <strong>{socialHead.name}</strong>, shown on the right.
+          </span>
+          <button className="invite-link-btn" onClick={() => advanceSocialQueue(socialHead.id)}>
+            Skip
+          </button>
+          <button className="invite-link-btn" onClick={() => { setSocialQueue(null); router.refresh(); }}>
             Stop
           </button>
         </div>
@@ -370,6 +513,8 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
               <option value="all">Everyone</option>
               <option value="has-email">Has email</option>
               <option value="has-mobile">Has mobile</option>
+              <option value="has-linkedin">Has LinkedIn</option>
+              <option value="has-facebook">Has Facebook</option>
               <option value="clicked">Clicked</option>
             </select>
           </div>
@@ -402,6 +547,16 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
               >
                 WhatsApp {selectedWithMobile.length} one by one
               </button>
+              {(["linkedin", "messenger"] as const).map((ch) => (
+                <button
+                  key={ch}
+                  className="social-post-btn invite-social-btn"
+                  disabled={busy || selectedReachable.length === 0}
+                  onClick={() => startSocialQueue(ch, selectedReachable)}
+                >
+                  {SOCIAL_LABEL[ch]} {selectedReachable.length} one by one
+                </button>
+              ))}
             </div>
           )}
 
@@ -440,9 +595,9 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
                 {[focused.company, focused.email, focused.phone].filter(Boolean).join(" · ") || "No details"}
               </p>
               <div className="social-tabs invite-preview-tabs">
-                {(["email", "whatsapp"] as const).map((ch) => (
+                {(["email", "whatsapp", "linkedin", "messenger"] as const).map((ch) => (
                   <button key={ch} className={`social-tab ${previewChannel === ch ? "social-tab-active" : ""}`} onClick={() => setPreviewChannel(ch)}>
-                    {ch === "email" ? "Email" : "WhatsApp"}
+                    {ch === "email" ? "Email" : ch === "whatsapp" ? "WhatsApp" : SOCIAL_LABEL[ch]}
                   </button>
                 ))}
               </div>
@@ -477,17 +632,51 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
                     />
                   )}
                 </div>
-              ) : (
+              ) : previewChannel === "whatsapp" ? (
                 <textarea
                   rows={14}
                   value={messageFor(focused, "whatsapp")}
                   onChange={(e) => setDrafts((d) => ({ ...d, [focused.id]: { ...d[focused.id], whatsapp: e.target.value } }))}
                 />
+              ) : (
+                <>
+                  {(() => {
+                    const ch = previewChannel;
+                    const saved = ch === "linkedin" ? focused.linkedin_url : focused.facebook_url;
+                    const editing = profileInput?.id === focused.id ? profileInput.value : null;
+                    return (
+                      <div className="invite-profile">
+                        <span>{ch === "linkedin" ? "LinkedIn profile" : "Facebook profile"}</span>
+                        <input
+                          placeholder={ch === "linkedin" ? "https://www.linkedin.com/in/…" : "https://www.facebook.com/…"}
+                          value={editing ?? saved}
+                          onChange={(e) => setProfileInput({ id: focused.id, value: e.target.value })}
+                        />
+                        {editing != null && editing !== saved && (
+                          <button className="invite-link-btn" onClick={() => saveProfile(focused, ch, editing)}>
+                            Save
+                          </button>
+                        )}
+                        {!saved && <small>Not known, so Copy &amp; open searches {ch === "linkedin" ? "LinkedIn" : "Facebook"} for their name.</small>}
+                      </div>
+                    );
+                  })()}
+                  <textarea
+                    rows={14}
+                    value={messageFor(focused, "social")}
+                    onChange={(e) => setDrafts((d) => ({ ...d, [focused.id]: { ...d[focused.id], social: e.target.value } }))}
+                  />
+                </>
               )}
-              {previewChannel === "email" && needsPersonalNote(focused) && (
+              {previewChannel !== "whatsapp" && needsPersonalNote(focused, kindFor(previewChannel)) && (
                 <p className="social-compose-error">
-                  Click <strong>Edit message</strong> and replace the highlighted [personalise here…] bit with a line
-                  about how you know {focused.first_name || focused.name} (or delete it). Send unlocks once it&apos;s gone.
+                  {previewChannel === "email" ? (
+                    <>Click <strong>Edit message</strong> and replace</>
+                  ) : (
+                    <>Replace</>
+                  )}{" "}
+                  the [personalise here…] bit with a line for {focused.first_name || focused.name} (or delete it).
+                  {previewChannel === "email" ? " Send" : " Copy & open"} unlocks once it&apos;s gone.
                 </p>
               )}
               <small>
@@ -511,6 +700,14 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
                             ? "Sending…"
                             : "Send this email"}
                   </button>
+                ) : previewChannel === "linkedin" || previewChannel === "messenger" ? (
+                  <button
+                    className="social-post-btn invite-social-btn"
+                    disabled={busy || focused.do_not_contact || needsPersonalNote(focused, "social")}
+                    onClick={() => openSocial(focused, previewChannel as SocialChannel)}
+                  >
+                    {needsPersonalNote(focused, "social") ? "Personalise first" : `Copy & open ${SOCIAL_LABEL[previewChannel]}`}
+                  </button>
                 ) : (
                   <button
                     className="social-post-btn invite-wa-btn"
@@ -532,6 +729,9 @@ export default function InviteSender({ contacts, emailsSentToday }: { contacts: 
                   </button>
                 )}
               </div>
+              {uncopied != null && (
+                <textarea className="invite-uncopied" rows={6} readOnly value={uncopied} onFocus={(e) => e.target.select()} />
+              )}
               <div className="invite-actions invite-actions-minor">
                 <label className="invite-check">
                   <input

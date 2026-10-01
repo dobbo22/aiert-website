@@ -8,7 +8,9 @@ import {
   INVITE_CHANNELS,
   INVITE_LINK_ORIGIN,
   PERSONAL_NOTE_MARKER,
+  SOCIAL_CHANNELS,
   type InviteChannel,
+  type SocialChannel,
   type InviteContact,
   androidWaitlistLink,
   ensureInviteSchema,
@@ -16,6 +18,7 @@ import {
   newInviteToken,
   personalise,
   shareLink,
+  socialOpenUrl,
   whatsappNumber,
 } from "@/lib/tapcardInvites";
 
@@ -57,7 +60,7 @@ export async function POST(req: Request) {
 
   await ensureInviteSchema();
   const contact = ((await sql`
-    SELECT id, name, first_name, email, phone, company, do_not_contact
+    SELECT id, name, first_name, email, phone, company, linkedin_url, facebook_url, do_not_contact
     FROM tapcard_invite_contacts WHERE id = ${contactId}
   `) as InviteContact[])[0];
   if (!contact) return NextResponse.json({ error: "Contact not found" }, { status: 404 });
@@ -131,6 +134,11 @@ export async function POST(req: Request) {
 
   if (channel === "whatsapp") {
     return NextResponse.json({ ok: true, link, waUrl: `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}` });
+  }
+
+  // LinkedIn / Messenger: the page copies the text and opens openUrl.
+  if (SOCIAL_CHANNELS.includes(channel as SocialChannel)) {
+    return NextResponse.json({ ok: true, link, text: message, openUrl: socialOpenUrl(channel as SocialChannel, contact) });
   }
 
   return NextResponse.json({ ok: true, link, text: message });

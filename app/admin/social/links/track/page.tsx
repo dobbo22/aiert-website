@@ -30,7 +30,7 @@ type SendRow = {
 type SpreaderRow = { name: string; forwarded_people: number; shared_people: number };
 type WaitlistRow = { name: string | null; email: string; created_at: string; notified_at: string | null };
 
-const CHANNEL_LABEL: Record<string, string> = { email: "Email", whatsapp: "WhatsApp", link: "Copied link", share: "Pass-it-on links" };
+const CHANNEL_LABEL: Record<string, string> = { email: "Email", whatsapp: "WhatsApp", linkedin: "LinkedIn", messenger: "Messenger", link: "Copied link", share: "Pass-it-on links" };
 const pct = (n: number, d: number) => (d ? `${Math.round((n / d) * 100)}%` : "—");
 const when = (d: string | null) =>
   d ? new Date(d).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";

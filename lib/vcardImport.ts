@@ -1,3 +1,5 @@
+import { normaliseFacebookUrl, normaliseLinkedinUrl } from "@/lib/inviteTemplates";
+
 // Minimal vCard (.vcf) reader for the TapCard Invites import — just the
 // fields an invite needs. Runs in the browser: an iCloud export with contact
 // photos is easily tens of MB, well past Vercel's request size limit, so
@@ -9,6 +11,8 @@ export type ImportedContact = {
   email: string;
   phone: string;
   company: string;
+  linkedin?: string;
+  facebook?: string;
 };
 
 function unescapeValue(value: string): string {
@@ -19,12 +23,12 @@ export function parseVcards(text: string): ImportedContact[] {
   // Unfold continuation lines (a line break followed by a space or tab).
   const lines = text.replace(/\r\n/g, "\n").replace(/\n[ \t]/g, "").split("\n");
   const contacts: ImportedContact[] = [];
-  let current: { fn: string; given: string; family: string; emails: string[]; phones: { value: string; mobile: boolean }[]; org: string } | null = null;
+  let current: { fn: string; given: string; family: string; emails: string[]; phones: { value: string; mobile: boolean }[]; org: string; linkedin: string; facebook: string } | null = null;
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
     if (/^BEGIN:VCARD$/i.test(line)) {
-      current = { fn: "", given: "", family: "", emails: [], phones: [], org: "" };
+      current = { fn: "", given: "", family: "", emails: [], phones: [], org: "", linkedin: "", facebook: "" };
       continue;
     }
     if (/^END:VCARD$/i.test(line)) {
@@ -32,13 +36,15 @@ export function parseVcards(text: string): ImportedContact[] {
         const name = current.fn || [current.given, current.family].filter(Boolean).join(" ") || current.org;
         const phone = (current.phones.find((p) => p.mobile) ?? current.phones[0])?.value ?? "";
         const email = current.emails[0] ?? "";
-        if (name && (email || phone)) {
+        if (name && (email || phone || current.linkedin || current.facebook)) {
           contacts.push({
             name,
             firstName: current.given || name.split(/\s+/)[0],
             email,
             phone,
             company: current.org,
+            linkedin: current.linkedin,
+            facebook: current.facebook,
           });
         }
       }
@@ -71,6 +77,15 @@ export function parseVcards(text: string): ImportedContact[] {
       case "TEL":
         current.phones.push({ value: unescapeValue(value), mobile: /cell|mobile|iphone/.test(paramText) });
         break;
+      // iCloud: "X-SOCIALPROFILE;type=linkedin;x-user=jo:http://www.linkedin.com/in/jo";
+      // some apps put profiles in URL lines instead.
+      case "X-SOCIALPROFILE":
+      case "URL": {
+        const url = unescapeValue(value);
+        current.linkedin ||= normaliseLinkedinUrl(url);
+        current.facebook ||= normaliseFacebookUrl(url);
+        break;
+      }
       case "ORG":
         current.org = unescapeValue(value.split(";")[0] ?? "");
         break;

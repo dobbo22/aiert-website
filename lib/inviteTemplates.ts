@@ -2,8 +2,14 @@
 // imports, so the admin page can show each contact's message exactly as it
 // will be sent (lib/tapcardInvites.ts re-exports these for server code).
 
-export type InviteChannel = "email" | "whatsapp" | "link";
-export const INVITE_CHANNELS: InviteChannel[] = ["email", "whatsapp", "link"];
+export type InviteChannel = "email" | "whatsapp" | "linkedin" | "messenger" | "link";
+export const INVITE_CHANNELS: InviteChannel[] = ["email", "whatsapp", "linkedin", "messenger", "link"];
+
+/// LinkedIn and Facebook don't let apps send messages from a personal
+/// account, so these work like WhatsApp: the message (with its tracked
+/// link) is copied and their profile or chat opens, ready to paste.
+export type SocialChannel = "linkedin" | "messenger";
+export const SOCIAL_CHANNELS: SocialChannel[] = ["linkedin", "messenger"];
 
 export const DEFAULT_CAMPAIGN = "tapcard-launch";
 
@@ -43,6 +49,28 @@ Always be prepared.
 Best wishes,
 Martin`;
 
+// LinkedIn / Messenger: plain text (no formatting in either), shorter, and
+// no "writing from my work email" line — it's coming from Martin's own
+// profile, to people he's already connected to.
+export const DEFAULT_SOCIAL_TEMPLATE = `Hi {firstName}, [personalise here: e.g. great to see the new role]
+
+Have you ever been asked for your business card and not had one with you, or run out?
+
+I've built a free app called TapCard to solve exactly that. Your business card lives on your phone, ready to share instantly with a QR code or a link. When you swap details, their info saves straight into your contacts — no typing, no running out of cards.
+
+• Tap to call — once someone has your TapCard, they can tap your number to call you direct
+• All your links in one place — your website, LinkedIn, X, Instagram, right there on the card
+• No app needed for them — they just tap your link or scan your QR code
+
+How it works: {howItWorksLink}
+
+Free on iPhone: {link}
+
+On Android? It's not on Google Play just yet. Tap here and I'll tell you the moment it is: {androidLink}
+
+Always be prepared.
+Martin`;
+
 export const DEFAULT_WHATSAPP_TEMPLATE = `Hi {firstName}, a free gift for you: TapCard, the business card swapper 📇
 
 Your business card is always on your phone, and you can swap cards with anyone in one tap. Always be prepared!
@@ -78,4 +106,36 @@ export function whatsappNumber(phone: string): string | null {
   if (digits.startsWith("00")) return digits.slice(2);
   if (digits.startsWith("0")) digits = `44${digits.slice(1)}`;
   return digits.length >= 10 ? digits : null;
+}
+
+/// https://www.linkedin.com/in/<slug>, or "" if it isn't a LinkedIn profile.
+export function normaliseLinkedinUrl(raw: string): string {
+  const m = raw.trim().match(/linkedin\.com\/(in|pub)\/([^/?#\s]+)/i);
+  return m ? `https://www.linkedin.com/in/${decodeURIComponent(m[2]).toLowerCase()}` : "";
+}
+
+/// https://www.facebook.com/<username or profile.php?id=…>, or "".
+export function normaliseFacebookUrl(raw: string): string {
+  const v = raw.trim();
+  const id = v.match(/facebook\.com\/profile\.php\?(?:[^#\s]*&)?id=(\d+)/i);
+  if (id) return `https://www.facebook.com/profile.php?id=${id[1]}`;
+  const m = v.match(/(?:facebook|fb)\.com\/([A-Za-z0-9.]+)\/?(?:[?#]|$)/i);
+  return m && !/^(profile\.php|people|pages|groups|search)$/i.test(m[1]) ? `https://www.facebook.com/${m[1]}` : "";
+}
+
+/// Where "Copy & open" goes: their LinkedIn profile or Messenger chat when
+/// we know it, otherwise a people search for their name.
+export function socialOpenUrl(
+  channel: SocialChannel,
+  contact: { name: string; company: string; linkedin_url: string; facebook_url: string },
+): string {
+  if (channel === "linkedin") {
+    if (contact.linkedin_url) return contact.linkedin_url;
+    const q = [contact.name, contact.company].filter(Boolean).join(" ");
+    return `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(q)}`;
+  }
+  const username = contact.facebook_url.match(/facebook\.com\/([A-Za-z0-9.]+)$/)?.[1];
+  if (username) return `https://m.me/${username}`;
+  if (contact.facebook_url) return contact.facebook_url;
+  return `https://www.facebook.com/search/people/?q=${encodeURIComponent(contact.name)}`;
 }

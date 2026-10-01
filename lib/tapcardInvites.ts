@@ -17,14 +17,19 @@ export {
   DEFAULT_CAMPAIGN,
   DEFAULT_EMAIL_SUBJECT,
   DEFAULT_EMAIL_TEMPLATE,
+  DEFAULT_SOCIAL_TEMPLATE,
   DEFAULT_WHATSAPP_TEMPLATE,
   HOW_IT_WORKS_URL,
   INVITE_CHANNELS,
   PERSONAL_NOTE_MARKER,
+  SOCIAL_CHANNELS,
+  normaliseFacebookUrl,
+  normaliseLinkedinUrl,
+  socialOpenUrl,
   personalise,
   whatsappNumber,
 } from "@/lib/inviteTemplates";
-export type { InviteChannel } from "@/lib/inviteTemplates";
+export type { InviteChannel, SocialChannel } from "@/lib/inviteTemplates";
 import { whatsappNumber } from "@/lib/inviteTemplates";
 
 export type InviteContact = {
@@ -34,6 +39,8 @@ export type InviteContact = {
   email: string;
   phone: string;
   company: string;
+  linkedin_url: string;
+  facebook_url: string;
   do_not_contact: boolean;
 };
 
@@ -101,6 +108,10 @@ export function ensureInviteSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_invite_clicks ADD COLUMN IF NOT EXISTS fingerprint TEXT`)
       .then(() => sql`ALTER TABLE tapcard_invite_clicks ADD COLUMN IF NOT EXISTS is_forward BOOLEAN NOT NULL DEFAULT false`)
       .then(() => sql`ALTER TABLE tapcard_invite_clicks ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'direct'`)
+      // Profiles for the LinkedIn / Messenger channels (from the vCard's
+      // social profiles, a LinkedIn Connections.csv, or typed in).
+      .then(() => sql`ALTER TABLE tapcard_invite_contacts ADD COLUMN IF NOT EXISTS linkedin_url TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_invite_contacts ADD COLUMN IF NOT EXISTS facebook_url TEXT NOT NULL DEFAULT ''`)
       // "Tell me when TapCard is on Android": one row per person (dedupe_key
       // is c:<contact id> from an invite link, or e:<email> from the public
       // form), with notified_at set once they've been told.
@@ -211,10 +222,12 @@ export function isBotUserAgent(ua: string): boolean {
   );
 }
 
-export function dedupeKey(email: string, phone: string): string | null {
+export function dedupeKey(email: string, phone: string, linkedinUrl = "", facebookUrl = ""): string | null {
   if (email.trim()) return `e:${email.trim().toLowerCase()}`;
   const wa = whatsappNumber(phone);
-  return wa ? `p:${wa}` : null;
+  if (wa) return `p:${wa}`;
+  if (linkedinUrl) return `l:${linkedinUrl}`;
+  return facebookUrl ? `f:${facebookUrl}` : null;
 }
 
 /// Zeroes the host part of the IP (as /api/track-click does) before it's
