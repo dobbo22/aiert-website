@@ -204,10 +204,10 @@ export default function InviteSender({
     const d = drafts[contact.id];
     // A hand-edited message no longer has the marker for the note to fill,
     // so picking a different note starts again from the template.
-    const edited = [d?.email, d?.social].some((t) => t != null && !PERSONAL_NOTE_MARKER.test(t));
+    const edited = [d?.email, d?.social, d?.whatsapp].some((t) => t != null && !PERSONAL_NOTE_MARKER.test(t));
     if (edited && notes[contact.id]?.choice !== choice) {
       if (!confirm("Use this note instead of your edited message? Your edits to the message will be lost.")) return;
-      setDrafts((all) => ({ ...all, [contact.id]: { ...all[contact.id], email: undefined, social: undefined } }));
+      setDrafts((all) => ({ ...all, [contact.id]: { ...all[contact.id], email: undefined, social: undefined, whatsapp: undefined } }));
     }
     setNotes((n) => ({ ...n, [contact.id]: { choice, text } }));
     if (choice === "custom") {
@@ -536,6 +536,24 @@ export default function InviteSender({
   }
 
   const queueHead = waQueue.length ? byId.get(waQueue[0]) : undefined;
+
+  // WhatsApp one by one: like email, each person is shown on the right to
+  // personalise, then "Open in WhatsApp" moves on to the next.
+  function startWaQueue(list: SenderContact[]) {
+    const ids = list.map((c) => c.id);
+    setWaQueue(ids);
+    if (ids.length) {
+      setFocusedId(ids[0]);
+      setPreviewChannel("whatsapp");
+    }
+    setStatus({ text: `${ids.length} queued for WhatsApp. Personalise each one, then Open in WhatsApp.` });
+  }
+
+  function advanceWaQueue(fromId: number) {
+    const next = waQueue.filter((id) => id !== fromId);
+    setWaQueue(next);
+    if (next.length) setFocusedId(next[0]);
+  }
   const emailHead = emailQueue.length ? byId.get(emailQueue[0]) : undefined;
   const socialHead = socialQueue ? byId.get(socialQueue.ids[0]) : undefined;
 
@@ -627,18 +645,9 @@ export default function InviteSender({
       {queueHead && (
         <div className="invite-queue">
           <span>
-            WhatsApp {waQueue.length} to go. Next: <strong>{queueHead.name}</strong>
+            WhatsApp {waQueue.length} to go. Now: <strong>{queueHead.name}</strong>, shown on the right.
           </span>
-          <button
-            className="social-post-btn invite-wa-btn"
-            disabled={busy}
-            onClick={async () => {
-              if (await openWhatsApp(queueHead)) setWaQueue((q) => q.slice(1));
-            }}
-          >
-            Open WhatsApp for {queueHead.first_name || queueHead.name}
-          </button>
-          <button className="invite-link-btn" onClick={() => setWaQueue((q) => q.slice(1))}>
+          <button className="invite-link-btn" onClick={() => advanceWaQueue(queueHead.id)}>
             Skip
           </button>
           <button className="invite-link-btn" onClick={() => { setWaQueue([]); router.refresh(); }}>
@@ -686,7 +695,7 @@ export default function InviteSender({
               <button
                 className="social-post-btn invite-wa-btn"
                 disabled={busy || selectedWithMobile.length === 0}
-                onClick={() => setWaQueue(selectedWithMobile.map((c) => c.id))}
+                onClick={() => startWaQueue(selectedWithMobile)}
               >
                 WhatsApp {selectedWithMobile.length} one by one
               </button>
@@ -797,11 +806,16 @@ export default function InviteSender({
                   )}
                 </div>
               ) : previewChannel === "whatsapp" ? (
-                <textarea
-                  rows={14}
-                  value={messageFor(focused, "whatsapp")}
-                  onChange={(e) => setDrafts((d) => ({ ...d, [focused.id]: { ...d[focused.id], whatsapp: e.target.value } }))}
-                />
+                <>
+                  {notePicker(focused)}
+                  <textarea
+                    ref={messageRef}
+                    rows={14}
+                    value={messageFor(focused, "whatsapp")}
+                    onChange={(e) => setDrafts((d) => ({ ...d, [focused.id]: { ...d[focused.id], whatsapp: e.target.value } }))}
+                  />
+                  <small>WhatsApp shows a preview of their link with a picture of their own TapCard.</small>
+                </>
               ) : (
                 <>
                   {(() => {
@@ -834,10 +848,10 @@ export default function InviteSender({
                   />
                 </>
               )}
-              {previewChannel !== "whatsapp" && needsPersonalNote(focused, kindFor(previewChannel)) && (
+              {needsPersonalNote(focused, kindFor(previewChannel)) && (
                 <p className="social-compose-error">
                   Choose <strong>How you know them</strong> for {focused.first_name || focused.name} (or edit the
-                  [personalise here…] bit yourself).{previewChannel === "email" ? " Send" : " Copy & open"} unlocks once it&apos;s filled in.
+                  [personalise here…] bit yourself).{previewChannel === "email" ? " Send" : previewChannel === "whatsapp" ? " Open in WhatsApp" : " Copy & open"} unlocks once it&apos;s filled in.
                 </p>
               )}
               <small>
@@ -872,13 +886,17 @@ export default function InviteSender({
                 ) : (
                   <button
                     className="social-post-btn invite-wa-btn"
-                    disabled={busy || !whatsappNumber(focused.phone) || focused.do_not_contact}
+                    disabled={busy || !whatsappNumber(focused.phone) || focused.do_not_contact || needsPersonalNote(focused, "whatsapp")}
                     onClick={async () => {
-                      await openWhatsApp(focused);
+                      if (await openWhatsApp(focused)) advanceWaQueue(focused.id);
                       router.refresh();
                     }}
                   >
-                    {whatsappNumber(focused.phone) ? "Open in WhatsApp" : "No mobile number"}
+                    {!whatsappNumber(focused.phone)
+                      ? "No mobile number"
+                      : needsPersonalNote(focused, "whatsapp")
+                        ? "Personalise first"
+                        : "Open in WhatsApp"}
                   </button>
                 )}
                 <button className="invite-link-btn" disabled={busy || focused.do_not_contact} onClick={() => copyLink(focused)}>

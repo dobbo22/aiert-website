@@ -99,13 +99,29 @@ On Android? It's not on Google Play just yet. Tap here and I'll tell you the mom
 Always be prepared.
 Martin`;
 
-export const DEFAULT_WHATSAPP_TEMPLATE = `Hi {firstName}, a free gift for you: TapCard, the business card swapper 📇
+// WhatsApp: the same message as the email, in WhatsApp's own formatting
+// (*bold*). WhatsApp previews the first link, so {link} comes first: its
+// preview shows a picture of their own card (see app/tapcard/get/[token]).
+export const DEFAULT_WHATSAPP_TEMPLATE = `Hi {firstName}, it's Martin Dobson — [personalise here: e.g. we worked together at BT].
 
-Your business card is always on your phone, and you can swap cards with anyone in one tap. Always be prepared!
+Have you ever been asked for your business card and not had one with you, or run out? 📇
 
-Free download: {link}
+I've built an app called *TapCard* to solve exactly that. It keeps your business card on your phone, and in your Apple Wallet, ready to share with a QR code or a link. When you swap details, their info saves straight into your contacts — no typing, no running out of cards.
 
-Know someone who'd like it? Pass it on: {shareLink}`;
+• *Tap to call* — once someone has your TapCard, they can tap your number to call you direct
+• *All your links in one place* — your website, LinkedIn, X, Instagram, right there on the card
+• *No app needed for them* — they just tap your link or scan your QR code
+
+{freeOffer}
+
+📱 *iPhone — get it free:* {link}
+
+👀 See how it works: {howItWorksLink}
+
+🤖 On Android? Tap here and I'll tell you the moment it's ready: {androidLink}
+
+Always be prepared!
+Martin`;
 
 /// The name to greet them by: just the first word, since contact cards often
 /// keep middle names or initials in the first-name field ("Martin CJ").

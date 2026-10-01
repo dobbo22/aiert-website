@@ -1,24 +1,38 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { firstNameOf } from "@/lib/inviteTemplates";
-import { appStoreUrl, getSendByToken, platformFromUserAgent, playStoreLive, playStoreUrl } from "@/lib/tapcardInvites";
+import { INVITE_LINK_ORIGIN, appStoreUrl, getSendByToken, platformFromUserAgent, playStoreLive, playStoreUrl } from "@/lib/tapcardInvites";
 
 const TITLE = "A free gift: TapCard, the business card swapper";
 const DESCRIPTION = "Always be prepared. Your business card on your phone — swap cards with anyone in one tap. Free on iPhone.";
+const EXAMPLE_CARD = "https://www.aiert.co.uk/tapcard-email-card.png";
 
-// What WhatsApp and iMessage show in the link preview bubble.
-export const metadata: Metadata = {
-  title: TITLE,
-  description: DESCRIPTION,
-  robots: { index: false, follow: false },
-  openGraph: {
-    title: TITLE,
+// What WhatsApp, iMessage and LinkedIn show in the link preview bubble: on
+// someone's own invite link, a picture of their own card (as in the email);
+// on a pass-it-on link, the example card.
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ token: string }>;
+  searchParams: Promise<{ via?: string }>;
+}): Promise<Metadata> {
+  const { token } = await params;
+  const shared = (await searchParams).via === "share";
+  const send = shared ? null : await getSendByToken(token).catch(() => null);
+  const firstName = send ? firstNameOf(send) : "";
+  const title = firstName ? `${firstName}, here's your TapCard — a free gift from Martin` : TITLE;
+  const image = send
+    ? { url: `${INVITE_LINK_ORIGIN}/api/invite-card/${token}`, alt: `${firstName}'s TapCard` }
+    : { url: EXAMPLE_CARD, alt: "An example TapCard" };
+  return {
+    title,
     description: DESCRIPTION,
-    images: ["https://www.aiert.co.uk/tapcard-wallet-hero.png"],
-    siteName: "TapCard",
-    type: "website",
-  },
-};
+    robots: { index: false, follow: false },
+    openGraph: { title, description: DESCRIPTION, images: [image], siteName: "TapCard", type: "website" },
+    twitter: { card: "summary_large_image", title, description: DESCRIPTION, images: [image.url] },
+  };
+}
 
 // Landing page behind the invite links (/i/ and /p/ — see
 // lib/inviteClickHandler.ts, which has already logged the click): what
