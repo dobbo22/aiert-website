@@ -64,6 +64,8 @@ export const TRACKED_LINKS: Record<string, TrackedLink> = {
   "tapcard-web-get-tapcard": { label: "TapCard card page → Get TapCard", to: "https://apps.apple.com/app/id6816003159", appStoreId: "6816003159" },
   "tapcard-web-mailbroom": { label: "TapCard card page → MailBroom", to: "https://apps.apple.com/app/mailbroom/id6766489663", appStoreId: "6766489663" },
   "tapcard-web-powersearch": { label: "TapCard card page → PowerSearch", to: "https://apps.apple.com/app/powersearch/id6807772868", appStoreId: "6807772868" },
+  "tapcard-web-invite-mailbroom": { label: "TapCard invite email → MailBroom", to: "https://apps.apple.com/app/mailbroom/id6766489663", appStoreId: "6766489663" },
+  "tapcard-web-invite-powersearch": { label: "TapCard invite email → PowerSearch", to: "https://apps.apple.com/app/powersearch/id6807772868", appStoreId: "6807772868" },
   "tapcard-app-ios-mailbroom": { label: "TapCard iPhone app → MailBroom promo tapped", to: "", inApp: true },
   "tapcard-app-ios-powersearch": { label: "TapCard iPhone app → PowerSearch promo tapped", to: "", inApp: true },
   "tapcard-app-android-mailbroom": { label: "TapCard Android app → MailBroom promo tapped", to: "", inApp: true },

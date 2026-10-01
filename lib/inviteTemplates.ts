@@ -24,14 +24,19 @@ export const PERSONAL_NOTE_MARKER = /\[personali[sz]e here[^\]]*\]/i;
 
 // Email formatting: a blank line starts a new paragraph, lines starting
 // "- " are bullets, **bold**, and [label](url) links. The {link} and
-// {androidLink} links are drawn as buttons (see lib/inviteEmail.ts).
+// {androidLink} links are drawn as buttons, and a paragraph that is just
+// {cardImage} becomes the example card picture (see lib/inviteEmail.ts).
 export const DEFAULT_EMAIL_TEMPLATE = `Hi {firstName},
 
-This is Martin Dobson — [personalise here: e.g. we worked together at BT]. I'm writing from my work email ({fromEmail}) in case you only have my old BT address.
+This is Martin Dobson — [personalise here: e.g. we worked together at BT]. I'm getting in touch from my business email ({fromEmail}) because I've started my own company, AIERT, making apps that take the hassle out of everyday work, and you're one of the first people I wanted to share the newest one with.
 
 Have you ever been in a situation where someone asked for your business card, and you didn't have one with you or had run out?
 
 I've built a free app called TapCard to solve exactly that. It keeps your business card on your phone, ready to share instantly with a QR code or a link. When you swap details, their info saves straight into your contacts — no typing, no running out of cards.
+
+Here's what a TapCard looks like:
+
+{cardImage}
 
 What makes it even better:
 - **Tap to call** — once someone has your TapCard, they can tap your number to call you direct.
@@ -47,7 +52,9 @@ On Android? We're not on the Google Play Store just yet. Tap the link below and 
 Always be prepared.
 
 Best wishes,
-Martin`;
+Martin
+
+P.S. Drowning in old email? My other apps can help: [MailBroom](https://tapcard.aiert.co.uk/go/tapcard-web-invite-mailbroom) clears out years of clutter in bulk, and [PowerSearch](https://tapcard.aiert.co.uk/go/tapcard-web-invite-powersearch) finds that one email you need across all your accounts at once.`;
 
 // LinkedIn / Messenger: plain text (no formatting in either), shorter, and
 // no "writing from my work email" line — it's coming from Martin's own
