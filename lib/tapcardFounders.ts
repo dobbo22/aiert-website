@@ -225,11 +225,12 @@ export async function founderOffer(): Promise<{ line: string; subject: string }>
   if (!status) {
     return { line: `It's free for life for the first ${first} people, so grab your place now.`, subject: "Free founder place: TapCard for iPhone" };
   }
+  // The exact number isn't shown ("997 left" reads as plenty); the Track
+  // invites tab still has it.
   if (status.freePlacesLeft > 0) {
-    const left = status.freePlacesLeft.toLocaleString("en-GB");
     return {
-      line: `It's free for life for the first ${first} people, and there are only ${left} free founder places left, so grab yours now.`,
-      subject: `Free founder place: TapCard for iPhone (${left} left)`,
+      line: `It's free for life for the first ${first} people, and there are only a few founder places left, so grab yours now.`,
+      subject: "Free founder place: TapCard for iPhone (only a few left)",
     };
   }
   return {
