@@ -86,12 +86,18 @@ export default function InviteSender({
   emailsSentToday,
   emailFrom,
   emailFromAddress,
+  freeOffer,
+  offerSubject,
 }: {
   contacts: SenderContact[];
   emailsSentToday: number;
   /// Who invite emails currently come from (Outlook or Resend — lib/inviteEmailRoute.ts).
   emailFrom: string;
   emailFromAddress: string;
+  /// The live {freeOffer} line (lib/tapcardFounders.ts); the server fills in
+  /// a fresh one when it sends.
+  freeOffer: string;
+  offerSubject: string;
 }) {
   const router = useRouter();
 
@@ -187,10 +193,9 @@ export default function InviteSender({
     // {link} stays as a placeholder — the server swaps in this person's tracked link.
     const text =
       draft ??
-      personalise(kind === "email" ? emailTemplate : kind === "social" ? socialTemplate : waTemplate, contact, "{link}", "{shareLink}", "{androidLink}").replaceAll(
-        "{fromEmail}",
-        emailFromAddress,
-      );
+      personalise(kind === "email" ? emailTemplate : kind === "social" ? socialTemplate : waTemplate, contact, "{link}", "{shareLink}", "{androidLink}")
+        .replaceAll("{fromEmail}", emailFromAddress)
+        .replaceAll("{freeOffer}", freeOffer);
     const note = noteText(contact);
     return note == null ? text : applyPersonalNote(text, note);
   }
@@ -245,7 +250,7 @@ export default function InviteSender({
   }
 
   function subjectFor(contact: SenderContact): string {
-    return drafts[contact.id]?.subject ?? personalise(subject, contact, "{link}", "{shareLink}");
+    return drafts[contact.id]?.subject ?? personalise(subject.replaceAll("{offerSubject}", offerSubject), contact, "{link}", "{shareLink}");
   }
 
   function previewHtml(contact: SenderContact): string {

@@ -97,6 +97,17 @@ export default function TapCardPrivacyPage() {
       </section>
 
       <section>
+        <h2>Founder places and the lifetime unlock</h2>
+        <p>
+          The first 1,000 people get TapCard free for life. To count them, the app sends our server Apple&apos;s signed
+          record of when your Apple ID first downloaded TapCard. We keep only a one-way hash of its identifier, that
+          download date, your place in the count and the price offered to you. It contains no name, email or card
+          details, and isn&apos;t used to track you. Lifetime unlock purchases are handled by Apple; we never see your
+          payment details.
+        </p>
+      </section>
+
+      <section>
         <h2>Android waitlist</h2>
         <p>
           If you ask us to tell you when TapCard is on Android, we keep your email address (and, if you came from an

@@ -13,7 +13,9 @@ export const SOCIAL_CHANNELS: SocialChannel[] = ["linkedin", "messenger"];
 
 export const DEFAULT_CAMPAIGN = "tapcard-launch";
 
-export const DEFAULT_EMAIL_SUBJECT = "Your free gift: TapCard (for iPhone)";
+/// {offerSubject} is filled in live: "Free founder place: TapCard for iPhone
+/// (673 left)", or the price once the free places have gone.
+export const DEFAULT_EMAIL_SUBJECT = "{offerSubject}";
 
 /// Public "how it works" page linked from the email (same for everyone).
 export const HOW_IT_WORKS_URL = "https://tapcard.aiert.co.uk/how-it-works";
@@ -60,6 +62,8 @@ What makes it even better:
 
 See exactly how it works: [How TapCard works]({howItWorksLink})
 
+{freeOffer}
+
 If you have an iPhone, you can use it today: [Get TapCard free]({link})
 
 On Android? We're not on the Google Play Store just yet. Tap the link below and I'll let you know the moment it's ready for you: [Tell me when TapCard is on Android]({androidLink})
@@ -86,7 +90,9 @@ I've built a free app called TapCard to solve exactly that. Your business card l
 
 How it works: {howItWorksLink}
 
-Free on iPhone: {link}
+{freeOffer}
+
+iPhone: {link}
 
 On Android? It's not on Google Play just yet. Tap here and I'll tell you the moment it is: {androidLink}
 

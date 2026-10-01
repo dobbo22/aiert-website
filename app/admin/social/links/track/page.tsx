@@ -1,5 +1,6 @@
 import sql from "@/lib/db";
 import { campaignToken, ensureInviteSchema, playStoreLive } from "@/lib/tapcardInvites";
+import { FREE_PLACES, ladderStatus } from "@/lib/tapcardFounders";
 import ResetSendButton from "./ResetSendButton";
 import StoreStatsInput from "./StoreStatsInput";
 
@@ -45,10 +46,12 @@ export default async function TrackInvitesPage() {
   let sends: SendRow[] = [];
   let spreaders: SpreaderRow[] = [];
   let waitlist: WaitlistRow[] = [];
+  let ladder: Awaited<ReturnType<typeof ladderStatus>> | null = null;
   let error: string | null = null;
 
   try {
     await ensureInviteSchema();
+    ladder = await ladderStatus();
     [channels, campaigns, stores, sends, spreaders, waitlist] = (await Promise.all([
       sql`
         SELECT s.channel, COUNT(DISTINCT s.id)::int AS sent,
@@ -199,6 +202,20 @@ export default async function TrackInvitesPage() {
           </div>
         </>
       )}
+
+      <h2 className="admin-subtitle invite-h2">Founder places</h2>
+      <p className="admin-mailbroom-note">
+        {ladder ? (
+          <>
+            <strong>{ladder.counted.toLocaleString("en-GB")}</strong> people counted in the iPhone app ·{" "}
+            <strong>{ladder.freePlacesLeft.toLocaleString("en-GB")}</strong> of {FREE_PLACES.toLocaleString("en-GB")} free
+            founder places left · a newcomer now pays <strong>{ladder.nextPrice}</strong> for life. Counted when someone
+            opens a version of the app with the founder check.
+          </>
+        ) : (
+          "Couldn't load the founder count."
+        )}
+      </p>
 
       <h2 className="admin-subtitle invite-h2">Android waitlist ({waitlist.length})</h2>
       {waitlist.length === 0 ? (

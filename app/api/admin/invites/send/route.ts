@@ -4,6 +4,7 @@ import sql from "@/lib/db";
 import { isAdminRequest } from "@/lib/adminRequest";
 import { inviteEmailHtml, inviteEmailText } from "@/lib/inviteEmail";
 import { inviteEmailRoute } from "@/lib/inviteEmailRoute";
+import { founderOffer } from "@/lib/tapcardFounders";
 import { sendMailbroomEmail } from "@/lib/mailbroomGraphMail";
 import {
   INVITE_CHANNELS,
@@ -58,6 +59,9 @@ async function handleSend(req: Request) {
   if (!messageTemplate.includes("{link}")) messageTemplate += "\n\n{link}";
   const route = inviteEmailRoute();
   messageTemplate = messageTemplate.replaceAll("{fromEmail}", route.fromEmail);
+  // Live at the moment of sending, so nobody is promised a free place that's gone.
+  const offer = await founderOffer();
+  messageTemplate = messageTemplate.replaceAll("{freeOffer}", offer.line);
   if (PERSONAL_NOTE_MARKER.test(messageTemplate)) {
     return NextResponse.json({ error: "Replace the [personalise here…] line before sending" }, { status: 400 });
   }
@@ -87,7 +91,7 @@ async function handleSend(req: Request) {
   const passOnLink = shareLink(token);
   const androidLink = androidWaitlistLink(token);
   const message = personalise(messageTemplate, contact, link, passOnLink, androidLink);
-  const subject = personalise(subjectTemplate || "A free gift for you: TapCard", contact, link);
+  const subject = personalise((subjectTemplate || "{offerSubject}").replaceAll("{offerSubject}", offer.subject), contact, link);
 
   const inserted = (await sql`
     INSERT INTO tapcard_invite_sends (token, contact_id, channel, campaign, subject, message)

@@ -1,10 +1,12 @@
 import sql from "@/lib/db";
 import { ensureInviteSchema } from "@/lib/tapcardInvites";
 import { inviteEmailRoute } from "@/lib/inviteEmailRoute";
+import { founderOffer } from "@/lib/tapcardFounders";
 import InviteSender, { type SenderContact } from "./InviteSender";
 
 export default async function SendInvitesPage() {
   const route = inviteEmailRoute();
+  const offer = await founderOffer();
   let contacts: SenderContact[] = [];
   let emailsSentToday = 0;
   let error: string | null = null;
@@ -46,11 +48,13 @@ export default async function SendInvitesPage() {
         <code>{"{firstName}"}</code>, <code>{"{name}"}</code>, <code>{"{company}"}</code>,{" "}
         <code>{"{link}"}</code> (their own link), <code>{"{shareLink}"}</code> (a pass-it-on link:
         clicks on it count as referrals by them), <code>{"{androidLink}"}</code> (their &quot;tell me when it&apos;s on
-        Android&quot; link) and <code>{"{howItWorksLink}"}</code>. In emails, <code>[label](url)</code> makes a link,
+        Android&quot; link), <code>{"{howItWorksLink}"}</code> and <code>{"{freeOffer}"}</code> (the live
+        &quot;free places left&quot; line, or the price once they&apos;ve gone; <code>{"{offerSubject}"}</code> is the
+        same for the subject). In emails, <code>[label](url)</code> makes a link,
         lines starting <code>- </code> are bullets and <code>**bold**</code> is bold.
       </p>
       {error && <p className="social-compose-error">{error}</p>}
-      <InviteSender contacts={contacts} emailsSentToday={emailsSentToday} emailFrom={route.from} emailFromAddress={route.fromEmail} />
+      <InviteSender contacts={contacts} emailsSentToday={emailsSentToday} emailFrom={route.from} emailFromAddress={route.fromEmail} freeOffer={offer.line} offerSubject={offer.subject} />
     </div>
   );
 }
