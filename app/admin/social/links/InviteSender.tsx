@@ -84,7 +84,7 @@ export default function InviteSender({ contacts }: { contacts: SenderContact[] }
     const draft = drafts[contact.id]?.[channel];
     if (draft != null) return draft;
     // {link} stays as a placeholder — the server swaps in this person's tracked link.
-    return personalise(channel === "email" ? emailTemplate : waTemplate, contact, "{link}");
+    return personalise(channel === "email" ? emailTemplate : waTemplate, contact, "{link}", "{shareLink}");
   }
 
   async function postSend(contact: SenderContact, channel: InviteChannel) {
@@ -364,13 +364,13 @@ export default function InviteSender({ contacts }: { contacts: SenderContact[] }
                   </button>
                 ))}
               </div>
-              {previewChannel === "email" && <p className="invite-subject">Subject: {personalise(subject, focused, "{link}")}</p>}
+              {previewChannel === "email" && <p className="invite-subject">Subject: {personalise(subject, focused, "{link}", "{shareLink}")}</p>}
               <textarea
                 rows={14}
                 value={messageFor(focused, previewChannel)}
                 onChange={(e) => setDrafts((d) => ({ ...d, [focused.id]: { ...d[focused.id], [previewChannel]: e.target.value } }))}
               />
-              <small>Edits here are just for {focused.first_name || focused.name}. {"{link}"} becomes their tracked link.</small>
+              <small>Edits here are just for {focused.first_name || focused.name}. {"{link}"} becomes their tracked link, {"{shareLink}"} their pass-it-on link.</small>
               <div className="invite-actions">
                 {previewChannel === "email" ? (
                   <button

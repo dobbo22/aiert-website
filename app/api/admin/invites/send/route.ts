@@ -11,6 +11,7 @@ import {
   inviteLink,
   newInviteToken,
   personalise,
+  shareLink,
   whatsappNumber,
 } from "@/lib/tapcardInvites";
 
@@ -24,14 +25,12 @@ function escapeHtml(s: string): string {
 // Plain, personal-looking email (this is one person writing to someone they
 // know, not a newsletter): the message as typed, the tracked link made
 // clickable, a "Get TapCard free" button, an open pixel and an unsubscribe.
-function emailHtml(text: string, link: string, token: string): string {
+function emailHtml(text: string, link: string, passOnLink: string, token: string): string {
+  const linkify = (html: string, url: string) =>
+    html.replaceAll(escapeHtml(url), `<a href="${url}" style="color:#0f766e;">${escapeHtml(url)}</a>`);
   const paragraphs = escapeHtml(text)
     .split(/\n{2,}/)
-    .map((p) =>
-      `<p style="margin:0 0 14px;">${p
-        .replace(/\n/g, "<br>")
-        .replaceAll(escapeHtml(link), `<a href="${link}" style="color:#0f766e;">${escapeHtml(link)}</a>`)}</p>`,
-    )
+    .map((p) => `<p style="margin:0 0 14px;">${linkify(linkify(p.replace(/\n/g, "<br>"), link), passOnLink)}</p>`)
     .join("");
   return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.55;color:#1f2937;max-width:560px;">
 ${paragraphs}
@@ -77,7 +76,8 @@ export async function POST(req: Request) {
 
   const token = newInviteToken();
   const link = inviteLink(token);
-  const message = personalise(messageTemplate, contact, link);
+  const passOnLink = shareLink(token);
+  const message = personalise(messageTemplate, contact, link, passOnLink);
   const subject = personalise(subjectTemplate || "A free gift for you: TapCard", contact, link);
 
   const inserted = (await sql`
@@ -94,7 +94,7 @@ export async function POST(req: Request) {
       replyTo: REPLY_TO,
       subject,
       text: `${message}\n\n--\nDon't want these? ${INVITE_LINK_ORIGIN}/u/${token}`,
-      html: emailHtml(message, link, token),
+      html: emailHtml(message, link, passOnLink, token),
       headers: {
         "List-Unsubscribe": `<${INVITE_LINK_ORIGIN}/api/unsubscribe/${token}>`,
         "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",

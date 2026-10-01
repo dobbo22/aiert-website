@@ -1,15 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import {
-  appStoreUrl,
-  getSendByToken,
-  isBotUserAgent,
-  platformFromUserAgent,
-  playStoreLive,
-  playStoreUrl,
-  recordInviteClick,
-} from "@/lib/tapcardInvites";
+import { appStoreUrl, getSendByToken, platformFromUserAgent, playStoreLive, playStoreUrl } from "@/lib/tapcardInvites";
 
 const TITLE = "A free gift: TapCard, the business card swapper";
 const DESCRIPTION = "Always be prepared. Your business card on your phone — swap cards with anyone in one tap. Free on iPhone.";
@@ -28,30 +19,25 @@ export const metadata: Metadata = {
   },
 };
 
-// The tracked link in every invite: tapcard.aiert.co.uk/i/<token>. Logs the
-// click against that person's invite, then sends phones straight to their
-// store with campaign attribution (App Store ct=, Play referrer UTMs).
-// Link-preview fetchers aren't counted. Desktop gets this landing page.
-export default async function InviteLinkPage({ params }: { params: Promise<{ token: string }> }) {
+// Landing page behind the invite links (/i/ and /p/ — see
+// lib/inviteClickHandler.ts, which has already logged the click): what
+// computers, link-preview fetchers and, until Play approval, Android see.
+// Also supplies the WhatsApp/iMessage link-preview card via `metadata`.
+export default async function InviteLandingPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ token: string }>;
+  searchParams: Promise<{ via?: string }>;
+}) {
   const { token } = await params;
+  const shared = (await searchParams).via === "share";
   const send = await getSendByToken(token).catch(() => null);
   const campaign = send?.campaign ?? "unknown";
-  const channel = send?.channel ?? "unknown";
+  const channel = shared ? "share" : (send?.channel ?? "unknown");
+  const platform = platformFromUserAgent((await headers()).get("user-agent") ?? "");
 
-  const requestHeaders = await headers();
-  const ua = requestHeaders.get("user-agent") ?? "";
-  const platform = platformFromUserAgent(ua);
-
-  if (send && !isBotUserAgent(ua)) {
-    await recordInviteClick(token, ua, requestHeaders.get("x-vercel-ip-country")).catch(() => {});
-  }
-
-  if (!isBotUserAgent(ua)) {
-    if (platform === "ios") redirect(appStoreUrl(campaign, channel));
-    if (platform === "android" && playStoreLive()) redirect(playStoreUrl(campaign, channel));
-  }
-
-  const firstName = send?.first_name || send?.name?.split(/\s+/)[0];
+  const firstName = shared ? null : send?.first_name || send?.name?.split(/\s+/)[0];
   const androidPending = platform === "android" && !playStoreLive();
 
   return (
@@ -60,7 +46,7 @@ export default async function InviteLinkPage({ params }: { params: Promise<{ tok
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="https://www.aiert.co.uk/tapcard-icon.png" alt="TapCard" className="mx-auto h-20 w-20 rounded-2xl" />
         <p className="mt-5 text-sm font-semibold uppercase tracking-wider text-teal">
-          {firstName ? `A free gift for ${firstName}` : "A free gift for you"}
+          {shared ? "A friend thought you'd like this" : firstName ? `A free gift for ${firstName}` : "A free gift for you"}
         </p>
         <h1 className="mt-2 text-2xl font-bold">TapCard, the business card swapper</h1>
         <p className="mt-3 text-white/80">

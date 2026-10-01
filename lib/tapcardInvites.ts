@@ -91,6 +91,14 @@ export function ensureInviteSchema(): Promise<unknown> {
           PRIMARY KEY (campaign_token, store)
         )
       `)
+      // Telling the recipient's own clicks from forwarded ones: each click
+      // carries a visitor cookie id and a fallback fingerprint (truncated IP
+      // + browser), and is_forward marks clicks by anyone other than the
+      // first clicker. source = 'share' is the separate pass-it-on link.
+      .then(() => sql`ALTER TABLE tapcard_invite_clicks ADD COLUMN IF NOT EXISTS visitor_id TEXT`)
+      .then(() => sql`ALTER TABLE tapcard_invite_clicks ADD COLUMN IF NOT EXISTS fingerprint TEXT`)
+      .then(() => sql`ALTER TABLE tapcard_invite_clicks ADD COLUMN IF NOT EXISTS is_forward BOOLEAN NOT NULL DEFAULT false`)
+      .then(() => sql`ALTER TABLE tapcard_invite_clicks ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'direct'`)
       .catch((err) => {
         schemaReady = null;
         throw err;
@@ -108,6 +116,15 @@ export function newInviteToken(): string {
 export function inviteLink(token: string): string {
   return `${INVITE_LINK_ORIGIN}/i/${token}`;
 }
+
+/// The "pass it on" link in the same message: same token, different path,
+/// so clicks on it count as referrals by this person rather than their own
+/// clicks — and get their own App Store campaign token (<campaign>-share).
+export function shareLink(token: string): string {
+  return `${INVITE_LINK_ORIGIN}/p/${token}`;
+}
+
+export type InviteSource = "direct" | "share";
 
 
 /// App Store campaign token (ct=, max 40 chars) — what App Store Connect →
@@ -157,27 +174,65 @@ export function isBotUserAgent(ua: string): boolean {
   );
 }
 
-
 export function dedupeKey(email: string, phone: string): string | null {
   if (email.trim()) return `e:${email.trim().toLowerCase()}`;
   const wa = whatsappNumber(phone);
   return wa ? `p:${wa}` : null;
 }
 
-export async function recordInviteClick(token: string, ua: string, country: string | null) {
-  const platform = platformFromUserAgent(ua);
+/// Zeroes the host part of the IP (as /api/track-click does) before it's
+/// hashed into the fallback fingerprint — no raw IP is used or stored.
+function truncateIp(ip: string): string {
+  if (ip.includes(":")) return ip.split(":").slice(0, 4).join(":");
+  return ip.split(".").slice(0, 3).join(".");
+}
+
+export function clickFingerprint(ip: string, ua: string): string {
+  return crypto.createHash("sha256").update(`${truncateIp(ip)}|${ua}`).digest("hex").slice(0, 16);
+}
+
+/// Logs one click on an invite link. On the main link (/i/) the first
+/// person to click is taken to be the recipient; later clicks from a
+/// different visitor (no matching cookie id and no matching fingerprint)
+/// are forwarded clicks, counted separately. Pass-it-on (/p/) clicks are
+/// always referrals.
+export async function recordInviteClick(
+  token: string,
+  click: { ua: string; country: string | null; visitorId: string; fingerprint: string; source: InviteSource },
+) {
+  const platform = platformFromUserAgent(click.ua);
   await ensureInviteSchema();
-  const rows = (await sql`
-    UPDATE tapcard_invite_sends
-    SET click_count = click_count + 1,
-        first_click_at = COALESCE(first_click_at, now()),
-        last_click_at = now(),
-        last_platform = ${platform}
-    WHERE token = ${token}
-    RETURNING id
-  `) as { id: number }[];
-  if (rows[0]) {
-    await sql`INSERT INTO tapcard_invite_clicks (send_id, platform, country) VALUES (${rows[0].id}, ${platform}, ${country})`;
+  const send = ((await sql`SELECT id FROM tapcard_invite_sends WHERE token = ${token}`) as { id: number }[])[0];
+  if (!send) return;
+
+  let isForward = false;
+  if (click.source === "direct") {
+    const first = ((await sql`
+      SELECT visitor_id, fingerprint FROM tapcard_invite_clicks
+      WHERE send_id = ${send.id} AND source = 'direct'
+      ORDER BY clicked_at LIMIT 1
+    `) as { visitor_id: string | null; fingerprint: string | null }[])[0];
+    // Clicks logged before visitor ids existed have neither — treat those
+    // as the recipient's rather than guessing.
+    if (first && (first.visitor_id || first.fingerprint)) {
+      const sameVisitor = first.visitor_id === click.visitorId || first.fingerprint === click.fingerprint;
+      isForward = !sameVisitor;
+    }
+  }
+
+  await sql`
+    INSERT INTO tapcard_invite_clicks (send_id, platform, country, visitor_id, fingerprint, is_forward, source)
+    VALUES (${send.id}, ${platform}, ${click.country}, ${click.visitorId}, ${click.fingerprint}, ${isForward}, ${click.source})
+  `;
+  if (click.source === "direct" && !isForward) {
+    await sql`
+      UPDATE tapcard_invite_sends
+      SET click_count = click_count + 1,
+          first_click_at = COALESCE(first_click_at, now()),
+          last_click_at = now(),
+          last_platform = ${platform}
+      WHERE id = ${send.id}
+    `;
   }
 }
 

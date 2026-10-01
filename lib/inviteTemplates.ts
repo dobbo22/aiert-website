@@ -19,6 +19,8 @@ Always be prepared.
 
 Get it free here: {link}
 
+Know someone who'd like it too? Pass it on: {shareLink}
+
 Best wishes,
 Martin`;
 
@@ -26,17 +28,21 @@ export const DEFAULT_WHATSAPP_TEMPLATE = `Hi {firstName}, a free gift for you: T
 
 Your business card is always on your phone, and you can swap cards with anyone in one tap. Always be prepared!
 
-Free download: {link}`;
+Free download: {link}
+
+Know someone who'd like it? Pass it on: {shareLink}`;
 
 export function personalise(
   template: string,
   contact: { name: string; first_name: string; company: string },
   link: string,
+  shareLink = "",
 ): string {
   return template
     .replaceAll("{firstName}", contact.first_name || contact.name.split(/\s+/)[0] || "there")
     .replaceAll("{name}", contact.name || "there")
     .replaceAll("{company}", contact.company || "")
+    .replaceAll("{shareLink}", shareLink)
     .replaceAll("{link}", link);
 }
 
