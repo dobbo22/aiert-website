@@ -1,7 +1,64 @@
 import { NextResponse } from "next/server";
 import sql from "@/lib/db";
 import { isAdminRequest } from "@/lib/adminRequest";
+import { websiteDomain } from "@/lib/inviteCardImage";
+import { normaliseInstagramUrl, normaliseXUrl } from "@/lib/inviteTemplates";
 import { ensureInviteSchema, normaliseFacebookUrl, normaliseLinkedinUrl, whatsappNumber } from "@/lib/tapcardInvites";
+
+type Details = {
+  name?: string;
+  firstName?: string;
+  title?: string;
+  company?: string;
+  website?: string;
+  email?: string;
+  phone?: string;
+  linkedinUrl?: string;
+  facebookUrl?: string;
+  xUrl?: string;
+  instagramUrl?: string;
+};
+
+/// Checks and tidies the "Edit details" form; returns an error message or the clean values.
+function cleanDetails(d: Details): { error: string } | Required<Details> {
+  const text = (v: unknown, max = 200) => String(v ?? "").trim().slice(0, max);
+  const out = {
+    name: text(d.name),
+    firstName: text(d.firstName, 100),
+    title: text(d.title),
+    company: text(d.company),
+    website: text(d.website),
+    email: text(d.email),
+    phone: text(d.phone, 50),
+    linkedinUrl: text(d.linkedinUrl, 300),
+    facebookUrl: text(d.facebookUrl, 300),
+    xUrl: text(d.xUrl, 300),
+    instagramUrl: text(d.instagramUrl, 300),
+  };
+  if (!out.name) return { error: "Name can't be empty" };
+  if (out.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(out.email)) return { error: "That email address doesn't look right" };
+  if (out.phone && !whatsappNumber(out.phone)) return { error: "That phone number doesn't look right" };
+  if (out.website) {
+    const domain = websiteDomain(out.website);
+    if (!domain) return { error: "That website doesn't look right" };
+    out.website = `https://${domain}`;
+  }
+  const social = (value: string, normalise: (v: string) => string, label: string) => {
+    if (!value) return "";
+    const n = normalise(value);
+    if (!n) throw new Error(`That ${label} link doesn't look right`);
+    return n;
+  };
+  try {
+    out.linkedinUrl = social(out.linkedinUrl, normaliseLinkedinUrl, "LinkedIn");
+    out.facebookUrl = social(out.facebookUrl, normaliseFacebookUrl, "Facebook");
+    out.xUrl = social(out.xUrl, normaliseXUrl, "X");
+    out.instagramUrl = social(out.instagramUrl, normaliseInstagramUrl, "Instagram");
+  } catch (err) {
+    return { error: (err as Error).message };
+  }
+  return out;
+}
 
 // Per-contact housekeeping from the Invites tab: mark do-not-contact, set
 // their LinkedIn / Facebook profile, correct their email address, mark their
@@ -14,7 +71,22 @@ export async function POST(req: Request) {
   if (!Number.isInteger(id)) return NextResponse.json({ error: "id required" }, { status: 400 });
 
   await ensureInviteSchema();
-  if (body.action === "delete") {
+  if (body.action === "details") {
+    // "Edit details" on the Send tab: everything at once. The *_edited flags
+    // stop a later iCloud re-import putting old values back.
+    const d = cleanDetails(body.details ?? {});
+    if ("error" in d) return NextResponse.json({ error: d.error }, { status: 400 });
+    await sql`
+      UPDATE tapcard_invite_contacts SET
+        name = ${d.name}, first_name = ${d.firstName}, title = ${d.title}, company = ${d.company},
+        website = ${d.website}, email = ${d.email}, phone = ${d.phone},
+        linkedin_url = ${d.linkedinUrl}, facebook_url = ${d.facebookUrl}, x_url = ${d.xUrl}, instagram_url = ${d.instagramUrl},
+        details_edited = true,
+        email_edited = email_edited OR email <> ${d.email},
+        phone_edited = phone_edited OR phone <> ${d.phone}
+      WHERE id = ${id}
+    `;
+  } else if (body.action === "delete") {
     await sql`DELETE FROM tapcard_invite_contacts WHERE id = ${id}`;
   } else if (body.action === "email-bounced") {
     // The email came back undelivered (the Graph send itself succeeds; the

@@ -1,5 +1,5 @@
 import sql from "@/lib/db";
-import { inviteCardImage } from "@/lib/inviteCardImage";
+import { type InviteCardPerson, inviteCardImage } from "@/lib/inviteCardImage";
 import { ensureInviteSchema } from "@/lib/tapcardInvites";
 
 // tapcard.aiert.co.uk/api/invite-card/<token>: the picture of the
@@ -8,10 +8,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
   const { token } = await params;
   await ensureInviteSchema();
   const person = ((await sql`
-    SELECT c.name, c.company, c.email, c.phone
+    SELECT c.name, c.company, c.email, c.phone, c.title, c.website, c.linkedin_url, c.facebook_url, c.x_url, c.instagram_url
     FROM tapcard_invite_sends s JOIN tapcard_invite_contacts c ON c.id = s.contact_id
     WHERE s.token = ${token}
-  `) as { name: string; company: string; email: string; phone: string }[])[0];
+  `) as InviteCardPerson[])[0];
   if (!person) return new Response("Not found", { status: 404 });
   return inviteCardImage(person);
 }

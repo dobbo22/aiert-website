@@ -13,7 +13,8 @@ export default async function SendInvitesPage() {
   try {
     await ensureInviteSchema();
     contacts = (await sql`
-      SELECT c.id, c.name, c.first_name, c.email, c.phone, c.company, c.linkedin_url, c.facebook_url, c.do_not_contact,
+      SELECT c.id, c.name, c.first_name, c.email, c.phone, c.company, c.linkedin_url, c.facebook_url,
+             c.title, c.website, c.x_url, c.instagram_url, c.do_not_contact,
              COALESCE(array_agg(DISTINCT s.channel) FILTER (WHERE s.id IS NOT NULL AND s.bounced_at IS NULL), '{}') AS channels,
              COALESCE(BOOL_OR(s.bounced_at IS NOT NULL), false) AS bounced,
              MAX(s.sent_at) AS last_sent_at,

@@ -29,6 +29,10 @@ export type SenderContact = {
   company: string;
   linkedin_url: string;
   facebook_url: string;
+  title: string;
+  website: string;
+  x_url: string;
+  instagram_url: string;
   do_not_contact: boolean;
   channels: string[];
   bounced: boolean;
@@ -143,6 +147,7 @@ export default function InviteSender({
   const [emailInput, setEmailInput] = useState<{ id: number; value: string } | null>(null);
   // Same for the WhatsApp mobile number.
   const [phoneInput, setPhoneInput] = useState<{ id: number; value: string } | null>(null);
+  const [cardVersion, setCardVersion] = useState(0);
   // Emails are never sent in bulk: ticked people go into this queue and each
   // one is shown (as the email will look) for checking and personalising
   // before Send.
@@ -268,7 +273,8 @@ export default function InviteSender({
       link: PREVIEW_LINK,
       passOnLink: PREVIEW_SHARE_LINK,
       androidLink: PREVIEW_ANDROID_LINK,
-      cardImageUrl: `/api/admin/invites/card-preview/${contact.id}`,
+      // ?v= changes after "Edit details" is saved, so the picture redraws.
+      cardImageUrl: `/api/admin/invites/card-preview/${contact.id}?v=${cardVersion}`,
       unsubscribeUrl: "#",
     });
   }
@@ -752,6 +758,7 @@ export default function InviteSender({
                     <span className="invite-row-sub">{[c.company, c.email || c.phone].filter(Boolean).join(" · ")}</span>
                   </button>
                   <span className="invite-badges">
+                    {c.website && <span className="invite-badge">site</span>}
                     {c.do_not_contact && <span className="invite-badge invite-badge-dnc">Do not contact</span>}
                     {c.channels.map((ch) => (
                       <span key={ch} className="invite-badge">{ch === "link" ? "copied" : ch}</span>
@@ -759,6 +766,20 @@ export default function InviteSender({
                     {c.bounced && !c.channels.includes("email") && <span className="invite-badge invite-badge-dnc">bounced</span>}
                     {c.clicked && <span className="invite-badge invite-badge-clicked">clicked</span>}
                   </span>
+                  {focusedId === c.id && (
+                    <ContactDetailsForm
+                      key={`${c.id}-${c.name}-${c.email}-${c.phone}-${c.website}`}
+                      contact={c}
+                      onSaved={(name) => {
+                        setEmailInput(null);
+                        setPhoneInput(null);
+                        setCardVersion((v) => v + 1);
+                        setStatus({ text: `Saved ${name}'s details.` });
+                        router.refresh();
+                      }}
+                      onError={(text) => setStatus({ text, error: true })}
+                    />
+                  )}
                 </li>
               ))}
               {visible.length > 500 && <li className="social-empty">Showing 500 of {visible.length}. Search to narrow down.</li>}
@@ -1003,6 +1024,80 @@ export default function InviteSender({
             </>
           )}
         </section>
+      </div>
+    </div>
+  );
+}
+
+/// Inline under the clicked contact: their details as their card will show
+/// them. A company website gives the card its logo and "Visit my site" row;
+/// social links add the "Follow me" icons. Saved values beat a re-import.
+function ContactDetailsForm({
+  contact,
+  onSaved,
+  onError,
+}: {
+  contact: SenderContact;
+  onSaved: (name: string) => void;
+  onError: (message: string) => void;
+}) {
+  const initial = {
+    name: contact.name,
+    firstName: contact.first_name,
+    title: contact.title ?? "",
+    company: contact.company,
+    website: contact.website ?? "",
+    email: contact.email,
+    phone: contact.phone,
+    linkedinUrl: contact.linkedin_url,
+    facebookUrl: contact.facebook_url,
+    xUrl: contact.x_url ?? "",
+    instagramUrl: contact.instagram_url ?? "",
+  };
+  const [d, setD] = useState(initial);
+  const [saving, setSaving] = useState(false);
+  const changed = JSON.stringify(d) !== JSON.stringify(initial);
+  const field = (key: keyof typeof d, label: string, placeholder = "", type = "text") => (
+    <label className="invite-details-field">
+      <span>{label}</span>
+      <input type={type} value={d[key]} placeholder={placeholder} onChange={(e) => setD({ ...d, [key]: e.target.value })} />
+    </label>
+  );
+
+  async function save() {
+    setSaving(true);
+    const res = await fetch("/api/admin/invites/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: contact.id, action: "details", details: d }),
+    });
+    setSaving(false);
+    if (res.ok) onSaved(d.name);
+    else onError((await res.json().catch(() => ({}))).error ?? "Couldn't save those details");
+  }
+
+  return (
+    <div className="invite-details">
+      {field("firstName", "First name")}
+      {field("name", "Full name")}
+      {field("title", "Job title", "e.g. Head of Sales")}
+      {field("company", "Company")}
+      {field("website", "Website", "e.g. acme.co.uk — gives their card the company logo")}
+      {field("email", "Email", "", "email")}
+      {field("phone", "Mobile", "", "tel")}
+      {field("linkedinUrl", "LinkedIn", "linkedin.com/in/…")}
+      {field("xUrl", "X", "@handle")}
+      {field("instagramUrl", "Instagram", "@handle")}
+      {field("facebookUrl", "Facebook", "facebook.com/…")}
+      <div className="invite-details-actions">
+        <button className="social-post-btn" disabled={!changed || saving} onClick={save}>
+          {saving ? "Saving…" : "Save details"}
+        </button>
+        {changed && (
+          <button className="invite-link-btn" onClick={() => setD(initial)}>
+            Undo changes
+          </button>
+        )}
       </div>
     </div>
   );

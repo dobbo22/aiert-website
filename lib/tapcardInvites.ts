@@ -116,6 +116,14 @@ export function ensureInviteSchema(): Promise<unknown> {
       // re-importing the (old) iCloud address doesn't put it back.
       .then(() => sql`ALTER TABLE tapcard_invite_contacts ADD COLUMN IF NOT EXISTS email_edited BOOLEAN NOT NULL DEFAULT false`)
       .then(() => sql`ALTER TABLE tapcard_invite_contacts ADD COLUMN IF NOT EXISTS phone_edited BOOLEAN NOT NULL DEFAULT false`)
+      // Business details typed in on the Send tab, for their card picture
+      // (job title, website → logo and site row, more social links).
+      // details_edited stops a re-import overwriting the name and company.
+      .then(() => sql`ALTER TABLE tapcard_invite_contacts ADD COLUMN IF NOT EXISTS title TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_invite_contacts ADD COLUMN IF NOT EXISTS website TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_invite_contacts ADD COLUMN IF NOT EXISTS x_url TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_invite_contacts ADD COLUMN IF NOT EXISTS instagram_url TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_invite_contacts ADD COLUMN IF NOT EXISTS details_edited BOOLEAN NOT NULL DEFAULT false`)
       // "Tell me when TapCard is on Android": one row per person (dedupe_key
       // is c:<contact id> from an invite link, or e:<email> from the public
       // form), with notified_at set once they've been told.

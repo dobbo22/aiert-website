@@ -173,6 +173,20 @@ export function normaliseFacebookUrl(raw: string): string {
   return m && !/^(profile\.php|people|pages|groups|search)$/i.test(m[1]) ? `https://www.facebook.com/${m[1]}` : "";
 }
 
+/// https://x.com/<handle> from a handle ("@jo") or an x.com / twitter.com link, or "".
+export function normaliseXUrl(raw: string): string {
+  const v = raw.trim();
+  const m = v.match(/(?:x|twitter)\.com\/@?([A-Za-z0-9_]{1,15})/i) ?? v.match(/^@?([A-Za-z0-9_]{1,15})$/);
+  return m ? `https://x.com/${m[1]}` : "";
+}
+
+/// https://www.instagram.com/<handle> from a handle or an instagram.com link, or "".
+export function normaliseInstagramUrl(raw: string): string {
+  const v = raw.trim();
+  const m = v.match(/instagram\.com\/@?([A-Za-z0-9_.]{1,30})/i) ?? v.match(/^@?([A-Za-z0-9_.]{1,30})$/);
+  return m ? `https://www.instagram.com/${m[1]}` : "";
+}
+
 /// Where "Copy & open" goes: their LinkedIn profile or Messenger chat when
 /// we know it, otherwise a people search for their name.
 export function socialOpenUrl(

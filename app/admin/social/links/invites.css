@@ -97,3 +97,10 @@
 .invite-mail textarea { border: 0; border-radius: 0; }
 .invite-mail > .invite-profile { padding: 0.5rem 0.75rem 0; margin-bottom: 0; }
 .invite-profile select { max-width: 100%; }
+
+.invite-row { flex-wrap: wrap; }
+.invite-details { flex-basis: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem 0.7rem; padding: 0.6rem 0 0.3rem 1.6rem; }
+.invite-details-field { display: flex; flex-direction: column; gap: 0.15rem; font-size: 0.75rem; color: #94a3b8; }
+.invite-details-field input { font-size: 0.85rem; }
+.invite-details-actions { grid-column: 1 / -1; display: flex; gap: 0.6rem; align-items: center; }
+@media (max-width: 640px) { .invite-details { grid-template-columns: 1fr; padding-left: 0; } }

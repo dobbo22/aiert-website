@@ -84,13 +84,15 @@ export async function POST(req: Request) {
       ${rows.map((r) => r.facebook ?? "")}::text[]
     )
     ON CONFLICT (dedupe_key) DO UPDATE SET
-      name = EXCLUDED.name,
-      first_name = COALESCE(NULLIF(EXCLUDED.first_name, ''), tapcard_invite_contacts.first_name),
+      name = CASE WHEN tapcard_invite_contacts.details_edited THEN tapcard_invite_contacts.name ELSE EXCLUDED.name END,
+      first_name = CASE WHEN tapcard_invite_contacts.details_edited THEN tapcard_invite_contacts.first_name
+                        ELSE COALESCE(NULLIF(EXCLUDED.first_name, ''), tapcard_invite_contacts.first_name) END,
       email = CASE WHEN tapcard_invite_contacts.email_edited THEN tapcard_invite_contacts.email
                    ELSE COALESCE(NULLIF(EXCLUDED.email, ''), tapcard_invite_contacts.email) END,
       phone = CASE WHEN tapcard_invite_contacts.phone_edited THEN tapcard_invite_contacts.phone
                    ELSE COALESCE(NULLIF(EXCLUDED.phone, ''), tapcard_invite_contacts.phone) END,
-      company = COALESCE(NULLIF(EXCLUDED.company, ''), tapcard_invite_contacts.company),
+      company = CASE WHEN tapcard_invite_contacts.details_edited THEN tapcard_invite_contacts.company
+                     ELSE COALESCE(NULLIF(EXCLUDED.company, ''), tapcard_invite_contacts.company) END,
       linkedin_url = COALESCE(NULLIF(EXCLUDED.linkedin_url, ''), tapcard_invite_contacts.linkedin_url),
       facebook_url = COALESCE(NULLIF(EXCLUDED.facebook_url, ''), tapcard_invite_contacts.facebook_url)
   `;

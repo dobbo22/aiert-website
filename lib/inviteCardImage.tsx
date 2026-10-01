@@ -15,7 +15,35 @@ export function companyDomain(email: string): string | null {
   return domain && !PERSONAL_DOMAINS.test(domain) ? domain : null;
 }
 
-export type InviteCardPerson = { name: string; company: string; email: string; phone: string };
+export type InviteCardPerson = {
+  name: string;
+  company: string;
+  email: string;
+  phone: string;
+  title?: string;
+  website?: string;
+  linkedin_url?: string;
+  facebook_url?: string;
+  x_url?: string;
+  instagram_url?: string;
+};
+
+/// The site's domain from whatever was typed ("https://www.acme.com/about" → acme.com).
+export function websiteDomain(website: string | undefined): string | null {
+  const host = (website ?? "").trim().replace(/^[a-z]+:\/\//i, "").split(/[/?#]/)[0]!.replace(/^www\./i, "");
+  return host ? normalizeDomain(host) : null;
+}
+
+type Social = { label: string; bg: string; mark: string };
+
+function socialsFor(person: InviteCardPerson): Social[] {
+  const out: Social[] = [];
+  if (person.linkedin_url) out.push({ label: "LinkedIn", bg: "#0a66c2", mark: "in" });
+  if (person.x_url) out.push({ label: "X", bg: "#000000", mark: "X" });
+  if (person.instagram_url) out.push({ label: "Instagram", bg: "linear-gradient(135deg, #feda75, #d62976 50%, #4f5bd5)", mark: "IG" });
+  if (person.facebook_url) out.push({ label: "Facebook", bg: "#1877f2", mark: "f" });
+  return out;
+}
 
 const WIDTH = 560;
 
@@ -83,14 +111,18 @@ function Row({ color, label, value, icon }: { color: string; label: string; valu
 }
 
 export async function inviteCardImage(person: InviteCardPerson): Promise<ImageResponse> {
-  const domain = companyDomain(person.email);
+  // A website typed in on the Send tab wins over the email's domain.
+  const domain = websiteDomain(person.website) ?? companyDomain(person.email);
   const logo = await logoDataUri(domain);
+  const socials = socialsFor(person);
   const rows: { color: string; label: string; value: string; icon: Icon }[] = [];
   if (person.phone) rows.push({ color: "#22c55e", label: "Call me", value: person.phone, icon: "phone" });
   if (person.email) rows.push({ color: "#a855f7", label: "Email me", value: person.email, icon: "mail" });
   if (domain) rows.push({ color: "#3b82f6", label: "Visit my site", value: domain, icon: "globe" });
-  const subtitle = person.company || (domain ? domain.split(".")[0]!.replace(/^./, (c) => c.toUpperCase()) : "");
-  const height = 330 + (subtitle ? 34 : 0) + rows.length * 92 + 70;
+  const subtitle =
+    [person.title, person.company].filter(Boolean).join(" · ") ||
+    (domain ? domain.split(".")[0]!.replace(/^./, (c) => c.toUpperCase()) : "");
+  const height = 330 + (subtitle ? 34 : 0) + rows.length * 92 + (socials.length ? 150 : 0) + 70;
 
   return new ImageResponse(
     (
@@ -141,6 +173,35 @@ export async function inviteCardImage(person: InviteCardPerson): Promise<ImageRe
               <Row key={r.label} {...r} />
             ))}
           </div>
+          {socials.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: 22 }}>
+              <div style={{ display: "flex", color: "#ffffff", fontSize: 18, letterSpacing: 3 }}>FOLLOW ME</div>
+              <div style={{ display: "flex", marginTop: 12 }}>
+                {socials.map((so) => (
+                  <div key={so.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", margin: "0 12px" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: 64,
+                        height: 64,
+                        borderRadius: 16,
+                        background: so.bg,
+                        border: "1px solid #3a3b42",
+                        color: "#ffffff",
+                        fontSize: 30,
+                        fontWeight: 700,
+                      }}
+                    >
+                      {so.mark}
+                    </div>
+                    <div style={{ display: "flex", color: "#e5e7eb", fontSize: 16, marginTop: 6 }}>{so.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <div style={{ display: "flex", justifyContent: "center", color: "#9ca3af", fontSize: 17, marginTop: "auto", paddingTop: 18 }}>
             Made with TapCard
           </div>
