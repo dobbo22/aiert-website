@@ -115,6 +115,7 @@ export function ensureInviteSchema(): Promise<unknown> {
       // Set when the email address was corrected by hand on the Send tab, so
       // re-importing the (old) iCloud address doesn't put it back.
       .then(() => sql`ALTER TABLE tapcard_invite_contacts ADD COLUMN IF NOT EXISTS email_edited BOOLEAN NOT NULL DEFAULT false`)
+      .then(() => sql`ALTER TABLE tapcard_invite_contacts ADD COLUMN IF NOT EXISTS phone_edited BOOLEAN NOT NULL DEFAULT false`)
       // "Tell me when TapCard is on Android": one row per person (dedupe_key
       // is c:<contact id> from an invite link, or e:<email> from the public
       // form), with notified_at set once they've been told.

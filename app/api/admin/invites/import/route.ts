@@ -88,7 +88,8 @@ export async function POST(req: Request) {
       first_name = COALESCE(NULLIF(EXCLUDED.first_name, ''), tapcard_invite_contacts.first_name),
       email = CASE WHEN tapcard_invite_contacts.email_edited THEN tapcard_invite_contacts.email
                    ELSE COALESCE(NULLIF(EXCLUDED.email, ''), tapcard_invite_contacts.email) END,
-      phone = COALESCE(NULLIF(EXCLUDED.phone, ''), tapcard_invite_contacts.phone),
+      phone = CASE WHEN tapcard_invite_contacts.phone_edited THEN tapcard_invite_contacts.phone
+                   ELSE COALESCE(NULLIF(EXCLUDED.phone, ''), tapcard_invite_contacts.phone) END,
       company = COALESCE(NULLIF(EXCLUDED.company, ''), tapcard_invite_contacts.company),
       linkedin_url = COALESCE(NULLIF(EXCLUDED.linkedin_url, ''), tapcard_invite_contacts.linkedin_url),
       facebook_url = COALESCE(NULLIF(EXCLUDED.facebook_url, ''), tapcard_invite_contacts.facebook_url)

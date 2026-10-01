@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import sql from "@/lib/db";
 import { isAdminRequest } from "@/lib/adminRequest";
-import { ensureInviteSchema, normaliseFacebookUrl, normaliseLinkedinUrl } from "@/lib/tapcardInvites";
+import { ensureInviteSchema, normaliseFacebookUrl, normaliseLinkedinUrl, whatsappNumber } from "@/lib/tapcardInvites";
 
 // Per-contact housekeeping from the Invites tab: mark do-not-contact, set
 // their LinkedIn / Facebook profile, correct their email address, mark their
@@ -35,6 +35,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "That email address doesn't look right" }, { status: 400 });
     }
     await sql`UPDATE tapcard_invite_contacts SET email = ${email}, email_edited = true WHERE id = ${id}`;
+  } else if (typeof body.phone === "string") {
+    // Same idea for the mobile number WhatsApp uses (phone_edited keeps it
+    // over a later re-import).
+    const phone = body.phone.trim().slice(0, 50);
+    if (phone && !whatsappNumber(phone)) {
+      return NextResponse.json({ error: "That doesn't look like a mobile number" }, { status: 400 });
+    }
+    await sql`UPDATE tapcard_invite_contacts SET phone = ${phone}, phone_edited = true WHERE id = ${id}`;
   } else if (typeof body.linkedinUrl === "string" || typeof body.facebookUrl === "string") {
     const linkedin = typeof body.linkedinUrl === "string" ? normaliseLinkedinUrl(body.linkedinUrl) : null;
     const facebook = typeof body.facebookUrl === "string" ? normaliseFacebookUrl(body.facebookUrl) : null;

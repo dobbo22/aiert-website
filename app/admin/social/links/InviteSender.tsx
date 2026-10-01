@@ -141,6 +141,8 @@ export default function InviteSender({
   const [profileInput, setProfileInput] = useState<{ id: number; value: string } | null>(null);
   // A corrected "To" address being typed; saved to the contact on Save or Send.
   const [emailInput, setEmailInput] = useState<{ id: number; value: string } | null>(null);
+  // Same for the WhatsApp mobile number.
+  const [phoneInput, setPhoneInput] = useState<{ id: number; value: string } | null>(null);
   // Emails are never sent in bulk: ticked people go into this queue and each
   // one is shown (as the email will look) for checking and personalising
   // before Send.
@@ -356,6 +358,7 @@ export default function InviteSender({
     setDrafts(without);
     setNotes(without);
     setEmailInput(null);
+    setPhoneInput(null);
     if (!keepFocus) setFocusedId((f) => (f === id ? null : f));
     router.refresh();
   }
@@ -389,6 +392,26 @@ export default function InviteSender({
     return true;
   }
 
+  /// Saves a corrected mobile number. Returns false if it was rejected.
+  async function savePhone(contact: SenderContact, value: string): Promise<boolean> {
+    const res = await fetch("/api/admin/invites/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: contact.id, phone: value }),
+    });
+    if (!res.ok) {
+      setStatus({ text: (await res.json().catch(() => ({}))).error ?? "Couldn't save that number", error: true });
+      return false;
+    }
+    setPhoneInput(null);
+    router.refresh();
+    return true;
+  }
+
+  const pendingPhone = (contact: SenderContact) =>
+    phoneInput?.id === contact.id && phoneInput.value.trim() !== contact.phone ? phoneInput.value.trim() : null;
+  const phoneFor = (contact: SenderContact) => pendingPhone(contact) ?? contact.phone;
+
   const pendingEmail = (contact: SenderContact) =>
     emailInput?.id === contact.id && emailInput.value.trim() !== contact.email ? emailInput.value.trim() : null;
 
@@ -419,6 +442,11 @@ export default function InviteSender({
   // the click itself (before the fetch) so the browser doesn't block it.
   async function openWhatsApp(contact: SenderContact) {
     const win = window.open("about:blank", "_blank");
+    const corrected = pendingPhone(contact);
+    if (corrected != null && !(await savePhone(contact, corrected))) {
+      win?.close();
+      return false;
+    }
     const result = await postSend(contact, "whatsapp");
     if (result.ok && result.waUrl) {
       if (win) win.location.href = result.waUrl;
@@ -807,6 +835,30 @@ export default function InviteSender({
                 </div>
               ) : previewChannel === "whatsapp" ? (
                 <>
+                  <div className="invite-profile">
+                    <span>Mobile</span>
+                    <input
+                      type="tel"
+                      placeholder="e.g. 07700 900123 or +44 7700 900123"
+                      value={phoneInput?.id === focused.id ? phoneInput.value : focused.phone}
+                      onChange={(e) => setPhoneInput({ id: focused.id, value: e.target.value })}
+                    />
+                    {pendingPhone(focused) != null && (
+                      <button
+                        className="invite-link-btn"
+                        onClick={async () => {
+                          if (await savePhone(focused, pendingPhone(focused)!)) setStatus({ text: `Saved ${focused.name}'s mobile number.` });
+                        }}
+                      >
+                        Save
+                      </button>
+                    )}
+                    <small>
+                      {whatsappNumber(phoneFor(focused))
+                        ? `WhatsApp: +${whatsappNumber(phoneFor(focused))} (numbers without a country code are taken as UK)`
+                        : "Not a usable mobile number yet."}
+                    </small>
+                  </div>
                   {notePicker(focused)}
                   <textarea
                     ref={messageRef}
@@ -886,17 +938,19 @@ export default function InviteSender({
                 ) : (
                   <button
                     className="social-post-btn invite-wa-btn"
-                    disabled={busy || !whatsappNumber(focused.phone) || focused.do_not_contact || needsPersonalNote(focused, "whatsapp")}
+                    disabled={busy || !whatsappNumber(phoneFor(focused)) || focused.do_not_contact || needsPersonalNote(focused, "whatsapp")}
                     onClick={async () => {
                       if (await openWhatsApp(focused)) advanceWaQueue(focused.id);
                       router.refresh();
                     }}
                   >
-                    {!whatsappNumber(focused.phone)
+                    {!whatsappNumber(phoneFor(focused))
                       ? "No mobile number"
                       : needsPersonalNote(focused, "whatsapp")
                         ? "Personalise first"
-                        : "Open in WhatsApp"}
+                        : pendingPhone(focused)
+                          ? "Save number & open WhatsApp"
+                          : "Open in WhatsApp"}
                   </button>
                 )}
                 <button className="invite-link-btn" disabled={busy || focused.do_not_contact} onClick={() => copyLink(focused)}>
