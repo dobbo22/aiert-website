@@ -124,6 +124,9 @@ export function ensureInviteSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_invite_contacts ADD COLUMN IF NOT EXISTS x_url TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_invite_contacts ADD COLUMN IF NOT EXISTS instagram_url TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_invite_contacts ADD COLUMN IF NOT EXISTS details_edited BOOLEAN NOT NULL DEFAULT false`)
+      // A real photo (dragged in from e.g. LinkedIn) for their card picture,
+      // in Vercel Blob — takes priority over the company logo/initials.
+      .then(() => sql`ALTER TABLE tapcard_invite_contacts ADD COLUMN IF NOT EXISTS photo_url TEXT NOT NULL DEFAULT ''`)
       // "Tell me when TapCard is on Android": one row per person (dedupe_key
       // is c:<contact id> from an invite link, or e:<email> from the public
       // form), with notified_at set once they've been told.

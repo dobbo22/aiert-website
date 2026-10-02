@@ -107,3 +107,32 @@
 .invite-details-ok { color: #6ee7b7; font-size: 0.8rem; }
 .invite-details-error { color: #fca5a5; font-size: 0.8rem; }
 .invite-details-unsaved { color: #fbbf24; font-size: 0.8rem; }
+
+.invite-photo-drop {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.6rem;
+  border: 1px dashed rgba(148, 163, 184, 0.35);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  transition: border-color 0.15s, background 0.15s;
+}
+.invite-photo-drop-over { border-color: #93c5fd; background: rgba(147, 197, 253, 0.08); }
+.invite-photo-thumb { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.invite-photo-placeholder {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(148, 163, 184, 0.2);
+  color: #cbd5e1;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.invite-photo-hint { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-size: 0.78rem; color: #94a3b8; }
+.invite-photo-browse { color: #93c5fd; cursor: pointer; font-size: 0.78rem; }

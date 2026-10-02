@@ -33,6 +33,7 @@ export type SenderContact = {
   website: string;
   x_url: string;
   instagram_url: string;
+  photo_url: string;
   do_not_contact: boolean;
   channels: string[];
   bounced: boolean;
@@ -1061,6 +1062,42 @@ function ContactDetailsForm({
   const [saving, setSaving] = useState(false);
   const [note, setNote] = useState<{ text: string; error?: boolean } | null>(null);
   const changed = JSON.stringify(d) !== JSON.stringify(saved);
+  const [photoUrl, setPhotoUrl] = useState(contact.photo_url);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+
+  async function uploadPhoto(file: File) {
+    if (!file.type.startsWith("image/")) {
+      setNote({ text: "That's not an image file", error: true });
+      return;
+    }
+    setUploadingPhoto(true);
+    setNote(null);
+    const form = new FormData();
+    form.set("id", String(contact.id));
+    form.set("photo", file);
+    const res = await fetch("/api/admin/invites/contact/photo", { method: "POST", body: form });
+    const json = await res.json().catch(() => ({}));
+    setUploadingPhoto(false);
+    if (res.ok && json.url) {
+      setPhotoUrl(json.url);
+      setNote({ text: "Photo saved ✓ — their card picture now uses it." });
+    } else {
+      const text = json.error ?? `Couldn't upload photo (HTTP ${res.status})`;
+      setNote({ text, error: true });
+      onError(text);
+    }
+  }
+
+  async function removePhoto() {
+    setUploadingPhoto(true);
+    const res = await fetch(`/api/admin/invites/contact/photo?id=${contact.id}`, { method: "DELETE" });
+    setUploadingPhoto(false);
+    if (res.ok) {
+      setPhotoUrl("");
+      setNote({ text: "Photo removed — back to the logo/initials." });
+    }
+  }
   const field = (key: keyof typeof d, label: string, placeholder = "", type = "text") => (
     <label className="invite-details-field">
       <span>{label}</span>
@@ -1094,6 +1131,48 @@ function ContactDetailsForm({
 
   return (
     <div className="invite-details">
+      <div
+        className={`invite-photo-drop${dragOver ? " invite-photo-drop-over" : ""}`}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOver(false);
+          const file = e.dataTransfer.files?.[0];
+          if (file) uploadPhoto(file);
+        }}
+      >
+        {photoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={photoUrl} alt="" className="invite-photo-thumb" />
+        ) : (
+          <div className="invite-photo-placeholder">{(d.firstName || d.name || "?").slice(0, 1).toUpperCase()}</div>
+        )}
+        <div className="invite-photo-hint">
+          <span>{uploadingPhoto ? "Uploading…" : "Drag a photo here (e.g. from LinkedIn) to use as their card picture"}</span>
+          <label className="invite-photo-browse">
+            Choose file…
+            <input
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) uploadPhoto(file);
+                e.target.value = "";
+              }}
+            />
+          </label>
+          {photoUrl && (
+            <button type="button" className="invite-link-btn" onClick={removePhoto} disabled={uploadingPhoto}>
+              Remove photo
+            </button>
+          )}
+        </div>
+      </div>
       {field("firstName", "First name")}
       {field("name", "Full name")}
       {field("title", "Job title", "e.g. Head of Sales")}

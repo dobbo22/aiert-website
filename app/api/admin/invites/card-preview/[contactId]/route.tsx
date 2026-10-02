@@ -10,7 +10,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ contact
   if (!Number.isInteger(id)) return new Response("Bad id", { status: 400 });
   await ensureInviteSchema();
   const person = ((await sql`
-    SELECT name, company, email, phone, title, website, linkedin_url, facebook_url, x_url, instagram_url
+    SELECT name, company, email, phone, title, website, linkedin_url, facebook_url, x_url, instagram_url, photo_url
     FROM tapcard_invite_contacts WHERE id = ${id}
   `) as InviteCardPerson[])[0];
   if (!person) return new Response("Not found", { status: 404 });

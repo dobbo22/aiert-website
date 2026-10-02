@@ -27,6 +27,7 @@ export type InviteCardPerson = {
   facebook_url?: string;
   x_url?: string;
   instagram_url?: string;
+  photo_url?: string;
 };
 
 /// The site's domain from whatever was typed ("https://www.acme.com/about" → acme.com).
@@ -146,7 +147,9 @@ function Row({ color, label, value, icon }: { color: string; label: string; valu
 export async function inviteCardImage(person: InviteCardPerson): Promise<ImageResponse> {
   // A website typed in on the Send tab wins over the email's domain.
   const domain = websiteDomain(person.website) ?? companyDomain(person.email);
-  const logo = await logoDataUri(domain);
+  // A real photo wins over the company logo, so don't wait on a logo fetch
+  // (up to 6s) when it won't be shown.
+  const logo = person.photo_url ? null : await logoDataUri(domain);
   const socials = socialsFor(person);
   const rows: { color: string; label: string; value: string; icon: Icon }[] = [];
   if (person.phone) rows.push({ color: "#22c55e", label: "Call me", value: person.phone, icon: "phone" });
@@ -186,12 +189,15 @@ export async function inviteCardImage(person: InviteCardPerson): Promise<ImageRe
                 width: 140,
                 height: 140,
                 borderRadius: 70,
-                background: logo ? "#ffffff" : "#3a3b42",
+                background: person.photo_url ? "#3a3b42" : logo ? "#ffffff" : "#3a3b42",
                 border: "6px solid #0b0c10",
                 overflow: "hidden",
               }}
             >
-              {logo ? (
+              {person.photo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={person.photo_url} alt="" width={140} height={140} style={{ objectFit: "cover" }} />
+              ) : logo ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={logo} alt="" width={92} height={92} style={{ objectFit: "contain" }} />
               ) : (

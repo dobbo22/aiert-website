@@ -8,7 +8,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
   const { token } = await params;
   await ensureInviteSchema();
   const person = ((await sql`
-    SELECT c.name, c.company, c.email, c.phone, c.title, c.website, c.linkedin_url, c.facebook_url, c.x_url, c.instagram_url
+    SELECT c.name, c.company, c.email, c.phone, c.title, c.website, c.linkedin_url, c.facebook_url, c.x_url, c.instagram_url, c.photo_url
     FROM tapcard_invite_sends s JOIN tapcard_invite_contacts c ON c.id = s.contact_id
     WHERE s.token = ${token}
   `) as InviteCardPerson[])[0];
