@@ -119,6 +119,9 @@ async function handleSend(req: Request) {
         const { data, error } = await new Resend(process.env.RESEND_API_KEY).emails.send({
           from: route.from,
           to: contact.email,
+          // Resend sends don't touch the real mailbox, so there's no Sent
+          // Items copy otherwise — bcc gives a record in the inbox instead.
+          bcc: route.fromEmail,
           replyTo: route.replyTo,
           subject,
           text: `${inviteEmailText(message)}\n\n--\nDon't want these? ${unsubscribeUrl}`,
