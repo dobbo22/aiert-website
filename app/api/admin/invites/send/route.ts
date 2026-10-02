@@ -19,6 +19,8 @@ import {
   inviteLink,
   newInviteToken,
   personalise,
+  playStoreLive,
+  playStoreUrl,
   shareLink,
   socialOpenUrl,
   whatsappNumber,
@@ -89,7 +91,9 @@ async function handleSend(req: Request) {
   const token = newInviteToken();
   const link = inviteLink(token);
   const passOnLink = shareLink(token);
-  const androidLink = androidWaitlistLink(token);
+  // Once Google's approved the listing (TAPCARD_PLAY_LIVE=1), send Android
+  // straight to the real Play Store page instead of the waitlist.
+  const androidLink = playStoreLive() ? playStoreUrl(campaign, channel) : androidWaitlistLink(token);
   const message = personalise(messageTemplate, contact, link, passOnLink, androidLink);
   const subject = personalise((subjectTemplate || "{offerSubject}").replaceAll("{offerSubject}", offer.subject), contact, link);
 

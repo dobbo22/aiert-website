@@ -66,7 +66,7 @@ See exactly how it works: [How TapCard works]({howItWorksLink})
 
 If you have an iPhone, you can use it today: [Get TapCard free]({link})
 
-On Android? We're not on the Google Play Store just yet. Tap the link below and I'll let you know the moment it's ready for you: [Tell me when TapCard is on Android]({androidLink})
+On Android? You can get it today too: [Get TapCard free]({androidLink})
 
 Always be prepared.
 
@@ -94,7 +94,7 @@ How it works: {howItWorksLink}
 
 iPhone: {link}
 
-On Android? It's not on Google Play just yet. Tap here and I'll tell you the moment it is: {androidLink}
+Android: {androidLink}
 
 Always be prepared.
 Martin`;
@@ -118,7 +118,7 @@ I've built an app called *TapCard* to solve exactly that. It keeps your business
 
 👀 See how it works: {howItWorksLink}
 
-🤖 On Android? Tap here and I'll tell you the moment it's ready: {androidLink}
+🤖 *Android — get it free:* {androidLink}
 
 Always be prepared!
 Martin`;
