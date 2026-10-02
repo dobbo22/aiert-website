@@ -136,3 +136,30 @@
 }
 .invite-photo-hint { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-size: 0.78rem; color: #94a3b8; }
 .invite-photo-browse { color: #93c5fd; cursor: pointer; font-size: 0.78rem; }
+
+.invite-crop-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.invite-crop-modal {
+  background: #15181f;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 12px;
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+}
+.invite-crop-title { font-size: 0.95rem; font-weight: 600; color: #e2e8f0; align-self: flex-start; }
+.invite-crop-frame { position: relative; border-radius: 50%; overflow: hidden; touch-action: none; cursor: grab; background: #0b0c10; }
+.invite-crop-frame:active { cursor: grabbing; }
+.invite-crop-mask { position: absolute; inset: 0; border-radius: 50%; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.4); pointer-events: none; }
+.invite-crop-zoom { display: flex; align-items: center; gap: 0.6rem; width: 100%; justify-content: center; }
+.invite-crop-zoom input[type="range"] { width: 180px; }
+.invite-crop-actions { display: flex; gap: 0.8rem; justify-content: flex-end; width: 100%; }

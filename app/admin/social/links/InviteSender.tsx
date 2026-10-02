@@ -1065,6 +1065,7 @@ function ContactDetailsForm({
   const [photoUrl, setPhotoUrl] = useState(contact.photo_url);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [cropFile, setCropFile] = useState<File | null>(null);
 
   async function uploadPhoto(file: File) {
     if (!file.type.startsWith("image/")) {
@@ -1142,7 +1143,7 @@ function ContactDetailsForm({
           e.preventDefault();
           setDragOver(false);
           const file = e.dataTransfer.files?.[0];
-          if (file) uploadPhoto(file);
+          if (file) setCropFile(file);
         }}
       >
         {photoUrl ? (
@@ -1161,7 +1162,7 @@ function ContactDetailsForm({
               style={{ display: "none" }}
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (file) uploadPhoto(file);
+                if (file) setCropFile(file);
                 e.target.value = "";
               }}
             />
@@ -1195,6 +1196,161 @@ function ContactDetailsForm({
         )}
         {note && <span className={note.error ? "invite-details-error" : "invite-details-ok"}>{note.text}</span>}
         {changed && !saving && <span className="invite-details-unsaved">Not saved yet</span>}
+      </div>
+      {cropFile && (
+        <PhotoCropModal
+          file={cropFile}
+          onCancel={() => setCropFile(null)}
+          onConfirm={(blob) => {
+            setCropFile(null);
+            uploadPhoto(new File([blob], "photo.jpg", { type: "image/jpeg" }));
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+const CROP_SIZE = 320;
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 3;
+
+/// Reposition/zoom a dropped photo into a circle before it's uploaded —
+/// same idea as macOS's own contact-photo picker. Pans and zooms an <img>
+/// with CSS transforms, then replays the identical transform on a canvas
+/// (object-fit: cover base placement + translate(pan) scale(zoom), same
+/// transform-origin: center) to produce the uploaded file.
+function PhotoCropModal({ file, onCancel, onConfirm }: { file: File; onCancel: () => void; onConfirm: (blob: Blob) => void }) {
+  const [src, setSrc] = useState<string | null>(null);
+  const [natural, setNatural] = useState<{ w: number; h: number } | null>(null);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [saving, setSaving] = useState(false);
+  const dragRef = useRef<{ startX: number; startY: number; panX: number; panY: number } | null>(null);
+
+  useEffect(() => {
+    const url = URL.createObjectURL(file);
+    setSrc(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  /// How far the image can be panned at the current zoom before a gap
+  /// would show at the edge of the circle (half the overflow each side).
+  const maxPan = (CROP_SIZE * (zoom - 1)) / 2;
+  const clampPan = (p: { x: number; y: number }, limit: number) => ({
+    x: Math.max(-limit, Math.min(limit, p.x)),
+    y: Math.max(-limit, Math.min(limit, p.y)),
+  });
+
+  function setZoomClamped(z: number) {
+    const next = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, z));
+    setZoom(next);
+    setPan((p) => clampPan(p, (CROP_SIZE * (next - 1)) / 2));
+  }
+
+  function onPointerDown(e: React.PointerEvent) {
+    (e.target as Element).setPointerCapture(e.pointerId);
+    dragRef.current = { startX: e.clientX, startY: e.clientY, panX: pan.x, panY: pan.y };
+  }
+  function onPointerMove(e: React.PointerEvent) {
+    if (!dragRef.current) return;
+    const { startX, startY, panX, panY } = dragRef.current;
+    setPan(clampPan({ x: panX + (e.clientX - startX), y: panY + (e.clientY - startY) }, maxPan));
+  }
+  function onPointerUp() {
+    dragRef.current = null;
+  }
+
+  async function confirm() {
+    if (!src || !natural) return;
+    setSaving(true);
+    const canvas = document.createElement("canvas");
+    canvas.width = CROP_SIZE;
+    canvas.height = CROP_SIZE;
+    const ctx = canvas.getContext("2d")!;
+    const img = new Image();
+    img.src = src;
+    await img.decode();
+    // Base placement: object-fit: cover into the CROP_SIZE box.
+    const coverScale = Math.max(CROP_SIZE / natural.w, CROP_SIZE / natural.h);
+    const drawW = natural.w * coverScale;
+    const drawH = natural.h * coverScale;
+    const drawX = (CROP_SIZE - drawW) / 2;
+    const drawY = (CROP_SIZE - drawH) / 2;
+    const center = CROP_SIZE / 2;
+    ctx.save();
+    // Matches the CSS: translate(pan) scale(zoom), transform-origin center.
+    ctx.translate(pan.x, pan.y);
+    ctx.translate(center, center);
+    ctx.scale(zoom, zoom);
+    ctx.translate(-center, -center);
+    ctx.drawImage(img, drawX, drawY, drawW, drawH);
+    ctx.restore();
+    canvas.toBlob(
+      (blob) => {
+        setSaving(false);
+        if (blob) onConfirm(blob);
+      },
+      "image/jpeg",
+      0.9,
+    );
+  }
+
+  return (
+    <div className="invite-crop-overlay" onClick={onCancel}>
+      <div className="invite-crop-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="invite-crop-title">Reposition photo</div>
+        <div
+          className="invite-crop-frame"
+          style={{ width: CROP_SIZE, height: CROP_SIZE }}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+        >
+          {src && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={src}
+              alt=""
+              draggable={false}
+              onLoad={(e) => setNatural({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                transformOrigin: "center center",
+                pointerEvents: "none",
+              }}
+            />
+          )}
+          <div className="invite-crop-mask" />
+        </div>
+        <div className="invite-crop-zoom">
+          <button type="button" className="invite-link-btn" onClick={() => setZoomClamped(zoom - 0.2)} disabled={zoom <= MIN_ZOOM}>
+            −
+          </button>
+          <input
+            type="range"
+            min={MIN_ZOOM}
+            max={MAX_ZOOM}
+            step={0.01}
+            value={zoom}
+            onChange={(e) => setZoomClamped(Number(e.target.value))}
+          />
+          <button type="button" className="invite-link-btn" onClick={() => setZoomClamped(zoom + 0.2)} disabled={zoom >= MAX_ZOOM}>
+            +
+          </button>
+        </div>
+        <div className="invite-crop-actions">
+          <button type="button" className="invite-link-btn" onClick={onCancel}>
+            Cancel
+          </button>
+          <button type="button" className="social-post-btn" onClick={confirm} disabled={!natural || saving}>
+            {saving ? "Saving…" : "Use this photo"}
+          </button>
+        </div>
       </div>
     </div>
   );
