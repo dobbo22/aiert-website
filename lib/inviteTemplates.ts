@@ -53,7 +53,7 @@ This is Martin Dobson — [personalise here: e.g. we worked together at BT]. I'm
 
 Have you ever been in a situation where someone asked for your business card, and you didn't have one with you or had run out?
 
-I've built an app called TapCard to solve exactly that. It keeps your business card on your phone — and in your Apple Wallet — shared instantly with a QR code or a link. When you swap details, their info saves straight into your contacts, no typing, no running out of cards.
+I've built an app called TapCard to solve exactly that. It keeps your business card on your phone — and in your Apple Wallet or Google Wallet — shared instantly with a QR code or a link. When you swap details, their info saves straight into your contacts, no typing, no running out of cards.
 
 {freeOffer}
 
@@ -109,7 +109,7 @@ Martin`;
 // preview shows a picture of their own card (see app/tapcard/get/[token]).
 export const DEFAULT_WHATSAPP_TEMPLATE = `Hi {firstName}, it's Martin Dobson — [personalise here: e.g. we worked together at BT].
 
-Ever been asked for your business card and not had one on you? I built *TapCard* to fix that — your card lives on your phone (and Apple Wallet), shared with a tap or QR code. When you swap details, theirs saves straight into your contacts.
+Ever been asked for your business card and not had one on you? I built *TapCard* to fix that — your card lives on your phone (and Apple Wallet or Google Wallet), shared with a tap or QR code. When you swap details, theirs saves straight into your contacts.
 
 {freeOffer}
 
