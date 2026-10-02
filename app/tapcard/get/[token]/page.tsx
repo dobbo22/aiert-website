@@ -83,20 +83,18 @@ export default async function InviteLandingPage({
           </>
         ) : (
           <>
-            <a
-              href={appStoreUrl(campaign, channel)}
-              className="mt-6 inline-block w-full rounded-xl bg-white px-4 py-3 font-semibold text-[#111318]"
-            >
-              Get TapCard free on the App Store
-            </a>
-            {playStoreLive() && (
-              <a
-                href={playStoreUrl(campaign, channel)}
-                className="mt-2 inline-block w-full rounded-xl px-4 py-3 font-semibold text-white ring-1 ring-white/30"
-              >
-                Get it on Google Play
+            <div className="mt-6 flex flex-col items-center gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <a href={appStoreUrl(campaign, channel)}>
+                <img src="https://www.aiert.co.uk/tapcard-badges/app-store-badge-white.png" alt="Download on the App Store" width={180} height={60} />
               </a>
-            )}
+              {playStoreLive() && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <a href={playStoreUrl(campaign, channel)}>
+                  <img src="https://www.aiert.co.uk/tapcard-badges/google-play-badge.png" alt="Get it on Google Play" width={155} height={60} />
+                </a>
+              )}
+            </div>
             {platform === "desktop" && (
               <p className="mt-4 text-xs text-white/60">TapCard is a phone app — open this link on your phone to install it.</p>
             )}
