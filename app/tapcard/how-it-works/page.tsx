@@ -17,6 +17,7 @@ export const metadata: Metadata = {
 };
 
 const APP_STORE_URL = "https://apps.apple.com/app/id6816003159";
+const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.mailbroom.tapcard";
 
 // Linked from the invite email ("See exactly how it works") —
 // tapcard.aiert.co.uk/how-it-works.
@@ -75,8 +76,8 @@ export default function HowItWorksPage() {
       <section>
         <h2>Get TapCard</h2>
         <p>
-          <a href={APP_STORE_URL}>Get TapCard free on the App Store</a> (iPhone). On Android?{" "}
-          <a href="/android-waitlist">Tell me when TapCard is on Android</a>.
+          <a href={APP_STORE_URL}>Get TapCard free on the App Store</a> (iPhone), or{" "}
+          <a href={PLAY_STORE_URL}>get it on Google Play</a> (Android).
         </p>
       </section>
     </DocPage>

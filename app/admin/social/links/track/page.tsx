@@ -1,5 +1,5 @@
 import sql from "@/lib/db";
-import { campaignToken, ensureInviteSchema, playStoreLive } from "@/lib/tapcardInvites";
+import { campaignToken, ensureInviteSchema } from "@/lib/tapcardInvites";
 import { FREE_PLACES, ladderStatus } from "@/lib/tapcardFounders";
 import ResetSendButton from "./ResetSendButton";
 import StoreStatsInput from "./StoreStatsInput";
@@ -31,7 +31,6 @@ type SendRow = {
   shared_people: number;
 };
 type SpreaderRow = { name: string; forwarded_people: number; shared_people: number };
-type WaitlistRow = { name: string | null; email: string; created_at: string; notified_at: string | null };
 
 const CHANNEL_LABEL: Record<string, string> = { email: "Email", whatsapp: "WhatsApp", linkedin: "LinkedIn", messenger: "Messenger", link: "Copied link", share: "Pass-it-on links" };
 const pct = (n: number, d: number) => (d ? `${Math.round((n / d) * 100)}%` : "—");
@@ -45,14 +44,13 @@ export default async function TrackInvitesPage() {
   let stores: StoreRow[] = [];
   let sends: SendRow[] = [];
   let spreaders: SpreaderRow[] = [];
-  let waitlist: WaitlistRow[] = [];
   let ladder: Awaited<ReturnType<typeof ladderStatus>> | null = null;
   let error: string | null = null;
 
   try {
     await ensureInviteSchema();
     ladder = await ladderStatus();
-    [channels, campaigns, stores, sends, spreaders, waitlist] = (await Promise.all([
+    [channels, campaigns, stores, sends, spreaders] = (await Promise.all([
       sql`
         SELECT s.channel, COUNT(DISTINCT s.id)::int AS sent,
                COUNT(DISTINCT s.id) FILTER (WHERE s.delivered_at IS NOT NULL)::int AS delivered,
@@ -111,12 +109,7 @@ export default async function TrackInvitesPage() {
         ORDER BY COUNT(DISTINCT COALESCE(k.visitor_id, k.fingerprint, k.id::text)) DESC
         LIMIT 10
       `,
-      sql`
-        SELECT c.name, w.email, w.created_at, w.notified_at
-        FROM tapcard_android_waitlist w LEFT JOIN tapcard_invite_contacts c ON c.id = w.contact_id
-        ORDER BY w.created_at DESC
-      `,
-    ])) as [ChannelRow[], CampaignRow[], StoreRow[], SendRow[], SpreaderRow[], WaitlistRow[]];
+    ])) as [ChannelRow[], CampaignRow[], StoreRow[], SendRow[], SpreaderRow[]];
   } catch (err) {
     error = err instanceof Error ? err.message : "Couldn't load invite stats";
   }
@@ -217,35 +210,13 @@ export default async function TrackInvitesPage() {
         )}
       </p>
 
-      <h2 className="admin-subtitle invite-h2">Android waitlist ({waitlist.length})</h2>
-      {waitlist.length === 0 ? (
-        <p className="admin-mailbroom-note">Nobody yet. People join from the &quot;Tell me when TapCard is on Android&quot; link.</p>
-      ) : (
-        <div className="admin-table-wrap">
-          <table className="admin-table">
-            <thead>
-              <tr><th>Name</th><th>Email</th><th>Joined</th><th>Told</th></tr>
-            </thead>
-            <tbody>
-              {waitlist.map((w) => (
-                <tr key={`${w.email}|${w.created_at}`}>
-                  <td>{w.name ?? "(public form)"}</td>
-                  <td>{w.email}</td>
-                  <td>{when(w.created_at)}</td>
-                  <td>{when(w.notified_at)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
 
       <h2 className="admin-subtitle invite-h2">Clicks vs store installs</h2>
       <p className="admin-mailbroom-note">
         The stores don&apos;t say <em>who</em> installed, only how many came from each campaign link.
         Type in the installs from <strong>App Store Connect → Analytics → Acquisition → Campaigns</strong>{" "}
         (each row&apos;s campaign token is the &quot;Campaign&quot; there) and Play Console&apos;s
-        acquisition report{playStoreLive() ? "" : " (once Google approves the Android app)"}, and this
+        acquisition report, and this
         compares them with the clicks. Forwarded clicks share the original medium&apos;s token; pass-it-on
         links have their own (<code>…-share</code>).
       </p>

@@ -168,28 +168,6 @@ export function shareLink(token: string): string {
 
 export type InviteSource = "direct" | "share";
 
-/// "Tell me when TapCard is on Android" in the email: same token, so a
-/// sign-up is tied to the person it was sent to.
-export function androidWaitlistLink(token: string): string {
-  return `${INVITE_LINK_ORIGIN}/w/${token}`;
-}
-
-/// Adds someone to the Android waitlist. Returns false for a bad email.
-export async function joinAndroidWaitlist(entry: { email: string; contactId?: number; sendId?: number }): Promise<boolean> {
-  const email = entry.email.trim().toLowerCase().slice(0, 200);
-  if (!entry.contactId && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return false;
-  await ensureInviteSchema();
-  const key = entry.contactId ? `c:${entry.contactId}` : `e:${email}`;
-  await sql`
-    INSERT INTO tapcard_android_waitlist (dedupe_key, contact_id, send_id, email)
-    VALUES (${key}, ${entry.contactId ?? null}, ${entry.sendId ?? null}, ${email})
-    ON CONFLICT (dedupe_key) DO UPDATE
-      SET email = CASE WHEN EXCLUDED.email <> '' THEN EXCLUDED.email ELSE tapcard_android_waitlist.email END
-  `;
-  return true;
-}
-
-
 /// App Store campaign token (ct=, max 40 chars) — what App Store Connect →
 /// Analytics → Acquisition → Campaigns reports installs against.
 export function campaignToken(campaign: string, channel: string): string {
@@ -212,12 +190,6 @@ export function appStoreUrl(campaign: string, channel: string): string {
 export function playStoreUrl(campaign: string, channel: string): string {
   const referrer = `utm_source=invite&utm_medium=${channel}&utm_campaign=${campaign}`;
   return `https://play.google.com/store/apps/details?id=${TAPCARD_PLAY_PACKAGE}&referrer=${encodeURIComponent(referrer)}`;
-}
-
-/// Flip TAPCARD_PLAY_LIVE=1 in Vercel once Google approves the listing —
-/// until then Android clicks get the landing page rather than a Play 404.
-export function playStoreLive(): boolean {
-  return process.env.TAPCARD_PLAY_LIVE === "1";
 }
 
 export type InvitePlatform = "ios" | "android" | "desktop";

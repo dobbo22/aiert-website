@@ -4,8 +4,7 @@ import { isAdminRequest } from "@/lib/adminRequest";
 import { ensureInviteSchema } from "@/lib/tapcardInvites";
 
 // "Reset" on Track invites: deletes one send (its clicks go with it, via ON
-// DELETE CASCADE; an Android waitlist sign-up keeps the person, minus the
-// link to this send). The contact itself is untouched.
+// DELETE CASCADE). The contact itself is untouched.
 export async function POST(req: Request) {
   if (!(await isAdminRequest())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await req.json().catch(() => null);

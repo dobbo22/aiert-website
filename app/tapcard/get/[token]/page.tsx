@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { firstNameOf } from "@/lib/inviteTemplates";
-import { INVITE_LINK_ORIGIN, appStoreUrl, getSendByToken, platformFromUserAgent, playStoreLive, playStoreUrl } from "@/lib/tapcardInvites";
+import { INVITE_LINK_ORIGIN, appStoreUrl, getSendByToken, platformFromUserAgent, playStoreUrl } from "@/lib/tapcardInvites";
 
 const TITLE = "A free gift: TapCard, the business card swapper";
 const DESCRIPTION = "Always be prepared. Your business card on your phone — swap cards with anyone in one tap. Free on iPhone.";
@@ -36,8 +36,8 @@ export async function generateMetadata({
 
 // Landing page behind the invite links (/i/ and /p/ — see
 // lib/inviteClickHandler.ts, which has already logged the click): what
-// computers, link-preview fetchers and, until Play approval, Android see.
-// Also supplies the WhatsApp/iMessage link-preview card via `metadata`.
+// computers, link-preview fetchers and phones see. Also supplies the
+// WhatsApp/iMessage link-preview card via `metadata`.
 export default async function InviteLandingPage({
   params,
   searchParams,
@@ -53,7 +53,6 @@ export default async function InviteLandingPage({
   const platform = platformFromUserAgent((await headers()).get("user-agent") ?? "");
 
   const firstName = shared || !send ? null : firstNameOf(send);
-  const androidPending = platform === "android" && !playStoreLive();
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-4 py-12 text-center">
@@ -69,36 +68,18 @@ export default async function InviteLandingPage({
         </p>
         <p className="mt-3 font-semibold">Always be prepared.</p>
 
-        {androidPending ? (
-          <>
-            <p className="mt-6 rounded-xl bg-white/10 px-4 py-3 text-sm">
-              TapCard for Android is with Google Play for review and will be available very soon.
-            </p>
-            <a
-              href={send && !shared ? `/w/${token}` : "/android-waitlist"}
-              className="mt-3 inline-block w-full rounded-xl bg-white px-4 py-3 font-semibold text-[#111318]"
-            >
-              Tell me when it&apos;s ready
-            </a>
-          </>
-        ) : (
-          <>
-            <div className="mt-6 flex flex-col items-center gap-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <a href={appStoreUrl(campaign, channel)}>
-                <img src="https://www.aiert.co.uk/tapcard-badges/app-store-badge-white.png" alt="Download on the App Store" width={180} height={60} />
-              </a>
-              {playStoreLive() && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <a href={playStoreUrl(campaign, channel)}>
-                  <img src="https://www.aiert.co.uk/tapcard-badges/google-play-badge.png" alt="Get it on Google Play" width={155} height={60} />
-                </a>
-              )}
-            </div>
-            {platform === "desktop" && (
-              <p className="mt-4 text-xs text-white/60">TapCard is a phone app — open this link on your phone to install it.</p>
-            )}
-          </>
+        <div className="mt-6 flex flex-col items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <a href={appStoreUrl(campaign, channel)}>
+            <img src="https://www.aiert.co.uk/tapcard-badges/app-store-badge-white.png" alt="Download on the App Store" width={180} height={60} />
+          </a>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <a href={playStoreUrl(campaign, channel)}>
+            <img src="https://www.aiert.co.uk/tapcard-badges/google-play-badge.png" alt="Get it on Google Play" width={155} height={60} />
+          </a>
+        </div>
+        {platform === "desktop" && (
+          <p className="mt-4 text-xs text-white/60">TapCard is a phone app — open this link on your phone to install it.</p>
         )}
       </div>
     </main>

@@ -8,7 +8,6 @@ import {
   getSendByToken,
   isBotUserAgent,
   platformFromUserAgent,
-  playStoreLive,
   playStoreUrl,
   recordInviteClick,
 } from "@/lib/tapcardInvites";
@@ -20,8 +19,8 @@ const TWO_YEARS = 60 * 60 * 24 * 365 * 2;
 // and /p/<token> (their "pass it on" link). A route handler rather than a
 // page so it can set the visitor cookie that tells the recipient's own
 // clicks apart from forwarded ones. Phones go straight to their store with
-// campaign attribution; computers, link-preview fetchers and (until Play
-// approval) Android get the landing page at /get/<token>.
+// campaign attribution; computers and link-preview fetchers get the
+// landing page at /get/<token>.
 export async function handleInviteClick(req: NextRequest, token: string, source: InviteSource) {
   const ua = req.headers.get("user-agent") ?? "";
   const bot = isBotUserAgent(ua);
@@ -46,7 +45,7 @@ export async function handleInviteClick(req: NextRequest, token: string, source:
   const storeChannel = source === "share" ? "share" : (send?.channel ?? "unknown");
   let destination = `${INVITE_LINK_ORIGIN}/get/${token}${source === "share" ? "?via=share" : ""}`;
   if (!bot && platform === "ios") destination = appStoreUrl(campaign, storeChannel);
-  if (!bot && platform === "android" && playStoreLive()) destination = playStoreUrl(campaign, storeChannel);
+  if (!bot && platform === "android") destination = playStoreUrl(campaign, storeChannel);
 
   const res = NextResponse.redirect(destination, 302);
   res.headers.set("Cache-Control", "no-store");
