@@ -163,3 +163,15 @@
 .invite-crop-zoom { display: flex; align-items: center; gap: 0.6rem; width: 100%; justify-content: center; }
 .invite-crop-zoom input[type="range"] { width: 180px; }
 .invite-crop-actions { display: flex; gap: 0.8rem; justify-content: flex-end; width: 100%; }
+
+.invite-add-contact-toggle { padding-left: 0; align-self: flex-start; }
+.invite-add-contact { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 0.3rem; }
+.invite-add-contact input {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 6px;
+  color: #e2e8f0;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.85rem;
+  width: 150px;
+}

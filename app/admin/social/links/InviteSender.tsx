@@ -157,6 +157,9 @@ export default function InviteSender({
   const [emailView, setEmailView] = useState<"preview" | "edit">("preview");
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<{ text: string; error?: boolean } | null>(null);
+  const [showAddContact, setShowAddContact] = useState(false);
+  const [newContact, setNewContact] = useState({ name: "", phone: "", email: "" });
+  const [addingContact, setAddingContact] = useState(false);
 
   const byId = useMemo(() => new Map(contacts.map((c) => [c.id, c])), [contacts]);
 
@@ -334,6 +337,40 @@ export default function InviteSender({
       setStatus({ text: err instanceof Error ? err.message : "Import failed", error: true });
     } finally {
       setBusy(false);
+    }
+  }
+
+  /// Someone not in iCloud/LinkedIn — e.g. a WhatsApp-only contact. Goes
+  /// through the same upsert endpoint as a one-contact "import".
+  async function addContact() {
+    const name = newContact.name.trim();
+    const phone = newContact.phone.trim();
+    const email = newContact.email.trim();
+    if (!name) {
+      setStatus({ text: "Name is required", error: true });
+      return;
+    }
+    if (!phone && !email) {
+      setStatus({ text: "Add a phone number or email so they can be invited", error: true });
+      return;
+    }
+    setAddingContact(true);
+    try {
+      const res = await fetch("/api/admin/invites/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contacts: [{ name, phone, email }] }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.imported) throw new Error(json.error ?? "Couldn't add contact");
+      setStatus({ text: `Added ${name}.` });
+      setNewContact({ name: "", phone: "", email: "" });
+      setShowAddContact(false);
+      router.refresh();
+    } catch (err) {
+      setStatus({ text: err instanceof Error ? err.message : "Couldn't add contact", error: true });
+    } finally {
+      setAddingContact(false);
     }
   }
 
@@ -613,6 +650,37 @@ export default function InviteSender({
               privacy → Get a copy of your data → Connections, then import Connections.csv (matched to your
               contacts by name). Re-import any time; existing people are updated, not duplicated.
             </small>
+            {showAddContact ? (
+              <div className="invite-add-contact">
+                <input
+                  placeholder="Name"
+                  value={newContact.name}
+                  onChange={(e) => setNewContact((c) => ({ ...c, name: e.target.value }))}
+                />
+                <input
+                  placeholder="Mobile (for WhatsApp)"
+                  type="tel"
+                  value={newContact.phone}
+                  onChange={(e) => setNewContact((c) => ({ ...c, phone: e.target.value }))}
+                />
+                <input
+                  placeholder="Email (optional)"
+                  type="email"
+                  value={newContact.email}
+                  onChange={(e) => setNewContact((c) => ({ ...c, email: e.target.value }))}
+                />
+                <button type="button" className="social-post-btn" onClick={addContact} disabled={addingContact}>
+                  {addingContact ? "Adding…" : "Add"}
+                </button>
+                <button type="button" className="invite-link-btn" onClick={() => setShowAddContact(false)}>
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button type="button" className="invite-link-btn invite-add-contact-toggle" onClick={() => setShowAddContact(true)}>
+                + Add a contact by hand (e.g. a WhatsApp-only number)
+              </button>
+            )}
           </label>
           <label className="invite-field">
             <span>Campaign name</span>
