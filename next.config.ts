@@ -31,6 +31,11 @@ const nextConfig: NextConfig = {
       "node_modules/@img/**/*", "node_modules/sharp/**/*",
       "node_modules/@resvg/**/*", "lib/tapcardPassAssets/**/*",
     ],
+    // lib/inviteCardImage.tsx re-encodes a fetched company favicon through
+    // sharp (some real-world icons, e.g. a lossless WebP, crash Satori's
+    // own image decoder otherwise) — same ERR_DLOPEN_FAILED risk as above.
+    "/api/admin/invites/card-preview/\\[contactId\\]": ["node_modules/@img/**/*", "node_modules/sharp/**/*"],
+    "/api/tapcard/invite-card/\\[token\\]": ["node_modules/@img/**/*", "node_modules/sharp/**/*"],
   },
   async redirects() {
     return [

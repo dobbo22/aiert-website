@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import sharp from "sharp";
 import sql from "@/lib/db";
 import { findSiteIcon, normalizeDomain } from "@/lib/siteIcon";
 
@@ -79,8 +80,14 @@ async function logoDataUri(domain: string | null): Promise<string | null> {
   if (!domain) return null;
   try {
     await ensureLogoTable();
+    // Only trust a cached entry if it's already PNG (what this function
+    // always produces now) or explicitly "no logo found" (null) — an entry
+    // cached before the sharp re-encode was added could be any format
+    // Satori chokes on, so it's treated as a miss and re-fetched/re-encoded.
     const cached = (await sql`
-      SELECT data_uri FROM tapcard_logo_cache WHERE domain = ${domain} AND fetched_at > now() - interval '30 days'
+      SELECT data_uri FROM tapcard_logo_cache
+      WHERE domain = ${domain} AND fetched_at > now() - interval '30 days'
+        AND (data_uri IS NULL OR data_uri LIKE 'data:image/png%')
     `) as { data_uri: string | null }[];
     if (cached.length) return cached[0]!.data_uri;
   } catch {
@@ -91,7 +98,21 @@ async function logoDataUri(domain: string | null): Promise<string | null> {
     findSiteIcon(domain, { allowIco: false }).catch(() => null),
     new Promise<null>((resolve) => setTimeout(() => resolve(null), 6000)),
   ]);
-  const uri = icon ? `data:${icon.contentType};base64,${icon.bytes.toString("base64")}` : null;
+  // Always re-encode to PNG rather than trust the site's own format/bytes
+  // directly: Satori's image decoder can crash (not just fail gracefully)
+  // on some real-world icons — a lossless WebP from singercm.com did
+  // exactly that ("u2 is not iterable"), taking the whole card down with
+  // it. sharp is a known-good decoder for anything a favicon is likely to
+  // be (PNG/JPEG/WebP/GIF/SVG), so this also normalises format, not just
+  // safety.
+  const uri = icon
+    ? await sharp(icon.bytes)
+        .resize(128, 128, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
+        .png()
+        .toBuffer()
+        .then((buf) => `data:image/png;base64,${buf.toString("base64")}`)
+        .catch(() => null)
+    : null;
   await sql`
     INSERT INTO tapcard_logo_cache (domain, data_uri) VALUES (${domain}, ${uri})
     ON CONFLICT (domain) DO UPDATE SET data_uri = EXCLUDED.data_uri, fetched_at = now()
