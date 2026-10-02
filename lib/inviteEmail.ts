@@ -12,10 +12,6 @@ const PERSONAL_NOTE = /\[personali[sz]e here[^\]]*\]/gi;
 const BULLET = /^\s*[-*•]\s+/;
 
 const LINK_STYLE = "color:#0f766e;";
-const PRIMARY_BUTTON =
-  "display:inline-block;background:#111318;color:#ffffff;text-decoration:none;font-weight:bold;padding:12px 22px;border-radius:10px;";
-const SECONDARY_BUTTON =
-  "display:inline-block;background:#ffffff;color:#111318;text-decoration:none;font-weight:bold;padding:11px 20px;border-radius:10px;border:1px solid #111318;";
 
 /// One line of the message: escaped, with **bold**, [label](url) links and
 /// bare URLs made clickable. A leftover "[personalise here…]" is
@@ -47,24 +43,22 @@ function cardImageHtml(url: string): string {
 
 // Official Apple/Google download badges — self-hosted PNGs (converted from
 // Apple's own badge API, since SVG isn't reliably rendered by Outlook and
-// other email clients) rather than the generic black/white pill button
-// below, so the App Store and Play Store links are recognisable at a
-// glance instead of looking like just another text link.
+// other email clients) rather than the generic black/white pill button.
+// Which badge to use is decided by *which template slot* a link came from
+// (params.link = iOS, params.androidLink = Android — see buttonUrls below),
+// not by sniffing the URL's domain: params.link is deliberately the tracked
+// /i/<token> redirect, not a literal apps.apple.com URL, so it can log our
+// own click count and (for WhatsApp, which previews the first link) show
+// the recipient's own card picture rather than Apple's App Store preview.
 const APP_STORE_BADGE_URL = "https://www.aiert.co.uk/tapcard-badges/app-store-badge.png";
 const GOOGLE_PLAY_BADGE_URL = "https://www.aiert.co.uk/tapcard-badges/google-play-badge.png";
 
-function storeBadge(url: string): { src: string; alt: string; width: number; height: number } | null {
-  if (/apps\.apple\.com/.test(url)) return { src: APP_STORE_BADGE_URL, alt: "Download on the App Store", width: 144, height: 48 };
-  if (/play\.google\.com/.test(url)) return { src: GOOGLE_PLAY_BADGE_URL, alt: "Get it on Google Play", width: 124, height: 48 };
-  return null;
-}
-
-function button(url: string, label: string, primary: boolean): string {
-  const badge = storeBadge(url);
-  if (badge) {
-    return `<a href="${escapeHtml(url)}" style="display:inline-block;margin:4px 12px 18px 0;"><img src="${badge.src}" width="${badge.width}" height="${badge.height}" alt="${escapeHtml(badge.alt)}" style="display:block;border:0;"></a>`;
-  }
-  return `<p style="margin:4px 0 18px;"><a href="${escapeHtml(url)}" style="${primary ? PRIMARY_BUTTON : SECONDARY_BUTTON}">${escapeHtml(label)}</a></p>`;
+function button(url: string, kind: "ios" | "android"): string {
+  const badge =
+    kind === "ios"
+      ? { src: APP_STORE_BADGE_URL, alt: "Download on the App Store", width: 144, height: 48 }
+      : { src: GOOGLE_PLAY_BADGE_URL, alt: "Get it on Google Play", width: 124, height: 48 };
+  return `<a href="${escapeHtml(url)}" style="display:inline-block;margin:4px 12px 18px 0;"><img src="${badge.src}" width="${badge.width}" height="${badge.height}" alt="${escapeHtml(badge.alt)}" style="display:block;border:0;"></a>`;
 }
 
 /// A paragraph: ordinary lines become a <p>, runs of "- " lines a list.
@@ -110,8 +104,8 @@ export function inviteEmailHtml(params: {
   cardImageUrl?: string;
   unsubscribeUrl: string;
 }): string {
-  const buttonUrls = new Map<string, boolean>([[params.link, true]]);
-  if (params.androidLink) buttonUrls.set(params.androidLink, false);
+  const buttonUrls = new Map<string, "ios" | "android">([[params.link, "ios"]]);
+  if (params.androidLink) buttonUrls.set(params.androidLink, "android");
   let linkShown = false;
 
   const body = params.text
@@ -119,18 +113,18 @@ export function inviteEmailHtml(params: {
     .split(/\n{2,}/)
     .map((raw) => {
       if (raw.trim() === "{cardImage}") return cardImageHtml(params.cardImageUrl ?? CARD_IMAGE_URL);
-      // [label](their link) or [label](android link) → a button under the
+      // [label](their link) or [label](android link) → a badge under the
       // paragraph's own words ("If you have an iPhone, you can use it today:").
       const buttons: string[] = [];
-      let text = raw.replace(MD_LINK, (whole, label: string, url: string) => {
+      let text = raw.replace(MD_LINK, (whole, _label: string, url: string) => {
         if (!buttonUrls.has(url)) return whole;
-        buttons.push(button(url, label, buttonUrls.get(url)!));
+        buttons.push(button(url, buttonUrls.get(url)!));
         if (url === params.link) linkShown = true;
         return "";
       });
-      // Older templates put the bare link in the text: keep it, add the button.
+      // Older templates put the bare link in the text: keep it, add the badge.
       if (raw.includes(params.link) && !linkShown) {
-        buttons.push(button(params.link, "Get TapCard free", true));
+        buttons.push(button(params.link, "ios"));
         linkShown = true;
       }
       text = text.replace(/[ \t]+$/gm, "").trim();
@@ -140,7 +134,7 @@ export function inviteEmailHtml(params: {
 
   return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.55;color:#1f2937;max-width:560px;">
 ${body}
-${linkShown ? "" : button(params.link, "Get TapCard free", true)}
+${linkShown ? "" : button(params.link, "ios")}
 <p style="margin:24px 0 0;font-size:13px;color:#4b5563;line-height:1.5;"><strong style="color:#111827;">Martin Dobson</strong><br>Founder, AIERT Ltd · TapCard · MailBroom · PowerSearch</p>
 <p style="margin:24px 0 0;font-size:12px;color:#9ca3af;">You're getting this because you're in Martin's contacts. <a href="${escapeHtml(params.unsubscribeUrl)}" style="color:#9ca3af;">Don't send me these</a></p>
 </div>`;
