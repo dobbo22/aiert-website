@@ -45,7 +45,25 @@ function cardImageHtml(url: string): string {
   return `<p style="margin:4px 0 18px;"><img src="${escapeHtml(url)}" width="280" alt="A TapCard: name, company, tap-to-call, email and website" style="display:block;width:280px;max-width:100%;height:auto;border:0;border-radius:18px;"></p>`;
 }
 
+// Official Apple/Google download badges — self-hosted PNGs (converted from
+// Apple's own badge API, since SVG isn't reliably rendered by Outlook and
+// other email clients) rather than the generic black/white pill button
+// below, so the App Store and Play Store links are recognisable at a
+// glance instead of looking like just another text link.
+const APP_STORE_BADGE_URL = "https://www.aiert.co.uk/tapcard-badges/app-store-badge.png";
+const GOOGLE_PLAY_BADGE_URL = "https://www.aiert.co.uk/tapcard-badges/google-play-badge.png";
+
+function storeBadge(url: string): { src: string; alt: string; width: number; height: number } | null {
+  if (/apps\.apple\.com/.test(url)) return { src: APP_STORE_BADGE_URL, alt: "Download on the App Store", width: 144, height: 48 };
+  if (/play\.google\.com/.test(url)) return { src: GOOGLE_PLAY_BADGE_URL, alt: "Get it on Google Play", width: 124, height: 48 };
+  return null;
+}
+
 function button(url: string, label: string, primary: boolean): string {
+  const badge = storeBadge(url);
+  if (badge) {
+    return `<a href="${escapeHtml(url)}" style="display:inline-block;margin:4px 12px 18px 0;"><img src="${badge.src}" width="${badge.width}" height="${badge.height}" alt="${escapeHtml(badge.alt)}" style="display:block;border:0;"></a>`;
+  }
   return `<p style="margin:4px 0 18px;"><a href="${escapeHtml(url)}" style="${primary ? PRIMARY_BUTTON : SECONDARY_BUTTON}">${escapeHtml(label)}</a></p>`;
 }
 

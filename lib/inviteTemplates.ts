@@ -41,15 +41,24 @@ export function applyPersonalNote(message: string, note: string): string {
 
 // Email formatting: a blank line starts a new paragraph, lines starting
 // "- " are bullets, **bold**, and [label](url) links. The {link} and
-// {androidLink} links are drawn as buttons, and a paragraph that is just
-// {cardImage} becomes the example card picture (see lib/inviteEmail.ts).
+// {androidLink} links are drawn as the official App Store/Google Play
+// badges (storeBadge() in lib/inviteEmail.ts, matched by URL), and a
+// paragraph that is just {cardImage} becomes the example card picture.
+// Both store links sit right after the pitch — previously they were all
+// the way at the bottom, past a card picture and three bullets, where a
+// scrolling/skimming reader could miss them entirely.
 export const DEFAULT_EMAIL_TEMPLATE = `Hi {firstName},
 
 This is Martin Dobson — [personalise here: e.g. we worked together at BT]. I'm getting in touch from my business email ({fromEmail}) because I've started my own company, AIERT, making apps that take the hassle out of everyday work, and you're one of the first people I wanted to share the newest one with.
 
 Have you ever been in a situation where someone asked for your business card, and you didn't have one with you or had run out?
 
-I've built an app called TapCard to solve exactly that. It keeps your business card on your phone in the TapCard app, and also in your Apple Wallet for easy access. Share it instantly with a QR code or a link, and when you swap details, their info saves straight into your contacts — no typing, no running out of cards.
+I've built an app called TapCard to solve exactly that. It keeps your business card on your phone — and in your Apple Wallet — shared instantly with a QR code or a link. When you swap details, their info saves straight into your contacts, no typing, no running out of cards.
+
+{freeOffer}
+
+[Get TapCard free]({link})
+[Get TapCard free]({androidLink})
 
 Here's what your TapCard could look like:
 
@@ -61,12 +70,6 @@ What makes it even better:
 - **No app needed for them** — they just tap your link or scan your QR code, and your details save to their phone.
 
 See exactly how it works: [How TapCard works]({howItWorksLink})
-
-{freeOffer}
-
-If you have an iPhone, you can use it today: [Get TapCard free]({link})
-
-On Android? You can get it today too: [Get TapCard free]({androidLink})
 
 Always be prepared.
 
@@ -84,41 +87,36 @@ Have you ever been asked for your business card and not had one with you, or run
 
 I've built a free app called TapCard to solve exactly that. Your business card lives on your phone, ready to share instantly with a QR code or a link. When you swap details, their info saves straight into your contacts — no typing, no running out of cards.
 
+iPhone: {link}
+Android: {androidLink}
+
 • Tap to call — once someone has your TapCard, they can tap your number to call you direct
 • All your links in one place — your website, LinkedIn, X, Instagram, right there on the card
 • No app needed for them — they just tap your link or scan your QR code
 
 How it works: {howItWorksLink}
 
-{freeOffer}
-
-iPhone: {link}
-
-Android: {androidLink}
-
 Always be prepared.
 Martin`;
 
-// WhatsApp: the same message as the email, in WhatsApp's own formatting
-// (*bold*). WhatsApp previews the first link, so {link} comes first: its
+// WhatsApp: shorter than the email — a long message gets folded behind
+// WhatsApp's "Read more" in the open chat, which used to bury both store
+// links and the "how it works" link below the fold (only the iPhone link,
+// right after the pitch, reliably survived). Both store links now come
+// straight after the pitch instead, and the feature bullets are dropped
+// here specifically to keep the whole thing short enough that nothing gets
+// hidden. WhatsApp previews the first link, so {link} comes first: its
 // preview shows a picture of their own card (see app/tapcard/get/[token]).
 export const DEFAULT_WHATSAPP_TEMPLATE = `Hi {firstName}, it's Martin Dobson — [personalise here: e.g. we worked together at BT].
 
-Have you ever been asked for your business card and not had one with you, or run out?
-
-I've built an app called *TapCard* to solve exactly that. It keeps your business card on your phone, and in your Apple Wallet, ready to share with a QR code or a link. When you swap details, their info saves straight into your contacts — no typing, no running out of cards.
-
-• *Tap to call* — once someone has your TapCard, they can tap your number to call you direct
-• *All your links in one place* — your website, LinkedIn, X, Instagram, right there on the card
-• *No app needed for them* — they just tap your link or scan your QR code
+Ever been asked for your business card and not had one on you? I built *TapCard* to fix that — your card lives on your phone (and Apple Wallet), shared with a tap or QR code. When you swap details, theirs saves straight into your contacts.
 
 {freeOffer}
 
-📱 *iPhone — get it free:* {link}
+📱 *iPhone:* {link}
+🤖 *Android:* {androidLink}
 
-👀 See how it works: {howItWorksLink}
-
-🤖 *Android — get it free:* {androidLink}
+See how it works: {howItWorksLink}
 
 Always be prepared!
 Martin`;
