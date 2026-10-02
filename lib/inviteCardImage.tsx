@@ -147,9 +147,9 @@ function Row({ color, label, value, icon }: { color: string; label: string; valu
 export async function inviteCardImage(person: InviteCardPerson): Promise<ImageResponse> {
   // A website typed in on the Send tab wins over the email's domain.
   const domain = websiteDomain(person.website) ?? companyDomain(person.email);
-  // A real photo wins over the company logo, so don't wait on a logo fetch
-  // (up to 6s) when it won't be shown.
-  const logo = person.photo_url ? null : await logoDataUri(domain);
+  // With a photo, the logo becomes a small badge on it rather than filling
+  // the avatar itself — still fetched either way.
+  const logo = await logoDataUri(domain);
   const socials = socialsFor(person);
   const rows: { color: string; label: string; value: string; icon: Icon }[] = [];
   if (person.phone) rows.push({ color: "#22c55e", label: "Call me", value: person.phone, icon: "phone" });
@@ -181,27 +181,51 @@ export async function inviteCardImage(person: InviteCardPerson): Promise<ImageRe
             </div>
           </div>
           <div style={{ display: "flex", justifyContent: "center", marginTop: 10 }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 140,
-                height: 140,
-                borderRadius: 70,
-                background: person.photo_url ? "#3a3b42" : logo ? "#ffffff" : "#3a3b42",
-                border: "6px solid #0b0c10",
-                overflow: "hidden",
-              }}
-            >
-              {person.photo_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={person.photo_url} alt="" width={140} height={140} style={{ objectFit: "cover" }} />
-              ) : logo ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={logo} alt="" width={92} height={92} style={{ objectFit: "contain" }} />
-              ) : (
-                <div style={{ display: "flex", color: "#ffffff", fontSize: 52, fontWeight: 700 }}>{initials(person.name)}</div>
+            <div style={{ display: "flex", position: "relative", width: 140, height: 140 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 140,
+                  height: 140,
+                  borderRadius: 70,
+                  background: person.photo_url ? "#3a3b42" : logo ? "#ffffff" : "#3a3b42",
+                  border: "6px solid #0b0c10",
+                  overflow: "hidden",
+                }}
+              >
+                {person.photo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={person.photo_url} alt="" width={140} height={140} style={{ objectFit: "cover" }} />
+                ) : logo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={logo} alt="" width={92} height={92} style={{ objectFit: "contain" }} />
+                ) : (
+                  <div style={{ display: "flex", color: "#ffffff", fontSize: 52, fontWeight: 700 }}>{initials(person.name)}</div>
+                )}
+              </div>
+              {/* The company logo as a small badge on the photo, like a verified mark — only when there's a real photo filling the main circle. */}
+              {person.photo_url && logo && (
+                <div
+                  style={{
+                    display: "flex",
+                    position: "absolute",
+                    right: -6,
+                    bottom: -6,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 52,
+                    height: 52,
+                    borderRadius: 26,
+                    background: "#ffffff",
+                    border: "4px solid #0b0c10",
+                    overflow: "hidden",
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={logo} alt="" width={34} height={34} style={{ objectFit: "contain" }} />
+                </div>
               )}
             </div>
           </div>
