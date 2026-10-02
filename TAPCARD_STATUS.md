@@ -18,7 +18,13 @@ The tapcard.aiert.co.uk host is served by aiert-website: `proxy.ts` rewrites
 
 - **iPhone 1.1 (10)** live on the App Store (app id 6816003159, bundle `com.mailbroom.tapcard`).
 - **iPhone 1.2 (11)** submitted for review with six in-app purchases (below).
-- **Android 1.2 (7)** built and tested in the emulator; Google Play listing still awaiting Google's approval.
+- **Android 1.2 (8)** (Billing 8.0.0) built and tested in the emulator; Google Play listing still awaiting Google's approval.
+  Branch also has the Play Console recommendation fixes (no deprecated bar colours, no portrait
+  lock, downsampled bitmaps, card centred in landscape). The remaining "deprecated edge-to-edge
+  APIs" warning comes from AndroidX's own enableEdgeToEdge() and can be ignored.
+  **Don't accept Android Studio's AGP/Kotlin/"Daemon toolchain" upgrade prompts** before release —
+  the newer AGP turns the old `android {}` / `kotlinOptions` build DSL into errors (repo pins
+  AGP 9.2.1, Kotlin 2.2.10, Gradle 9.4.1). Migrating the build files is a post-release tidy-up.
 
 ## Founder places + lifetime unlock (new in 1.2)
 
@@ -42,7 +48,7 @@ The tapcard.aiert.co.uk host is served by aiert-website: `proxy.ts` rewrites
   - Each person keeps the price current when first counted.
 - iPhone: `TapCard/Services/EntitlementService.swift`, `TapCard/Views/UnlockView.swift`;
   debug launch arg `-showUnlock` shows the unlock screen (scheme has a synced `TapCard.storekit`).
-- Android: `data/Entitlements.kt` (Play Billing 7.1.1), `ui/UnlockDialog.kt`.
+- Android: `data/Entitlements.kt` (Play Billing 8.0.0), `ui/UnlockDialog.kt`.
 - Unknown status (offline, Xcode build) never blocks sharing; already-shared cards keep working.
 - Track invites page shows founder places left.
 
