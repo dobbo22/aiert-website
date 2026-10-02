@@ -1083,6 +1083,7 @@ function ContactDetailsForm({
     if (res.ok && json.url) {
       setPhotoUrl(json.url);
       setNote({ text: "Photo saved ✓ — their card picture now uses it." });
+      onSaved(contact.name); // bumps the preview's cache-busting ?v= so the new photo shows
     } else {
       const text = json.error ?? `Couldn't upload photo (HTTP ${res.status})`;
       setNote({ text, error: true });
@@ -1097,6 +1098,7 @@ function ContactDetailsForm({
     if (res.ok) {
       setPhotoUrl("");
       setNote({ text: "Photo removed — back to the logo/initials." });
+      onSaved(contact.name);
     }
   }
   const field = (key: keyof typeof d, label: string, placeholder = "", type = "text") => (
