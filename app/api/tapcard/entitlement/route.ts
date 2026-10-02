@@ -33,10 +33,20 @@ export async function POST(req: Request) {
 }
 
 // Public: free places left and today's price, for the website and emails.
-export async function GET() {
-  const status = await ladderStatus();
+// Each platform has its own independent 1,000-place ladder — pass
+// ?platform=ios or ?platform=android for just that one, or omit it for both.
+export async function GET(req: Request) {
+  const platform = new URL(req.url).searchParams.get("platform");
+  if (platform === "ios" || platform === "android") {
+    const status = await ladderStatus(platform);
+    return NextResponse.json(
+      { freePlacesLeft: status.freePlacesLeft, price: status.nextPrice },
+      { headers: { "Cache-Control": "public, s-maxage=60" } },
+    );
+  }
+  const [ios, android] = await Promise.all([ladderStatus("ios"), ladderStatus("android")]);
   return NextResponse.json(
-    { freePlacesLeft: status.freePlacesLeft, price: status.nextPrice },
+    { ios: { freePlacesLeft: ios.freePlacesLeft, price: ios.nextPrice }, android: { freePlacesLeft: android.freePlacesLeft, price: android.nextPrice } },
     { headers: { "Cache-Control": "public, s-maxage=60" } },
   );
 }

@@ -1,15 +1,18 @@
 import crypto from "crypto";
 import sql from "@/lib/db";
 
-// TapCard's "first 1,000 free for life" ladder, shared by iPhone and
-// Android. The iPhone app sends Apple's signed AppTransaction (who
-// downloaded it, and when) on launch; the Android app, which has no signed
-// equivalent, sends a random install id kept in its (Google-backed-up)
-// preferences. Each person is counted once, in order. Places 1–1,000 are founders (free for life);
-// after that, sharing a card needs a one-off lifetime unlock whose price
-// steps up £1 per 1,000 people, from £0.99 to £4.99, then £9.99 from the
-// 10,001st person. Each person keeps the price that was current when they
-// were first counted.
+// TapCard's "first 1,000 free for life" ladder — one independent 1,000-place
+// ladder per platform (1,000 for iPhone, 1,000 for Android; 2,000 founder
+// places total), not a single pool shared between them. The iPhone app
+// sends Apple's signed AppTransaction (who downloaded it, and when) on
+// launch; the Android app, which has no signed equivalent, sends a random
+// install id kept in its (Google-backed-up) preferences. Each person is
+// counted once, in order, within their platform. Places 1–1,000 on a
+// platform are founders (free for life) on that platform; after that,
+// sharing a card needs a one-off lifetime unlock whose price steps up £1
+// per 1,000 people, from £0.99 to £4.99, then £9.99 from the 10,001st
+// person — the same price ladder runs independently per platform. Each
+// person keeps the price that was current when they were first counted.
 
 export const FREE_PLACES = 1000;
 const BUNDLE_ID = "com.mailbroom.tapcard";
@@ -186,25 +189,27 @@ async function claim(
   `) as { id: number; place: number | null; tier: number | null }[];
   let { place, tier } = inserted[0];
   if (place == null || tier == null) {
-    // Place = how many in this environment were counted up to and including them.
+    // Place = how many on this platform, in this environment, were counted
+    // up to and including them — each platform has its own independent
+    // place count, not a shared one.
     const rank = (await sql`
-      SELECT COUNT(*)::int AS n FROM tapcard_app_claims WHERE environment = ${environment} AND id <= ${inserted[0].id}
+      SELECT COUNT(*)::int AS n FROM tapcard_app_claims WHERE platform = ${platform} AND environment = ${environment} AND id <= ${inserted[0].id}
     `) as { n: number }[];
     place = rank[0].n;
     const launch = paywallLaunch();
     tier = originalAt && launch && originalAt < launch ? 0 : tierForPlace(place, environment);
     await sql`UPDATE tapcard_app_claims SET place = ${place}, tier = ${tier} WHERE id = ${inserted[0].id}`;
   }
-  const status = await ladderStatus(environment);
+  const status = await ladderStatus(platform, environment);
   const unlock = tier > 0 ? LIFETIME_TIERS[tier - 1] : null;
   return { place, founder: tier === 0, productId: unlock?.productId ?? null, price: unlock?.price ?? null, freePlacesLeft: status.freePlacesLeft };
 }
 
-/// Where the ladder is now: people counted, free places left, and the
-/// unlock a newcomer would be offered.
-export async function ladderStatus(environment = "Production") {
+/// Where one platform's ladder is now: people counted on it, free places
+/// left on it, and the unlock a newcomer on it would be offered.
+export async function ladderStatus(platform: "ios" | "android", environment = "Production") {
   await ensureSchema();
-  const rows = (await sql`SELECT COUNT(*)::int AS n FROM tapcard_app_claims WHERE environment = ${environment}`) as { n: number }[];
+  const rows = (await sql`SELECT COUNT(*)::int AS n FROM tapcard_app_claims WHERE platform = ${platform} AND environment = ${environment}`) as { n: number }[];
   const counted = rows[0]?.n ?? 0;
   const nextTier = tierForPlace(counted + 1, environment);
   const unlock = nextTier > 0 ? LIFETIME_TIERS[nextTier - 1] : null;
@@ -218,23 +223,29 @@ export async function ladderStatus(environment = "Production") {
 
 /// The live offer for invites: {freeOffer} (a sentence in the message) and
 /// {offerSubject} (the email subject) — free places left, or the price once
-/// they've gone.
+/// they've gone. An invite goes out before the recipient has picked a
+/// platform, so this checks both ladders: as long as either iPhone or
+/// Android still has free places, the offer reads as live (a newcomer who
+/// picks the one that's run out just lands on that platform's own price
+/// instead — still accurate, since each platform's ladder is independent).
 export async function founderOffer(): Promise<{ line: string; subject: string }> {
-  const status = await ladderStatus().catch(() => null);
+  const [ios, android] = await Promise.all([ladderStatus("ios").catch(() => null), ladderStatus("android").catch(() => null)]);
   const first = FREE_PLACES.toLocaleString("en-GB");
-  if (!status) {
-    return { line: `It's free for life for the first ${first} people, so grab your place now.`, subject: "Free founder place: TapCard for iPhone" };
+  if (!ios && !android) {
+    return { line: `It's free for life for the first ${first} people on each of iPhone and Android, so grab your place now.`, subject: "Free founder place: TapCard" };
   }
+  const anyFree = (ios?.freePlacesLeft ?? 0) > 0 || (android?.freePlacesLeft ?? 0) > 0;
   // The exact number isn't shown ("997 left" reads as plenty); the Track
-  // invites tab still has it.
-  if (status.freePlacesLeft > 0) {
+  // invites tab still has it, per platform.
+  if (anyFree) {
     return {
-      line: `It's free for life for the first ${first} people, and there are only a few founder places left, so grab yours now.`,
-      subject: "Free founder place: TapCard for iPhone (only a few left)",
+      line: `It's free for life for the first ${first} people on each of iPhone and Android, and there are only a few founder places left, so grab yours now.`,
+      subject: "Free founder place: TapCard (only a few left)",
     };
   }
+  const price = ios?.nextPrice ?? android?.nextPrice ?? "a small one-off fee";
   return {
-    line: `The free founder places have all gone, but it's just ${status.nextPrice} for life — a one-off payment, no subscription.`,
-    subject: `TapCard for iPhone: ${status.nextPrice} for life`,
+    line: `The free founder places have all gone, but it's just ${price} for life — a one-off payment, no subscription.`,
+    subject: `TapCard: ${price} for life`,
   };
 }

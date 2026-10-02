@@ -44,12 +44,13 @@ export default async function TrackInvitesPage() {
   let stores: StoreRow[] = [];
   let sends: SendRow[] = [];
   let spreaders: SpreaderRow[] = [];
-  let ladder: Awaited<ReturnType<typeof ladderStatus>> | null = null;
+  let iosLadder: Awaited<ReturnType<typeof ladderStatus>> | null = null;
+  let androidLadder: Awaited<ReturnType<typeof ladderStatus>> | null = null;
   let error: string | null = null;
 
   try {
     await ensureInviteSchema();
-    ladder = await ladderStatus();
+    [iosLadder, androidLadder] = await Promise.all([ladderStatus("ios"), ladderStatus("android")]);
     [channels, campaigns, stores, sends, spreaders] = (await Promise.all([
       sql`
         SELECT s.channel, COUNT(DISTINCT s.id)::int AS sent,
@@ -198,15 +199,29 @@ export default async function TrackInvitesPage() {
 
       <h2 className="admin-subtitle invite-h2">Founder places</h2>
       <p className="admin-mailbroom-note">
-        {ladder ? (
+        Each platform has its own independent {FREE_PLACES.toLocaleString("en-GB")}-place ladder. Counted when someone
+        opens a version of the app with the founder check.
+      </p>
+      <p className="admin-mailbroom-note">
+        {iosLadder ? (
           <>
-            <strong>{ladder.counted.toLocaleString("en-GB")}</strong> people counted in the apps (iPhone and Android) ·{" "}
-            <strong>{ladder.freePlacesLeft.toLocaleString("en-GB")}</strong> of {FREE_PLACES.toLocaleString("en-GB")} free
-            founder places left · a newcomer now pays <strong>{ladder.nextPrice}</strong> for life. Counted when someone
-            opens a version of the app with the founder check.
+            <strong>iPhone:</strong> <strong>{iosLadder.counted.toLocaleString("en-GB")}</strong> counted ·{" "}
+            <strong>{iosLadder.freePlacesLeft.toLocaleString("en-GB")}</strong> of {FREE_PLACES.toLocaleString("en-GB")} free
+            founder places left · a newcomer now pays <strong>{iosLadder.nextPrice}</strong> for life.
           </>
         ) : (
-          "Couldn't load the founder count."
+          "Couldn't load the iPhone founder count."
+        )}
+      </p>
+      <p className="admin-mailbroom-note">
+        {androidLadder ? (
+          <>
+            <strong>Android:</strong> <strong>{androidLadder.counted.toLocaleString("en-GB")}</strong> counted ·{" "}
+            <strong>{androidLadder.freePlacesLeft.toLocaleString("en-GB")}</strong> of {FREE_PLACES.toLocaleString("en-GB")} free
+            founder places left · a newcomer now pays <strong>{androidLadder.nextPrice}</strong> for life.
+          </>
+        ) : (
+          "Couldn't load the Android founder count."
         )}
       </p>
 
