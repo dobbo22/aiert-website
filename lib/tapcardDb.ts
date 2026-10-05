@@ -11,6 +11,12 @@ export interface TapCardRecord {
   phone: string;
   email: string;
   website: string;
+  /// A postal address — same as the other contact fields: shown on the
+  /// card, editable by the app. Auto-filled once, in the background, from
+  /// the website's own schema.org markup if the card doesn't already have
+  /// one when the website is set (lib/siteBrandColor.ts); never overwrites
+  /// an address the person typed themselves.
+  address: string;
   linkedin_url: string;
   twitter_url: string;
   instagram_url: string;
@@ -25,12 +31,18 @@ export interface TapCardRecord {
   save_count: number;
   /// Wallet pass design: "artwork" (default), "photo" or "brand" — lib/tapcardPassArt.ts.
   pass_style: string;
+  /// The "brand" style's gradient/accent colour, e.g. "#1a73e8" — extracted
+  /// from the card's own website (lib/siteBrandColor.ts) rather than set by
+  /// the apps. Empty until a background job resolves it; "brand" style
+  /// falls back to the default TapCard gradient until then.
+  brand_color: string;
   updated_at: Date | string;
 }
 
 /// pass_style is optional: app builds that predate it don't send one, and
-/// an update without it keeps the card's current style.
-type TapCardInput = Omit<TapCardRecord, "id" | "photo_url" | "edit_token_hash" | "view_count" | "save_count" | "pass_style" | "updated_at"> & {
+/// an update without it keeps the card's current style. brand_color is
+/// never accepted from the client at all — see lib/siteBrandColor.ts.
+type TapCardInput = Omit<TapCardRecord, "id" | "photo_url" | "edit_token_hash" | "view_count" | "save_count" | "pass_style" | "brand_color" | "updated_at"> & {
   photo_url?: string | null;
   pass_style?: string;
 };
@@ -72,6 +84,8 @@ function ensureSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS edit_token_hash TEXT`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS creator_ip_hash TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS pass_style TEXT NOT NULL DEFAULT 'artwork'`)
+      .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS brand_color TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS address TEXT NOT NULL DEFAULT ''`)
       // "Send your card back": a receiver's app returning its own (already
       // public) card to the card it scanned. Only the two ids are stored —
       // the returned details are read live from tapcard_cards, so nothing is
@@ -104,10 +118,10 @@ export async function createCard(input: TapCardInput, editTokenHash: string, cre
   await ensureSchema();
   const id = newCardId();
   await sql`
-    INSERT INTO tapcard_cards (id, label, grouping_id, name, title, company, phone, email, website, linkedin_url,
+    INSERT INTO tapcard_cards (id, label, grouping_id, name, title, company, phone, email, website, address, linkedin_url,
                                twitter_url, instagram_url, facebook_url, facebook_is_page, tiktok_url, photo_url,
                                edit_token_hash, creator_ip_hash, pass_style)
-    VALUES (${id}, ${input.label}, ${input.grouping_id}, ${input.name}, ${input.title}, ${input.company}, ${input.phone}, ${input.email}, ${input.website}, ${input.linkedin_url},
+    VALUES (${id}, ${input.label}, ${input.grouping_id}, ${input.name}, ${input.title}, ${input.company}, ${input.phone}, ${input.email}, ${input.website}, ${input.address}, ${input.linkedin_url},
             ${input.twitter_url}, ${input.instagram_url}, ${input.facebook_url}, ${input.facebook_is_page}, ${input.tiktok_url}, ${input.photo_url ?? null},
             ${editTokenHash}, ${creatorIpHash}, ${input.pass_style ?? "artwork"})
   `;
@@ -119,7 +133,7 @@ export async function updateCard(id: string, input: TapCardInput): Promise<boole
   const rows = await sql`
     UPDATE tapcard_cards
     SET label = ${input.label}, grouping_id = ${input.grouping_id}, name = ${input.name}, title = ${input.title}, company = ${input.company},
-        phone = ${input.phone}, email = ${input.email}, website = ${input.website},
+        phone = ${input.phone}, email = ${input.email}, website = ${input.website}, address = ${input.address},
         linkedin_url = ${input.linkedin_url},
         twitter_url = ${input.twitter_url}, instagram_url = ${input.instagram_url},
         facebook_url = ${input.facebook_url}, facebook_is_page = ${input.facebook_is_page},
@@ -194,6 +208,7 @@ export function publicCardJSON(card: TapCardRecord) {
     phone: card.phone,
     email: card.email,
     website: card.website,
+    address: card.address,
     linkedInURL: card.linkedin_url,
     twitterURL: card.twitter_url,
     instagramURL: card.instagram_url,
@@ -201,7 +216,30 @@ export function publicCardJSON(card: TapCardRecord) {
     facebookIsPage: card.facebook_is_page,
     tiktokURL: card.tiktok_url,
     photoURL: card.photo_url,
+    // null rather than "" while nothing's been resolved yet, or nothing
+    // suitable was found — lets the apps tell "no brand colour" apart from
+    // an actual (if unlikely) colour hex string without a sentinel value.
+    brandColor: card.brand_color || null,
   };
+}
+
+/// Set once a background job (lib/siteBrandColor.ts) resolves the card's
+/// website to a colour — never from client input, and never blocked on by
+/// the request that triggered it (see app/api/tapcard/cards/route.ts).
+export async function setBrandColor(id: string, color: string | null): Promise<void> {
+  await ensureSchema();
+  await sql`UPDATE tapcard_cards SET brand_color = ${color ?? ""} WHERE id = ${id}`;
+}
+
+/// Same background-job pattern as setBrandColor, but guarded: only writes
+/// if the card's address is still empty, so this can never overwrite one
+/// the person typed themselves — including a blank they deliberately set
+/// after the auto-fill ran once (this only ever runs once per website
+/// change anyway, but the guard is what actually makes that safe).
+export async function setAddressIfEmpty(id: string, address: string | null): Promise<void> {
+  if (!address) return;
+  await ensureSchema();
+  await sql`UPDATE tapcard_cards SET address = ${address} WHERE id = ${id} AND address = ''`;
 }
 
 /// Re-sending the same card just refreshes the timestamp, so it's delivered

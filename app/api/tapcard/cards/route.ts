@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse, after } from "next/server";
-import { countRecentCreates, createCard, getCard, updateCard } from "@/lib/tapcardDb";
+import { countRecentCreates, createCard, getCard, setAddressIfEmpty, setBrandColor, updateCard } from "@/lib/tapcardDb";
 import { canEdit, clientIpHash, hashSecret, readEditToken } from "@/lib/tapcardAuth";
 import { parsePassStyle } from "@/lib/tapcardPassStyle";
 import { refreshGoogleWalletPass } from "@/lib/googleWallet";
+import { resolveSiteBranding } from "@/lib/siteBrandColor";
 
 interface CardBody {
   id?: string;
@@ -14,6 +15,7 @@ interface CardBody {
   phone?: string;
   email?: string;
   website?: string;
+  address?: string;
   linkedInURL?: string;
   twitterURL?: string;
   instagramURL?: string;
@@ -58,6 +60,7 @@ function sanitize(body: CardBody) {
     phone: (body.phone ?? "").trim().slice(0, 60),
     email: (body.email ?? "").trim().slice(0, 200),
     website: (body.website ?? "").trim().slice(0, 300),
+    address: (body.address ?? "").trim().slice(0, 300),
     linkedin_url: socialUrl(body.linkedInURL, "linkedin"),
     twitter_url: socialUrl(body.twitterURL, "x"),
     instagram_url: socialUrl(body.instagramURL, "instagram"),
@@ -89,11 +92,15 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "forbidden" }, { status: 403 });
       }
       await updateCard(body.id, fields);
+      const websiteChanged = fields.website !== existing.website;
+      const addressIsBlank = !fields.address;
       // A pass already saved in Google Wallet picks up the change (Apple
       // passes are fixed once added — the app offers to re-add instead).
       after(async () => {
         const card = await getCard(body.id!);
-        if (card) await refreshGoogleWalletPass(card, `https://tapcard.aiert.co.uk/s/${card.id}`).catch(() => {});
+        if (!card) return;
+        if (websiteChanged || addressIsBlank) await resolveAndSaveSiteBranding(card.id, fields.website, addressIsBlank);
+        await refreshGoogleWalletPass(card, `https://tapcard.aiert.co.uk/s/${card.id}`).catch(() => {});
       });
       return NextResponse.json({ id: body.id });
     }
@@ -107,5 +114,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "too many cards created, try again later" }, { status: 429 });
   }
   const id = await createCard(fields, hashSecret(token), ipHash);
+  // Resolved after responding — the app gets its id back immediately and
+  // picks up the colour/address on its next GET of the card (a few seconds
+  // later, same deferred pattern as the Google Wallet pass refresh above).
+  if (fields.website) after(() => resolveAndSaveSiteBranding(id, fields.website, !fields.address));
   return NextResponse.json({ id });
+}
+
+/// Clears the stored colour if the website was removed, rather than leaving
+/// a stale colour from whatever site used to be there. Address is left
+/// alone unless it's still blank — see setAddressIfEmpty, which this relies
+/// on to never overwrite one the person typed themselves.
+async function resolveAndSaveSiteBranding(id: string, website: string, fillAddress: boolean): Promise<void> {
+  const branding = website ? await resolveSiteBranding(website).catch(() => ({ color: null, address: null })) : { color: null, address: null };
+  await setBrandColor(id, branding.color);
+  if (fillAddress) await setAddressIfEmpty(id, branding.address);
 }

@@ -20,7 +20,7 @@ const MAX_IMAGE_BYTES = 512 * 1024;
 const MAX_REDIRECTS = 3;
 const MAX_CANDIDATES = 6;
 
-export type SiteIcon = { bytes: Buffer; contentType: string };
+export type SiteIcon = { bytes: Buffer; contentType: string; themeColor: string | null; address: string | null };
 
 /// Lowercased hostname, or null unless it's a plain public-looking domain.
 export function normalizeDomain(input: string): string | null {
@@ -36,18 +36,98 @@ export async function findSiteIcon(domain: string, { allowIco = true } = {}): Pr
   const page = await safeFetch(`https://${domain}/`);
   const candidates: string[] = [];
   let origin = `https://${domain}`;
+  let themeColor: string | null = null;
+  let address: string | null = null;
   if (page && (page.res.headers.get("content-type") ?? "").includes("text/html")) {
     origin = page.url.origin;
     const html = await readLimited(page.res, MAX_HTML_BYTES);
-    if (html) candidates.push(...iconLinks(html.toString("utf8"), page.url));
+    if (html) {
+      const text = html.toString("utf8");
+      candidates.push(...iconLinks(text, page.url));
+      themeColor = metaThemeColor(text);
+      address = jsonLdAddress(text);
+    }
   }
   candidates.push(`${origin}/apple-touch-icon.png`, `${origin}/favicon.ico`);
 
   for (const url of [...new Set(candidates)].slice(0, MAX_CANDIDATES)) {
     const icon = await fetchIcon(url);
-    if (icon && (allowIco || icon.contentType !== "image/x-icon")) return icon;
+    if (icon && (allowIco || icon.contentType !== "image/x-icon")) return { ...icon, themeColor, address };
   }
-  return fetchIcon(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`);
+  const fallback = await fetchIcon(`https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`);
+  return fallback && { ...fallback, themeColor, address };
+}
+
+/// A postal address from the site's own schema.org JSON-LD markup (the
+/// same structured data search engines and Google Business read) — never
+/// scraped from free text or footers, since an address is something that
+/// ends up printed on someone's business card: wrong is worse than
+/// missing, so only an unambiguous, machine-authored source counts.
+function jsonLdAddress(html: string): string | null {
+  for (const [, json] of html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(json);
+    } catch {
+      continue;
+    }
+    const nodes = Array.isArray(parsed) ? parsed : [parsed];
+    for (const node of nodes) {
+      const address = findAddressIn(node);
+      if (address) return address;
+    }
+  }
+  return null;
+}
+
+/// Depth-limited: `@graph` is the only nesting schema.org actually uses for
+/// multiple entities on one page, so this doesn't need to walk arbitrary
+/// JSON structures looking for an "address" key that might belong to
+/// something else entirely (a quoted review's business, a breadcrumb, etc).
+function findAddressIn(node: unknown, depth = 0): string | null {
+  if (!node || typeof node !== "object" || depth > 2) return null;
+  const obj = node as Record<string, unknown>;
+  if (Array.isArray(obj["@graph"])) {
+    for (const child of obj["@graph"] as unknown[]) {
+      const found = findAddressIn(child, depth + 1);
+      if (found) return found;
+    }
+  }
+  const type = String(obj["@type"] ?? "");
+  if (/organization|localbusiness|corporation|ngo/i.test(type)) {
+    const formatted = formatPostalAddress(obj["address"]);
+    if (formatted) return formatted;
+  }
+  return null;
+}
+
+function formatPostalAddress(address: unknown): string | null {
+  if (typeof address === "string") return address.trim() || null;
+  if (!address || typeof address !== "object") return null;
+  const a = address as Record<string, unknown>;
+  const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+  const parts = [str(a.streetAddress), str(a.addressLocality), str(a.addressRegion), str(a.postalCode), str(a.addressCountry)].filter(Boolean);
+  return parts.length ? parts.join(", ") : null;
+}
+
+/// A site's declared brand colour, straight from its own markup — set by
+/// browsers to tint the address bar/PWA chrome, so most sites with any kind
+/// of brand identity already have one. Only a plain #rgb/#rrggbb is trusted:
+/// named colours ("white") and color-scheme-aware `media` variants aren't
+/// worth the parsing complexity when the icon's own dominant colour (see
+/// lib/siteBrandColor.ts) is a solid fallback either way.
+function metaThemeColor(html: string): string | null {
+  for (const [tag] of html.matchAll(/<meta\b[^>]*>/gi)) {
+    const attr = (name: string) => new RegExp(`\\b${name}\\s*=\\s*["']([^"']*)["']`, "i").exec(tag)?.[1] ?? "";
+    if (attr("name").toLowerCase() !== "theme-color") continue;
+    const content = attr("content").trim();
+    if (/^#[0-9a-f]{6}$/i.test(content)) return content.toLowerCase();
+    if (/^#[0-9a-f]{3}$/i.test(content)) {
+      const [r, g, b] = content.slice(1);
+      return `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
+    }
+  }
+  return null;
 }
 
 /// <link> icons in the page, best first: apple-touch-icon (large, made for
@@ -72,7 +152,7 @@ function iconLinks(html: string, base: URL): string[] {
   return found.sort((a, b) => b.score - a.score).map((f) => f.url);
 }
 
-async function fetchIcon(url: string): Promise<SiteIcon | null> {
+async function fetchIcon(url: string): Promise<Omit<SiteIcon, "themeColor" | "address"> | null> {
   const got = await safeFetch(url);
   if (!got) return null;
   const bytes = await readLimited(got.res, MAX_IMAGE_BYTES);

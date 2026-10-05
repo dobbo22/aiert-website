@@ -22,6 +22,11 @@ export function buildVCard(card: TapCardRecord): string {
   if (card.phone) lines.push(`TEL;TYPE=CELL:${escapeVCardText(card.phone)}`);
   if (card.email) lines.push(`EMAIL:${escapeVCardText(card.email)}`);
   if (card.website) lines.push(`URL:${escapeVCardText(card.website)}`);
+  // ADR's structured fields (street;locality;region;postcode;country) don't
+  // map cleanly onto the single flattened string this app stores — putting
+  // it all in the "street" slot is what every contacts app actually shows
+  // regardless, so nothing is lost by not splitting it back apart.
+  if (card.address) lines.push(`ADR;TYPE=WORK:;;${escapeVCardText(card.address)};;;;`);
   if (card.linkedin_url) lines.push(`X-SOCIALPROFILE;TYPE=linkedin:${escapeVCardText(card.linkedin_url)}`);
   if (card.twitter_url) lines.push(`X-SOCIALPROFILE;TYPE=twitter:${escapeVCardText(card.twitter_url)}`);
   if (card.instagram_url) lines.push(`X-SOCIALPROFILE;TYPE=instagram:${escapeVCardText(card.instagram_url)}`);

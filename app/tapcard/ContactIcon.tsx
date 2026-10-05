@@ -11,7 +11,7 @@ const BRAND_PATHS = {
 } as const;
 
 
-export type ContactIconName = keyof typeof BRAND_PATHS | "linkedin" | "phone" | "mail" | "globe";
+export type ContactIconName = keyof typeof BRAND_PATHS | "linkedin" | "phone" | "mail" | "globe" | "mapPin";
 
 export default function ContactIcon({ name, large = false }: { name: ContactIconName; large?: boolean }) {
   const size = large ? "h-7 w-7" : "h-5 w-5";
@@ -37,6 +37,13 @@ export default function ContactIcon({ name, large = false }: { name: ContactIcon
           <circle cx="12" cy="12" r="10" />
           <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
           <path d="M2 12h20" />
+        </LineIcon>
+      );
+    case "mapPin":
+      return (
+        <LineIcon size={size}>
+          <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
+          <circle cx="12" cy="10" r="3" />
         </LineIcon>
       );
     default:

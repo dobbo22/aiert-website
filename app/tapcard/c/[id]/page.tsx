@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { after } from "next/server";
 import { getCard, incrementViewCount } from "@/lib/tapcardDb";
+import { paletteFor } from "@/lib/brandPalette";
 import CompanyLogo from "../../CompanyLogo";
 import ContactIcon, { type ContactIconName } from "../../ContactIcon";
 
@@ -87,6 +88,13 @@ export default async function CardPage({
     { action: "Call me", value: card.phone, href: `tel:${card.phone}`, icon: "phone", iconBg: "#22C55E" },
     { action: "Email me", value: card.email, href: `mailto:${card.email}`, icon: "mail", iconBg: "#A855F7" },
     { action: "Visit my site", value: card.website, href: normalizeUrl(card.website), icon: "globe", iconBg: "#3B82F6" },
+    {
+      action: "Get directions",
+      value: card.address,
+      href: mapsUrl(card.address, requestHeaders.get("user-agent") ?? ""),
+      icon: "mapPin",
+      iconBg: "#EF4444",
+    },
   ];
   const visibleLines = contactLines.filter((line) => line.value);
 
@@ -105,14 +113,20 @@ export default async function CardPage({
   const visibleSocials = socialLinks.filter((link) => link.value);
 
   const companyDomain = card.website ? extractDomain(card.website) : null;
+  const palette = paletteFor(card.brand_color);
 
   return (
     <main className="min-h-screen flex flex-col items-center px-4 py-12">
       <div className="w-full max-w-sm">
         <div className="overflow-hidden rounded-3xl bg-[#111318] text-center shadow-xl ring-1 ring-white/10">
           {/* Cover banner: the card's own photo blurred out behind it, or
-              the app icon's navy-to-purple gradient when there's no photo. */}
-          <div className="relative h-36 overflow-hidden bg-gradient-to-br from-[#1A2138] to-[#422975]">
+              the company's brand gradient (extracted from its website) when
+              there's no photo — the default TapCard navy→violet if there's
+              no website, or nothing usable was found there. */}
+          <div
+            className="relative h-36 overflow-hidden"
+            style={{ background: `linear-gradient(to bottom right, ${palette.gradStart}, ${palette.gradEnd})` }}
+          >
             {card.photo_url && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -310,6 +324,20 @@ function extractDomain(website: string): string | null {
   } catch {
     return null;
   }
+}
+
+/// iOS has no real "default maps app" concept the way Android does — a
+/// maps.apple.com link always opens Apple Maps, which is the only sensible
+/// choice there. Android's geo: URI scheme, by contrast, genuinely is
+/// routed through whichever app the person set as their default maps
+/// handler (Google Maps, Waze, whatever) — this is what "whichever is the
+/// default" means in practice, and only Android actually has one. Desktop
+/// gets a plain Google Maps web search, the only option that needs no app.
+function mapsUrl(address: string, userAgent: string): string {
+  const query = encodeURIComponent(address);
+  if (/Android/i.test(userAgent)) return `geo:0,0?q=${query}`;
+  if (/iPhone|iPad|iPod/i.test(userAgent)) return `https://maps.apple.com/?q=${query}`;
+  return `https://www.google.com/maps/search/?api=1&query=${query}`;
 }
 
 function PromoCard({

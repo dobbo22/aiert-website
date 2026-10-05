@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import type { TapCardRecord } from "@/lib/tapcardDb";
 import { effectiveStyle, type PassStyle } from "@/lib/tapcardPassStyle";
+import { paletteFor } from "@/lib/brandPalette";
 
 // The picture parts of TapCard's Wallet passes — the Apple store-card strip,
 // the Google hero banner, and the Apple header logo. Wallet only allows the
@@ -18,7 +19,6 @@ import { effectiveStyle, type PassStyle } from "@/lib/tapcardPassStyle";
 const ASSETS = path.join(process.cwd(), "lib/tapcardPassAssets");
 const FONT_FILES = ["Sora-Regular.ttf", "Sora-SemiBold.ttf", "Sora-Bold.ttf"].map((f) => path.join(ASSETS, "fonts", f));
 const RESVG: ResvgRenderOptions = { font: { fontFiles: FONT_FILES, loadSystemFonts: false, defaultFontFamily: "Sora" } };
-const GOLD = "#f6d27a";
 
 let artworkCache: Promise<Buffer> | null = null;
 const artwork = () => (artworkCache ??= fs.readFile(path.join(ASSETS, "artwork-circuit.jpg")));
@@ -76,6 +76,7 @@ export async function renderBanner(card: TapCardRecord, opts: BannerOptions): Pr
   const { width: w, height: h } = opts;
   const style = effectiveStyle(card, opts.style);
   const photo = await fetchPhoto(card.photo_url);
+  const palette = paletteFor(card.brand_color);
 
   let background = "";
   if (style === "artwork") {
@@ -121,13 +122,13 @@ export async function renderBanner(card: TapCardRecord, opts: BannerOptions): Pr
     const ruleY = (role ? roleY + role.size * 0.35 : nameY + name.size * 0.25) + h * 0.028;
     text = `<text x="${textX}" y="${nameY}" font-family="Sora" font-weight="700" font-size="${name.size}" fill="#fff">${esc(name.text)}</text>
       ${role ? `<text x="${textX}" y="${roleY}" font-family="Sora" font-weight="400" font-size="${role.size}" fill="rgba(255,255,255,0.92)">${esc(role.text)}</text>` : ""}
-      <rect x="${textX}" y="${ruleY}" width="${h * 0.236}" height="${ruleH}" rx="${ruleH / 2}" fill="${GOLD}"/>`;
+      <rect x="${textX}" y="${ruleY}" width="${h * 0.236}" height="${ruleH}" rx="${ruleH / 2}" fill="${palette.accent}"/>`;
   }
 
   const dot = h * 0.083;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
     <defs>
-      <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1a2138"/><stop offset="0.48" stop-color="#2a2350"/><stop offset="1" stop-color="#422975"/></linearGradient>
+      <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${palette.gradStart}"/><stop offset="0.48" stop-color="${palette.gradMid}"/><stop offset="1" stop-color="${palette.gradEnd}"/></linearGradient>
       <pattern id="dots" width="${dot}" height="${dot}" patternUnits="userSpaceOnUse"><circle cx="${dot / 2}" cy="${dot / 2}" r="${Math.max(1, dot * 0.09)}" fill="rgba(255,255,255,0.14)"/></pattern>
       <linearGradient id="shade" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="rgb(10,12,20)" stop-opacity="0.45"/><stop offset="1" stop-color="rgb(10,12,20)" stop-opacity="0.75"/></linearGradient>
       <clipPath id="round"><circle cx="${cx}" cy="${cy}" r="${d / 2}"/></clipPath>
@@ -156,10 +157,11 @@ export async function renderRoundLogo(card: TapCardRecord, companyIcon: Buffer |
       .composite([{ input: icon, gravity: "centre" }]).png().toBuffer();
   }
   const letters = initials(card.company || card.name || "TapCard");
+  const palette = paletteFor(card.brand_color);
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}">
-    <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1a2138"/><stop offset="1" stop-color="#422975"/></linearGradient></defs>
+    <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${palette.gradStart}"/><stop offset="1" stop-color="${palette.gradEnd}"/></linearGradient></defs>
     <rect width="${S}" height="${S}" fill="url(#g)"/>
-    <text x="${S / 2}" y="${S / 2 + S * 0.13}" text-anchor="middle" font-family="Sora" font-weight="700" font-size="${S * 0.36}" fill="${GOLD}">${esc(letters)}</text>
+    <text x="${S / 2}" y="${S / 2 + S * 0.13}" text-anchor="middle" font-family="Sora" font-weight="700" font-size="${S * 0.36}" fill="${palette.accent}">${esc(letters)}</text>
   </svg>`;
   return renderSvg(svg);
 }
@@ -197,7 +199,8 @@ export async function renderLogoLockup(card: TapCardRecord, companyIcon: Buffer 
   // Legal suffixes go first — the header has room for about a dozen letters.
   const wordText = (card.company || card.name || "TapCard").replace(/[\s,]+(ltd\.?|limited|llc|inc\.?|plc|gmbh|l\.?l\.?p\.?)$/i, "");
   const word = fitText(wordText, 700, H * 0.46, H * 0.22, maxW - x, 0.04);
-  parts.push(`<text x="${x}" y="${H / 2 + word.size * 0.36}" font-family="Sora" font-weight="700" font-size="${word.size}" letter-spacing="${word.size * 0.04}" fill="${GOLD}">${esc(word.text)}</text>`);
+  const accent = paletteFor(card.brand_color).accent;
+  parts.push(`<text x="${x}" y="${H / 2 + word.size * 0.36}" font-family="Sora" font-weight="700" font-size="${word.size}" letter-spacing="${word.size * 0.04}" fill="${accent}">${esc(word.text)}</text>`);
   x += word.width;
 
   const width = Math.min(maxW, Math.ceil(x + 2));
