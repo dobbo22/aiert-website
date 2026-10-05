@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import StoreBadges from "../StoreBadges";
+import DemoVideo from "./DemoVideo";
 
 const TITLE = "TapCard – your business card on your phone";
 const DESCRIPTION =
@@ -70,20 +71,7 @@ export default function TapCardHomePage() {
             <p className="mt-3 text-sm text-mist">Free to download on iPhone and Android.</p>
           </div>
 
-          <div className="mx-auto w-full max-w-xs">
-            <video
-              src="https://www.aiert.co.uk/tapcard-app-demo.mp4"
-              poster="https://www.aiert.co.uk/tapcard-app-demo-poster.jpg"
-              width={720}
-              height={720}
-              autoPlay
-              muted
-              loop
-              playsInline
-              aria-label="A business card in the TapCard iPhone app"
-              className="w-full rounded-[2rem] shadow-xl ring-1 ring-white/10"
-            />
-          </div>
+          <DemoVideo />
         </section>
 
         <section className="mt-16 grid gap-4 sm:grid-cols-3">
