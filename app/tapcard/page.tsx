@@ -71,12 +71,16 @@ export default function TapCardHomePage() {
           </div>
 
           <div className="mx-auto w-full max-w-xs">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://www.aiert.co.uk/tapcard-app-card.jpg"
-              alt="A business card in the TapCard iPhone app"
-              width={660}
-              height={1000}
+            <video
+              src="https://www.aiert.co.uk/tapcard-app-demo.mp4"
+              poster="https://www.aiert.co.uk/tapcard-app-demo-poster.jpg"
+              width={720}
+              height={720}
+              autoPlay
+              muted
+              loop
+              playsInline
+              aria-label="A business card in the TapCard iPhone app"
               className="w-full rounded-[2rem] shadow-xl ring-1 ring-white/10"
             />
           </div>
