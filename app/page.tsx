@@ -1,4 +1,10 @@
 import type { Metadata } from "next";
+import StoreBadges from "./StoreBadges";
+
+const MAILBROOM_APP_STORE = "https://apps.apple.com/gb/app/mailbroom/id6766489663";
+const POWERSEARCH_APP_STORE = "https://apps.apple.com/gb/app/powersearch/id6807772868";
+const TAPCARD_APP_STORE = "https://apps.apple.com/gb/app/tapcard/id6816003159";
+const TAPCARD_PLAY_STORE = "https://play.google.com/store/apps/details?id=com.mailbroom.tapcard";
 
 export const metadata: Metadata = {
   title: "AIERT Ltd – MailBroom | AI-Powered Productivity Tools",
@@ -36,6 +42,7 @@ export default function Home() {
             <a href="#products" className="hover:text-white transition-colors font-medium">Products</a>
             <a href="/mailbroom" className="hover:text-white transition-colors font-medium">MailBroom</a>
             <a href="/powersearch" className="hover:text-white transition-colors font-medium">PowerSearch</a>
+            <a href="https://tapcard.aiert.co.uk" className="hover:text-white transition-colors font-medium">TapCard</a>
             <a href="#technology" className="hover:text-white transition-colors font-medium">Technology</a>
             <a href="#contact" className="hover:text-white transition-colors font-medium">Contact</a>
           </div>
@@ -73,7 +80,7 @@ export default function Home() {
 
         <p className="text-lg md:text-xl max-w-2xl mx-auto mb-6 text-mist leading-relaxed">
           AIERT Ltd is a UK-based AI company building intelligent tools that give people back their time
-          — starting with MailBroom, private on-device AI that clears an overflowing inbox in minutes.
+          — MailBroom, PowerSearch and TapCard, all live now.
         </p>
 
         {/* Same App Store privacy-label trust signal as the MailBroom landing page,
@@ -88,7 +95,7 @@ export default function Home() {
           <span className="text-2xl" aria-hidden="true">🔒</span>
           <span className="text-left">
             <span className="block text-sm font-semibold text-cloud">App Store Privacy Label: &ldquo;Data Not Collected&rdquo;</span>
-            <span className="block text-xs text-mist">Verified on the App Store — every AIERT product is built on-device first</span>
+            <span className="block text-xs text-mist">MailBroom, verified on the App Store — our email apps keep your mail on your device</span>
           </span>
         </a>
 
@@ -273,12 +280,15 @@ export default function Home() {
                     </li>
                   ))}
                 </ul>
-                <a
-                  href="/mailbroom"
-                  className="btn-green inline-block px-7 py-3 rounded-full text-sm"
-                >
-                  Learn More →
-                </a>
+                <div className="flex flex-wrap items-center gap-4">
+                  <StoreBadges appStoreUrl={MAILBROOM_APP_STORE} />
+                  <a
+                    href="/mailbroom"
+                    className="btn-green inline-block px-7 py-3 rounded-full text-sm"
+                  >
+                    Learn More →
+                  </a>
+                </div>
               </div>
               <div className="flex flex-col gap-4">
                 {[
@@ -322,12 +332,15 @@ export default function Home() {
                     </li>
                   ))}
                 </ul>
-                <a
-                  href="/powersearch"
-                  className="btn-outline inline-block px-7 py-3 rounded-full text-sm"
-                >
-                  Learn More →
-                </a>
+                <div className="flex flex-wrap items-center gap-4">
+                  <StoreBadges appStoreUrl={POWERSEARCH_APP_STORE} />
+                  <a
+                    href="/powersearch"
+                    className="btn-outline inline-block px-7 py-3 rounded-full text-sm"
+                  >
+                    Learn More →
+                  </a>
+                </div>
               </div>
               <div className="flex flex-col gap-4">
                 {[
@@ -349,11 +362,11 @@ export default function Home() {
             <div className="grid md:grid-cols-2 gap-10 items-center">
               <div>
                 <div className="badge-gold inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-6">
-                  📱 iOS App · Coming Soon
+                  📱 iPhone &amp; Android
                 </div>
                 <h3 className="text-3xl font-black mb-4 text-cloud">TapCard</h3>
                 <p className="mb-6 text-cloud leading-relaxed">
-                  Free digital business card. Share your details by QR code, Apple Wallet pass, or a
+                  Your business card on your phone. Share your details by QR code, Apple Wallet pass, or a
                   link — anyone can view and save your contact, even without the app.
                 </p>
                 <ul className="space-y-3 mb-8">
@@ -361,7 +374,7 @@ export default function Home() {
                     "QR code and Apple Wallet pass sharing",
                     "A clean shareable link for anyone without the app",
                     "Save Contact in one tap — no login required",
-                    "Completely free",
+                    "Free to download on iPhone and Android",
                   ].map((f) => (
                     <li key={f} className="flex items-center gap-3 text-sm text-cloud">
                       <span className="text-gold">✓</span>
@@ -369,12 +382,22 @@ export default function Home() {
                     </li>
                   ))}
                 </ul>
+                <div className="flex flex-wrap items-center gap-4">
+                  <StoreBadges appStoreUrl={TAPCARD_APP_STORE} playStoreUrl={TAPCARD_PLAY_STORE} />
+                  <a
+                    href="https://tapcard.aiert.co.uk"
+                    className="btn-gold inline-block px-7 py-3 rounded-full text-sm"
+                  >
+                    Learn More →
+                  </a>
+                </div>
               </div>
               <div className="flex flex-col gap-4">
                 {[
                   { label: "Sharing", value: "QR Code · Apple Wallet · Link" },
                   { label: "Privacy", value: "Shared Only When You Choose To" },
-                  { label: "Price", value: "Free" },
+                  { label: "Platform", value: "iOS 17.0+ · Android" },
+                  { label: "Price", value: "Free download" },
                 ].map((stat) => (
                   <div key={stat.label} className="stat-gold rounded-xl px-5 py-4">
                     <div className="text-xs mb-1 text-cloud">{stat.label}</div>
