@@ -95,7 +95,7 @@ export default function Home() {
           <span className="text-2xl" aria-hidden="true">🔒</span>
           <span className="text-left">
             <span className="block text-sm font-semibold text-cloud">App Store Privacy Label: &ldquo;Data Not Collected&rdquo;</span>
-            <span className="block text-xs text-mist">Verified on the App Store — every AIERT product is built on-device first</span>
+            <span className="block text-xs text-mist">MailBroom, verified on the App Store — our email apps keep your mail on your device</span>
           </span>
         </a>
 
