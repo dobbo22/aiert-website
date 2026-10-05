@@ -28,7 +28,12 @@ export interface SiteBranding {
 export async function resolveSiteBranding(websiteOrDomain: string): Promise<SiteBranding> {
   const domain = normalizeDomain(stripToHost(websiteOrDomain));
   if (!domain) return { color: null, address: null };
-  const icon = await findSiteIcon(domain).catch(() => null);
+  // ICO skipped here (unlike the public favicon endpoint): sharp/libvips
+  // can't decode a fair number of real-world .ico files (confirmed against
+  // stripe.com's), which silently threw this to the catch below and gave
+  // up on a colour entirely. Skipping it falls through to a PNG candidate
+  // (apple-touch-icon, or Google's favicon service) that actually decodes.
+  const icon = await findSiteIcon(domain, { allowIco: false }).catch(() => null);
   if (!icon) return { color: null, address: null };
   const color = icon.themeColor ?? (await dominantColorOf(icon.bytes).catch(() => null));
   return { color, address: icon.address };
@@ -47,20 +52,51 @@ function stripToHost(input: string): string {
   }
 }
 
+// sharp's stats().dominant is a single colour for the *whole* image — for a
+// typical favicon (a coloured mark on a white or transparent background)
+// that's almost always the background, not the mark, so filtering out a
+// near-white/near-black/grey *result* just throws the whole icon away
+// instead of finding the colour actually in it. This looks pixel-by-pixel
+// instead: skip background-like pixels (transparent, near-white, near-
+// black, grey), then bucket what's left and take the most common colour.
+// An icon with no colour anywhere in it (Apple's logo, say) still
+// correctly comes back null — there's nothing to find.
 async function dominantColorOf(bytes: Buffer): Promise<string | null> {
-  // .ico files can hold multiple sizes in one file — sharp reads the first,
-  // which is fine here (any size gives the same dominant colour).
-  const { dominant } = await sharp(bytes).stats();
-  if (!dominant) return null;
-  const { r, g, b } = dominant;
-  // Most favicons are white/near-white padding around a mark — a washed-out
-  // "brand colour" of #fefefe is worse than just falling back to the
-  // default gradient, so this is treated as no result rather than returned.
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const isNearWhite = min > 235;
-  const isNearBlack = max < 20;
-  const isLowSaturation = max - min < 12 && max > 40 && max < 235;
-  if (isNearWhite || isNearBlack || isLowSaturation) return null;
-  return `#${[r, g, b].map((n) => n.toString(16).padStart(2, "0")).join("")}`;
+  const { data, info } = await sharp(bytes)
+    .resize(64, 64, { fit: "inside" })
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  const buckets = new Map<string, number>();
+  for (let i = 0; i + 3 < data.length; i += info.channels) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const a = data[i + 3];
+    if (a < 128) continue;
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const isNearWhite = min > 235;
+    const isNearBlack = max < 20;
+    const isLowSaturation = max - min < 20;
+    if (isNearWhite || isNearBlack || isLowSaturation) continue;
+    // Quantize (16 levels/channel) so anti-aliased edge pixels land in the
+    // same bucket as the solid fill they're blending into.
+    const key = `${r >> 4}-${g >> 4}-${b >> 4}`;
+    buckets.set(key, (buckets.get(key) ?? 0) + 1);
+  }
+  if (buckets.size === 0) return null;
+
+  let bestKey = "";
+  let bestCount = 0;
+  for (const [key, count] of buckets) {
+    if (count > bestCount) {
+      bestCount = count;
+      bestKey = key;
+    }
+  }
+  const [rq, gq, bq] = bestKey.split("-").map(Number);
+  const toByte = (q: number) => Math.min(255, (q << 4) | 8);
+  return `#${[toByte(rq), toByte(gq), toByte(bq)].map((n) => n.toString(16).padStart(2, "0")).join("")}`;
 }
