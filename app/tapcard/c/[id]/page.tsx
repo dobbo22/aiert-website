@@ -109,6 +109,7 @@ export default async function CardPage({
     },
     { name: card.facebook_is_page ? "Facebook Page" : "Facebook", value: card.facebook_url, icon: "facebook", iconBg: "#0866FF" },
     { name: "TikTok", value: card.tiktok_url, icon: "tiktok", iconBg: "#000000" },
+    { name: "WhatsApp", value: card.whatsapp_url, icon: "whatsapp", iconBg: "#25D366" },
   ];
   const visibleSocials = socialLinks.filter((link) => link.value);
 

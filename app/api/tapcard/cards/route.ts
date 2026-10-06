@@ -22,6 +22,7 @@ interface CardBody {
   facebookURL?: string;
   facebookIsPage?: boolean;
   tiktokURL?: string;
+  whatsAppURL?: string;
   passStyle?: string;
 }
 
@@ -50,6 +51,20 @@ function socialUrl(raw: string | undefined, platform: keyof typeof SOCIAL_PROFIL
   return url.slice(0, 300);
 }
 
+// WhatsApp links are wa.me/<digits>, not a handle — a typed phone number
+// gets its punctuation/spaces stripped down to digits; an already-pasted
+// wa.me or whatsapp.com link is kept as-is (scheme-less gets https://).
+function whatsAppUrl(raw: string | undefined): string {
+  const value = (raw ?? "").trim();
+  if (!value) return "";
+  if (/wa\.me|whatsapp\.com/i.test(value)) {
+    const url = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+    return url.slice(0, 300);
+  }
+  const digits = value.replace(/[^0-9]/g, "");
+  return digits ? `https://wa.me/${digits}`.slice(0, 300) : "";
+}
+
 function sanitize(body: CardBody) {
   return {
     label: (body.label ?? "").trim().slice(0, 60),
@@ -67,6 +82,7 @@ function sanitize(body: CardBody) {
     facebook_url: socialUrl(body.facebookURL, "facebook"),
     facebook_is_page: body.facebookIsPage === true,
     tiktok_url: socialUrl(body.tiktokURL, "tiktok"),
+    whatsapp_url: whatsAppUrl(body.whatsAppURL),
     pass_style: parsePassStyle(body.passStyle),
   };
 }

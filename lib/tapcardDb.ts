@@ -23,6 +23,7 @@ export interface TapCardRecord {
   facebook_url: string;
   facebook_is_page: boolean;
   tiktok_url: string;
+  whatsapp_url: string;
   photo_url: string | null;
   /// SHA-256 of the app's secret edit token — see lib/tapcardAuth.ts. Null
   /// only for cards shared before tokens existed, until the app claims them.
@@ -80,6 +81,7 @@ function ensureSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS instagram_url TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS facebook_url TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS tiktok_url TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS whatsapp_url TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS facebook_is_page BOOLEAN NOT NULL DEFAULT false`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS edit_token_hash TEXT`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS creator_ip_hash TEXT NOT NULL DEFAULT ''`)
@@ -119,10 +121,10 @@ export async function createCard(input: TapCardInput, editTokenHash: string, cre
   const id = newCardId();
   await sql`
     INSERT INTO tapcard_cards (id, label, grouping_id, name, title, company, phone, email, website, address, linkedin_url,
-                               twitter_url, instagram_url, facebook_url, facebook_is_page, tiktok_url, photo_url,
+                               twitter_url, instagram_url, facebook_url, facebook_is_page, tiktok_url, whatsapp_url, photo_url,
                                edit_token_hash, creator_ip_hash, pass_style)
     VALUES (${id}, ${input.label}, ${input.grouping_id}, ${input.name}, ${input.title}, ${input.company}, ${input.phone}, ${input.email}, ${input.website}, ${input.address}, ${input.linkedin_url},
-            ${input.twitter_url}, ${input.instagram_url}, ${input.facebook_url}, ${input.facebook_is_page}, ${input.tiktok_url}, ${input.photo_url ?? null},
+            ${input.twitter_url}, ${input.instagram_url}, ${input.facebook_url}, ${input.facebook_is_page}, ${input.tiktok_url}, ${input.whatsapp_url}, ${input.photo_url ?? null},
             ${editTokenHash}, ${creatorIpHash}, ${input.pass_style ?? "artwork"})
   `;
   return id;
@@ -138,6 +140,7 @@ export async function updateCard(id: string, input: TapCardInput): Promise<boole
         twitter_url = ${input.twitter_url}, instagram_url = ${input.instagram_url},
         facebook_url = ${input.facebook_url}, facebook_is_page = ${input.facebook_is_page},
         tiktok_url = ${input.tiktok_url},
+        whatsapp_url = ${input.whatsapp_url},
         photo_url = COALESCE(${input.photo_url ?? null}, photo_url),
         pass_style = COALESCE(${input.pass_style ?? null}, pass_style),
         updated_at = now()
@@ -215,6 +218,7 @@ export function publicCardJSON(card: TapCardRecord) {
     facebookURL: card.facebook_url,
     facebookIsPage: card.facebook_is_page,
     tiktokURL: card.tiktok_url,
+    whatsAppURL: card.whatsapp_url,
     photoURL: card.photo_url,
     // null rather than "" while nothing's been resolved yet, or nothing
     // suitable was found — lets the apps tell "no brand colour" apart from

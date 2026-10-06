@@ -32,6 +32,7 @@ export function buildVCard(card: TapCardRecord): string {
   if (card.instagram_url) lines.push(`X-SOCIALPROFILE;TYPE=instagram:${escapeVCardText(card.instagram_url)}`);
   if (card.facebook_url) lines.push(`X-SOCIALPROFILE;TYPE=facebook:${escapeVCardText(card.facebook_url)}`);
   if (card.tiktok_url) lines.push(`X-SOCIALPROFILE;TYPE=tiktok:${escapeVCardText(card.tiktok_url)}`);
+  if (card.whatsapp_url) lines.push(`X-SOCIALPROFILE;TYPE=whatsapp:${escapeVCardText(card.whatsapp_url)}`);
   if (card.photo_url) lines.push(`PHOTO;VALUE=URL:${escapeVCardText(card.photo_url)}`);
 
   lines.push("END:VCARD");
