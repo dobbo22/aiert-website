@@ -58,7 +58,7 @@ export default function SignupForm() {
                 <input type="radio" name="band" checked={bandId === band.id} onChange={() => setBandId(band.id)} />
                 {band.label}
               </span>
-              <span className="text-mist">£{band.monthlyGBP}/mo</span>
+              <span className="text-mist">£{band.annualGBP}/year</span>
             </label>
           ))}
         </div>

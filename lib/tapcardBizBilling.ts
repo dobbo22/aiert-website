@@ -12,13 +12,16 @@ export interface SeatBand {
   maxSeats: number;
   priceId: string | undefined;
   /// Display only — Stripe is the source of truth for what's actually charged.
-  monthlyGBP: number;
+  /// Billed annually, not monthly — see the price objects themselves
+  /// (recurring.interval: "year").
+  annualGBP: number;
 }
 
 export const SEAT_BANDS: SeatBand[] = [
-  { id: "1-10", label: "1–10 people", minSeats: 1, maxSeats: 10, priceId: process.env.TAPCARD_BIZ_PRICE_1_10, monthlyGBP: 15 },
-  { id: "11-25", label: "11–25 people", minSeats: 11, maxSeats: 25, priceId: process.env.TAPCARD_BIZ_PRICE_11_25, monthlyGBP: 35 },
-  { id: "26-50", label: "26–50 people", minSeats: 26, maxSeats: 50, priceId: process.env.TAPCARD_BIZ_PRICE_26_50, monthlyGBP: 65 },
+  { id: "1-10", label: "1–10 people", minSeats: 1, maxSeats: 10, priceId: process.env.TAPCARD_BIZ_PRICE_1_10, annualGBP: 20 },
+  { id: "11-25", label: "11–25 people", minSeats: 11, maxSeats: 25, priceId: process.env.TAPCARD_BIZ_PRICE_11_25, annualGBP: 40 },
+  { id: "26-50", label: "26–50 people", minSeats: 26, maxSeats: 50, priceId: process.env.TAPCARD_BIZ_PRICE_26_50, annualGBP: 70 },
+  { id: "51-100", label: "51–100 people", minSeats: 51, maxSeats: 100, priceId: process.env.TAPCARD_BIZ_PRICE_51_100, annualGBP: 120 },
 ];
 
 export function bandById(id: string): SeatBand | undefined {
