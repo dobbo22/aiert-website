@@ -4,7 +4,7 @@ import DemoVideo from "./DemoVideo";
 
 const TITLE = "TapCard – your business card on your phone";
 const DESCRIPTION =
-  "Always be prepared. Share your business card with a QR code or a link, and swap details with anyone in one tap. Free on iPhone and Android.";
+  "Always be prepared, always up to date. Share your business card with a QR code or a link, and it stays in sync with everyone you've shared it with — even after they're saved. Free on iPhone and Android.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -31,20 +31,28 @@ const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.mailbr
 
 const FEATURES = [
   {
+    title: "Always in sync",
+    body: "Change your job, number or links once and it updates everywhere — the same QR code and link always show your latest details, and anyone you've sent your card to directly is quietly kept current too.",
+  },
+  {
     title: "Share in seconds",
     body: "Show your QR code, send your link by text, WhatsApp or email, or keep your card in Apple Wallet.",
   },
   {
     title: "Send it straight to a contact",
-    body: "Pick someone from your phone's contacts and TapCard texts or emails them your card directly — no typing their number in yourself.",
+    body: "Pick people from your phone's contacts and TapCard sends your card to each of them directly — over WhatsApp if they're on it, by email or text otherwise.",
+  },
+  {
+    title: "They can share back, too",
+    body: "Whoever you send your card to can share their own details back in one tap, with a live preview of their card as they type — no account or app needed on their end.",
   },
   {
     title: "No app needed to receive",
     body: "Your card opens in their browser. One tap on Save Contact and you're in their phone. No typing, no mistakes.",
   },
   {
-    title: "Always up to date",
-    body: "Change your job, number or links and the same QR code and link show your latest details — and anyone you sent it to directly gets a quiet heads-up.",
+    title: "Manage who's got your card",
+    body: "See everyone you've shared your card with, who's accepted, and edit someone's details right up until you send — all from one list in the app.",
   },
 ];
 
@@ -69,7 +77,11 @@ export default function TapCardHomePage() {
               Someone asks for your card and you&apos;ve run out, or left them at the office. With TapCard your card
               lives on your phone: share it with a QR code or a link, and swap details with anyone in one tap.
             </p>
-            <p className="mt-4 text-lg font-semibold text-cloud">Always be prepared.</p>
+            <p className="mt-4 text-lg leading-relaxed text-cloud">
+              Change your number or job title later and there&apos;s nothing to resend — everyone with your card,
+              including the people you&apos;ve shared it with directly, is kept in sync automatically.
+            </p>
+            <p className="mt-4 text-lg font-semibold text-cloud">Always be prepared. Always current.</p>
 
             <StoreBadges appStoreUrl={APP_STORE_URL} playStoreUrl={PLAY_STORE_URL} className="mt-8" />
             <p className="mt-3 text-sm text-mist">Free to download on iPhone and Android.</p>
@@ -78,7 +90,7 @@ export default function TapCardHomePage() {
           <DemoVideo />
         </section>
 
-        <section className="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((f) => (
             <div key={f.title} className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
               <h2 className="text-lg font-bold text-cloud">{f.title}</h2>
