@@ -7,6 +7,7 @@ import { paletteFor } from "@/lib/brandPalette";
 import { orgLogoUrlForCard } from "@/lib/tapcardBiz";
 import { BannerBrand, BrandProvider, FaviconBadge } from "../../CardBrand";
 import ContactIcon, { type ContactIconName } from "../../ContactIcon";
+import AcceptRecipientForm from "../../AcceptRecipientForm";
 
 // App Store Connect record "TapCard: Digital Business Card" (id 6816003159).
 const TAPCARD_ORIGIN = "https://tapcard.aiert.co.uk";
@@ -49,10 +50,10 @@ export default async function CardPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ send?: string; via?: string }>;
+  searchParams: Promise<{ send?: string; via?: string; a?: string }>;
 }) {
   const { id } = await params;
-  const { send, via } = await searchParams;
+  const { send, via, a: acceptToken } = await searchParams;
   const card = await getCard(id);
   if (!card) notFound();
 
@@ -195,6 +196,8 @@ export default async function CardPage({
                 Send {firstName} your card
               </a>
             )}
+
+            {acceptToken && <AcceptRecipientForm cardId={id} token={acceptToken} ownerFirstName={firstName} />}
 
             {SEND_BACK_ENABLED && send === "1" && (
               <div className="mt-3 rounded-2xl bg-white/[0.07] p-4 text-left text-sm text-white">

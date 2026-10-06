@@ -121,6 +121,17 @@ function ensureSchema(): Promise<unknown> {
           UNIQUE (card_id, phone, email)
         )
       `)
+      // Separate from unsubscribe_token on purpose: one identifies "stop
+      // emailing me" (destructive, single action), the other identifies
+      // "fill in my details" (a page load + form) — reusing one token for
+      // both would let an unsubscribe click double as an accept. Nullable
+      // because rows created before this existed have none; addCardRecipient
+      // always sets it for new rows.
+      .then(() => sql`ALTER TABLE tapcard_card_recipients ADD COLUMN IF NOT EXISTS accept_token TEXT UNIQUE`)
+      .then(() => sql`ALTER TABLE tapcard_card_recipients ADD COLUMN IF NOT EXISTS accepted_at TIMESTAMPTZ`)
+      .then(() => sql`ALTER TABLE tapcard_card_recipients ADD COLUMN IF NOT EXISTS accepted_name TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_card_recipients ADD COLUMN IF NOT EXISTS accepted_phone TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_card_recipients ADD COLUMN IF NOT EXISTS accepted_email TEXT NOT NULL DEFAULT ''`)
       .catch((err) => {
         schemaReady = null; // let the next call retry rather than caching a failure
         throw err;
@@ -317,9 +328,14 @@ export interface TapCardRecipient {
   phone: string;
   email: string;
   unsubscribe_token: string;
+  accept_token: string | null;
   do_not_contact: boolean;
   last_notified_at: Date | string | null;
   last_notified_snapshot: Record<string, string> | null;
+  accepted_at: Date | string | null;
+  accepted_name: string;
+  accepted_phone: string;
+  accepted_email: string;
 }
 
 /// Re-sending to the same person (same card + phone/email) just refreshes
@@ -328,13 +344,36 @@ export interface TapCardRecipient {
 export async function addCardRecipient(cardId: string, name: string, phone: string, email: string): Promise<TapCardRecipient> {
   await ensureSchema();
   const token = crypto.randomBytes(6).toString("base64url");
+  const acceptToken = crypto.randomBytes(6).toString("base64url");
   const rows = (await sql`
-    INSERT INTO tapcard_card_recipients (card_id, name, phone, email, unsubscribe_token)
-    VALUES (${cardId}, ${name}, ${phone}, ${email}, ${token})
+    INSERT INTO tapcard_card_recipients (card_id, name, phone, email, unsubscribe_token, accept_token)
+    VALUES (${cardId}, ${name}, ${phone}, ${email}, ${token}, ${acceptToken})
     ON CONFLICT (card_id, phone, email) DO UPDATE SET name = EXCLUDED.name
     RETURNING *
   `) as TapCardRecipient[];
   return rows[0];
+}
+
+/// The owner's view of everyone they've sent this card to directly —
+/// unfiltered (unlike listNotifiableRecipients, which only returns people
+/// worth emailing about a change).
+export async function listRecipients(cardId: string): Promise<TapCardRecipient[]> {
+  await ensureSchema();
+  return (await sql`SELECT * FROM tapcard_card_recipients WHERE card_id = ${cardId} ORDER BY created_at`) as TapCardRecipient[];
+}
+
+/// A recipient sharing their own details back — see app/tapcard/AcceptRecipientForm.tsx.
+/// Returns the card_id they're a recipient of, or null if the token doesn't
+/// match anyone (expired/garbled link).
+export async function acceptRecipient(acceptToken: string, name: string, phone: string, email: string): Promise<string | null> {
+  await ensureSchema();
+  const rows = (await sql`
+    UPDATE tapcard_card_recipients
+    SET accepted_at = now(), accepted_name = ${name}, accepted_phone = ${phone}, accepted_email = ${email}
+    WHERE accept_token = ${acceptToken}
+    RETURNING card_id
+  `) as { card_id: string }[];
+  return rows[0]?.card_id ?? null;
 }
 
 /// Recipients worth emailing about a change: haven't unsubscribed and gave
