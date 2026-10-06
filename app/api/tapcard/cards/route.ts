@@ -4,6 +4,7 @@ import { canEdit, clientIpHash, hashSecret, readEditToken } from "@/lib/tapcardA
 import { parsePassStyle } from "@/lib/tapcardPassStyle";
 import { refreshGoogleWalletPass } from "@/lib/googleWallet";
 import { resolveSiteBranding } from "@/lib/siteBrandColor";
+import { applyOrgLocks } from "@/lib/tapcardBiz";
 
 interface CardBody {
   id?: string;
@@ -99,7 +100,7 @@ export async function POST(req: NextRequest) {
   if (!body.name?.trim()) {
     return NextResponse.json({ error: "name is required" }, { status: 400 });
   }
-  const fields = sanitize(body);
+  let fields = sanitize(body);
 
   if (body.id) {
     const existing = await getCard(body.id);
@@ -107,6 +108,9 @@ export async function POST(req: NextRequest) {
       if (!(await canEdit(existing, token))) {
         return NextResponse.json({ error: "forbidden" }, { status: 403 });
       }
+      // A company card (TapCard for Business) keeps its locked fields
+      // whatever the app sent — see applyOrgLocks.
+      fields = await applyOrgLocks(existing as unknown as Record<string, unknown>, fields);
       await updateCard(body.id, fields);
       const websiteChanged = fields.website !== existing.website;
       const addressIsBlank = !fields.address;

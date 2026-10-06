@@ -414,3 +414,45 @@ export async function attachCardToOrg(cardId: string, orgId: string, employeeId:
     WHERE id = ${cardId}
   `;
 }
+
+/// Card-input column for each LOCKABLE_FIELDS name (which use the card JSON
+/// keys), and the org template column that supplies its value, where the
+/// template has one. Fields without a template column (title, phone,
+/// address) are per-employee, so locking them just freezes what the card
+/// already has.
+const LOCKED_FIELD_COLUMNS: Record<(typeof LOCKABLE_FIELDS)[number], { card: string; template?: keyof BizOrg }> = {
+  title: { card: "title" },
+  company: { card: "company", template: "name" },
+  phone: { card: "phone" },
+  website: { card: "website", template: "website" },
+  address: { card: "address" },
+  linkedinURL: { card: "linkedin_url", template: "linkedin_url" },
+  twitterURL: { card: "twitter_url", template: "twitter_url" },
+  instagramURL: { card: "instagram_url", template: "instagram_url" },
+  facebookURL: { card: "facebook_url", template: "facebook_url" },
+  tiktokURL: { card: "tiktok_url", template: "tiktok_url" },
+  whatsAppURL: { card: "whatsapp_url", template: "whatsapp_url" },
+};
+
+/// The server-side half of field locking (the apps grey the same fields
+/// out): called on every update to a card, so an old app build or a
+/// hand-crafted request can't change a field the company has locked.
+/// Uses the org's *current* lock list and template rather than the copy
+/// stored on the card at claim time, so an admin's later template change
+/// also lands on the next save. Cards with no org pass through untouched.
+export async function applyOrgLocks<T extends Record<string, unknown>>(
+  existing: Record<string, unknown>,
+  fields: T
+): Promise<T> {
+  const orgId = existing.org_id;
+  if (typeof orgId !== "string" || !orgId) return fields;
+  const org = await getOrg(orgId);
+  if (!org) return fields;
+  const locked: Record<string, unknown> = { ...fields };
+  for (const name of org.locked_fields) {
+    const columns = LOCKED_FIELD_COLUMNS[name as (typeof LOCKABLE_FIELDS)[number]];
+    if (!columns || !(columns.card in locked)) continue;
+    locked[columns.card] = columns.template ? (org[columns.template] ?? "") : (existing[columns.card] ?? "");
+  }
+  return locked as T;
+}
