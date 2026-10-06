@@ -153,6 +153,14 @@ export default function TapCardPrivacyPage() {
       </section>
 
       <section>
+        <h2>TapCard for Business</h2>
+        <p>
+          Company cards set up through TapCard for Business are covered by this policy too. How company accounts,
+          staff invites and company cards are handled is explained on the{" "}
+          <a href="/business/security">TapCard for Business security &amp; privacy</a> page.
+        </p>
+      </section>
+      <section>
         <h2>Children</h2>
         <p>TapCard is a business-card tool and is not directed at children under 13.</p>
       </section>

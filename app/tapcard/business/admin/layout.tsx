@@ -30,6 +30,10 @@ export default async function BizAdminLayout({ children }: { children: React.Rea
         </header>
         <AdminNav />
         <div className="mt-8">{children}</div>
+        <footer className="mt-12 border-t border-slate pt-6 text-sm text-mist">
+          <a href="/business/guide" className="text-gold underline">Admin guide</a> ·{" "}
+          <a href="/business/security" className="text-gold underline">Security &amp; privacy</a>
+        </footer>
       </div>
     </main>
   );

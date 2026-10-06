@@ -18,7 +18,7 @@ const FEATURES = [
   },
   {
     title: "Add everyone in one go",
-    body: "Upload a CSV of your team and each person gets an email to set up their card in seconds. No typing, no inconsistent details.",
+    body: "Choose your staff list — a CSV or an Outlook, Google or iCloud contacts export — and get one invite link per person to send from your own email. The list stays on your computer.",
   },
   {
     title: "One subscription, no App Store paywall",
@@ -58,6 +58,12 @@ export default function TapCardBusinessPage() {
             </div>
           ))}
         </section>
+
+        <footer className="mt-16 border-t border-slate pt-6 text-sm text-cloud">
+          <a href="/business/guide" className="text-gold underline">Admin guide</a> ·{" "}
+          <a href="/business/security" className="text-gold underline">Security &amp; privacy</a> ·{" "}
+          <a href="/privacy" className="text-gold underline">Privacy policy</a> · AIERT Ltd
+        </footer>
       </div>
     </main>
   );

@@ -39,6 +39,9 @@ export default async function BizAdminOverview() {
           <li>Set your company&apos;s card template — logo, colours, social links, and which fields employees can edit.</li>
           <li>Choose your staff list on the Employees tab to create everyone&apos;s invite link — the list stays on your computer.</li>
         </ol>
+        <p className="mt-4 text-sm text-cloud">
+          Step by step, with troubleshooting: <a href="/business/guide" className="text-gold underline">Admin guide</a>
+        </p>
       </div>
     </div>
   );
