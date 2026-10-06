@@ -17,9 +17,25 @@ export default function SignupForm() {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
+    // Gives up rather than leaving the button on "Please wait…" forever.
+    const timeout = new AbortController();
+    const timer = setTimeout(() => timeout.abort(), 30_000);
+    try {
+      await submit(timeout.signal);
+    } catch {
+      // A network failure, timeout or non-JSON reply. A trial may still
+      // have been set up server-side, so point at the email too.
+      setError("Something went wrong. Check your email for a sign-in link before trying again.");
+      setSubmitting(false);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
 
+  async function submit(signal: AbortSignal) {
     if (bandId === TRIAL_ID) {
       const res = await fetch("/api/tapcard/biz/trial", {
+        signal,
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ companyName, email }),
@@ -35,6 +51,7 @@ export default function SignupForm() {
     }
 
     const res = await fetch("/api/tapcard/biz/checkout", {
+      signal,
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ companyName, email, bandId }),
@@ -53,8 +70,8 @@ export default function SignupForm() {
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">Check your email</h2>
         <p className="mt-2 text-cloud">
-          We've sent a sign-in link to {email} — no card needed, your free trial seat is ready. Upgrade to a paid
-          band whenever you're ready to add your team.
+          We&apos;ve sent a sign-in link to {email} — no card needed, your free trial seat is ready. Upgrade to a paid
+          band whenever you&apos;re ready to add your team.
         </p>
       </div>
     );

@@ -63,33 +63,8 @@ export interface BizEmployee {
   created_at: Date | string;
 }
 
-/// Every field a company can lock an employee out of editing. Rendered as
-/// a single checklist on the admin template page — adding a new lockable
-/// field later is a one-line change here, not new UI code.
-export const LOCKABLE_FIELDS = [
-  "title",
-  "company",
-  "phone",
-  "website",
-  "address",
-  "linkedinURL",
-  "twitterURL",
-  "instagramURL",
-  "facebookURL",
-  "tiktokURL",
-  "whatsAppURL",
-] as const;
-
-export const DEFAULT_LOCKED_FIELDS = [
-  "company",
-  "website",
-  "linkedinURL",
-  "twitterURL",
-  "instagramURL",
-  "facebookURL",
-  "tiktokURL",
-  "whatsAppURL",
-];
+import { DEFAULT_LOCKED_FIELDS, LOCKABLE_FIELDS } from "@/lib/tapcardBizFields";
+export { DEFAULT_LOCKED_FIELDS, LOCKABLE_FIELDS };
 
 let schemaReady: Promise<unknown> | null = null;
 export function ensureSchema(): Promise<unknown> {

@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     newOnes.map(async (employee) => {
       const token = await issueClaimToken(employee.id);
       if (!token) return;
-      await sendBizClaimEmail(employee.email, employee.name, org.name, `${origin}/business/claim/${token}`).catch(() => {});
+      await sendBizClaimEmail(employee.email, employee.name, org.name, `${origin}/business/claim/${token}`).catch((e) => console.error("tapcard biz email failed:", e));
     })
   );
 

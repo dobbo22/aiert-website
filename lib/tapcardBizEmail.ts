@@ -8,13 +8,16 @@ import { inviteEmailRoute } from "@/lib/inviteEmailRoute";
 // any of that machinery. Reuses the same Resend/from-address wiring
 // (lib/inviteEmailRoute.ts) rather than inventing new sender config.
 
+// No BCC to the sender (unlike the personal invites): every one of these
+// carries a single-use sign-in or claim link, which shouldn't be copied
+// into anyone else's mailbox — and when the recipient is the sender
+// address itself, a BCC just delivers the same email twice.
 async function send(to: string, subject: string, html: string, text: string): Promise<void> {
   const route = inviteEmailRoute();
   if (route.viaResend) {
     const { error } = await new Resend(process.env.RESEND_API_KEY).emails.send({
       from: route.from,
       to,
-      bcc: route.fromEmail,
       replyTo: route.replyTo,
       subject,
       text,

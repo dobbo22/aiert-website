@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
   await addAdmin(org.id, email, "admin");
 
   const token = await createLoginToken(email, org.id);
-  await sendBizLoginEmail(email, `https://tapcard.aiert.co.uk/api/biz/login/${token}`).catch(() => {});
+  await sendBizLoginEmail(email, `https://tapcard.aiert.co.uk/api/biz/login/${token}`).catch((e) => console.error("tapcard biz email failed:", e));
 
   return NextResponse.json({ ok: true });
 }
