@@ -2,6 +2,7 @@ import { requireBizSession } from "@/lib/tapcardBizSession";
 import { getOrg } from "@/lib/tapcardBiz";
 import { bandById } from "@/lib/tapcardBizBilling";
 import BillingPortalButton from "./BillingPortalButton";
+import UpgradePicker from "./UpgradePicker";
 
 export default async function BizBillingPage() {
   const session = await requireBizSession();
@@ -16,14 +17,26 @@ export default async function BizBillingPage() {
       <h2 className="text-lg font-bold text-cloud">Billing</h2>
       <dl className="mt-4 space-y-2 text-cloud">
         <Row label="Status" value={org.billing_status} />
-        <Row label="Plan" value={band?.label ?? (org.seat_band || "–")} />
+        <Row label="Plan" value={org.seat_band === "trial" ? "Free trial" : band?.label ?? (org.seat_band || "–")} />
         <Row label="Seats" value={String(org.seat_limit || "–")} />
         <Row
           label="Renews"
           value={org.current_period_end ? new Date(org.current_period_end).toLocaleDateString("en-GB") : "–"}
         />
       </dl>
-      <BillingPortalButton />
+
+      {org.stripe_customer_id ? (
+        <BillingPortalButton />
+      ) : (
+        <div className="mt-6">
+          <p className="text-cloud">
+            {org.seat_band === "trial"
+              ? "You're on the free trial (1 seat). Upgrade to a paid band to add your whole team:"
+              : "No payment method on file yet. Pick a band to get started:"}
+          </p>
+          <UpgradePicker />
+        </div>
+      )}
     </div>
   );
 }

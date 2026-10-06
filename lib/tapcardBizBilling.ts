@@ -24,6 +24,11 @@ export const SEAT_BANDS: SeatBand[] = [
   { id: "51-100", label: "51–100 people", minSeats: 51, maxSeats: 100, priceId: process.env.TAPCARD_BIZ_PRICE_51_100, annualGBP: 120 },
 ];
 
+/// Free trial: one seat, no Stripe price at all — see
+/// app/api/tapcard/biz/trial/route.ts, which activates the org directly
+/// rather than going through Checkout.
+export const TRIAL_SEAT_LIMIT = 1;
+
 export function bandById(id: string): SeatBand | undefined {
   return SEAT_BANDS.find((b) => b.id === id);
 }
