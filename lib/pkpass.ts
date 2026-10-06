@@ -6,6 +6,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import type { TapCardRecord } from "@/lib/tapcardDb";
 import { findSiteIcon } from "@/lib/siteIcon";
+import { orgLogoBytesForCard } from "@/lib/tapcardBiz";
 import { renderBanner, renderLogoLockup } from "@/lib/tapcardPassArt";
 import { isPersonalCard, sameName } from "@/lib/tapcardPassStyle";
 
@@ -129,8 +130,11 @@ function extractDomain(website: string): string | null {
   }
 }
 
-/// The company's own icon from its website (lib/siteIcon), or null.
+/// A company card's uploaded logo (TapCard for Business), else the
+/// company's own icon from its website (lib/siteIcon), or null.
 async function companyIcon(card: TapCardRecord): Promise<Buffer | null> {
+  const orgLogo = await orgLogoBytesForCard(card);
+  if (orgLogo) return orgLogo;
   const domain = card.website ? extractDomain(card.website) : null;
   if (!domain) return null;
   // sharp can't decode .ico, so ask for a PNG/JPEG/WebP/GIF.

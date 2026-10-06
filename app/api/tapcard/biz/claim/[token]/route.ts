@@ -42,7 +42,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
       facebook_is_page: false,
       tiktok_url: org.tiktok_url,
       whatsapp_url: org.whatsapp_url,
-      photo_url: org.logo_url,
+      // The person's photo, if their admin added one — never the company
+      // logo, which has its own place on the card (orgLogoUrlForCard).
+      photo_url: employee.photo_url,
       pass_style: "brand",
     },
     hashSecret(editToken),

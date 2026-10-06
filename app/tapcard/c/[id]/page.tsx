@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { after } from "next/server";
 import { getCard, incrementViewCount } from "@/lib/tapcardDb";
 import { paletteFor } from "@/lib/brandPalette";
+import { orgLogoUrlForCard } from "@/lib/tapcardBiz";
 import CompanyLogo from "../../CompanyLogo";
 import ContactIcon, { type ContactIconName } from "../../ContactIcon";
 
@@ -114,6 +115,9 @@ export default async function CardPage({
   const visibleSocials = socialLinks.filter((link) => link.value);
 
   const companyDomain = card.website ? extractDomain(card.website) : null;
+  // A TapCard for Business card's uploaded logo — often a wide wordmark, so
+  // it goes across the banner rather than in the small round avatar badge.
+  const orgLogo = await orgLogoUrlForCard(card).catch(() => null);
   const palette = paletteFor(card.brand_color);
 
   return (
@@ -137,9 +141,15 @@ export default async function CardPage({
               />
             )}
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#111318]" />
-            {card.label && (
+            {card.label && !orgLogo && (
               <span className="absolute left-4 top-4 rounded-full bg-black/40 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
                 {card.label}
+              </span>
+            )}
+            {orgLogo && (
+              <span className="absolute left-4 top-4 flex h-10 max-w-[60%] items-center rounded-xl bg-white px-3 py-1.5">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={orgLogo} alt={card.company} className="max-h-full max-w-full object-contain" />
               </span>
             )}
           </div>
@@ -158,7 +168,7 @@ export default async function CardPage({
                   🙂
                 </div>
               )}
-              {companyDomain && (
+              {companyDomain && !orgLogo && (
                 <span className="absolute -bottom-1 -right-1 rounded-full bg-white p-1 ring-4 ring-[#111318]">
                   <CompanyLogo domain={companyDomain} />
                 </span>

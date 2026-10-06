@@ -58,6 +58,75 @@ export async function findSiteIcon(domain: string, { allowIco = true } = {}): Pr
   return fallback && { ...fallback, themeColor, address };
 }
 
+/// A company's logo for TapCard for Business (the admin's "use the logo
+/// from our website"): wider than an icon is fine — a wordmark like the one
+/// in most sites' header is exactly what's wanted. In order: the logo the
+/// site declares in its schema.org Organization data (what Google reads,
+/// so the most deliberate choice), then the first <img> that names itself
+/// a logo (class/id/alt/src — usually the header's), then the site icon.
+/// Same locked-down fetching and raster-only rule as findSiteIcon.
+export async function findSiteLogo(domain: string): Promise<{ bytes: Buffer; contentType: string } | null> {
+  const page = await safeFetch(`https://${domain}/`);
+  if (page && (page.res.headers.get("content-type") ?? "").includes("text/html")) {
+    const html = await readLimited(page.res, MAX_HTML_BYTES);
+    if (html) {
+      const text = html.toString("utf8");
+      const candidates = [...jsonLdLogos(text), ...logoImages(text)]
+        .map((href) => {
+          try {
+            return new URL(href.replace(/&amp;/g, "&"), page.url).toString();
+          } catch {
+            return null;
+          }
+        })
+        .filter((u): u is string => !!u && !/\.svg(\?|$)/i.test(u));
+      for (const url of [...new Set(candidates)].slice(0, MAX_CANDIDATES)) {
+        const logo = await fetchIcon(url);
+        if (logo && logo.contentType !== "image/x-icon") return logo;
+      }
+    }
+  }
+  const icon = await findSiteIcon(domain, { allowIco: false });
+  return icon && { bytes: icon.bytes, contentType: icon.contentType };
+}
+
+/// schema.org Organization `logo` — a URL string, or an ImageObject with `url`.
+function jsonLdLogos(html: string): string[] {
+  const found: string[] = [];
+  const visit = (node: unknown, depth: number) => {
+    if (!node || typeof node !== "object" || depth > 2) return;
+    const obj = node as Record<string, unknown>;
+    if (Array.isArray(obj["@graph"])) for (const child of obj["@graph"] as unknown[]) visit(child, depth + 1);
+    if (!/organization|localbusiness|corporation/i.test(String(obj["@type"] ?? ""))) return;
+    const logo = obj["logo"];
+    if (typeof logo === "string") found.push(logo);
+    else if (logo && typeof logo === "object" && typeof (logo as Record<string, unknown>).url === "string") {
+      found.push((logo as Record<string, string>).url);
+    }
+  };
+  for (const [, json] of html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+    try {
+      const parsed: unknown = JSON.parse(json);
+      for (const node of Array.isArray(parsed) ? parsed : [parsed]) visit(node, 0);
+    } catch {}
+  }
+  return found;
+}
+
+/// <img> tags that call themselves a logo, in page order (the header's
+/// comes first on almost every site). Lazy-loaded images often keep the
+/// real URL in data-src.
+function logoImages(html: string): string[] {
+  const found: string[] = [];
+  for (const [tag] of html.matchAll(/<img\b[^>]*>/gi)) {
+    const attr = (name: string) => new RegExp(`\\s${name}\\s*=\\s*["']([^"']*)["']`, "i").exec(tag)?.[1] ?? "";
+    const src = attr("data-src") || attr("src");
+    if (!src || src.startsWith("data:")) continue;
+    if (/logo/i.test([attr("class"), attr("id"), attr("alt"), src].join(" "))) found.push(src);
+  }
+  return found;
+}
+
 /// A postal address from the site's own schema.org JSON-LD markup (the
 /// same structured data search engines and Google Business read) — never
 /// scraped from free text or footers, since an address is something that

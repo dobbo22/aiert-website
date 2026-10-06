@@ -1,6 +1,7 @@
 import { requireBizSession } from "@/lib/tapcardBizSession";
 import { getOrg, listEmployees } from "@/lib/tapcardBiz";
 import EmployeeImport from "./EmployeeImport";
+import EmployeePhoto from "./EmployeePhoto";
 
 export default async function BizEmployeesPage() {
   const session = await requireBizSession();
@@ -18,6 +19,7 @@ export default async function BizEmployeesPage() {
         <table className="w-full text-left text-cloud">
           <thead>
             <tr className="border-b border-slate text-sm text-mist">
+              <th className="px-4 py-3">Photo</th>
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Title</th>
@@ -27,13 +29,16 @@ export default async function BizEmployeesPage() {
           <tbody>
             {employees.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-mist">
+                <td colSpan={5} className="px-4 py-6 text-mist">
                   No employees added yet.
                 </td>
               </tr>
             )}
             {employees.map((e) => (
               <tr key={e.id} className="border-b border-slate/50">
+                <td className="px-4 py-3">
+                  <EmployeePhoto employeeId={e.id} name={e.name} initialUrl={e.photo_url} />
+                </td>
                 <td className="px-4 py-3">{e.name}</td>
                 <td className="px-4 py-3">{e.email}</td>
                 <td className="px-4 py-3">{e.title}</td>

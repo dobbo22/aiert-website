@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCard } from "@/lib/tapcardDb";
 import { findSiteIcon } from "@/lib/siteIcon";
+import { orgLogoBytesForCard } from "@/lib/tapcardBiz";
 import { renderLogoLockup, renderRoundLogo } from "@/lib/tapcardPassArt";
 
 // Logos for the Google Wallet pass (lib/googleWallet.ts):
@@ -16,7 +17,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     domain = card.website ? new URL(/^https?:\/\//i.test(card.website) ? card.website : `https://${card.website}`).hostname.replace(/^www\./, "") : null;
   } catch {}
-  const icon = domain ? (await findSiteIcon(domain, { allowIco: false }))?.bytes ?? null : null;
+  // A company card's uploaded logo wins over the website icon.
+  const icon = (await orgLogoBytesForCard(card)) ?? (domain ? (await findSiteIcon(domain, { allowIco: false }))?.bytes ?? null : null);
 
   const png = req.nextUrl.searchParams.get("wide") === "1"
     ? await renderLogoLockup(card, icon, 400)

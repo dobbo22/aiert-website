@@ -4,7 +4,6 @@ import { requireBizSession } from "@/lib/tapcardBizSession";
 
 interface Body {
   name?: string;
-  logoURL?: string | null;
   website?: string;
   brandColor?: string;
   linkedInURL?: string;
@@ -31,7 +30,6 @@ export async function POST(req: NextRequest) {
 
   await updateOrgTemplate(org.id, {
     name: (body.name ?? "").trim().slice(0, 200),
-    logo_url: body.logoURL ?? null,
     website: (body.website ?? "").trim().slice(0, 300),
     brand_color: (body.brandColor ?? "").trim().slice(0, 20),
     linkedin_url: (body.linkedInURL ?? "").trim().slice(0, 300),

@@ -60,6 +60,9 @@ export interface BizEmployee {
   claim_token_expires_at: Date | string | null;
   claimed_at: Date | string | null;
   card_id: string | null;
+  /// Set by the admin on the employees page; becomes the card photo when
+  /// the employee claims (app/api/tapcard/biz/employees/[id]/photo).
+  photo_url: string | null;
   created_at: Date | string;
 }
 
@@ -140,6 +143,7 @@ export function ensureSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS org_id TEXT`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS org_employee_id TEXT`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS org_locked_fields TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`)
+      .then(() => sql`ALTER TABLE tapcard_biz_employees ADD COLUMN IF NOT EXISTS photo_url TEXT`)
       .catch((err) => {
         schemaReady = null;
         throw err;
@@ -205,9 +209,9 @@ export function orgCanProvision(org: Pick<BizOrg, "billing_status">): boolean {
   return org.billing_status === "active";
 }
 
+/// No logo_url: the logo has its own route (setOrgLogo).
 export interface OrgTemplateInput {
   name: string;
-  logo_url: string | null;
   website: string;
   brand_color: string;
   linkedin_url: string;
@@ -224,7 +228,7 @@ export async function updateOrgTemplate(id: string, input: OrgTemplateInput): Pr
   await ensureSchema();
   await sql`
     UPDATE tapcard_biz_orgs
-    SET name = ${input.name}, logo_url = ${input.logo_url}, website = ${input.website},
+    SET name = ${input.name}, website = ${input.website},
         brand_color = ${input.brand_color}, linkedin_url = ${input.linkedin_url},
         twitter_url = ${input.twitter_url}, instagram_url = ${input.instagram_url},
         facebook_url = ${input.facebook_url}, tiktok_url = ${input.tiktok_url},
@@ -252,6 +256,17 @@ export async function setOrgBilling(
         stripe_subscription_id = ${fields.stripe_subscription_id ?? current.stripe_subscription_id},
         current_period_end = ${fields.current_period_end ?? current.current_period_end},
         updated_at = now()
+    WHERE id = ${id}
+  `;
+}
+
+/// Set by app/api/tapcard/biz/logo — kept out of updateOrgTemplate so a
+/// template save never touches it. Bumps policy_version so apps refetch.
+export async function setOrgLogo(id: string, logoUrl: string | null): Promise<void> {
+  await ensureSchema();
+  await sql`
+    UPDATE tapcard_biz_orgs
+    SET logo_url = ${logoUrl}, policy_version = policy_version + 1, updated_at = now()
     WHERE id = ${id}
   `;
 }
@@ -430,4 +445,52 @@ export async function applyOrgLocks<T extends Record<string, unknown>>(
     locked[columns.card] = columns.template ? (org[columns.template] ?? "") : (existing[columns.card] ?? "");
   }
   return locked as T;
+}
+
+/// The uploaded company logo of the org a card belongs to (template page,
+/// app/api/tapcard/biz/logo), or null for personal cards and orgs without
+/// one. Callers fall back to the website icon (lib/siteIcon) as before.
+export async function orgLogoUrlForCard(card: object): Promise<string | null> {
+  const orgId = (card as { org_id?: unknown }).org_id;
+  if (typeof orgId !== "string" || !orgId) return null;
+  return (await getOrg(orgId))?.logo_url ?? null;
+}
+
+/// orgLogoUrlForCard's image bytes, for the Wallet pass artwork. Only ever
+/// our own Vercel Blob URL (set by the logo route), capped like site icons.
+export async function orgLogoBytesForCard(card: object): Promise<Buffer | null> {
+  const url = await orgLogoUrlForCard(card).catch(() => null);
+  if (!url) return null;
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
+    if (!res.ok) return null;
+    const bytes = Buffer.from(await res.arrayBuffer());
+    return bytes.length <= 2 * 1024 * 1024 ? bytes : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function getEmployee(orgId: string, employeeId: string): Promise<BizEmployee | null> {
+  await ensureSchema();
+  const rows = (await sql`
+    SELECT * FROM tapcard_biz_employees WHERE id = ${employeeId} AND org_id = ${orgId}
+  `) as BizEmployee[];
+  return rows[0] ?? null;
+}
+
+/// The admin-set photo for an employee. If they've already claimed their
+/// card and its photo is still the one the admin set before (or none), the
+/// card follows; a photo the employee picked in the app themselves is left
+/// alone.
+export async function setEmployeePhoto(employee: BizEmployee, photoUrl: string | null): Promise<void> {
+  await ensureSchema();
+  await sql`UPDATE tapcard_biz_employees SET photo_url = ${photoUrl} WHERE id = ${employee.id}`;
+  if (employee.card_id) {
+    await sql`
+      UPDATE tapcard_cards SET photo_url = ${photoUrl}
+      WHERE id = ${employee.card_id} AND org_id = ${employee.org_id}
+        AND (photo_url IS NULL OR photo_url = '' OR photo_url = ${employee.photo_url ?? ""})
+    `;
+  }
 }

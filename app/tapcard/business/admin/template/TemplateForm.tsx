@@ -30,6 +30,9 @@ export default function TemplateForm({ org }: { org: BizOrg }) {
   const [whatsAppURL, setWhatsAppURL] = useState(org.whatsapp_url);
   const [lockedFields, setLockedFields] = useState<Set<string>>(new Set(org.locked_fields));
   const [allowsPersonalCards, setAllowsPersonalCards] = useState(org.allows_personal_cards);
+  const [logoURL, setLogoURL] = useState(org.logo_url);
+  const [logoBusy, setLogoBusy] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -41,6 +44,28 @@ export default function TemplateForm({ org }: { org: BizOrg }) {
       return next;
     });
     setSaved(false);
+  }
+
+  // The logo saves straight away through its own route (not "Save template").
+  async function changeLogo(request: Promise<Response>) {
+    setLogoBusy(true);
+    setLogoError(null);
+    try {
+      const res = await request;
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) setLogoError(data.error ?? "Something went wrong — try again.");
+      else setLogoURL(data.url ?? null);
+    } catch {
+      setLogoError("Something went wrong — try again.");
+    } finally {
+      setLogoBusy(false);
+    }
+  }
+
+  function uploadLogo(file: File) {
+    const form = new FormData();
+    form.append("logo", file);
+    return changeLogo(fetch("/api/tapcard/biz/logo", { method: "POST", body: form }));
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -79,6 +104,60 @@ export default function TemplateForm({ org }: { org: BizOrg }) {
           <Field label="Website" value={website} onChange={setWebsite} placeholder="company.com" />
           <Field label="Brand colour" value={brandColor} onChange={setBrandColor} placeholder="#1a73e8" />
         </div>
+      </div>
+
+      <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
+        <h2 className="text-lg font-bold text-cloud">Company logo</h2>
+        <p className="mt-1 text-sm text-mist">
+          Shown on every employee&apos;s card and Wallet pass. The logo from your website&apos;s header usually works
+          best — a PNG with a transparent background.
+        </p>
+        <div className="mt-4 flex flex-wrap items-center gap-4">
+          <div className="flex h-20 w-56 items-center justify-center rounded-xl bg-white p-3">
+            {logoURL ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoURL} alt="Company logo" className="max-h-full max-w-full object-contain" />
+            ) : (
+              <span className="text-sm text-slate">No logo yet</span>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <label className={`btn-gold cursor-pointer rounded-xl px-4 py-2 text-sm font-semibold ${logoBusy ? "opacity-60" : ""}`}>
+              Upload logo
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="hidden"
+                disabled={logoBusy}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  if (file) void uploadLogo(file);
+                }}
+              />
+            </label>
+            <button
+              type="button"
+              disabled={logoBusy}
+              onClick={() => changeLogo(fetch("/api/tapcard/biz/logo", { method: "POST" }))}
+              className="rounded-xl px-4 py-2 text-sm font-semibold text-cloud ring-1 ring-slate"
+            >
+              Use logo from website
+            </button>
+            {logoURL && (
+              <button
+                type="button"
+                disabled={logoBusy}
+                onClick={() => changeLogo(fetch("/api/tapcard/biz/logo", { method: "DELETE" }))}
+                className="rounded-xl px-4 py-2 text-sm text-mist underline"
+              >
+                Remove
+              </button>
+            )}
+          </div>
+        </div>
+        {logoBusy && <p className="mt-3 text-sm text-mist">Working…</p>}
+        {logoError && <p className="mt-3 text-sm text-gold">{logoError}</p>}
       </div>
 
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
