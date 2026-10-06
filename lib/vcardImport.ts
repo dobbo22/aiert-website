@@ -11,6 +11,7 @@ export type ImportedContact = {
   email: string;
   phone: string;
   company: string;
+  title?: string;
   linkedin?: string;
   facebook?: string;
 };
@@ -23,12 +24,12 @@ export function parseVcards(text: string): ImportedContact[] {
   // Unfold continuation lines (a line break followed by a space or tab).
   const lines = text.replace(/\r\n/g, "\n").replace(/\n[ \t]/g, "").split("\n");
   const contacts: ImportedContact[] = [];
-  let current: { fn: string; given: string; family: string; emails: string[]; phones: { value: string; mobile: boolean }[]; org: string; linkedin: string; facebook: string } | null = null;
+  let current: { fn: string; given: string; family: string; emails: string[]; phones: { value: string; mobile: boolean }[]; org: string; title: string; linkedin: string; facebook: string } | null = null;
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
     if (/^BEGIN:VCARD$/i.test(line)) {
-      current = { fn: "", given: "", family: "", emails: [], phones: [], org: "", linkedin: "", facebook: "" };
+      current = { fn: "", given: "", family: "", emails: [], phones: [], org: "", title: "", linkedin: "", facebook: "" };
       continue;
     }
     if (/^END:VCARD$/i.test(line)) {
@@ -43,6 +44,7 @@ export function parseVcards(text: string): ImportedContact[] {
             email,
             phone,
             company: current.org,
+            title: current.title,
             linkedin: current.linkedin,
             facebook: current.facebook,
           });
@@ -88,6 +90,9 @@ export function parseVcards(text: string): ImportedContact[] {
       }
       case "ORG":
         current.org = unescapeValue(value.split(";")[0] ?? "");
+        break;
+      case "TITLE":
+        current.title = unescapeValue(value);
         break;
     }
   }

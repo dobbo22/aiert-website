@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { parseVcards } from "@/lib/vcardImport";
+
+type Row = { name: string; email: string; title: string };
 
 // Expects a flat CSV: name,email,title — a format we define ourselves
 // (not a third-party export like LinkedIn's Connections.csv, so no need
 // for a heavier parser). Parsed client-side, then sent to the import API
 // in one batch.
-function parseCsv(text: string): { name: string; email: string; title: string }[] {
+function parseCsv(text: string): Row[] {
   const lines = text.split(/\r?\n/).filter((l) => l.trim());
   const rows = lines.map((line) => line.split(",").map((c) => c.trim()));
   // Skip a header row if the first cell looks like a column name, not an email.
@@ -14,8 +17,20 @@ function parseCsv(text: string): { name: string; email: string; title: string }[
   return rows.slice(start).map(([name, email, title]) => ({ name: name ?? "", email: email ?? "", title: title ?? "" }));
 }
 
+// M365/Outlook's "Export contacts" (and Google, iCloud) all produce a
+// single .vcf holding every contact back to back — the exact same format
+// lib/vcardImport.ts already parses for the personal-invite import, so no
+// new parser needed here. TITLE maps to job title; ORG is the company,
+// which we don't need per-employee (the org template already supplies it),
+// so it's only used as a fallback if TITLE is blank.
+function parseVcf(text: string): Row[] {
+  return parseVcards(text)
+    .filter((c) => c.email)
+    .map((c) => ({ name: c.name, email: c.email, title: c.title || c.company || "" }));
+}
+
 export default function EmployeeImport({ billingActive }: { billingActive: boolean }) {
-  const [rows, setRows] = useState<{ name: string; email: string; title: string }[]>([]);
+  const [rows, setRows] = useState<Row[]>([]);
   const [fileName, setFileName] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<string | null>(null);
@@ -25,7 +40,7 @@ export default function EmployeeImport({ billingActive }: { billingActive: boole
     if (!file) return;
     const text = await file.text();
     setFileName(file.name);
-    setRows(parseCsv(text));
+    setRows(file.name.toLowerCase().endsWith(".vcf") ? parseVcf(text) : parseCsv(text));
     setResult(null);
   }
 
@@ -52,8 +67,9 @@ export default function EmployeeImport({ billingActive }: { billingActive: boole
     <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
       <h2 className="text-lg font-bold text-cloud">Add employees</h2>
       <p className="mt-1 text-sm text-mist">
-        Upload a CSV with columns: name, email, title. Each new person gets an email with a link to set up their
-        card — re-uploading the same file won't duplicate or resend anyone already added.
+        Upload a vCard (.vcf) exported from Outlook/M365, Google or iCloud contacts — or a CSV with columns: name,
+        email, title. Each new person gets an email with a link to set up their card — re-uploading the same file
+        won't duplicate or resend anyone already added.
       </p>
 
       {!billingActive && (
@@ -63,8 +79,14 @@ export default function EmployeeImport({ billingActive }: { billingActive: boole
       )}
 
       <div className="mt-4 flex items-center gap-4">
-        <input type="file" accept=".csv,text/csv" onChange={handleFile} disabled={!billingActive} className="text-cloud" />
-        {fileName && <span className="text-sm text-mist">{fileName} — {rows.length} rows</span>}
+        <input
+          type="file"
+          accept=".csv,.vcf,text/csv,text/vcard"
+          onChange={handleFile}
+          disabled={!billingActive}
+          className="text-cloud"
+        />
+        {fileName && <span className="text-sm text-mist">{fileName} — {rows.length} people found</span>}
       </div>
 
       {rows.length > 0 && (
