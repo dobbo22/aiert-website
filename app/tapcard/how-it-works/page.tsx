@@ -44,6 +44,10 @@ export default function HowItWorksPage() {
         <ul>
           <li><strong>QR code:</strong> open TapCard and let them scan the code with their phone camera.</li>
           <li><strong>Link:</strong> send your card&apos;s link by text, WhatsApp or email, or add it to your email signature.</li>
+          <li>
+            <strong>Send it straight to a contact:</strong> pick someone from your phone&apos;s contacts (Apple or
+            Google) and TapCard opens a text or email to them, already written and addressed, with your card link.
+          </li>
           <li><strong>Apple Wallet:</strong> add your card to Wallet so it&apos;s always to hand.</li>
         </ul>
       </section>
@@ -69,7 +73,14 @@ export default function HowItWorksPage() {
         <ul>
           <li><strong>Tap to call</strong> or email you direct.</li>
           <li><strong>Tap through to your links</strong>: your website, LinkedIn, X, Instagram, or wherever you want them to find you.</li>
-          <li>Always see your latest details: when you edit your card, the same link and QR code show the update.</li>
+          <li>
+            Always see your latest details: when you edit your card, the same link and QR code show the update
+            immediately — nothing to resend.
+          </li>
+          <li>
+            If you sent your card to them directly and later change your job title, company or number, they get a
+            short email letting them know your details changed (they can turn this off any time).
+          </li>
         </ul>
       </section>
 

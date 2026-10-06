@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse, after } from "next/server";
-import { countRecentCreates, createCard, getCard, setAddressIfEmpty, setBrandColor, updateCard } from "@/lib/tapcardDb";
+import { countRecentCreates, createCard, getCard, listNotifiableRecipients, markRecipientNotified, setAddressIfEmpty, setBrandColor, updateCard } from "@/lib/tapcardDb";
 import { canEdit, clientIpHash, hashSecret, readEditToken } from "@/lib/tapcardAuth";
 import { parsePassStyle } from "@/lib/tapcardPassStyle";
 import { refreshGoogleWalletPass } from "@/lib/googleWallet";
 import { resolveSiteBranding } from "@/lib/siteBrandColor";
 import { applyOrgLocks } from "@/lib/tapcardBiz";
+import { sendCardUpdatedEmail } from "@/lib/tapcardRecipientEmail";
+
+// Fields worth quietly notifying recipients about — avatar/colour tweaks
+// shouldn't spam anyone who was sent this card directly.
+const NOTIFY_WATCHLIST = ["title", "company", "phone", "email"] as const;
 
 interface CardBody {
   id?: string;
@@ -111,6 +116,7 @@ export async function POST(req: NextRequest) {
       // A company card (TapCard for Business) keeps its locked fields
       // whatever the app sent — see applyOrgLocks.
       fields = await applyOrgLocks(existing as unknown as Record<string, unknown>, fields);
+      const watchedChanged = NOTIFY_WATCHLIST.some((f) => fields[f] !== existing[f]);
       await updateCard(body.id, fields);
       const websiteChanged = fields.website !== existing.website;
       const addressIsBlank = !fields.address;
@@ -121,6 +127,7 @@ export async function POST(req: NextRequest) {
         if (!card) return;
         if (websiteChanged || addressIsBlank) await resolveAndSaveSiteBranding(card.id, fields.website, addressIsBlank);
         await refreshGoogleWalletPass(card, `https://tapcard.aiert.co.uk/s/${card.id}`).catch(() => {});
+        if (watchedChanged) await notifyRecipientsOfChange(card.id, card.name, fields);
       });
       return NextResponse.json({ id: body.id });
     }
@@ -149,4 +156,20 @@ async function resolveAndSaveSiteBranding(id: string, website: string, fillAddre
   const branding = website ? await resolveSiteBranding(website).catch(() => ({ color: null, address: null })) : { color: null, address: null };
   await setBrandColor(id, branding.color);
   if (fillAddress) await setAddressIfEmpty(id, branding.address);
+}
+
+/// Quietly emails anyone the owner previously sent this card directly to —
+/// see app/api/tapcard/cards/[id]/recipients. Skips a recipient whose
+/// last_notified_snapshot already matches the new watched values, so an
+/// edit saved twice in a row (or reverted back) only sends once.
+async function notifyRecipientsOfChange(cardId: string, ownerName: string, fields: Record<string, unknown>): Promise<void> {
+  const snapshot = Object.fromEntries(NOTIFY_WATCHLIST.map((f) => [f, String(fields[f] ?? "")]));
+  const recipients = await listNotifiableRecipients(cardId);
+  const link = `https://tapcard.aiert.co.uk/c/${cardId}`;
+  for (const recipient of recipients) {
+    const unchanged = recipient.last_notified_snapshot && NOTIFY_WATCHLIST.every((f) => recipient.last_notified_snapshot![f] === snapshot[f]);
+    if (unchanged) continue;
+    await sendCardUpdatedEmail(recipient.email, ownerName, link, recipient.unsubscribe_token).catch((err) => console.error("tapcard recipient notify failed:", err));
+    await markRecipientNotified(recipient.id, snapshot);
+  }
 }

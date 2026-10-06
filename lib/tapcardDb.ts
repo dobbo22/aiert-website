@@ -101,6 +101,26 @@ function ensureSchema(): Promise<unknown> {
           UNIQUE (to_card_id, from_card_id)
         )
       `)
+      // People the owner picked from their phone's Contacts and sent their
+      // card to directly (see app/api/tapcard/cards/[id]/recipients) — kept
+      // so a later edit to a watched field (lib/tapcardRecipientEmail.ts)
+      // can quietly notify them, the same unsubscribe-token pattern as
+      // tapcard_invite_sends.
+      .then(() => sql`
+        CREATE TABLE IF NOT EXISTS tapcard_card_recipients (
+          id BIGSERIAL PRIMARY KEY,
+          card_id TEXT NOT NULL,
+          name TEXT NOT NULL DEFAULT '',
+          phone TEXT NOT NULL DEFAULT '',
+          email TEXT NOT NULL DEFAULT '',
+          unsubscribe_token TEXT NOT NULL UNIQUE,
+          do_not_contact BOOLEAN NOT NULL DEFAULT false,
+          last_notified_at TIMESTAMPTZ,
+          last_notified_snapshot JSONB,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          UNIQUE (card_id, phone, email)
+        )
+      `)
       .catch((err) => {
         schemaReady = null; // let the next call retry rather than caching a failure
         throw err;
@@ -288,4 +308,56 @@ export async function deleteExchanges(toCardId: string, exchangeIds: number[]): 
   if (exchangeIds.length === 0) return;
   await ensureSchema();
   await sql`DELETE FROM tapcard_exchanges WHERE to_card_id = ${toCardId} AND id = ANY(${exchangeIds})`;
+}
+
+export interface TapCardRecipient {
+  id: number;
+  card_id: string;
+  name: string;
+  phone: string;
+  email: string;
+  unsubscribe_token: string;
+  do_not_contact: boolean;
+  last_notified_at: Date | string | null;
+  last_notified_snapshot: Record<string, string> | null;
+}
+
+/// Re-sending to the same person (same card + phone/email) just refreshes
+/// the name rather than creating a duplicate row — see the UNIQUE constraint
+/// in ensureSchema.
+export async function addCardRecipient(cardId: string, name: string, phone: string, email: string): Promise<TapCardRecipient> {
+  await ensureSchema();
+  const token = crypto.randomBytes(6).toString("base64url");
+  const rows = (await sql`
+    INSERT INTO tapcard_card_recipients (card_id, name, phone, email, unsubscribe_token)
+    VALUES (${cardId}, ${name}, ${phone}, ${email}, ${token})
+    ON CONFLICT (card_id, phone, email) DO UPDATE SET name = EXCLUDED.name
+    RETURNING *
+  `) as TapCardRecipient[];
+  return rows[0];
+}
+
+/// Recipients worth emailing about a change: haven't unsubscribed and gave
+/// an email address (phone-only recipients have no notification channel in
+/// v1 — see app/api/tapcard/cards/route.ts).
+export async function listNotifiableRecipients(cardId: string): Promise<TapCardRecipient[]> {
+  await ensureSchema();
+  return (await sql`
+    SELECT * FROM tapcard_card_recipients
+    WHERE card_id = ${cardId} AND do_not_contact = false AND email <> ''
+  `) as TapCardRecipient[];
+}
+
+export async function markRecipientNotified(id: number, snapshot: Record<string, string>): Promise<void> {
+  await ensureSchema();
+  await sql`
+    UPDATE tapcard_card_recipients
+    SET last_notified_at = now(), last_notified_snapshot = ${JSON.stringify(snapshot)}
+    WHERE id = ${id}
+  `;
+}
+
+export async function unsubscribeCardRecipient(token: string): Promise<void> {
+  await ensureSchema();
+  await sql`UPDATE tapcard_card_recipients SET do_not_contact = true WHERE unsubscribe_token = ${token}`;
 }

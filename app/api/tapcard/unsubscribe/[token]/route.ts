@@ -1,13 +1,19 @@
 import { NextResponse } from "next/server";
 import sql from "@/lib/db";
 import { INVITE_LINK_ORIGIN, ensureInviteSchema } from "@/lib/tapcardInvites";
+import { unsubscribeCardRecipient } from "@/lib/tapcardDb";
 
+// A token here is either a tapcard_invite_sends token (the personal-invite
+// growth emails) or a tapcard_card_recipients token (someone sent a card
+// directly, lib/tapcardRecipientEmail.ts) — the two tables use disjoint
+// token spaces, so trying both is safe and avoids a third token type.
 async function unsubscribe(token: string) {
   await ensureInviteSchema();
   await sql`
     UPDATE tapcard_invite_contacts SET do_not_contact = true
     WHERE id = (SELECT contact_id FROM tapcard_invite_sends WHERE token = ${token})
   `;
+  await unsubscribeCardRecipient(token);
 }
 
 // POST: the email's List-Unsubscribe one-click header (Gmail/Apple Mail's

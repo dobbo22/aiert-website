@@ -35,12 +35,16 @@ const FEATURES = [
     body: "Show your QR code, send your link by text, WhatsApp or email, or keep your card in Apple Wallet.",
   },
   {
+    title: "Send it straight to a contact",
+    body: "Pick someone from your phone's contacts and TapCard texts or emails them your card directly — no typing their number in yourself.",
+  },
+  {
     title: "No app needed to receive",
     body: "Your card opens in their browser. One tap on Save Contact and you're in their phone. No typing, no mistakes.",
   },
   {
     title: "Always up to date",
-    body: "Change your job, number or links and the same QR code and link show your latest details.",
+    body: "Change your job, number or links and the same QR code and link show your latest details — and anyone you sent it to directly gets a quiet heads-up.",
   },
 ];
 
@@ -74,7 +78,7 @@ export default function TapCardHomePage() {
           <DemoVideo />
         </section>
 
-        <section className="mt-16 grid gap-4 sm:grid-cols-3">
+        <section className="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {FEATURES.map((f) => (
             <div key={f.title} className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
               <h2 className="text-lg font-bold text-cloud">{f.title}</h2>
