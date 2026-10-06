@@ -17,18 +17,25 @@ export default function SignupForm() {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
+    // Gives up rather than leaving the button on "Please wait…" forever.
+    const timeout = new AbortController();
+    const timer = setTimeout(() => timeout.abort(), 30_000);
     try {
-      await submit();
+      await submit(timeout.signal);
     } catch {
-      // A network failure or a non-JSON reply — never leave the button stuck.
-      setError("Something went wrong — try again.");
+      // A network failure, timeout or non-JSON reply. A trial may still
+      // have been set up server-side, so point at the email too.
+      setError("Something went wrong. Check your email for a sign-in link before trying again.");
       setSubmitting(false);
+    } finally {
+      clearTimeout(timer);
     }
   }
 
-  async function submit() {
+  async function submit(signal: AbortSignal) {
     if (bandId === TRIAL_ID) {
       const res = await fetch("/api/tapcard/biz/trial", {
+        signal,
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ companyName, email }),
@@ -44,6 +51,7 @@ export default function SignupForm() {
     }
 
     const res = await fetch("/api/tapcard/biz/checkout", {
+      signal,
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ companyName, email, bandId }),
