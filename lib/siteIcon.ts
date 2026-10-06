@@ -65,7 +65,12 @@ export async function findSiteIcon(domain: string, { allowIco = true } = {}): Pr
 /// so the most deliberate choice), then the first <img> that names itself
 /// a logo (class/id/alt/src — usually the header's), then the site icon.
 /// Same locked-down fetching and raster-only rule as findSiteIcon.
-export async function findSiteLogo(domain: string): Promise<{ bytes: Buffer; contentType: string } | null> {
+/// `iconFallback: false` returns null rather than the icon, for callers
+/// that already show the icon separately (/api/logo, the apps' banner).
+export async function findSiteLogo(
+  domain: string,
+  { iconFallback = true } = {}
+): Promise<{ bytes: Buffer; contentType: string } | null> {
   const page = await safeFetch(`https://${domain}/`);
   if (page && (page.res.headers.get("content-type") ?? "").includes("text/html")) {
     const html = await readLimited(page.res, MAX_HTML_BYTES);
@@ -86,6 +91,7 @@ export async function findSiteLogo(domain: string): Promise<{ bytes: Buffer; con
       }
     }
   }
+  if (!iconFallback) return null;
   const icon = await findSiteIcon(domain, { allowIco: false });
   return icon && { bytes: icon.bytes, contentType: icon.contentType };
 }

@@ -69,6 +69,7 @@ export async function POST(req: NextRequest) {
       orgID: org.id,
       orgLockedFields: org.locked_fields,
       orgPolicyVersion: org.policy_version,
+      orgLogoURL: org.logo_url,
     },
     editToken,
   });

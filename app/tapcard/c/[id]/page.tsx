@@ -5,7 +5,7 @@ import { after } from "next/server";
 import { getCard, incrementViewCount } from "@/lib/tapcardDb";
 import { paletteFor } from "@/lib/brandPalette";
 import { orgLogoUrlForCard } from "@/lib/tapcardBiz";
-import CompanyLogo from "../../CompanyLogo";
+import { BannerBrand, BrandProvider, FaviconBadge } from "../../CardBrand";
 import ContactIcon, { type ContactIconName } from "../../ContactIcon";
 
 // App Store Connect record "TapCard: Digital Business Card" (id 6816003159).
@@ -115,15 +115,20 @@ export default async function CardPage({
   const visibleSocials = socialLinks.filter((link) => link.value);
 
   const companyDomain = card.website ? extractDomain(card.website) : null;
-  // A TapCard for Business card's uploaded logo — often a wide wordmark, so
-  // it goes across the banner rather than in the small round avatar badge.
+  // Across the banner: a TapCard for Business card's uploaded logo, else the
+  // logo from the card's website (404s when the site has none, and the
+  // label + round icon badge show instead — see CardBrand). Absolute, since
+  // this page is also served at www.aiert.co.uk/tapcard/c/….
   const orgLogo = await orgLogoUrlForCard(card).catch(() => null);
+  const bannerLogo =
+    orgLogo ?? (companyDomain ? `https://tapcard.aiert.co.uk/api/logo?domain=${encodeURIComponent(companyDomain)}` : null);
   const palette = paletteFor(card.brand_color);
 
   return (
     <main className="min-h-screen flex flex-col items-center px-4 py-12">
       <div className="w-full max-w-sm">
         <div className="overflow-hidden rounded-3xl bg-[#111318] text-center shadow-xl ring-1 ring-white/10">
+          <BrandProvider>
           {/* Cover banner: the card's own photo blurred out behind it, or
               the company's brand gradient (extracted from its website) when
               there's no photo — the default TapCard navy→violet if there's
@@ -141,17 +146,7 @@ export default async function CardPage({
               />
             )}
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#111318]" />
-            {card.label && !orgLogo && (
-              <span className="absolute left-4 top-4 rounded-full bg-black/40 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
-                {card.label}
-              </span>
-            )}
-            {orgLogo && (
-              <span className="absolute left-4 top-4 flex h-10 max-w-[60%] items-center rounded-xl bg-white px-3 py-1.5">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={orgLogo} alt={card.company} className="max-h-full max-w-full object-contain" />
-              </span>
-            )}
+            <BannerBrand logoSrc={bannerLogo} label={card.label} alt={card.company} />
           </div>
 
           <div className="relative -mt-16 px-5 pb-6">
@@ -168,11 +163,7 @@ export default async function CardPage({
                   🙂
                 </div>
               )}
-              {companyDomain && !orgLogo && (
-                <span className="absolute -bottom-1 -right-1 rounded-full bg-white p-1 ring-4 ring-[#111318]">
-                  <CompanyLogo domain={companyDomain} />
-                </span>
-              )}
+              {companyDomain && !orgLogo && <FaviconBadge domain={companyDomain} />}
             </div>
 
             <h1 className="mt-4 text-2xl font-bold text-white">{card.name}</h1>
@@ -272,6 +263,7 @@ export default async function CardPage({
               </div>
             )}
           </div>
+          </BrandProvider>
         </div>
 
         <a
