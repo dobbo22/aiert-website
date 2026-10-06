@@ -30,6 +30,9 @@ interface CardBody {
   tiktokURL?: string;
   whatsAppURL?: string;
   passStyle?: string;
+  /// The app's save-confirm dialog ("Don't notify them") — skips the
+  /// quiet recipient email for this save only, see NOTIFY_WATCHLIST below.
+  suppressNotify?: boolean;
 }
 
 // Same rules as the iOS app's SocialProfileLink: a bare handle ("@Aiert")
@@ -127,7 +130,7 @@ export async function POST(req: NextRequest) {
         if (!card) return;
         if (websiteChanged || addressIsBlank) await resolveAndSaveSiteBranding(card.id, fields.website, addressIsBlank);
         await refreshGoogleWalletPass(card, `https://tapcard.aiert.co.uk/s/${card.id}`).catch(() => {});
-        if (watchedChanged) await notifyRecipientsOfChange(card.id, card.name, fields);
+        if (watchedChanged && !body.suppressNotify) await notifyRecipientsOfChange(card.id, card.name, fields);
       });
       return NextResponse.json({ id: body.id });
     }
