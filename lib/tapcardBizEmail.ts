@@ -2,7 +2,8 @@ import { Resend } from "resend";
 import { inviteEmailRoute } from "@/lib/inviteEmailRoute";
 
 // TapCard for Business's own small set of transactional emails — magic
-// links and employee claim invites. Deliberately separate from
+// links. (Employee invites go from the admin's own email — see
+// lib/tapcardBizInvite.ts.) Deliberately separate from
 // lib/inviteEmail.ts, which is built around the personal-card invite
 // flow's rich card-preview image; these are plain, short, and don't need
 // any of that machinery. Reuses the same Resend/from-address wiring
@@ -39,18 +40,4 @@ export async function sendBizLoginEmail(email: string, link: string): Promise<vo
     <p>This link works once and expires in 15 minutes.</p>
   `;
   await send(email, "Sign in to TapCard for Business", html, `Sign in: ${link}\n\nThis link works once and expires in 15 minutes.`);
-}
-
-export async function sendBizClaimEmail(email: string, name: string, companyName: string, link: string): Promise<void> {
-  const html = `
-    <p>Hi ${name || "there"},</p>
-    <p>${companyName} has set you up with a TapCard — your digital business card.</p>
-    <p><a href="${link}">Tap here to set up your card</a></p>
-  `;
-  await send(
-    email,
-    `${companyName} has set you up with TapCard`,
-    html,
-    `Hi ${name || "there"},\n\n${companyName} has set you up with a TapCard — your digital business card.\n\nSet up your card: ${link}`
-  );
 }

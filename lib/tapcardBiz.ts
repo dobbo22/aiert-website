@@ -1,5 +1,6 @@
 import sql from "@/lib/db";
 import crypto from "crypto";
+import { del } from "@vercel/blob";
 
 // TapCard for Business: a company admin defines a card template (logo,
 // website, brand colour, company social links), locks whichever fields
@@ -46,24 +47,6 @@ export interface BizOrg {
   policy_version: number;
   created_at: Date | string;
   updated_at: Date | string;
-}
-
-export interface BizEmployee {
-  id: string;
-  org_id: string;
-  dedupe_key: string;
-  name: string;
-  email: string;
-  title: string;
-  details_edited: boolean;
-  claim_token_hash: string | null;
-  claim_token_expires_at: Date | string | null;
-  claimed_at: Date | string | null;
-  card_id: string | null;
-  /// Set by the admin on the employees page; becomes the card photo when
-  /// the employee claims (app/api/tapcard/biz/employees/[id]/photo).
-  photo_url: string | null;
-  created_at: Date | string;
 }
 
 import { DEFAULT_LOCKED_FIELDS, LOCKABLE_FIELDS } from "@/lib/tapcardBizFields";
@@ -119,23 +102,20 @@ export function ensureSchema(): Promise<unknown> {
           consumed_at TIMESTAMPTZ
         )
       `)
+      // Single-use invite links (lib/tapcardBizInvite.ts) are signed, not
+      // stored — this only records each spent invite's random id (hashed),
+      // which says nothing about who it was for.
       .then(() => sql`
-        CREATE TABLE IF NOT EXISTS tapcard_biz_employees (
-          id TEXT PRIMARY KEY,
-          org_id TEXT NOT NULL REFERENCES tapcard_biz_orgs(id) ON DELETE CASCADE,
-          dedupe_key TEXT NOT NULL,
-          name TEXT NOT NULL DEFAULT '',
-          email TEXT NOT NULL DEFAULT '',
-          title TEXT NOT NULL DEFAULT '',
-          details_edited BOOLEAN NOT NULL DEFAULT false,
-          claim_token_hash TEXT,
-          claim_token_expires_at TIMESTAMPTZ,
-          claimed_at TIMESTAMPTZ,
-          card_id TEXT,
-          created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-          UNIQUE(org_id, dedupe_key)
+        CREATE TABLE IF NOT EXISTS tapcard_biz_spent_invites (
+          jti_hash TEXT PRIMARY KEY,
+          org_id TEXT NOT NULL,
+          spent_at TIMESTAMPTZ NOT NULL DEFAULT now()
         )
       `)
+      // The staff list used to be stored here; it now stays in the admin's
+      // own file. One-off cleanup of any rows (and admin-uploaded photos)
+      // from before — a no-op once the table is gone.
+      .then(() => purgeLegacyEmployeeRoster())
       // tapcard_cards already exists (lib/tapcardDb.ts) — these columns tie
       // a card to an org without a hard FK, keeping the two modules
       // decoupled (consistent with how tapcard_cards already relates
@@ -143,7 +123,6 @@ export function ensureSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS org_id TEXT`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS org_employee_id TEXT`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS org_locked_fields TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`)
-      .then(() => sql`ALTER TABLE tapcard_biz_employees ADD COLUMN IF NOT EXISTS photo_url TEXT`)
       .catch((err) => {
         schemaReady = null;
         throw err;
@@ -199,8 +178,8 @@ export async function getOrg(id: string): Promise<BizOrg | null> {
 }
 
 /// The only thing that matters for "can this org's employees still be
-/// provisioned" — see app/api/tapcard/biz/employees/import and
-/// app/api/tapcard/biz/claim/[token]. Deliberately NOT consulted anywhere
+/// provisioned" — see app/api/tapcard/biz/invites and
+/// app/api/tapcard/biz/claim. Deliberately NOT consulted anywhere
 /// in the existing card read/update/share paths: an already-claimed card
 /// must keep working even if billing lapses later (see the plan's
 /// reasoning — breaking a card already out in the world over a billing
@@ -319,90 +298,69 @@ export async function findAdminOrgsByEmail(email: string): Promise<BizAdmin[]> {
   return (await sql`SELECT * FROM tapcard_biz_admins WHERE email = ${email.toLowerCase().trim()}`) as BizAdmin[];
 }
 
-/// Employee bulk import — INSERT ... SELECT * FROM unnest(...) ON CONFLICT,
-/// the same pattern app/api/admin/invites/import/route.ts already uses,
-/// because the Neon HTTP driver can't do multi-statement transactions (so
-/// no Prisma-style loop of individual creates). Re-import never overwrites
-/// a row an admin hand-edited since (details_edited). Returns the ids of
-/// rows that are brand new (so the caller knows who needs a claim email).
-export async function importEmployees(
-  orgId: string,
-  rows: { name: string; email: string; title: string }[]
-): Promise<{ id: string; email: string; name: string; isNew: boolean }[]> {
-  await ensureSchema();
-  const ids = rows.map(() => newId());
-  const dedupeKeys = rows.map((r) => r.email.trim().toLowerCase());
-  const names = rows.map((r) => r.name.trim().slice(0, 200));
-  const emails = rows.map((r) => r.email.trim().slice(0, 200));
-  const titles = rows.map((r) => r.title.trim().slice(0, 200));
-  const orgIds = rows.map(() => orgId);
-
-  const result = (await sql`
-    INSERT INTO tapcard_biz_employees (id, org_id, dedupe_key, name, email, title)
-    SELECT * FROM unnest(
-      ${ids}::text[], ${orgIds}::text[], ${dedupeKeys}::text[],
-      ${names}::text[], ${emails}::text[], ${titles}::text[]
-    )
-    ON CONFLICT (org_id, dedupe_key) DO UPDATE
-      SET name = CASE WHEN tapcard_biz_employees.details_edited THEN tapcard_biz_employees.name ELSE EXCLUDED.name END,
-          title = CASE WHEN tapcard_biz_employees.details_edited THEN tapcard_biz_employees.title ELSE EXCLUDED.title END
-    RETURNING id, email, name, (xmax = 0) AS is_new
-  `) as { id: string; email: string; name: string; is_new: boolean }[];
-
-  return result.map((r) => ({ id: r.id, email: r.email, name: r.name, isNew: r.is_new }));
-}
-
-export async function listEmployees(orgId: string): Promise<BizEmployee[]> {
-  await ensureSchema();
-  return (await sql`SELECT * FROM tapcard_biz_employees WHERE org_id = ${orgId} ORDER BY created_at DESC`) as BizEmployee[];
-}
-
-export async function markDetailsEdited(id: string, name: string, title: string): Promise<void> {
-  await ensureSchema();
-  await sql`UPDATE tapcard_biz_employees SET name = ${name}, title = ${title}, details_edited = true WHERE id = ${id}`;
-}
-
-/// 14-day single-use claim token for a not-yet-claimed employee. Returns
-/// null (and does nothing) once already claimed — re-sending an invite to
-/// someone who's already set up shouldn't silently revoke their card.
-export async function issueClaimToken(employeeId: string): Promise<string | null> {
-  await ensureSchema();
-  const token = crypto.randomBytes(32).toString("base64url");
-  const hash = crypto.createHash("sha256").update(token).digest("hex");
-  const rows = await sql`
-    UPDATE tapcard_biz_employees
-    SET claim_token_hash = ${hash}, claim_token_expires_at = now() + interval '14 days'
-    WHERE id = ${employeeId} AND claimed_at IS NULL
-    RETURNING id
-  `;
-  return rows.length > 0 ? token : null;
-}
-
-export async function getEmployeeByClaimToken(token: string): Promise<BizEmployee | null> {
-  await ensureSchema();
-  const hash = crypto.createHash("sha256").update(token).digest("hex");
-  const rows = (await sql`
-    SELECT * FROM tapcard_biz_employees
-    WHERE claim_token_hash = ${hash} AND claim_token_expires_at > now() AND claimed_at IS NULL
-  `) as BizEmployee[];
-  return rows[0] ?? null;
-}
-
-export async function markClaimed(employeeId: string, cardId: string): Promise<void> {
-  await ensureSchema();
-  await sql`UPDATE tapcard_biz_employees SET claimed_at = now(), card_id = ${cardId} WHERE id = ${employeeId}`;
-}
-
 /// Ties a freshly-created tapcard_cards row to its org — a separate update
 /// rather than part of createCard() in lib/tapcardDb.ts, so that module
 /// stays untouched by the business concept entirely.
-export async function attachCardToOrg(cardId: string, orgId: string, employeeId: string, lockedFields: string[]): Promise<void> {
+export async function attachCardToOrg(cardId: string, orgId: string, lockedFields: string[]): Promise<void> {
   await ensureSchema();
   await sql`
-    UPDATE tapcard_cards
-    SET org_id = ${orgId}, org_employee_id = ${employeeId}, org_locked_fields = ${lockedFields}
-    WHERE id = ${cardId}
+    UPDATE tapcard_cards SET org_id = ${orgId}, org_locked_fields = ${lockedFields} WHERE id = ${cardId}
   `;
+}
+
+/// Marks an invite id as used. Atomic: true only for the one request that
+/// spends it, so two taps on the same link can't both create a card.
+export async function spendInvite(jti: string, orgId: string): Promise<boolean> {
+  await ensureSchema();
+  const hash = crypto.createHash("sha256").update(jti).digest("hex");
+  const rows = await sql`
+    INSERT INTO tapcard_biz_spent_invites (jti_hash, org_id) VALUES (${hash}, ${orgId})
+    ON CONFLICT (jti_hash) DO NOTHING
+    RETURNING jti_hash
+  `;
+  return rows.length > 0;
+}
+
+/// Cards employees have activated — what seats are counted against, and
+/// what the employees page lists (the card's own public details only).
+export interface OrgCard {
+  id: string;
+  name: string;
+  title: string;
+  email: string;
+  created_at: Date | string;
+}
+
+export async function listOrgCards(orgId: string): Promise<OrgCard[]> {
+  await ensureSchema();
+  return (await sql`
+    SELECT id, name, title, email, created_at FROM tapcard_cards WHERE org_id = ${orgId} ORDER BY created_at DESC
+  `) as OrgCard[];
+}
+
+export async function countOrgCards(orgId: string): Promise<number> {
+  await ensureSchema();
+  const rows = (await sql`SELECT count(*)::int AS n FROM tapcard_cards WHERE org_id = ${orgId}`) as { n: number }[];
+  return rows[0]?.n ?? 0;
+}
+
+/// The photo_url of a company card, checked to belong to `orgId` — for the
+/// admin's "Remove" (someone left): the caller deletes the card and photo.
+export async function getOrgCardPhoto(orgId: string, cardId: string): Promise<{ found: boolean; photoUrl: string | null }> {
+  await ensureSchema();
+  const rows = (await sql`
+    SELECT photo_url FROM tapcard_cards WHERE id = ${cardId} AND org_id = ${orgId}
+  `) as { photo_url: string | null }[];
+  return rows[0] ? { found: true, photoUrl: rows[0].photo_url } : { found: false, photoUrl: null };
+}
+
+async function purgeLegacyEmployeeRoster(): Promise<void> {
+  const exists = (await sql`SELECT to_regclass('tapcard_biz_employees') AS t`) as { t: string | null }[];
+  if (!exists[0]?.t) return;
+  const rows = (await sql`SELECT * FROM tapcard_biz_employees`) as { photo_url?: string | null }[];
+  const photos = rows.map((r) => r.photo_url).filter((u): u is string => !!u);
+  if (photos.length) await del(photos).catch(() => {});
+  await sql`DROP TABLE IF EXISTS tapcard_biz_employees`;
 }
 
 /// Card-input column for each LOCKABLE_FIELDS name (which use the card JSON
@@ -468,29 +426,5 @@ export async function orgLogoBytesForCard(card: object): Promise<Buffer | null> 
     return bytes.length <= 2 * 1024 * 1024 ? bytes : null;
   } catch {
     return null;
-  }
-}
-
-export async function getEmployee(orgId: string, employeeId: string): Promise<BizEmployee | null> {
-  await ensureSchema();
-  const rows = (await sql`
-    SELECT * FROM tapcard_biz_employees WHERE id = ${employeeId} AND org_id = ${orgId}
-  `) as BizEmployee[];
-  return rows[0] ?? null;
-}
-
-/// The admin-set photo for an employee. If they've already claimed their
-/// card and its photo is still the one the admin set before (or none), the
-/// card follows; a photo the employee picked in the app themselves is left
-/// alone.
-export async function setEmployeePhoto(employee: BizEmployee, photoUrl: string | null): Promise<void> {
-  await ensureSchema();
-  await sql`UPDATE tapcard_biz_employees SET photo_url = ${photoUrl} WHERE id = ${employee.id}`;
-  if (employee.card_id) {
-    await sql`
-      UPDATE tapcard_cards SET photo_url = ${photoUrl}
-      WHERE id = ${employee.card_id} AND org_id = ${employee.org_id}
-        AND (photo_url IS NULL OR photo_url = '' OR photo_url = ${employee.photo_url ?? ""})
-    `;
   }
 }

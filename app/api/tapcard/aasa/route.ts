@@ -28,7 +28,9 @@ export function GET(req: Request) {
           // swallows plain single-segment card links — confirmed on-device
           // via swcd's log (`Inputs blocked by pattern {"exclude":true}` on
           // a plain /c/<id> link). Match the literal /vcard suffix instead.
-          paths: [`NOT ${prefix}/c/*/vcard`, `${prefix}/c/*`, `${prefix}/business/claim/*`],
+          // Business invites are /business/claim#<invite> — the invite is a
+          // fragment, which path matching ignores, so the bare path.
+          paths: [`NOT ${prefix}/c/*/vcard`, `${prefix}/c/*`, `${prefix}/business/claim`],
         },
       ],
     },
