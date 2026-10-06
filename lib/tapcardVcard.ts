@@ -1,12 +1,31 @@
-import type { TapCardRecord } from "@/lib/tapcardDb";
-
 // RFC 6350 §3.4: backslash, comma, semicolon and newline are the characters
 // that need escaping in a text value.
 function escapeVCardText(value: string): string {
   return value.replace(/\\/g, "\\\\").replace(/,/g, "\\,").replace(/;/g, "\\;").replace(/\n/g, "\\n");
 }
 
-export function buildVCard(card: TapCardRecord): string {
+/// Just the fields buildVCard actually reads — a TapCardRecord satisfies
+/// this structurally, but it also lets app/api/tapcard/vcard-preview build
+/// a vCard from loose form fields (no stored card, no id) without widening
+/// TapCardRecord itself.
+export interface VCardFields {
+  name?: string;
+  title?: string;
+  company?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  address?: string;
+  linkedin_url?: string;
+  twitter_url?: string;
+  instagram_url?: string;
+  facebook_url?: string;
+  tiktok_url?: string;
+  whatsapp_url?: string;
+  photo_url?: string | null;
+}
+
+export function buildVCard(card: VCardFields): string {
   const lines = ["BEGIN:VCARD", "VERSION:3.0"];
 
   if (card.name) {

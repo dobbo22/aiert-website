@@ -132,6 +132,9 @@ function ensureSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_card_recipients ADD COLUMN IF NOT EXISTS accepted_name TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_card_recipients ADD COLUMN IF NOT EXISTS accepted_phone TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_card_recipients ADD COLUMN IF NOT EXISTS accepted_email TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_card_recipients ADD COLUMN IF NOT EXISTS accepted_title TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_card_recipients ADD COLUMN IF NOT EXISTS accepted_company TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_card_recipients ADD COLUMN IF NOT EXISTS accepted_website TEXT NOT NULL DEFAULT ''`)
       .catch((err) => {
         schemaReady = null; // let the next call retry rather than caching a failure
         throw err;
@@ -336,6 +339,9 @@ export interface TapCardRecipient {
   accepted_name: string;
   accepted_phone: string;
   accepted_email: string;
+  accepted_title: string;
+  accepted_company: string;
+  accepted_website: string;
 }
 
 /// Re-sending to the same person (same card + phone/email) just refreshes
@@ -365,11 +371,20 @@ export async function listRecipients(cardId: string): Promise<TapCardRecipient[]
 /// A recipient sharing their own details back — see app/tapcard/AcceptRecipientForm.tsx.
 /// Returns the card_id they're a recipient of, or null if the token doesn't
 /// match anyone (expired/garbled link).
-export async function acceptRecipient(acceptToken: string, name: string, phone: string, email: string): Promise<string | null> {
+export async function acceptRecipient(
+  acceptToken: string,
+  name: string,
+  phone: string,
+  email: string,
+  title: string,
+  company: string,
+  website: string,
+): Promise<string | null> {
   await ensureSchema();
   const rows = (await sql`
     UPDATE tapcard_card_recipients
-    SET accepted_at = now(), accepted_name = ${name}, accepted_phone = ${phone}, accepted_email = ${email}
+    SET accepted_at = now(), accepted_name = ${name}, accepted_phone = ${phone}, accepted_email = ${email},
+        accepted_title = ${title}, accepted_company = ${company}, accepted_website = ${website}
     WHERE accept_token = ${acceptToken}
     RETURNING card_id
   `) as { card_id: string }[];

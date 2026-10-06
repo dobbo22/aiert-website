@@ -30,6 +30,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       acceptedName: r.accepted_name,
       acceptedPhone: r.accepted_phone,
       acceptedEmail: r.accepted_email,
+      acceptedTitle: r.accepted_title,
+      acceptedCompany: r.accepted_company,
+      acceptedWebsite: r.accepted_website,
     })),
   });
 }

@@ -6,6 +6,9 @@ interface Body {
   name?: string;
   phone?: string;
   email?: string;
+  title?: string;
+  company?: string;
+  website?: string;
 }
 
 // The recipient sharing their own details back (AcceptRecipientForm, on the
@@ -21,11 +24,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const name = (body.name ?? "").trim().slice(0, 200);
   const phone = (body.phone ?? "").trim().slice(0, 60);
   const email = (body.email ?? "").trim().slice(0, 200);
+  const title = (body.title ?? "").trim().slice(0, 200);
+  const company = (body.company ?? "").trim().slice(0, 200);
+  const website = (body.website ?? "").trim().slice(0, 300);
   if (!name && !phone && !email) {
     return NextResponse.json({ error: "enter at least one detail" }, { status: 400 });
   }
 
-  const cardId = await acceptRecipient(token, name, phone, email);
+  const cardId = await acceptRecipient(token, name, phone, email, title, company, website);
   if (!cardId || cardId !== id) {
     return NextResponse.json({ error: "this link has expired or is no longer valid" }, { status: 404 });
   }

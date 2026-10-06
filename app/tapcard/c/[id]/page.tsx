@@ -197,7 +197,9 @@ export default async function CardPage({
               </a>
             )}
 
-            {acceptToken && <AcceptRecipientForm cardId={id} token={acceptToken} ownerFirstName={firstName} />}
+            {acceptToken && (
+              <AcceptRecipientForm cardId={id} token={acceptToken} ownerFirstName={firstName} appStoreUrl={TAPCARD_APP_STORE_URL} />
+            )}
 
             {SEND_BACK_ENABLED && send === "1" && (
               <div className="mt-3 rounded-2xl bg-white/[0.07] p-4 text-left text-sm text-white">
