@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   if (admins.length > 0) {
     const token = await createLoginToken(email, admins[0].org_id);
     const origin = "https://tapcard.aiert.co.uk";
-    await sendBizLoginEmail(email, `${origin}/api/biz/login/${token}`).catch(() => {});
+    await sendBizLoginEmail(email, `${origin}/api/biz/login/${token}`).catch((e) => console.error("tapcard biz email failed:", e));
   }
 
   return NextResponse.json({ ok: true });
