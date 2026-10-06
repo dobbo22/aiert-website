@@ -31,6 +31,10 @@ export interface BizOrg {
   /// lockable field is just one more string here, not a schema change.
   locked_fields: string[];
   allows_personal_cards: boolean;
+  /// Set once, permanently, the moment this domain's first free trial is
+  /// created — stays true even after upgrading to a paid band, so a later
+  /// org for the same domain can't reopen the free trial.
+  trial_used: boolean;
   seat_band: string;
   seat_limit: number;
   billing_status: "incomplete" | "active" | "past_due" | "canceled";
@@ -117,6 +121,7 @@ export function ensureSchema(): Promise<unknown> {
         updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
       )
     `
+      .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS trial_used BOOLEAN NOT NULL DEFAULT false`)
       .then(() => sql`
         CREATE TABLE IF NOT EXISTS tapcard_biz_admins (
           id TEXT PRIMARY KEY,
@@ -172,15 +177,40 @@ export function newId(): string {
   return crypto.randomBytes(16).toString("base64url");
 }
 
-export async function createOrg(name: string): Promise<BizOrg> {
+export async function createOrg(name: string, domain = ""): Promise<BizOrg> {
   await ensureSchema();
   const id = newId();
   const rows = (await sql`
-    INSERT INTO tapcard_biz_orgs (id, name, locked_fields)
-    VALUES (${id}, ${name}, ${DEFAULT_LOCKED_FIELDS})
+    INSERT INTO tapcard_biz_orgs (id, name, domain, locked_fields)
+    VALUES (${id}, ${name}, ${domain}, ${DEFAULT_LOCKED_FIELDS})
     RETURNING *
   `) as BizOrg[];
   return rows[0];
+}
+
+/// The domain half of an email address, lowercased — e.g.
+/// "jane@acme.co.uk" -> "acme.co.uk". Used to key one free trial per
+/// company rather than per person, so the same company can't just sign
+/// up five different employees for five free trials. Free email domains
+/// (gmail.com etc.) deliberately aren't special-cased — a genuine small
+/// company using Gmail only gets one trial same as anyone else, which is
+/// an acceptable, simple tradeoff rather than maintaining a domain list.
+export function domainOf(email: string): string {
+  return email.trim().toLowerCase().split("@")[1] ?? "";
+}
+
+/// True if this domain has already claimed a free trial — checked before
+/// creating a new one (see app/api/tapcard/biz/trial/route.ts). Reads the
+/// persistent trial_used flag, not the org's current seat_band, since an
+/// org that started as a trial and later upgraded still has to block a
+/// second trial for the same domain.
+export async function domainHasUsedTrial(domain: string): Promise<boolean> {
+  if (!domain) return false;
+  await ensureSchema();
+  const rows = (await sql`
+    SELECT 1 FROM tapcard_biz_orgs WHERE domain = ${domain} AND trial_used = true LIMIT 1
+  `) as unknown[];
+  return rows.length > 0;
 }
 
 export async function getOrg(id: string): Promise<BizOrg | null> {
@@ -249,6 +279,11 @@ export async function setOrgBilling(
         updated_at = now()
     WHERE id = ${id}
   `;
+}
+
+export async function markTrialUsed(orgId: string): Promise<void> {
+  await ensureSchema();
+  await sql`UPDATE tapcard_biz_orgs SET trial_used = true WHERE id = ${orgId}`;
 }
 
 export async function getOrgByStripeCustomerId(stripeCustomerId: string): Promise<BizOrg | null> {
