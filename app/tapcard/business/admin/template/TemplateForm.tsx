@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { BizOrg } from "@/lib/tapcardBiz";
-import { LOCKABLE_FIELDS } from "@/lib/tapcardBiz";
+import { LOCKABLE_FIELDS } from "@/lib/tapcardBizFields";
 
 const FIELD_LABELS: Record<(typeof LOCKABLE_FIELDS)[number], string> = {
   title: "Job title",
@@ -72,7 +72,7 @@ export default function TemplateForm({ org }: { org: BizOrg }) {
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">Company details</h2>
         <p className="mt-1 text-sm text-mist">
-          These fill in every employee's card automatically, and are locked by default below.
+          These fill in every employee&apos;s card automatically, and are locked by default below.
         </p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <Field label="Company name" value={name} onChange={setName} />
@@ -83,7 +83,7 @@ export default function TemplateForm({ org }: { org: BizOrg }) {
 
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">Company social links</h2>
-        <p className="mt-1 text-sm text-mist">Shown on every employee's card instead of a personal profile.</p>
+        <p className="mt-1 text-sm text-mist">Shown on every employee&apos;s card instead of a personal profile.</p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <Field label="LinkedIn" value={linkedInURL} onChange={setLinkedInURL} />
           <Field label="X (Twitter)" value={twitterURL} onChange={setTwitterURL} />
@@ -97,7 +97,7 @@ export default function TemplateForm({ org }: { org: BizOrg }) {
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">What employees can edit</h2>
         <p className="mt-1 text-sm text-mist">
-          Ticked fields are locked to the company's value above — employees can't change them. Name is always
+          Ticked fields are locked to the company&apos;s value above — employees can&apos;t change them. Name is always
           editable.
         </p>
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
