@@ -17,7 +17,16 @@ export default function SignupForm() {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
+    try {
+      await submit();
+    } catch {
+      // A network failure or a non-JSON reply — never leave the button stuck.
+      setError("Something went wrong — try again.");
+      setSubmitting(false);
+    }
+  }
 
+  async function submit() {
     if (bandId === TRIAL_ID) {
       const res = await fetch("/api/tapcard/biz/trial", {
         method: "POST",
@@ -53,8 +62,8 @@ export default function SignupForm() {
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">Check your email</h2>
         <p className="mt-2 text-cloud">
-          We've sent a sign-in link to {email} — no card needed, your free trial seat is ready. Upgrade to a paid
-          band whenever you're ready to add your team.
+          We&apos;ve sent a sign-in link to {email} — no card needed, your free trial seat is ready. Upgrade to a paid
+          band whenever you&apos;re ready to add your team.
         </p>
       </div>
     );

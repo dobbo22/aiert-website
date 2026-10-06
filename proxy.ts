@@ -33,6 +33,14 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Already-prefixed paths pass through: the TapCard for Business pages
+  // call /api/tapcard/biz/… from the browser, which must work on this host
+  // as well as www.aiert.co.uk — rewriting them again gave
+  // /api/tapcard/tapcard/… (a 404, and a signup form stuck on "Please wait").
+  if (request.nextUrl.pathname.startsWith("/api/tapcard/")) {
+    return NextResponse.next();
+  }
+
   const url = request.nextUrl.clone();
   url.pathname = url.pathname.startsWith("/api/")
     ? `/api/tapcard${url.pathname.slice(4)}`
