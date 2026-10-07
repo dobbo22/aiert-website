@@ -968,7 +968,7 @@ export default function InviteSender({
                       <div className="invite-profile">
                         <span>{ch === "linkedin" ? "LinkedIn profile" : "Facebook profile"}</span>
                         <input
-                          placeholder={ch === "linkedin" ? "https://www.linkedin.com/in/…" : "https://www.facebook.com/…"}
+                          placeholder={ch === "linkedin" ? "https://www.linkedin.com/in/… or /company/…" : "https://www.facebook.com/…"}
                           value={editing ?? saved}
                           onChange={(e) => setProfileInput({ id: focused.id, value: e.target.value })}
                         />
@@ -1251,7 +1251,7 @@ function ContactDetailsForm({
       {field("website", "Website", "e.g. acme.co.uk — gives their card the company logo")}
       {field("email", "Email", "", "email")}
       {field("phone", "Mobile", "", "tel")}
-      {field("linkedinUrl", "LinkedIn", "linkedin.com/in/…")}
+      {field("linkedinUrl", "LinkedIn", "linkedin.com/in/… or /company/…")}
       {field("xUrl", "X", "@handle")}
       {field("instagramUrl", "Instagram", "@handle")}
       {field("facebookUrl", "Facebook", "facebook.com/…")}

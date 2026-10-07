@@ -156,10 +156,19 @@ export function whatsappNumber(phone: string): string | null {
   return digits.length >= 10 ? digits : null;
 }
 
-/// https://www.linkedin.com/in/<slug>, or "" if it isn't a LinkedIn profile.
+/// https://www.linkedin.com/in/<slug> for a person, or /company/<slug> (also /school/ and
+/// /showcase/) for a page, or "" if it isn't a LinkedIn profile or page.
 export function normaliseLinkedinUrl(raw: string): string {
-  const m = raw.trim().match(/linkedin\.com\/(in|pub)\/([^/?#\s]+)/i);
-  return m ? `https://www.linkedin.com/in/${decodeURIComponent(m[2]).toLowerCase()}` : "";
+  const m = raw.trim().match(/linkedin\.com\/(in|pub|company|school|showcase)\/([^/?#\s]+)/i);
+  if (!m) return "";
+  let slug = m[2];
+  try {
+    slug = decodeURIComponent(slug);
+  } catch {
+    // malformed % escape: keep the raw slug
+  }
+  const kind = m[1].toLowerCase();
+  return `https://www.linkedin.com/${kind === "pub" ? "in" : kind}/${slug.toLowerCase()}`;
 }
 
 /// https://www.facebook.com/<username or profile.php?id=…>, or "".
