@@ -100,8 +100,9 @@ Never `vercel --prod` from the Mac folder (it has personal files in it).
 If Martin says **"back at Mac in VS Code, run everything"**, do the steps below in order,
 without asking again for anything already decided here. Stop and ask only where a step says so.
 
-Unmerged work waiting (all pushed, never compiled or run, because it was written in a cloud
-session with no Xcode or Android SDK):
+Work waiting to be built and tested. It was **merged into `main` on 9 Oct 2026** in both app repos
+(Martin approved) but has **never been compiled or run**, because it was written in a cloud session
+with no Xcode or Android SDK:
 
 | Repo | Branch | What it is |
 |---|---|---|
@@ -110,7 +111,7 @@ session with no Xcode or Android SDK):
 | TapCardAndroid | `claude/promo-no-thanks` | Same "No thanks" (`ui/Promos.kt`, `data/CardStore.kt`). |
 | TapCardAndroid | `claude/print-qr-sign` | Same print sign (`ui/PrintSign.kt`, `ui/CardsScreen.kt`, adds `androidx.print:print:1.0.0`). |
 
-The two branches per repo touch different files, so they merge cleanly.
+The branches merged cleanly. Expect compile errors on first build and fix them on `main`.
 The website side (landing page at tapcard.aiert.co.uk, store badges on aiert.co.uk) is already live.
 
 Why: people tapped the MailBroom/PowerSearch promos, saw those apps' in-app purchases on the
@@ -120,14 +121,14 @@ reception desk, till or window. A scan opens the card itself, so a public sign s
 
 ### Steps
 
-1. `git fetch origin` in both app repos. Check out each branch and build.
+1. `git pull origin main` in both app repos (the branches are already merged) and build.
    - iPhone: `xcodebuild -scheme TapCard -destination 'generic/platform=iOS Simulator' build`,
      then run in the simulator. Check the promo "No thanks" and Print QR sign (preview, switches,
      Print, Save as PDF, "Make a separate card").
    - Android: `./gradlew assembleDebug`, then run in the emulator and check the same things.
    - Fix any compile errors. They are expected: none of this has been built.
 2. **Ask Martin:** should the promo ✕ also hide for good? (Currently ✕ = 24 hours, "No thanks" = forever.)
-3. Merge both branches into `main` in each repo, push `main`.
+3. (Done: branches are merged into `main`. After any build fixes, commit and push them to `main`.)
 4. Bump build numbers by one.
    - iPhone is **2.0 (12)** in `TapCard.xcodeproj/project.pbxproj`. **Do not run `xcodegen`:**
      `project.yml` is stale (1.1 / 9), so regenerating would reset the version and drop hand edits.
