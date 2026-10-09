@@ -95,6 +95,61 @@ Never `vercel --prod` from the Mac folder (it has personal files in it).
 - Once a plain Outlook email from martin@mailbroom.app reaches mcjdobson@btopenworld.com:
   `vercel env rm TAPCARD_INVITE_EMAIL_VIA production` + redeploy → invites go back via Outlook (Graph).
 
+## "Back at the Mac" runbook (added 9 Oct 2026)
+
+If Martin says **"back at Mac in VS Code, run everything"**, do the steps below in order,
+without asking again for anything already decided here. Stop and ask only where a step says so.
+
+Unmerged work waiting (all pushed, never compiled or run, because it was written in a cloud
+session with no Xcode or Android SDK):
+
+| Repo | Branch | What it is |
+|---|---|---|
+| TapCard2 (iPhone) | `claude/promo-no-thanks` | "No thanks" on the MailBroom/PowerSearch promos hides them for good (`CrossPromoCard.swift`). The ✕ still hides for 24h. |
+| TapCard2 (iPhone) | `claude/print-qr-sign` | "Print QR sign" on the share screen (`PrintSignView.swift`, `CardDisplayView.swift`). |
+| TapCardAndroid | `claude/promo-no-thanks` | Same "No thanks" (`ui/Promos.kt`, `data/CardStore.kt`). |
+| TapCardAndroid | `claude/print-qr-sign` | Same print sign (`ui/PrintSign.kt`, `ui/CardsScreen.kt`, adds `androidx.print:print:1.0.0`). |
+
+The two branches per repo touch different files, so they merge cleanly.
+The website side (landing page at tapcard.aiert.co.uk, store badges on aiert.co.uk) is already live.
+
+Why: people tapped the MailBroom/PowerSearch promos, saw those apps' in-app purchases on the
+App Store page and thought TapCard itself had a paywall. The print sign is a poster for a
+reception desk, till or window. A scan opens the card itself, so a public sign should use a
+**separate card** with only the details wanted. The sheet has a "Make a separate card" button.
+
+### Steps
+
+1. `git fetch origin` in both app repos. Check out each branch and build.
+   - iPhone: `xcodebuild -scheme TapCard -destination 'generic/platform=iOS Simulator' build`,
+     then run in the simulator. Check the promo "No thanks" and Print QR sign (preview, switches,
+     Print, Save as PDF, "Make a separate card").
+   - Android: `./gradlew assembleDebug`, then run in the emulator and check the same things.
+   - Fix any compile errors. They are expected: none of this has been built.
+2. **Ask Martin:** should the promo ✕ also hide for good? (Currently ✕ = 24 hours, "No thanks" = forever.)
+3. Merge both branches into `main` in each repo, push `main`.
+4. Bump build numbers by one.
+   - iPhone is **2.0 (12)** in `TapCard.xcodeproj/project.pbxproj`. **Do not run `xcodegen`:**
+     `project.yml` is stale (1.1 / 9), so regenerating would reset the version and drop hand edits.
+     `PrintSignView.swift` was added to the `.pbxproj` by hand. If Xcode shows it missing, add it
+     to the Views group in Xcode.
+   - Android is **1.3.1 (versionCode 13)** in `app/build.gradle.kts`.
+5. Build for the stores.
+   - iPhone: archive and export with `AppStore/ExportOptions.plist`, signing with the App Store
+     Connect API key (`ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_FILEPATH` in the environment). Upload to TestFlight.
+     `AppStore/asc/build.js` has the old 1.0 version id hard-coded, so update it before using it.
+   - Android: `./gradlew bundleRelease` (signs with `keystore.properties`), then upload the AAB to
+     the **internal** track using `play/api/play.js` and the publisher service account.
+     `play/api/play-upload.js` points at `TapCard-1.0-1.aab`, so update it first.
+   - If the App Store Connect / Play Console MCP connections are available in the session, prefer them.
+6. **Do not submit for App Review or promote to production** without Martin saying so. Stop at
+   TestFlight and the internal track, tell him the build numbers, and ask.
+
+### Mac must stay awake and unlocked-enough for this
+Sleep off and plugged in. Keychain not set to lock, and `codesign` set to "Always Allow". Run in
+tmux with `caffeinate -dimsu`. Never ask for or store Martin's login password: it cannot be typed
+at the lock screen and must not go in a `.env`.
+
 ## To do next
 
 1. When Apple approves iPhone 1.2: set TAPCARD_PAYWALL_LAUNCH, redeploy, merge TapCard2
