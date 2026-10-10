@@ -368,6 +368,14 @@ export async function listRecipients(cardId: string): Promise<TapCardRecipient[]
   return (await sql`SELECT * FROM tapcard_card_recipients WHERE card_id = ${cardId} ORDER BY created_at`) as TapCardRecipient[];
 }
 
+/// "Stop sharing with this contact": removes one recipient from the card's list, so they
+/// stop getting update emails. Returns whether a row was removed.
+export async function deleteCardRecipient(cardId: string, recipientId: number): Promise<boolean> {
+  await ensureSchema();
+  const rows = await sql`DELETE FROM tapcard_card_recipients WHERE id = ${recipientId} AND card_id = ${cardId} RETURNING id`;
+  return rows.length > 0;
+}
+
 /// A recipient sharing their own details back — see app/tapcard/AcceptRecipientForm.tsx.
 /// Returns the card_id they're a recipient of, or null if the token doesn't
 /// match anyone (expired/garbled link).
