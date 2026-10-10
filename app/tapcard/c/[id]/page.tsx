@@ -88,6 +88,8 @@ export default async function CardPage({
 
   const contactLines: { action: string; value: string; href: string; icon: ContactIconName; iconBg: string }[] = [
     { action: "Call me", value: card.phone, href: `tel:${card.phone}`, icon: "phone", iconBg: "#22C55E" },
+    // A full row (like the address), not one of the small "follow me" tiles.
+    { action: "Message me on WhatsApp", value: whatsappDisplay(card.whatsapp_url), href: card.whatsapp_url, icon: "whatsapp", iconBg: "#25D366" },
     { action: "Email me", value: card.email, href: `mailto:${card.email}`, icon: "mail", iconBg: "#A855F7" },
     { action: "Visit my site", value: card.website, href: normalizeUrl(card.website), icon: "globe", iconBg: "#3B82F6" },
     {
@@ -111,7 +113,6 @@ export default async function CardPage({
     },
     { name: card.facebook_is_page ? "Facebook Page" : "Facebook", value: card.facebook_url, icon: "facebook", iconBg: "#0866FF" },
     { name: "TikTok", value: card.tiktok_url, icon: "tiktok", iconBg: "#000000" },
-    { name: "WhatsApp", value: card.whatsapp_url, icon: "whatsapp", iconBg: "#25D366" },
   ];
   const visibleSocials = socialLinks.filter((link) => link.value);
 
@@ -322,6 +323,13 @@ function normalizeUrl(value: string): string {
 }
 
 // Display only — the href keeps the full URL. Harmless on phone/email.
+/// "https://wa.me/447809768984" shows as "+447809768984"; any other WhatsApp link shows as written.
+function whatsappDisplay(url: string): string {
+  if (!url) return "";
+  const m = url.match(/wa\.me\/(\d+)/i);
+  return m ? `+${m[1]}` : displayUrl(url);
+}
+
 function displayUrl(value: string): string {
   return value.replace(/^https?:\/\/(www\.)?/i, "");
 }
