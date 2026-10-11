@@ -3,19 +3,30 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "PowerSearch – Privacy & Support | AIERT Ltd",
   description:
-    "PowerSearch is a multi-account email finder for iOS — sync headers from every account on-device, search across all of them, flag or forward what you find. Privacy policy and support.",
+    "PowerSearch is a multi-account email finder for iPhone and Android — sync headers from every account on-device, search across all of them, flag or forward what you find. Privacy policy and support.",
   metadataBase: new URL("https://www.aiert.co.uk"),
   alternates: { canonical: "/powersearch" },
   openGraph: {
     title: "PowerSearch – Privacy & Support",
     description:
-      "A multi-account email finder for iOS. On-device header search, no server, no tracking.",
+      "A multi-account email finder for iPhone and Android. On-device header search, no server, no tracking.",
     url: "https://www.aiert.co.uk/powersearch",
     siteName: "AIERT Ltd",
     locale: "en_GB",
     type: "website",
   },
 };
+
+const guideSections = [
+  { icon: "➕", title: "Add your accounts", body: "Add a mail account: Gmail, Microsoft 365, iCloud, or any IMAP account. PowerSearch pulls down headers only (sender, subject, date, folder) for every folder, never the email body. The first sync of a large account can take a few minutes." },
+  { icon: "🔄", title: "Sync", body: "Sync is manual: tap the sync icon to sync every account at once. A re-sync only pulls what is new, so it is quick after the first time. If an account shows a red error, tap Fix to update its password or sign in again." },
+  { icon: "🔎", title: "Search", body: "Type in the search box. Results are grouped by sender and collapsed by default. Tap a sender to peek at their emails, or tap the magnifying-glass on that row to narrow the whole search to just that person." },
+  { icon: "⌨️", title: "Search operators", body: "Type operators straight into the search box: from:sarah, has:pdf, has:image, has:document, after:2026-01-01, before:2026-06-30. Combine as many as you like with ordinary words, for example \"from:sarah has:pdf invoice\"." },
+  { icon: "📅", title: "Date and other filters", body: "The date chips (Today, This week and so on) are quick picks for when you roughly remember getting an email. Use Filters for exact date ranges, unread only, attachments, or limiting the search to certain accounts." },
+  { icon: "↩️", title: "Flag, Reply and Forward", body: "Tap any result to read the full email. Flag marks it on your mail server. Reply, Reply All and Forward open your own email app with the message pre-filled; Reply is the default. PowerSearch never sends email itself." },
+  { icon: "🪪", title: "Search from TapCard", body: "If you also use the free TapCard app, open a contact there and tap Find emails in PowerSearch. PowerSearch opens locked to that person, showing every email from every address they have, across all your accounts." },
+  { icon: "💳", title: "Trial and purchase", body: "PowerSearch is free for 7 days. After that it is a single one-time purchase, with no subscription." },
+];
 
 const privacySections = [
   {
@@ -92,12 +103,29 @@ export default function PowerSearchPage() {
           PowerSearch
         </h1>
         <p className="text-cloud text-base max-w-xl mx-auto">
-          A multi-account email finder for iOS. Sync headers from every account on-device,
+          A multi-account email finder for iPhone and Android. Sync headers from every account on-device,
           search across all of them at once, flag or forward what you find.
         </p>
         <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal/10 border border-teal/20 text-teal text-sm font-medium">
           <span>🔐</span> No server. No tracking. Bodies never stored.
         </div>
+      </section>
+
+      {/* ── GUIDE ───────────────────────────────────────── */}
+      <section id="guide" className="max-w-3xl mx-auto px-6 py-16 space-y-6 scroll-mt-24">
+        <h2 className="text-3xl font-black tracking-tight text-cloud text-center mb-2">
+          How PowerSearch works
+        </h2>
+        <p className="text-cloud text-center text-sm mb-10">The same guide is in the app, under the ? button.</p>
+        {guideSections.map((g) => (
+          <div key={g.title} className="card-glass rounded-2xl p-8">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-2xl">{g.icon}</span>
+              <h3 className="text-xl font-bold text-cloud">{g.title}</h3>
+            </div>
+            <p className="text-cloud leading-relaxed">{g.body}</p>
+          </div>
+        ))}
       </section>
 
       {/* ── PRIVACY ─────────────────────────────────────── */}
