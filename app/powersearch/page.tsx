@@ -18,13 +18,13 @@ export const metadata: Metadata = {
 };
 
 const guideSections = [
-  { icon: "➕", title: "Add your accounts", body: "Add a mail account: Gmail, Microsoft 365, iCloud, or any IMAP account. PowerSearch pulls down headers only (sender, subject, date, folder) for every folder, never the email body. The first sync of a large account can take a few minutes." },
+  { icon: "➕", title: "Add your accounts", img: "5-accounts.png", body: "Add a mail account: Gmail, Microsoft 365, iCloud, or any IMAP account. PowerSearch pulls down headers only (sender, subject, date, folder) for every folder, never the email body. The first sync of a large account can take a few minutes." },
   { icon: "🔄", title: "Sync", body: "Sync is manual: tap the sync icon to sync every account at once. A re-sync only pulls what is new, so it is quick after the first time. If an account shows a red error, tap Fix to update its password or sign in again." },
-  { icon: "🔎", title: "Search", body: "Type in the search box. Results are grouped by sender and collapsed by default. Tap a sender to peek at their emails, or tap the magnifying-glass on that row to narrow the whole search to just that person." },
-  { icon: "⌨️", title: "Search operators", body: "Type operators straight into the search box: from:sarah, has:pdf, has:image, has:document, after:2026-01-01, before:2026-06-30. Combine as many as you like with ordinary words, for example \"from:sarah has:pdf invoice\"." },
-  { icon: "📅", title: "Date and other filters", body: "The date chips (Today, This week and so on) are quick picks for when you roughly remember getting an email. Use Filters for exact date ranges, unread only, attachments, or limiting the search to certain accounts." },
+  { icon: "🔎", title: "Search", img: "2-sender-results.png", body: "Type in the search box. Results are grouped by sender and collapsed by default. Tap a sender to peek at their emails, or tap the magnifying-glass on that row to narrow the whole search to just that person." },
+  { icon: "⌨️", title: "Search operators", img: "1-search.png", body: "Type operators straight into the search box: from:sarah, has:pdf, has:image, has:document, after:2026-01-01, before:2026-06-30. Combine as many as you like with ordinary words, for example \"from:sarah has:pdf invoice\"." },
+  { icon: "📅", title: "Date and other filters", img: "4-filters.png", body: "The date chips (Today, This week and so on) are quick picks for when you roughly remember getting an email. Use Filters for exact date ranges, unread only, attachments, or limiting the search to certain accounts." },
   { icon: "↩️", title: "Flag, Reply and Forward", body: "Tap any result to read the full email. Flag marks it on your mail server. Reply, Reply All and Forward open your own email app with the message pre-filled; Reply is the default. PowerSearch never sends email itself." },
-  { icon: "🪪", title: "Search from TapCard", body: "If you also use the free TapCard app, open a contact there and tap Find emails in PowerSearch. PowerSearch opens locked to that person, showing every email from every address they have, across all your accounts." },
+  { icon: "🪪", title: "Search from TapCard", img: "3-drill-down.png", body: "If you also use the free TapCard app, open a contact there and tap Find emails in PowerSearch. PowerSearch opens locked to that person, showing every email from every address they have, across all your accounts." },
   { icon: "💳", title: "Trial and purchase", body: "PowerSearch is free for 7 days. After that it is a single one-time purchase, with no subscription." },
 ];
 
@@ -116,7 +116,7 @@ export default function PowerSearchPage() {
         <h2 className="text-3xl font-black tracking-tight text-cloud text-center mb-2">
           How PowerSearch works
         </h2>
-        <p className="text-cloud text-center text-sm mb-10">The same guide is in the app, under the ? button.</p>
+        <p className="text-cloud text-center text-sm mb-10">The same guide is in the app, under the ? button. Screens shown are from the Android app; iPhone looks very similar.</p>
         {guideSections.map((g) => (
           <div key={g.title} className="card-glass rounded-2xl p-8">
             <div className="flex items-center gap-3 mb-4">
@@ -124,6 +124,15 @@ export default function PowerSearchPage() {
               <h3 className="text-xl font-bold text-cloud">{g.title}</h3>
             </div>
             <p className="text-cloud leading-relaxed">{g.body}</p>
+            {"img" in g && g.img && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={`/powersearch-guide/${g.img}`}
+                alt={g.title}
+                loading="lazy"
+                className="mx-auto mt-5 w-full max-w-[260px] rounded-2xl border border-white/10"
+              />
+            )}
           </div>
         ))}
       </section>

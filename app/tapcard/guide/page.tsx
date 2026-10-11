@@ -1,0 +1,76 @@
+import type { Metadata } from "next";
+import DocPage from "../DocPage";
+
+export const metadata: Metadata = {
+  title: "Visual guide – TapCard | AIERT Ltd",
+  description: "A picture guide to TapCard: share your card, scan to add people, categories, your own notes and more.",
+  robots: { index: true, follow: true },
+};
+
+const IMG = "https://www.aiert.co.uk/tapcard-guide";
+
+const steps = [
+  {
+    title: "1. Share your card",
+    img: "share.png",
+    alt: "TapCard share screen with a QR code and Share, Send and Print buttons",
+    text: "Your QR code is the quickest way. Anyone scans it with their camera and saves you, with no app needed. Under it, Share sends your link, Send picks people from your contacts, and Print makes a QR sign. Add your card to Apple Wallet or Google Wallet and choose a design.",
+  },
+  {
+    title: "2. No signal? Use Offline QR",
+    img: "offline.png",
+    alt: "Offline QR code screen",
+    text: "Tap No signal? Offline QR under your code. This code holds your contact details themselves, so it works with no internet and no app on their phone. You can also send your contact file by AirDrop.",
+  },
+  {
+    title: "3. Find people fast with categories",
+    img: "contacts.png",
+    alt: "Contacts tab with category chips and a search box",
+    text: "Tag contacts your own way, like #Restaurants, #Shops or #Clubs. A contact can have more than one. Filter by tapping a chip, or type #clubs in the search box. Categories stay on your phone.",
+  },
+  {
+    title: "4. Add your own details",
+    img: "contact.png",
+    alt: "A received card showing the user's own extra phone, email, where they met and notes",
+    text: "Open someone's card and tap My details to add where you met, a photo, another phone or email, and notes. They appear as extra rows on their card, and you can tap to call or email. If they are in your phone contacts, new phones and emails are added there too. If they stop sharing, your details are kept.",
+  },
+  {
+    title: "5. Scan to add someone",
+    text: "On My Cards, tap the camera button at the top left and scan someone's TapCard QR code. They are added to your contacts straight away.",
+  },
+  {
+    title: "6. Everything in one list",
+    img: "help.png",
+    alt: "How TapCard works screen inside the app",
+    text: "In the app, tap the … menu at the top right, then How TapCard works, for a short list of everything TapCard can do.",
+  },
+];
+
+// Visual guide: opened from the help screens inside the iPhone and Android apps.
+export default function TapCardGuidePage() {
+  return (
+    <DocPage title="TapCard visual guide">
+      <section>
+        <p>
+          A quick picture tour of TapCard. Screens shown are from the iPhone app; Android looks the same.
+          More help is on the <a href="/how-it-works">How it works</a> and <a href="/support">Support</a> pages.
+        </p>
+      </section>
+      {steps.map((s) => (
+        <section key={s.title}>
+          <h2>{s.title}</h2>
+          <p>{s.text}</p>
+          {s.img && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={`${IMG}/${s.img}`}
+              alt={s.alt}
+              loading="lazy"
+              className="mx-auto mt-3 w-full max-w-[300px] rounded-3xl border border-slate"
+            />
+          )}
+        </section>
+      ))}
+    </DocPage>
+  );
+}
