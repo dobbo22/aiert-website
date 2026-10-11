@@ -36,7 +36,7 @@ const FEATURES = [
   },
   {
     title: "Share in seconds",
-    body: "Show your QR code, send your link by text, WhatsApp or email, or keep your card in Apple Wallet.",
+    body: "Show your QR code, send your link by text, WhatsApp or email, or keep your card in Apple or Google Wallet. No signal? An offline QR code still works.",
   },
   {
     title: "Send it straight to a contact",
@@ -49,6 +49,10 @@ const FEATURES = [
   {
     title: "No app needed to receive",
     body: "Your card opens in their browser. One tap on Save Contact and you're in their phone. No typing, no mistakes.",
+  },
+  {
+    title: "Organise your contacts",
+    body: "Tag contacts with your own categories, like restaurants or clubs, then filter and search. Scan someone's QR code to add them in a tap.",
   },
   {
     title: "Manage who's got your card",

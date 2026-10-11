@@ -14,17 +14,28 @@ then check `git log` in each repo for anything newer.
 The tapcard.aiert.co.uk host is served by aiert-website: `proxy.ts` rewrites
 `/x` → `app/tapcard/x` and `/api/x` → `app/api/tapcard/x`.
 
-## Released / in review
+## Released / in review (updated 11 Oct 2026)
 
-- **iPhone 1.1 (10)** live on the App Store (app id 6816003159, bundle `com.mailbroom.tapcard`).
-- **iPhone 1.2 (11)** submitted for review with six in-app purchases (below).
-- **Android 1.2 (8)** (Billing 8.0.0) built and tested in the emulator; Google Play listing still awaiting Google's approval.
-  Branch also has the Play Console recommendation fixes (no deprecated bar colours, no portrait
-  lock, downsampled bitmaps, card centred in landscape). The remaining "deprecated edge-to-edge
-  APIs" warning comes from AndroidX's own enableEdgeToEdge() and can be ignored.
-  **Don't accept Android Studio's AGP/Kotlin/"Daemon toolchain" upgrade prompts** before release —
-  the newer AGP turns the old `android {}` / `kotlinOptions` build DSL into errors (repo pins
-  AGP 9.2.1, Kotlin 2.2.10, Gradle 9.4.1). Migrating the build files is a post-release tidy-up.
+- **iPhone 2.1** is live (app id 6816003159, bundle `com.mailbroom.tapcard`). **2.2 (20)** is in App Review (submitted 11 Oct,
+  release after approval): My details (notes, photo, extra phones/emails, synced to the iPhone contact), Withdrawn marking,
+  tappable extra rows on a received card, categories/#tags, offline QR, scan-to-add, in-app help + welcome/what's-new cards,
+  store-button + No thanks promo cards (no X). Store screenshots/description/promo text updated on the 2.2 version
+  (`AppStore/listing-2.2.md`).
+- **Android 1.3.6 (18)** is the live-or-in-review production release. **1.3.7 (22)** was committed as the production release
+  on 11 Oct but **must be sent for review from Play Console (Publishing overview)**: the API cannot send it. Listing text and
+  screenshots (`play/screenshots-v2`) are in the same pending change. Managed publishing is ON, so click **Publish changes**
+  after approval. Google earlier rejected 1.3.6 for the Data safety form (Approximate location); the form was fixed 11 Oct.
+- Android release helper: `play/api/release-prod.js <code> <name> <notesFile> [listing.json shotsDir]` sets production to an
+  already-uploaded version code (don't re-upload: "version code already used").
+- iPhone release helper: `AppStore/asc/release-ios.js <appId> <version> <build> <meta.json> [shotsDir]` creates the version,
+  sets text/screenshots, attaches the build and submits.
+- Debug demo mode (fictional card + contacts) for screenshots: iPhone launch args `-demo -demoScreen contacts|contact|offline|help`
+  (`-screenshotShare`, `-demoPromos`); Android `adb shell am start ... --ez demo true`. Debug builds only.
+- **Don't accept Android Studio's AGP/Kotlin/"Daemon toolchain" upgrade prompts** before release (repo pins AGP 9.2.1,
+  Kotlin 2.2.10, Gradle 9.4.1); migrating the build files is a post-release tidy-up.
+- PowerSearch (separate repos, now on GitHub: dobbo22/PowerSearch, dobbo22/PowerSearchAndroid): iPhone **1.3 (14)** in review,
+  Android **1.3 (4)** sent for review. Both add the Help screens and visual-guide link.
+- Website guides: `tapcard.aiert.co.uk/guide`, `aiert.co.uk/powersearch#guide`, FAQ on the TapCard support page.
 
 ## Founder places + lifetime unlock (new in 1.2)
 
@@ -95,70 +106,14 @@ Never `vercel --prod` from the Mac folder (it has personal files in it).
 - Once a plain Outlook email from martin@mailbroom.app reaches mcjdobson@btopenworld.com:
   `vercel env rm TAPCARD_INVITE_EMAIL_VIA production` + redeploy → invites go back via Outlook (Graph).
 
-## "Back at the Mac" runbook (added 9 Oct 2026)
+## "Back at the Mac" runbook
 
-If Martin says **"back at Mac in VS Code, run everything"**, do the steps below in order,
-without asking again for anything already decided here. Stop and ask only where a step says so.
-
-Work waiting to be built and tested. It was **merged into `main` on 9 Oct 2026** in both app repos
-(Martin approved) but has **never been compiled or run**, because it was written in a cloud session
-with no Xcode or Android SDK:
-
-| Repo | Branch | What it is |
-|---|---|---|
-| TapCard2 (iPhone) | `claude/promo-no-thanks` | "No thanks" on the MailBroom/PowerSearch promos hides them for good (`CrossPromoCard.swift`). The ✕ still hides for 24h. |
-| TapCard2 (iPhone) | `claude/print-qr-sign` | "Print QR sign" on the share screen (`PrintSignView.swift`, `CardDisplayView.swift`). |
-| TapCardAndroid | `claude/promo-no-thanks` | Same "No thanks" (`ui/Promos.kt`, `data/CardStore.kt`). |
-| TapCardAndroid | `claude/print-qr-sign` | Same print sign (`ui/PrintSign.kt`, `ui/CardsScreen.kt`, adds `androidx.print:print:1.0.0`). |
-
-The branches merged cleanly. Expect compile errors on first build and fix them on `main`.
-The website side (landing page at tapcard.aiert.co.uk, store badges on aiert.co.uk) is already live.
-
-Why: people tapped the MailBroom/PowerSearch promos, saw those apps' in-app purchases on the
-App Store page and thought TapCard itself had a paywall. The print sign is a poster for a
-reception desk, till or window. A scan opens the card itself, so a public sign should use a
-**separate card** with only the details wanted. The sheet has a "Make a separate card" button.
-
-### Steps
-
-1. `git pull origin main` in both app repos (the branches are already merged) and build.
-   - iPhone: `xcodebuild -scheme TapCard -destination 'generic/platform=iOS Simulator' build`,
-     then run in the simulator. Check the promo "No thanks" and Print QR sign (preview, switches,
-     Print, Save as PDF, "Make a separate card").
-   - Android: `./gradlew assembleDebug`, then run in the emulator and check the same things.
-   - Fix any compile errors. They are expected: none of this has been built.
-2. **Ask Martin:** should the promo ✕ also hide for good? (Currently ✕ = 24 hours, "No thanks" = forever.)
-3. (Done: branches are merged into `main`. After any build fixes, commit and push them to `main`.)
-4. Bump build numbers by one.
-   - iPhone is **2.0 (12)** in `TapCard.xcodeproj/project.pbxproj`. **Do not run `xcodegen`:**
-     `project.yml` is stale (1.1 / 9), so regenerating would reset the version and drop hand edits.
-     `PrintSignView.swift` was added to the `.pbxproj` by hand. If Xcode shows it missing, add it
-     to the Views group in Xcode.
-   - Android is **1.3.1 (versionCode 13)** in `app/build.gradle.kts`.
-5. Build for the stores.
-   - iPhone: archive and export with `AppStore/ExportOptions.plist`, signing with the App Store
-     Connect API key (`ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_FILEPATH` in the environment). Upload to TestFlight.
-     `AppStore/asc/build.js` has the old 1.0 version id hard-coded, so update it before using it.
-   - Android: `./gradlew bundleRelease` (signs with `keystore.properties`), then upload the AAB to
-     the **internal** track using `play/api/play.js` and the publisher service account.
-     `play/api/play-upload.js` points at `TapCard-1.0-1.aab`, so update it first.
-   - If the App Store Connect / Play Console MCP connections are available in the session, prefer them.
-6. **Do not submit for App Review or promote to production** without Martin saying so. Stop at
-   TestFlight and the internal track, tell him the build numbers, and ask.
-
-### Mac must stay awake and unlocked-enough for this
-Sleep off and plugged in. Keychain not set to lock, and `codesign` set to "Always Allow". Run in
-tmux with `caffeinate -dimsu`. Never ask for or store Martin's login password: it cannot be typed
-at the lock screen and must not go in a `.env`.
+Done on 9-11 Oct 2026 (builds fixed, tested on simulators, released as above). Removed.
 
 ## To do next
 
-1. When Apple approves iPhone 1.2: set TAPCARD_PAYWALL_LAUNCH, redeploy, merge TapCard2
-   `claude/lifetime-unlock` → `main`, check "Founder #1" in the app and the count on Track invites.
-   Update App Store privacy answers if not done.
-2. When Google approves Android: signed bundle → Internal testing, create the six products
-   in Play Console (Monetize → Products → In-app products), payments profile, Data safety
-   (Device or other IDs; Purchase history), set TAPCARD_PLAY_LIVE=1, merge Android branch.
-3. After 4 Oct: confirm Outlook sending works, switch invites back from Resend.
-4. Optional: tracked link for a TapCard post on the MailBroom Facebook Page; "it's on Android"
-   email to the waitlist when Play goes live.
+1. Android TapCard 1.3.7: send changes for review in Play Console, then **Publish changes** after approval.
+2. When Apple approves 2.2 and PowerSearch 1.3: they release automatically. Check "Founder #1" still shows.
+3. Set `TAPCARD_PAYWALL_LAUNCH` / `TAPCARD_PLAY_LIVE` if not set yet (see table above) and confirm the Resend-to-Outlook switch.
+4. Optional: tracked link for a TapCard post on the MailBroom Facebook Page; "it's on Android" email to the waitlist.
+5. Android store screenshots and a real screen-recording demo video would replace the slideshow video on the landing page.

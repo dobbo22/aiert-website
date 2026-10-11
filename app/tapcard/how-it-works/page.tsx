@@ -49,7 +49,19 @@ export default function HowItWorksPage() {
             (Apple or Google) and TapCard sends each of them your card directly — over WhatsApp if they&apos;re on it,
             by email or text otherwise, already written and addressed, nothing to type yourself.
           </li>
-          <li><strong>Apple Wallet:</strong> add your card to Wallet so it&apos;s always to hand.</li>
+          <li>
+            <strong>Apple Wallet and Google Wallet:</strong> add your card to your phone&apos;s Wallet so it&apos;s always
+            to hand. Pick a design in the app and your Wallet card updates to match.
+          </li>
+          <li>
+            <strong>Print a QR sign:</strong> make a poster for a reception desk, till or window. Use a separate card
+            for it, so only the details you want to be public are shown.
+          </li>
+          <li>
+            <strong>No signal?</strong> Tap <strong>Offline QR</strong>. It shows a QR code that holds your contact
+            details themselves, so it works with no signal and no app on their phone. You can also send your contact
+            file by AirDrop.
+          </li>
         </ul>
       </section>
 
@@ -81,6 +93,27 @@ export default function HowItWorksPage() {
           you wait for them to accept, <strong>Accepted</strong> once they&apos;ve shared their details back. You can edit someone&apos;s
           name or number right up until you send; after that it&apos;s locked in, so there&apos;s no mix-up with what was
           actually sent.
+        </p>
+      </section>
+
+      <section>
+        <h2>6. Organise your contacts</h2>
+        <p>
+          Give contacts categories of your own, such as <strong>Restaurants</strong>, <strong>Shops</strong> or{" "}
+          <strong>Clubs</strong>, using #tags. A contact can be in more than one category. Filter by category or
+          search to find people fast. Categories stay on your phone.
+        </p>
+        <p>
+          Meeting someone in person? Tap the camera button at the top left of the main screen and scan their TapCard QR
+          code to add them straight to your contacts.
+        </p>
+        <p>
+          Want to stop sharing with one person? Open them in your contacts and choose <strong>Stop sharing with</strong>{" "}
+          them. Their copy of your card is removed and nobody else is affected.
+        </p>
+        <p>
+          Got PowerSearch too? Open any contact and tap <strong>Find emails in PowerSearch</strong> to see every email
+          from them, across all your accounts.
         </p>
       </section>
 
