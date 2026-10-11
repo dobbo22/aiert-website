@@ -8,6 +8,7 @@ import { orgLogoUrlForCard } from "@/lib/tapcardBiz";
 import { BannerBrand, BrandProvider, FaviconBadge } from "../../CardBrand";
 import ContactIcon, { type ContactIconName } from "../../ContactIcon";
 import AcceptRecipientForm from "../../AcceptRecipientForm";
+import SaveContactButton from "../../SaveContactButton";
 
 // App Store Connect record "TapCard: Digital Business Card" (id 6816003159).
 const TAPCARD_ORIGIN = "https://tapcard.aiert.co.uk";
@@ -68,6 +69,7 @@ export default async function CardPage({
     ? `https://www.aiert.co.uk/tapcard/c/${id}?send=1`
     : `${TAPCARD_ORIGIN}/c/${id}?send=1`;
   const firstName = card.name.split(/\s+/)[0] || card.name;
+  const isMobile = /android|iphone|ipad|ipod/i.test(requestHeaders.get("user-agent") ?? "");
 
   // QR codes point at /s/[id] (see ../../s/[id]/page.tsx), which renders
   // this page with via=qr. iPhone Camera's "Open in app" handoff for a
@@ -173,21 +175,13 @@ export default async function CardPage({
               <p className="mt-1 text-sm text-white">{[card.title, card.company].filter(Boolean).join(" · ")}</p>
             )}
 
-            {via === "qr" && (
-              <a
-                href={openInAppHref}
-                className="mt-5 inline-block w-full rounded-xl bg-teal px-4 py-3 font-semibold text-[#111318]"
-              >
-                Have TapCard? Open in the app
-              </a>
-            )}
-
-            <a
-              href={`${TAPCARD_ORIGIN}/c/${id}/vcard`}
-              className="mt-5 inline-block w-full rounded-xl bg-white px-4 py-3 font-semibold text-[#111318]"
-            >
-              Save Contact
-            </a>
+            <SaveContactButton
+              vcardHref={`${TAPCARD_ORIGIN}/c/${id}/vcard`}
+              storeHref={TAPCARD_APP_STORE_URL}
+              openInAppHref={via === "qr" ? openInAppHref : undefined}
+              firstName={firstName}
+              goToStore={isMobile && !acceptToken}
+            />
 
             {SEND_BACK_ENABLED && (
               <a
