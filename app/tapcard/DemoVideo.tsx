@@ -10,18 +10,18 @@ export default function DemoVideo() {
   const [muted, setMuted] = useState(true);
 
   return (
-    <div className="relative mx-auto w-full max-w-xs">
+    <div className="relative mx-auto w-full max-w-[280px]">
       <video
         ref={videoRef}
-        src="https://www.aiert.co.uk/tapcard-app-demo.mp4"
-        poster="https://www.aiert.co.uk/tapcard-app-demo-poster.jpg"
+        src="https://www.aiert.co.uk/tapcard-demo-2.2.mp4"
+        poster="https://www.aiert.co.uk/tapcard-demo-2.2-poster.jpg"
         width={720}
-        height={720}
+        height={1280}
         autoPlay
         muted={muted}
         loop
         playsInline
-        aria-label="A business card in the TapCard iPhone app"
+        aria-label="A quick tour of the TapCard app"
         className="w-full rounded-[2rem] shadow-xl ring-1 ring-white/10"
       />
       <button
