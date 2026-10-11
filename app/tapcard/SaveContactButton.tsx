@@ -28,13 +28,10 @@ export default function SaveContactButton({
             window.location.href = storeHref;
           }, 2500);
         }}
-        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#2DD4BF] to-[#22C55E] px-4 py-4 text-lg font-bold text-[#111318] shadow-lg shadow-black/30 transition-transform active:scale-[0.98]"
+        className="flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-[#2A3560] to-[#422975] px-4 py-3.5 text-lg font-bold text-white shadow-lg shadow-black/40 ring-1 ring-white/25 transition-transform active:scale-[0.98]"
       >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <path d="M19 8v6M22 11h-6" />
-        </svg>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="https://www.aiert.co.uk/tapcard-icon.png" alt="" className="h-9 w-9 rounded-xl" />
         Save {firstName} to contacts
       </a>
       <p className="mt-2 text-center text-xs text-white">
