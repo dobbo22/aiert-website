@@ -8,6 +8,7 @@ import { orgLogoUrlForCard } from "@/lib/tapcardBiz";
 import { BannerBrand, BrandProvider, FaviconBadge } from "../../CardBrand";
 import ContactIcon, { type ContactIconName } from "../../ContactIcon";
 import AcceptRecipientForm from "../../AcceptRecipientForm";
+import { isTapLink, linkIcon, parseStoredLinks } from "@/lib/tapcardLinks";
 import SaveContactButton from "../../SaveContactButton";
 
 // App Store Connect record "TapCard: Digital Business Card" (id 6816003159).
@@ -102,7 +103,15 @@ export default async function CardPage({
       iconBg: "#EF4444",
     },
   ];
-  const visibleLines = contactLines.filter((line) => line.value);
+  // Business cards: booking / menu / shop links, opening hours and custom rows.
+  const linkRows = parseStoredLinks(card.links).map((l) => ({
+    action: l.label,
+    value: l.value,
+    href: isTapLink(l) ? l.value : "",
+    icon: linkIcon(l.kind) as ContactIconName,
+    iconBg: "#0E8C99",
+  }));
+  const visibleLines = [...contactLines.filter((line) => line.value), ...linkRows];
 
   const socialLinks: { name: string; value: string; icon: ContactIconName; iconBg: string }[] = [
     { name: "LinkedIn", value: card.linkedin_url, icon: "linkedin", iconBg: "#0A66C2" },
@@ -218,8 +227,8 @@ export default async function CardPage({
             <div className="mt-5 space-y-2 text-left">
               {visibleLines.map((line) => (
                 <a
-                  key={line.action}
-                  href={line.href}
+                  key={line.action + line.value}
+                  href={line.href || undefined}
                   className="flex items-center gap-3 rounded-2xl bg-white/[0.07] px-3 py-2.5 transition-colors hover:bg-white/[0.12]"
                 >
                   {/* ring keeps the black X/TikTok tiles visible on the dark row */}

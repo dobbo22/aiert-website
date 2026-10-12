@@ -5,6 +5,7 @@ import { parsePassStyle } from "@/lib/tapcardPassStyle";
 import { refreshGoogleWalletPass } from "@/lib/googleWallet";
 import { resolveSiteBranding } from "@/lib/siteBrandColor";
 import { applyOrgLocks } from "@/lib/tapcardBiz";
+import { isBusinessLabel, sanitizeLinks } from "@/lib/tapcardLinks";
 import { sendCardUpdatedEmail } from "@/lib/tapcardRecipientEmail";
 
 // Fields worth quietly notifying recipients about — avatar/colour tweaks
@@ -30,6 +31,8 @@ interface CardBody {
   tiktokURL?: string;
   whatsAppURL?: string;
   passStyle?: string;
+  /// Business cards only — see lib/tapcardLinks.ts.
+  links?: unknown;
   /// The app's save-confirm dialog ("Don't notify them") — skips the
   /// quiet recipient email for this save only, see NOTIFY_WATCHLIST below.
   suppressNotify?: boolean;
@@ -93,6 +96,8 @@ function sanitize(body: CardBody) {
     tiktok_url: socialUrl(body.tiktokURL, "tiktok"),
     whatsapp_url: whatsAppUrl(body.whatsAppURL),
     pass_style: parsePassStyle(body.passStyle),
+    // Personal cards never keep links; an app that doesn't send the field leaves them untouched.
+    links: body.links === undefined ? undefined : JSON.stringify(isBusinessLabel(body.label) ? sanitizeLinks(body.links) : []),
   };
 }
 
