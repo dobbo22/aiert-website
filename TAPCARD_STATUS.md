@@ -112,6 +112,12 @@ Done on 9-11 Oct 2026 (builds fixed, tested on simulators, released as above). R
 one-time in-place refresh of older stored headers via HeaderStore.attachmentScan). TapCard pages now have their own icon layout; invalid
 JSON to the API returns 400 not 500. Demo cards for Sam Patel and Alex Morgan are live on the server (delete via their edit tokens if wanted).
 
+13 Oct follow-up: PowerSearch iPhone 1.4 (16) was withdrawn from review and replaced by **1.4 (17)** (resubmitted, waiting for review) after a
+watchdog crash on a large mailbox: HeaderStore decoded the whole JSON on every load()/headerCount() (now cached in memory, warmed off the main
+thread), and a sync cut off by iOS suspension is now abandoned and restarted on return (AccountsViewModel.abandonInterruptedSyncs). The same
+weakness exists in live 1.3 for very large accounts. Device log tip: `idevicesyslog -u <udid>` works over USB; crash reports are in
+`idevicecrashreport -e -k <dir>` under Retired/.
+
 ## To do next
 
 1. Set `TAPCARD_PAYWALL_LAUNCH` / `TAPCARD_PLAY_LIVE` if not set yet (see table above) and confirm the Resend-to-Outlook switch.
