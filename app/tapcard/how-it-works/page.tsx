@@ -121,7 +121,7 @@ export default function HowItWorksPage() {
         <h2>7. Add people from your phone, and add your own details</h2>
         <p>
           Tap the add-contact button on the Contacts tab and pick one person from your phone&apos;s contacts. TapCard
-          uses their contact photo if they have one and opens their page, which looks like a proper TapCard.
+          uses their contact photo if they have one and opens their page, which looks like a proper TapCard. If the same person is in your contacts twice, TapCard marks them Possible duplicate and offers to merge them into one, keeping all their numbers and emails.
         </p>
         <p>
           Open any contact and add your own details: where you met, notes, another phone or email, their job title,
