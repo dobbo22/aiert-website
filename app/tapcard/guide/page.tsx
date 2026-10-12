@@ -39,7 +39,7 @@ const steps = [
     text: "On a Business card, tap Edit and find Bookings & links. Add Book a table, Book a room, Book an appointment, View our menu, Order online, Shop online, Opening hours or Leave a review, or make your own with any label, like Price list. Not sure where to start? Tap Start from my type of business and pick restaurant, hotel, shop, salon or trades. Each one shows as a tappable row on your card and on your web card. The Personal card does not have them.",
   },
   {
-    title: "6. Enhance a contact from their emails (iPhone)",
+    title: "6. Enhance a contact from their emails",
     text: "Open a contact and tap Enhance this contact. PowerSearch reads the signature in their latest emails, on your phone only, and lists what it found: phone numbers, job title, company, website, address and social links. Tick what you want and tap Add to TapCard. It needs the PowerSearch app (free for 7 days, then a one-off purchase). What you add appears on their card marked Added, in the normal tiles, and you can tap an item to use it or the x to remove it. Contacts you picked from your phone get the same card.",
   },
   {
