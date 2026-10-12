@@ -14,17 +14,13 @@ then check `git log` in each repo for anything newer.
 The tapcard.aiert.co.uk host is served by aiert-website: `proxy.ts` rewrites
 `/x` → `app/tapcard/x` and `/api/x` → `app/api/tapcard/x`.
 
-## Released / in review (updated 11 Oct 2026)
+## Released (updated 12 Oct 2026)
 
-- **iPhone 2.1** is live (app id 6816003159, bundle `com.mailbroom.tapcard`). **2.2 (20)** is in App Review (submitted 11 Oct,
-  release after approval): My details (notes, photo, extra phones/emails, synced to the iPhone contact), Withdrawn marking,
-  tappable extra rows on a received card, categories/#tags, offline QR, scan-to-add, in-app help + welcome/what's-new cards,
-  store-button + No thanks promo cards (no X). Store screenshots/description/promo text updated on the 2.2 version
-  (`AppStore/listing-2.2.md`).
-- **Android 1.3.6 (18)** is the live-or-in-review production release. **1.3.7 (22)** was committed as the production release
-  on 11 Oct but **must be sent for review from Play Console (Publishing overview)**: the API cannot send it. Listing text and
-  screenshots (`play/screenshots-v2`) are in the same pending change. Managed publishing is ON, so click **Publish changes**
-  after approval. Google earlier rejected 1.3.6 for the Data safety form (Approximate location); the form was fixed 11 Oct.
+All four are LIVE as of 12 Oct 2026: TapCard iPhone 2.2, TapCard Android 1.3.7 (22), PowerSearch iPhone 1.3 and
+PowerSearch Android 1.3 (4). 2.2 / 1.3.7 added My details (notes, photo, extra phones/emails, synced to the phone contact),
+Withdrawn marking, tappable extra rows on a received card, categories/#tags, offline QR, scan-to-add, in-app help +
+welcome/what's-new cards, and store-button + No thanks promo cards (no X). Store text/screenshots: `AppStore/listing-2.2.md`.
+Google earlier rejected 1.3.6 for the Data safety form (Approximate location); fixed 11 Oct.
 - Android release helper: `play/api/release-prod.js <code> <name> <notesFile> [listing.json shotsDir]` sets production to an
   already-uploaded version code (don't re-upload: "version code already used").
 - iPhone release helper: `AppStore/asc/release-ios.js <appId> <version> <build> <meta.json> [shotsDir]` creates the version,
@@ -33,8 +29,9 @@ The tapcard.aiert.co.uk host is served by aiert-website: `proxy.ts` rewrites
   (`-screenshotShare`, `-demoPromos`); Android `adb shell am start ... --ez demo true`. Debug builds only.
 - **Don't accept Android Studio's AGP/Kotlin/"Daemon toolchain" upgrade prompts** before release (repo pins AGP 9.2.1,
   Kotlin 2.2.10, Gradle 9.4.1); migrating the build files is a post-release tidy-up.
-- PowerSearch (separate repos, now on GitHub: dobbo22/PowerSearch, dobbo22/PowerSearchAndroid): iPhone **1.3 (14)** in review,
-  Android **1.3 (4)** sent for review. Both add the Help screens and visual-guide link.
+- PowerSearch (separate repos, on GitHub: dobbo22/PowerSearch, dobbo22/PowerSearchAndroid): 1.3 live on both; adds the Help
+  screens and visual-guide link.
+- Handout page `www.aiert.co.uk/get-app`: pick iPhone/Android and an app, shows a big store QR code.
 - Website guides: `tapcard.aiert.co.uk/guide`, `aiert.co.uk/powersearch#guide`, FAQ on the TapCard support page.
 
 ## Founder places + lifetime unlock (new in 1.2)
@@ -112,8 +109,6 @@ Done on 9-11 Oct 2026 (builds fixed, tested on simulators, released as above). R
 
 ## To do next
 
-1. Android TapCard 1.3.7: send changes for review in Play Console, then **Publish changes** after approval.
-2. When Apple approves 2.2 and PowerSearch 1.3: they release automatically. Check "Founder #1" still shows.
-3. Set `TAPCARD_PAYWALL_LAUNCH` / `TAPCARD_PLAY_LIVE` if not set yet (see table above) and confirm the Resend-to-Outlook switch.
-4. Optional: tracked link for a TapCard post on the MailBroom Facebook Page; "it's on Android" email to the waitlist.
-5. Android store screenshots and a real screen-recording demo video would replace the slideshow video on the landing page.
+1. Set `TAPCARD_PAYWALL_LAUNCH` / `TAPCARD_PLAY_LIVE` if not set yet (see table above) and confirm the Resend-to-Outlook switch.
+2. Optional: tracked link for a TapCard post on the MailBroom Facebook Page; "it's on Android" email to the waitlist.
+3. Android store screenshots are in; a real screen-recording demo video would replace the slideshow on the landing page.
