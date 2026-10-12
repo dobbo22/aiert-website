@@ -22,7 +22,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Billing isn't active, so invites can't be created right now." }, { status: 402 });
   }
 
-  const people = ((await req.json()) as Body).people ?? [];
+  const parsedBody = (await req.json().catch(() => null)) as Body | null;
+  if (!parsedBody || typeof parsedBody !== "object") return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  const people = parsedBody.people ?? [];
   if (!Array.isArray(people) || people.length === 0 || people.length > MAX_PEOPLE) {
     return NextResponse.json({ error: `Send between 1 and ${MAX_PEOPLE} people.` }, { status: 400 });
   }

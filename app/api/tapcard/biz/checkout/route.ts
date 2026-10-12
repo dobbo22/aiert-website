@@ -19,7 +19,9 @@ interface Body {
 // it reuses their existing org instead of creating a new one — the trial's
 // one real card and its data carry straight over, nothing is recreated.
 export async function POST(req: NextRequest) {
-  const body = (await req.json()) as Body;
+  const parsed = (await req.json().catch(() => null)) as Body | null;
+  if (!parsed || typeof parsed !== "object") return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  const body: Body = parsed;
   const band = body.bandId ? bandById(body.bandId) : undefined;
   if (!band || !band.priceId) {
     return NextResponse.json({ error: "invalid or unavailable seat band" }, { status: 400 });

@@ -17,7 +17,9 @@ interface Body {
 // unsubscribe token.
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const body = (await req.json()) as Body;
+  const parsed = (await req.json().catch(() => null)) as Body | null;
+  if (!parsed || typeof parsed !== "object") return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  const body: Body = parsed;
   const token = (body.token ?? "").trim();
   if (!token) return NextResponse.json({ error: "missing token" }, { status: 400 });
 

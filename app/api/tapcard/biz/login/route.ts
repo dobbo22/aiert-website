@@ -14,7 +14,9 @@ interface Body {
 // sign up rather than waiting for an email that never comes — a deliberate
 // trade: it does reveal whether an address administers an account.
 export async function POST(req: NextRequest) {
-  const body = (await req.json()) as Body;
+  const parsed = (await req.json().catch(() => null)) as Body | null;
+  if (!parsed || typeof parsed !== "object") return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  const body: Body = parsed;
   const email = (body.email ?? "").trim().toLowerCase();
   if (!/^\S+@\S+\.\S+$/.test(email)) {
     return NextResponse.json({ error: "a valid email is required" }, { status: 400 });

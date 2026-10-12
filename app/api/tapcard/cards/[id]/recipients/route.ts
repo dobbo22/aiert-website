@@ -51,7 +51,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!card) return NextResponse.json({ error: "not found" }, { status: 404 });
   if (!(await canEdit(card, token))) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
-  const body = (await req.json()) as Body;
+  const parsed = (await req.json().catch(() => null)) as Body | null;
+
+  if (!parsed || typeof parsed !== "object") return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+
+  const body: Body = parsed;
   const name = (body.name ?? "").trim().slice(0, 200);
   const phone = (body.phone ?? "").trim().slice(0, 60);
   const email = (body.email ?? "").trim().slice(0, 200);

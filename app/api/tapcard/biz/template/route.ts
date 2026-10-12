@@ -23,7 +23,11 @@ export async function POST(req: NextRequest) {
   const org = await getOrg(session.orgId);
   if (!org) return NextResponse.json({ error: "not found" }, { status: 404 });
 
-  const body = (await req.json()) as Body;
+  const parsed = (await req.json().catch(() => null)) as Body | null;
+
+  if (!parsed || typeof parsed !== "object") return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+
+  const body: Body = parsed;
   const lockedFields = (body.lockedFields ?? []).filter((f): f is (typeof LOCKABLE_FIELDS)[number] =>
     (LOCKABLE_FIELDS as readonly string[]).includes(f)
   );

@@ -22,7 +22,9 @@ interface Body {
 // otherwise someone could sign up every colleague individually and never
 // pay. The flag is permanent once set, even if that org later upgrades.
 export async function POST(req: NextRequest) {
-  const body = (await req.json()) as Body;
+  const parsed = (await req.json().catch(() => null)) as Body | null;
+  if (!parsed || typeof parsed !== "object") return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  const body: Body = parsed;
   const companyName = (body.companyName ?? "").trim().slice(0, 200);
   const email = (body.email ?? "").trim().toLowerCase().slice(0, 200);
 

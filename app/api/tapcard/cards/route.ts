@@ -104,7 +104,11 @@ export async function POST(req: NextRequest) {
   const token = readEditToken(req);
   if (!token) return NextResponse.json({ error: "edit token required" }, { status: 401 });
 
-  const body = (await req.json()) as CardBody;
+  const parsed = (await req.json().catch(() => null)) as CardBody | null;
+
+  if (!parsed || typeof parsed !== "object") return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+
+  const body: CardBody = parsed;
   if (!body.name?.trim()) {
     return NextResponse.json({ error: "name is required" }, { status: 400 });
   }
