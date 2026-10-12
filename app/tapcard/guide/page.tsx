@@ -32,14 +32,18 @@ const steps = [
     title: "4. Add your own details",
     img: "contact.png",
     alt: "A received card showing the user's own extra phone, email, where they met and notes",
-    text: "Open someone's card and tap My details to add where you met, a photo, another phone or email, and notes. They appear as extra rows on their card, and you can tap to call or email. If they are in your phone contacts, new phones and emails are added there too. If they stop sharing, your details are kept.",
+    text: "Open someone's card and tap My details to add where you met, a photo, another phone or email, and notes. They appear as extra rows on their card, and you can tap to call or email. This works for people you scanned and for people you picked from your phone contacts. New phones, emails and photos are added to their phone contact too. If they stop sharing, your details are kept.",
   },
   {
-    title: "5. Scan to add someone",
+    title: "5. Bookings, shop and more for your business",
+    text: "On a Business card, tap Edit and find Bookings & links. Add Book a table, Book a room, Book an appointment, View our menu, Order online, Shop online, Opening hours or Leave a review, or make your own with any label, like Price list. Not sure where to start? Tap Start from my type of business and pick restaurant, hotel, shop, salon or trades. Each one shows as a tappable row on your card and on your web card. The Personal card does not have them.",
+  },
+  {
+    title: "6. Scan to add someone",
     text: "On My Cards, tap the camera button at the top left and scan someone's TapCard QR code. They are added to your contacts straight away.",
   },
   {
-    title: "6. Everything in one list",
+    title: "7. Everything in one list",
     img: "help.png",
     alt: "How TapCard works screen inside the app",
     text: "In the app, tap the … menu at the top right, then How TapCard works, for a short list of everything TapCard can do.",
