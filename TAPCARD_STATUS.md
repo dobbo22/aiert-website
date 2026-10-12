@@ -123,3 +123,20 @@ weakness exists in live 1.3 for very large accounts. Device log tip: `idevicesys
 1. Set `TAPCARD_PAYWALL_LAUNCH` / `TAPCARD_PLAY_LIVE` if not set yet (see table above) and confirm the Resend-to-Outlook switch.
 2. Optional: tracked link for a TapCard post on the MailBroom Facebook Page; "it's on Android" email to the waitlist.
 3. Android store screenshots are in; a real screen-recording demo video would replace the slideshow on the landing page.
+
+## 13 Oct 2026 (later): features added and submitted
+Submitted: TapCard iPhone 2.3 (35), TapCard Android 1.3.21 (36), PowerSearch iPhone 1.4 (24), PowerSearch Android 1.4.6 (12).
+New in these builds:
+- Business cards (every card except "Personal") get Bookings & links rows: book a table/room/appointment, menu, order, shop, hours,
+  reviews, custom rows, plus "Start from my type of business". Server: `lib/tapcardLinks.ts`, `tapcard_cards.links` (JSON text).
+- Received and phone-picked contacts render as a proper TapCard; my added details are promoted into the normal tiles
+  (call, email, site, directions, socials, job title in the header) with a small "A" badge and an x to remove. Long emails show the domain.
+- Add from phone contacts is one at a time, uses the contact photo, offers to merge duplicates, opens the contact page.
+- Enhance: TapCard row opens `powersearch://details?...`; PowerSearch reads signatures of up to 3 recent emails per address (9 total),
+  on device only, hands ticked items back via `tapcard://details?ref=r:<id>|i:<id>&...` (`cancel=1` on Close). Needs PowerSearch (paid after 7 days).
+- PowerSearch trial status is shared to TapCard: iPhone keychain group `ATMHQQQQ5S.com.mailbroom.shared` (entitlement in both apps);
+  Android content provider `mailbroom.app.access`.
+- "Report a problem with this card" with explanation (iPhone + Android).
+- Helper scripts in /tmp are not kept: cancel-a-review = PATCH /v1/reviewSubmissions/<id> {canceled:true}; then `release-ios.js` re-attaches the build and submits.
+- Each resubmission puts the iPhone build back in Apple's queue; batch changes before submitting.
+- Website: guide (8 steps with pictures), FAQ, how-it-works and PowerSearch page updated.
