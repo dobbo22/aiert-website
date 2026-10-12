@@ -118,6 +118,35 @@ export default function HowItWorksPage() {
       </section>
 
       <section>
+        <h2>7. Add people from your phone, and add your own details</h2>
+        <p>
+          Tap the add-contact button on the Contacts tab and pick one person from your phone&apos;s contacts. TapCard
+          uses their contact photo if they have one and opens their page, which looks like a proper TapCard.
+        </p>
+        <p>
+          Open any contact and add your own details: where you met, notes, another phone or email, their job title,
+          company, website, social links or address. They appear in the card&apos;s normal tiles, marked with a small{" "}
+          <strong>A</strong> so you know you added them. Tap one to use it, or the x under it to remove it. They stay
+          on your phone, and are kept even if the person later stops sharing their card.
+        </p>
+        <p>
+          <strong>Enhance this contact</strong> finds the missing details for you. It opens PowerSearch, which reads the
+          signature in their latest emails on your phone and lists what it found. You tick what to keep. It needs
+          PowerSearch, which is free for 7 days and then a one-off purchase.
+        </p>
+      </section>
+
+      <section>
+        <h2>8. Business cards</h2>
+        <p>
+          On any card except Personal, tap <strong>Edit</strong> and add <strong>Bookings &amp; links</strong>: Book a table,
+          Book a room, Book an appointment, View our menu, Order online, Shop online, Opening hours, Leave a review,
+          or your own rows such as a price list. <strong>Start from my type of business</strong> fills in a sensible set
+          for a restaurant, hotel, shop, salon or trades. They show as tappable rows on your card and web page.
+        </p>
+      </section>
+
+      <section>
         <h2>Always in sync</h2>
         <ul>
           <li>

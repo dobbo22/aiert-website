@@ -40,7 +40,7 @@ const steps = [
   },
   {
     title: "6. Enhance a contact from their emails",
-    text: "Open a contact and tap Enhance this contact. PowerSearch reads the signature in their latest emails, on your phone only, and lists what it found: phone numbers, job title, company, website, address and social links. Tick what you want and tap Add to TapCard. It needs the PowerSearch app (free for 7 days, then a one-off purchase). What you add appears on their card marked Added, in the normal tiles, and you can tap an item to use it or the x to remove it. Contacts you picked from your phone get the same card.",
+    text: "Open a contact and tap Enhance this contact. PowerSearch reads the signature in their latest emails, on your phone only, and lists what it found: phone numbers, job title, company, website, address and social links. Tick what you want and tap Add to TapCard. It needs the PowerSearch app (free for 7 days, then a one-off purchase). What you add appears on their card marked with a small A, in the normal tiles, and you can tap an item to use it or the x to remove it. Contacts you picked from your phone get the same card, with their contact photo if they have one.",
   },
   {
     title: "7. Scan to add someone",
