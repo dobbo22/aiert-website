@@ -28,7 +28,8 @@ const DEFAULT_LABELS: Record<LinkKind, string> = {
 };
 
 export function isBusinessLabel(label: string | undefined | null): boolean {
-  return (label ?? "").trim().toLowerCase() === "business";
+  // Card names are free text; only the "Personal" card is excluded.
+  return (label ?? "").trim().toLowerCase() !== "personal";
 }
 
 function looksLikeUrl(v: string): boolean {
