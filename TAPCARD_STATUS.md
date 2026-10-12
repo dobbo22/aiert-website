@@ -20,6 +20,7 @@ All four are LIVE as of 12 Oct 2026: TapCard iPhone 2.2, TapCard Android 1.3.7 (
 PowerSearch Android 1.3 (4). 2.2 / 1.3.7 added My details (notes, photo, extra phones/emails, synced to the phone contact),
 Withdrawn marking, tappable extra rows on a received card, categories/#tags, offline QR, scan-to-add, in-app help +
 welcome/what's-new cards, and store-button + No thanks promo cards (no X). Store text/screenshots: `AppStore/listing-2.2.md`.
+12 Oct follow-up fix: scanned/incoming card screen now shows Save/send ABOVE the card (it was pushed off-screen on the Note 10). Android 1.3.8 (23) and iPhone 2.3 (21) submitted 12 Oct (the API now sends TapCard Play changes for review automatically). Google Sign-In on the Play build needed the Play app-signing SHA-1 registered as an Android OAuth client (done 12 Oct).
 Google earlier rejected 1.3.6 for the Data safety form (Approximate location); fixed 11 Oct.
 - Android release helper: `play/api/release-prod.js <code> <name> <notesFile> [listing.json shotsDir]` sets production to an
   already-uploaded version code (don't re-upload: "version code already used").
