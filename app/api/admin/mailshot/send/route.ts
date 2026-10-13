@@ -11,6 +11,7 @@ import {
   mailshotLinks,
   mailshotStats,
   mailshotText,
+  type Relationship,
 } from "@/lib/mailshot";
 
 // Sends the cold mailshot through Resend only (never your own Outlook mailbox). "test" sends one copy to an
@@ -21,7 +22,7 @@ export const maxDuration = 60;
 const HARD_DAILY_LIMIT = 300;
 const MAX_PER_CALL = 40;
 
-type Contact = { id: number; first_name: string; name: string; email: string };
+type Contact = { id: number; first_name: string; name: string; email: string; relationship?: Relationship };
 
 export async function POST(req: Request) {
   try {
@@ -44,7 +45,8 @@ async function sendOne(resend: Resend, from: string, replyTo: string, campaign: 
   const links = mailshotLinks(token);
   const firstName = contact.first_name || "";
   const subject = subjectFor(subjectIndex, firstName);
-  const text = mailshotText(firstName, links);
+  const relationship: Relationship = contact.relationship === "personal" ? "personal" : "business";
+  const text = mailshotText(firstName, links, relationship);
   const inserted = (await sql`
     INSERT INTO tapcard_invite_sends (token, contact_id, channel, campaign, subject, message)
     VALUES (${token}, ${contact.id}, 'email', ${campaign}, ${subject}, ${text})
@@ -58,7 +60,7 @@ async function sendOne(resend: Resend, from: string, replyTo: string, campaign: 
       replyTo,
       subject,
       text,
-      html: mailshotHtml(firstName, links),
+      html: mailshotHtml(firstName, links, relationship),
       headers: {
         "List-Unsubscribe": `<${INVITE_LINK_ORIGIN}/api/unsubscribe/${token}>, <mailto:${replyTo}?subject=Unsubscribe>`,
         "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
@@ -116,7 +118,7 @@ async function handle(req: Request) {
   }
   const n = Math.min(Math.max(Number(body?.count) || 25, 1), MAX_PER_CALL, room);
   const next = (await sql`
-    SELECT c.id, c.first_name, c.name, c.email
+    SELECT c.id, c.first_name, c.name, c.email, l.relationship
     FROM tapcard_mailshot_list l
     JOIN tapcard_invite_contacts c ON c.id = l.contact_id
     WHERE l.campaign = ${campaign} AND NOT c.do_not_contact

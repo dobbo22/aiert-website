@@ -20,6 +20,7 @@ export default function MailshotPanel({
   const [campaign, setCampaign] = useState(initialCampaign);
   const [stats, setStats] = useState<Stats | null>(initialStats);
   const [bounces, setBounces] = useState(initialBounces);
+  const [includePersonalContacts, setIncludePersonalContacts] = useState(false);
   const [cands, setCands] = useState<{ total: number; ok: { id: number; name: string; email: string; company: string }[]; personal: number; role: number; invalid: number } | null>(null);
   const [list, setList] = useState("");
   const [includePersonal, setIncludePersonal] = useState(false);
@@ -47,14 +48,14 @@ export default function MailshotPanel({
   };
 
   const checkContacts = run(async () => {
-    const res = await fetch(`/api/admin/mailshot/from-contacts?campaign=${encodeURIComponent(campaign)}`);
+    const res = await fetch(`/api/admin/mailshot/from-contacts?campaign=${encodeURIComponent(campaign)}${includePersonalContacts ? "&personal=1" : ""}`);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? "Couldn't load");
     setCands(data.candidates);
   });
   const addContacts = run(async () => {
     if (!cands) return;
-    const data = await call("/api/admin/mailshot/from-contacts", { campaign, ids: cands.ok.map((r) => r.id) });
+    const data = await call("/api/admin/mailshot/from-contacts", { campaign, ids: cands.ok.map((r) => r.id), includePersonal: includePersonalContacts });
     setCands(null);
     setMessage({ text: `Added ${data.added} from your contacts` });
     await refresh();
@@ -145,6 +146,7 @@ export default function MailshotPanel({
       <section style={box}>
         <div style={row}>
           <button style={ghost} disabled={busy} onClick={checkContacts}>Check my contacts</button>
+          <label style={row}><input type="checkbox" checked={includePersonalContacts} onChange={(e) => { setIncludePersonalContacts(e.target.checked); setCands(null); }} /> Include Gmail-type addresses</label>
           {cands && (
             <>
               <span style={{ color: "#cbd5e1" }}>

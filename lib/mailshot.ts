@@ -124,6 +124,8 @@ export function ensureMailshotSchema(): Promise<unknown> {
           PRIMARY KEY (campaign, contact_id)
         )
       `)
+      // Which wording the footer uses: 'business' (a past business contact) or 'personal' (a personal contact).
+      .then(() => sql`ALTER TABLE tapcard_mailshot_list ADD COLUMN IF NOT EXISTS relationship TEXT NOT NULL DEFAULT 'business'`)
       .catch((err) => {
         schemaReady = null;
         throw err;
@@ -195,12 +197,15 @@ export type MailshotStats = {
   complained: number;
 };
 
+export type Relationship = "business" | "personal";
+const relationshipLine = (r: Relationship) => (r === "personal" ? "a personal contact of mine" : "a past business contact of mine");
+
 export type CandidateRow = { id: number; name: string; email: string; company: string };
 export type ContactsCandidates = { total: number; ok: CandidateRow[]; personal: number; role: number; invalid: number };
 
 /// People in the invite contacts (iCloud / LinkedIn imports) who have had no invite sent in any channel, have not
 /// unsubscribed or bounced, and are not already in this mailshot. Only business-looking addresses are offered.
-export async function contactsCandidates(campaign: string): Promise<ContactsCandidates> {
+export async function contactsCandidates(campaign: string, includePersonal = false): Promise<ContactsCandidates> {
   await ensureMailshotSchema();
   const rows = (await sql`
     SELECT c.id, c.name, c.email, c.company
@@ -214,18 +219,18 @@ export async function contactsCandidates(campaign: string): Promise<ContactsCand
   const out: ContactsCandidates = { total: rows.length, ok: [], personal: 0, role: 0, invalid: 0 };
   for (const r of rows) {
     const check = classifyEmail(r.email.trim().toLowerCase());
-    if (check === "ok") out.ok.push(r);
+    if (check === "ok" || (check === "personal" && includePersonal)) out.ok.push(r);
     else out[check]++;
   }
   return out;
 }
 
-export async function addCandidatesToMailshot(campaign: string, ids: number[]): Promise<number> {
+export async function addCandidatesToMailshot(campaign: string, ids: number[], relationship: Relationship = "personal"): Promise<number> {
   await ensureMailshotSchema();
   let added = 0;
   for (const id of ids) {
     const res = (await sql`
-      INSERT INTO tapcard_mailshot_list (campaign, contact_id) VALUES (${campaign}, ${id})
+      INSERT INTO tapcard_mailshot_list (campaign, contact_id, relationship) VALUES (${campaign}, ${id}, ${relationship})
       ON CONFLICT DO NOTHING RETURNING contact_id
     `) as unknown[];
     if (res.length) added++;
@@ -293,7 +298,7 @@ export const MAILSHOT_IMAGE_TAPCARD = "https://www.aiert.co.uk/mailshot/tapcard-
 export const MAILSHOT_IMAGE_POWERSEARCH = "https://www.aiert.co.uk/mailshot/powersearch-emails.png";
 export const MAILSHOT_M365_NOTE = "* Some company Microsoft 365 accounts need your IT administrator to approve the connection.";
 
-export function mailshotText(firstName: string, links: MailshotLinks): string {
+export function mailshotText(firstName: string, links: MailshotLinks, relationship: Relationship = "business"): string {
   const hi = firstName ? `Hi ${firstName},` : "Hi,";
   return `${hi}
 
@@ -319,12 +324,12 @@ Martin Dobson
 Aiert Ltd
 
 --
-You're receiving this because you're a past business contact of mine. ${MAILSHOT_COMPANY_LINE}. Privacy: https://www.aiert.co.uk/privacy
+You're receiving this because you're ${relationshipLine(relationship)}. ${MAILSHOT_COMPANY_LINE}. Privacy: https://www.aiert.co.uk/privacy
 Not interested? Unsubscribe here and I won't email you again: ${links.unsubscribe}
 `;
 }
 
-export function mailshotHtml(firstName: string, links: MailshotLinks): string {
+export function mailshotHtml(firstName: string, links: MailshotLinks, relationship: Relationship = "business"): string {
   const hi = firstName ? `Hi ${esc(firstName)},` : "Hi,";
   const btn = "display:inline-block;background:#4c2f93;color:#ffffff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:10px;";
   const link = "color:#4c2f93;font-weight:600;";
@@ -350,6 +355,6 @@ export function mailshotHtml(firstName: string, links: MailshotLinks): string {
 <p style="margin:0 0 24px;"><a href="${esc(links.how)}" style="${link}">See how it works</a> &nbsp;·&nbsp; <a href="${esc(links.video)}" style="${link}">See everything it can do</a></p>
 <p style="margin:0 0 4px;">Martin Dobson</p>
 <p style="margin:0 0 28px;">Aiert Ltd</p>
-<p style="margin:0;font-size:12px;line-height:1.5;color:#6b7280;">You're receiving this because you're a past business contact of mine. ${esc(MAILSHOT_COMPANY_LINE)}. <a href="https://www.aiert.co.uk/privacy" style="color:#6b7280;">Privacy</a><br>Not interested? <a href="${esc(links.unsubscribe)}" style="color:#6b7280;">Unsubscribe here</a> and I won't email you again.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:#6b7280;">You're receiving this because you're ${relationshipLine(relationship)}. ${esc(MAILSHOT_COMPANY_LINE)}. <a href="https://www.aiert.co.uk/privacy" style="color:#6b7280;">Privacy</a><br>Not interested? <a href="${esc(links.unsubscribe)}" style="color:#6b7280;">Unsubscribe here</a> and I won't email you again.</p>
 </div></body></html>`;
 }
