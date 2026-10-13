@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { del, put } from "@vercel/blob";
 import { deleteCard, getCard, publicCardJSON, updateCard } from "@/lib/tapcardDb";
 import { canEdit, readEditToken } from "@/lib/tapcardAuth";
-import { publicOffer } from "@/lib/tapcardOffers";
+import { publicAnnouncement, publicOffer } from "@/lib/tapcardOffers";
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
@@ -14,7 +14,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   if (!card) return NextResponse.json({ error: "not found" }, { status: 404 });
   // The special offer (if any) rides along so a saved card's next refresh shows it in the app's updates.
   const offer = await publicOffer(id).catch(() => null);
-  return NextResponse.json(offer ? { ...publicCardJSON(card), offer } : publicCardJSON(card));
+  const announcement = await publicAnnouncement(id).catch(() => null);
+  return NextResponse.json({ ...publicCardJSON(card), ...(offer ? { offer } : {}), ...(announcement ? { announcement } : {}) });
 }
 
 // "Stop sharing" — the delete/revoke control called for in the plan's

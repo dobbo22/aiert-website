@@ -44,6 +44,16 @@ function ensureOfferSchema(): Promise<unknown> {
           UNIQUE (offer_id, claimant_hash)
         )
       `)
+      .then(() => sql`
+        CREATE TABLE IF NOT EXISTS tapcard_announcements (
+          id BIGSERIAL PRIMARY KEY,
+          card_id TEXT NOT NULL,
+          text TEXT NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          withdrawn BOOLEAN NOT NULL DEFAULT false
+        )
+      `)
+      .then(() => sql`CREATE INDEX IF NOT EXISTS tapcard_announcements_card ON tapcard_announcements (card_id)`)
       .catch((err) => {
         ready = null;
         throw err;
@@ -235,4 +245,35 @@ export async function redeemCode(code: string, pin: unknown): Promise<RedeemResu
   if (!done.length) return { ok: false, error: "not_valid", state: "used" };
   await sql`UPDATE tapcard_offers SET pin_fails = 0 WHERE id = ${o.id}`;
   return { ok: true, offerText: status.offerText ?? "" };
+}
+
+// ---- Announcements ("New autumn menu", "Christmas bookings open"): one short line per card, newest wins.
+export const MAX_ANNOUNCEMENT_TEXT = 140;
+// A restaurant can post a new one at most this often (stops a card turning into a spam source).
+const MIN_ANNOUNCEMENT_GAP_MS = 6 * 60 * 60 * 1000;
+
+export async function publicAnnouncement(cardId: string) {
+  await ensureOfferSchema();
+  const row = ((await sql`
+    SELECT id, text, created_at, withdrawn FROM tapcard_announcements WHERE card_id = ${cardId} ORDER BY id DESC LIMIT 1
+  `) as { id: number; text: string; created_at: string; withdrawn: boolean }[])[0];
+  if (!row || row.withdrawn) return null;
+  return { id: Number(row.id), text: row.text, postedAt: new Date(row.created_at).toISOString() };
+}
+
+export async function setAnnouncement(cardId: string, textRaw: unknown): Promise<{ ok: true } | { ok: false; error: string }> {
+  await ensureOfferSchema();
+  const text = typeof textRaw === "string" ? textRaw.trim().slice(0, MAX_ANNOUNCEMENT_TEXT) : "";
+  if (!text) return { ok: false, error: "announcement text is required" };
+  const last = ((await sql`SELECT created_at FROM tapcard_announcements WHERE card_id = ${cardId} ORDER BY id DESC LIMIT 1`) as { created_at: string }[])[0];
+  if (last && Date.now() - new Date(last.created_at).getTime() < MIN_ANNOUNCEMENT_GAP_MS) {
+    return { ok: false, error: "You can post one announcement every 6 hours" };
+  }
+  await sql`INSERT INTO tapcard_announcements (card_id, text) VALUES (${cardId}, ${text})`;
+  return { ok: true };
+}
+
+export async function clearAnnouncement(cardId: string): Promise<void> {
+  await ensureOfferSchema();
+  await sql`UPDATE tapcard_announcements SET withdrawn = true WHERE card_id = ${cardId}`;
 }
