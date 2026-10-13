@@ -195,6 +195,44 @@ export type MailshotStats = {
   complained: number;
 };
 
+export type CandidateRow = { id: number; name: string; email: string; company: string };
+export type ContactsCandidates = { total: number; ok: CandidateRow[]; personal: number; role: number; invalid: number };
+
+/// People in the invite contacts (iCloud / LinkedIn imports) who have had no invite sent in any channel, have not
+/// unsubscribed or bounced, and are not already in this mailshot. Only business-looking addresses are offered.
+export async function contactsCandidates(campaign: string): Promise<ContactsCandidates> {
+  await ensureMailshotSchema();
+  const rows = (await sql`
+    SELECT c.id, c.name, c.email, c.company
+    FROM tapcard_invite_contacts c
+    WHERE c.email <> '' AND NOT c.do_not_contact
+      AND NOT EXISTS (SELECT 1 FROM tapcard_invite_sends s WHERE s.contact_id = c.id AND s.bounced_at IS NULL)
+      AND NOT EXISTS (SELECT 1 FROM tapcard_invite_sends s2 WHERE s2.contact_id = c.id AND s2.bounced_at IS NOT NULL)
+      AND NOT EXISTS (SELECT 1 FROM tapcard_mailshot_list l WHERE l.campaign = ${campaign} AND l.contact_id = c.id)
+    ORDER BY lower(c.name)
+  `) as CandidateRow[];
+  const out: ContactsCandidates = { total: rows.length, ok: [], personal: 0, role: 0, invalid: 0 };
+  for (const r of rows) {
+    const check = classifyEmail(r.email.trim().toLowerCase());
+    if (check === "ok") out.ok.push(r);
+    else out[check]++;
+  }
+  return out;
+}
+
+export async function addCandidatesToMailshot(campaign: string, ids: number[]): Promise<number> {
+  await ensureMailshotSchema();
+  let added = 0;
+  for (const id of ids) {
+    const res = (await sql`
+      INSERT INTO tapcard_mailshot_list (campaign, contact_id) VALUES (${campaign}, ${id})
+      ON CONFLICT DO NOTHING RETURNING contact_id
+    `) as unknown[];
+    if (res.length) added++;
+  }
+  return added;
+}
+
 export type BouncedRow = { name: string; email: string; reason: string | null };
 
 export async function mailshotBounces(campaign: string): Promise<BouncedRow[]> {

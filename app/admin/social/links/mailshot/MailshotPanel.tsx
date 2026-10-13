@@ -20,6 +20,7 @@ export default function MailshotPanel({
   const [campaign, setCampaign] = useState(initialCampaign);
   const [stats, setStats] = useState<Stats | null>(initialStats);
   const [bounces, setBounces] = useState(initialBounces);
+  const [cands, setCands] = useState<{ total: number; ok: { id: number; name: string; email: string; company: string }[]; personal: number; role: number; invalid: number } | null>(null);
   const [list, setList] = useState("");
   const [includePersonal, setIncludePersonal] = useState(false);
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -44,6 +45,20 @@ export default function MailshotPanel({
     try { await fn(); } catch (err) { setMessage({ text: err instanceof Error ? err.message : "Failed", error: true }); }
     setBusy(false);
   };
+
+  const checkContacts = run(async () => {
+    const res = await fetch(`/api/admin/mailshot/from-contacts?campaign=${encodeURIComponent(campaign)}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? "Couldn't load");
+    setCands(data.candidates);
+  });
+  const addContacts = run(async () => {
+    if (!cands) return;
+    const data = await call("/api/admin/mailshot/from-contacts", { campaign, ids: cands.ok.map((r) => r.id) });
+    setCands(null);
+    setMessage({ text: `Added ${data.added} from your contacts` });
+    await refresh();
+  });
 
   const doImport = run(async () => {
     const data = await call("/api/admin/mailshot/import", { campaign, text: list, includePersonal });
@@ -125,6 +140,28 @@ export default function MailshotPanel({
         </div>
         {s && <p style={{ marginTop: "0.6rem", color: "#94a3b8" }}>Sent today {s.sentToday} of {dailyCap}</p>}
         {message && <p className={message.error ? "social-compose-error" : "social-compose-success"} style={{ marginTop: "0.6rem" }}>{message.text}</p>}
+      </section>
+
+      <section style={box}>
+        <div style={row}>
+          <button style={ghost} disabled={busy} onClick={checkContacts}>Check my contacts</button>
+          {cands && (
+            <>
+              <span style={{ color: "#cbd5e1" }}>
+                {cands.ok.length} business addresses with no invite yet · held back: personal {cands.personal}, role {cands.role}, invalid {cands.invalid}
+              </span>
+              <span style={{ flex: 1 }} />
+              <button style={btn} disabled={busy || !cands.ok.length} onClick={addContacts}>Add {cands.ok.length} to list</button>
+            </>
+          )}
+        </div>
+        {cands && cands.ok.length > 0 && (
+          <div style={{ marginTop: "0.75rem", maxHeight: 260, overflowY: "auto", fontSize: "0.9rem", color: "#cbd5e1" }}>
+            {cands.ok.map((r) => (
+              <div key={r.id} style={{ padding: "0.15rem 0" }}>{r.name || r.email} <span style={{ color: "#94a3b8" }}>· {r.company || r.email}</span></div>
+            ))}
+          </div>
+        )}
       </section>
 
       {bounces.length > 0 && (
