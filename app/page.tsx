@@ -7,15 +7,15 @@ const TAPCARD_APP_STORE = "https://apps.apple.com/gb/app/tapcard/id6816003159";
 const TAPCARD_PLAY_STORE = "https://play.google.com/store/apps/details?id=com.mailbroom.tapcard";
 
 export const metadata: Metadata = {
-  title: "AIERT Ltd – MailBroom | AI-Powered Productivity Tools",
+  title: "Aiert Ltd – TapCard, PowerSearch and MailBroom | Simple productivity apps",
   description:
-    "AIERT Ltd builds AI-powered productivity tools, including MailBroom, an AI email cleaner that bulk-deletes, unsubscribes, and organises inboxes privately on-device.",
-  keywords: ["AIERT", "AI", "productivity", "MailBroom", "email cleaner", "inbox cleaner", "UK", "on-device AI"],
+    "Aiert Ltd builds simple productivity apps for iPhone and Android: TapCard, a free digital business card; PowerSearch, which searches every email account at once; and MailBroom, which cleans up your inbox privately on your phone.",
+  keywords: ["Aiert", "productivity apps", "TapCard", "digital business card", "PowerSearch", "email search", "MailBroom", "email cleaner", "inbox cleaner", "UK", "on-device"],
   metadataBase: new URL("https://www.aiert.co.uk"),
   openGraph: {
-    title: "AIERT Ltd – MailBroom",
+    title: "Aiert Ltd – Simple productivity apps for iPhone and Android",
     description:
-      "UK-based AI company building productivity tools, starting with MailBroom (private, on-device AI email cleanup).",
+      "TapCard (free digital business card), PowerSearch (search every email account at once) and MailBroom (clean up your inbox).",
     url: "https://www.aiert.co.uk",
     siteName: "AIERT Ltd",
     locale: "en_GB",
