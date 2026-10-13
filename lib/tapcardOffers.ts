@@ -93,11 +93,11 @@ export async function publicOffer(cardId: string) {
   if (!o) return null;
   const { claimed } = await offerCounts(o.id);
   return {
-    id: o.id,
+    id: Number(o.id),
     text: o.text,
     expiresAt: o.expires_at,
     claimsLeft: o.max_claims == null ? null : Math.max(0, o.max_claims - claimed),
-    postedAt: o.created_at,
+    postedAt: o.created_at ? new Date(o.created_at).toISOString() : null,
   };
 }
 
