@@ -25,6 +25,7 @@ export default function MailshotPanel({
   const [includePersonalContacts, setIncludePersonalContacts] = useState(false);
   const [rows, setRows] = useState<PRow[]>([]);
   const [queue, setQueue] = useState<PRow[] | null>(null);
+  const [skipped, setSkipped] = useState<{ id: number; name: string; email: string; reason: string }[] | null>(null);
   const [queueOrig, setQueueOrig] = useState<Record<number, string>>({});
   const [testWording, setTestWording] = useState<"business" | "personal">("business");
   const [cands, setCands] = useState<{ total: number; ok: { id: number; name: string; email: string; company: string }[]; personal: number; role: number; invalid: number } | null>(null);
@@ -81,6 +82,22 @@ export default function MailshotPanel({
     setQueue(q.map((r) => ({ id: r.id, name: r.name || r.email, sub: r.email, email: r.email, greeting: r.greeting, on: true })));
   }
   const loadQueue = run(loadQueueNow);
+  const showSkipped = run(async () => {
+    const res = await fetch(`/api/admin/mailshot/skipped?campaign=${encodeURIComponent(campaign)}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? "Couldn't load");
+    setSkipped(data.skipped);
+  });
+  const putBack = async (id: number) => {
+    try {
+      await call("/api/admin/mailshot/skipped", { campaign, ids: [id] });
+      setSkipped((all) => (all ? all.filter((x) => x.id !== id) : all));
+      await refresh();
+      if (queue) await loadQueueNow();
+    } catch (err) {
+      setMessage({ text: err instanceof Error ? err.message : "Failed", error: true });
+    }
+  };
   const checkDomains = run(async () => {
     const data = await call("/api/admin/mailshot/check-domains", { campaign });
     setMessage({ text: `Checked ${data.domainsChecked} domains. Took ${data.removed} people off the queue at ${data.deadDomains.length} domains with no mail server${data.deadDomains.length ? `: ${data.deadDomains.slice(0, 12).join(", ")}${data.deadDomains.length > 12 ? "…" : ""}` : ""}` });
@@ -231,6 +248,7 @@ export default function MailshotPanel({
           <button style={ghost} disabled={busy} onClick={checkDomains}>Check mail servers</button>
           <a style={{ ...ghost, textDecoration: "none", display: "inline-block" }} href={`/api/admin/mailshot/export?campaign=${encodeURIComponent(campaign)}`}>Export queue (CSV)</a>
           <button style={ghost} disabled={busy} onClick={keepOnly}>Keep only valid…</button>
+          <button style={ghost} disabled={busy} onClick={showSkipped}>Show taken off</button>
           {queue && (
             <>
               <span style={{ flex: 1 }} />
@@ -238,6 +256,23 @@ export default function MailshotPanel({
             </>
           )}
         </div>
+        {skipped && (
+          <div style={{ marginTop: "0.75rem" }}>
+            <div style={{ color: "#94a3b8", fontSize: "0.85rem", marginBottom: "0.4rem" }}>
+              Taken off the queue: {skipped.length} ({skipped.filter((x) => x.reason === "no mail server").length} at domains with no mail server)
+              <button style={{ ...ghost, padding: "0.15rem 0.6rem", marginLeft: "0.6rem", fontSize: "0.8rem" }} onClick={() => setSkipped(null)}>Hide</button>
+            </div>
+            <div style={{ maxHeight: 360, overflowY: "auto", fontSize: "0.9rem", color: "#cbd5e1" }}>
+              {skipped.map((x) => (
+                <div key={x.id} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 130px auto", gap: "0.6rem", alignItems: "center", padding: "0.15rem 0" }}>
+                  <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{x.email}{x.name && x.name !== x.email ? <span style={{ color: "#94a3b8" }}> · {x.name}</span> : null}</div>
+                  <span style={{ color: x.reason === "no mail server" ? "#f87171" : "#94a3b8" }}>{x.reason}</span>
+                  <button style={{ ...ghost, padding: "0.15rem 0.5rem", fontSize: "0.8rem" }} onClick={() => putBack(x.id)}>Put back</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {queue && <PeopleTable rows={queue} setRows={(fn) => setQueue((q) => (q ? (typeof fn === "function" ? fn(q) : fn) : q))} input={input} ghost={ghost} onRemove={removeForGood} />}
       </section>
 

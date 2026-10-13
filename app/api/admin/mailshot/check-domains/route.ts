@@ -8,7 +8,7 @@ export const maxDuration = 60;
 
 // Checks that each queued person's email domain can receive mail at all (it has mail servers). People at
 // dead domains (a company that closed, a lapsed domain) would only bounce, so they are marked don't send.
-async function hasMail(domain: string): Promise<boolean> {
+export async function hasMail(domain: string): Promise<boolean> {
   const lookup = async () => {
     try {
       const mx = await dns.resolveMx(domain);
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
   let removed = 0;
   for (const d of dead) {
     for (const id of byDomain.get(d) ?? []) {
-      await sql`UPDATE tapcard_mailshot_list SET status = 'skipped' WHERE campaign = ${campaign} AND contact_id = ${id}`;
+      await sql`UPDATE tapcard_mailshot_list SET status = 'skipped', skip_reason = 'no mail server' WHERE campaign = ${campaign} AND contact_id = ${id}`;
       removed++;
     }
   }

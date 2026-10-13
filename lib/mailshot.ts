@@ -137,6 +137,8 @@ export function ensureMailshotSchema(): Promise<unknown> {
       // The name used in "Hi …," (null = use the contact's first name; empty = just "Hi,"), and queued or skipped (don't send).
       .then(() => sql`ALTER TABLE tapcard_mailshot_list ADD COLUMN IF NOT EXISTS greeting TEXT`)
       .then(() => sql`ALTER TABLE tapcard_mailshot_list ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'queued'`)
+      // Why someone was marked don't send: 'no mail server' (from the domain check) or null (unticked by hand).
+      .then(() => sql`ALTER TABLE tapcard_mailshot_list ADD COLUMN IF NOT EXISTS skip_reason TEXT`)
       // Anyone whose address bounced for good (anything but an explicit temporary bounce) is never emailed again,
       // in any campaign or on a re-import.
       .then(() => sql`
