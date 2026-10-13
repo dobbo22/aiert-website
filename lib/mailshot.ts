@@ -134,6 +134,9 @@ export function ensureMailshotSchema(): Promise<unknown> {
       `)
       // Which wording the footer uses: 'business' (a past business contact) or 'personal' (a personal contact).
       .then(() => sql`ALTER TABLE tapcard_mailshot_list ADD COLUMN IF NOT EXISTS relationship TEXT NOT NULL DEFAULT 'business'`)
+      // The name used in "Hi …," (null = use the contact's first name; empty = just "Hi,"), and queued or skipped (don't send).
+      .then(() => sql`ALTER TABLE tapcard_mailshot_list ADD COLUMN IF NOT EXISTS greeting TEXT`)
+      .then(() => sql`ALTER TABLE tapcard_mailshot_list ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'queued'`)
       // One-off repair: contacts imported from a pasted list got an email-like fragment as their name.
       .then(async () => {
         const bad = (await sql`SELECT id, email FROM tapcard_invite_contacts WHERE first_name LIKE '%@%' OR name LIKE '%@%'`) as { id: number; email: string }[];
@@ -216,7 +219,7 @@ export type MailshotStats = {
 export type Relationship = "business" | "personal";
 const relationshipLine = (r: Relationship) => (r === "personal" ? "a personal contact of mine" : "a past business contact of mine");
 
-export type CandidateRow = { id: number; name: string; email: string; company: string };
+export type CandidateRow = { id: number; name: string; email: string; company: string; greeting: string };
 export type ContactsCandidates = { total: number; ok: CandidateRow[]; personal: number; role: number; invalid: number };
 
 /// People in the invite contacts (iCloud / LinkedIn imports) who have had no invite sent in any channel, have not
@@ -224,7 +227,7 @@ export type ContactsCandidates = { total: number; ok: CandidateRow[]; personal: 
 export async function contactsCandidates(campaign: string, includePersonal = false): Promise<ContactsCandidates> {
   await ensureMailshotSchema();
   const rows = (await sql`
-    SELECT c.id, c.name, c.email, c.company
+    SELECT c.id, c.name, c.email, c.company, c.first_name AS greeting
     FROM tapcard_invite_contacts c
     WHERE c.email <> '' AND NOT c.do_not_contact
       AND NOT EXISTS (SELECT 1 FROM tapcard_invite_sends s WHERE s.contact_id = c.id AND s.bounced_at IS NULL)
@@ -234,6 +237,7 @@ export async function contactsCandidates(campaign: string, includePersonal = fal
   `) as CandidateRow[];
   const out: ContactsCandidates = { total: rows.length, ok: [], personal: 0, role: 0, invalid: 0 };
   for (const r of rows) {
+    r.greeting = safeFirstName(r.greeting) || guessFirstName(r.email.trim().toLowerCase());
     const check = classifyEmail(r.email.trim().toLowerCase());
     if (check === "ok" || (check === "personal" && includePersonal)) out.ok.push(r);
     else out[check]++;
@@ -241,17 +245,56 @@ export async function contactsCandidates(campaign: string, includePersonal = fal
   return out;
 }
 
-export async function addCandidatesToMailshot(campaign: string, ids: number[], relationship: Relationship = "personal"): Promise<number> {
+export type AddItem = { id: number; greeting: string; send: boolean };
+
+/// Adds people to the list: ticked ones queued with their greeting, unticked ones recorded as "don't send".
+export async function addCandidatesToMailshot(campaign: string, items: AddItem[], relationship: Relationship = "personal"): Promise<{ queued: number; skipped: number }> {
   await ensureMailshotSchema();
-  let added = 0;
-  for (const id of ids) {
+  let queued = 0;
+  let skipped = 0;
+  for (const it of items) {
+    const status = it.send ? "queued" : "skipped";
+    const greeting = safeFirstName(it.greeting);
     const res = (await sql`
-      INSERT INTO tapcard_mailshot_list (campaign, contact_id, relationship) VALUES (${campaign}, ${id}, ${relationship})
+      INSERT INTO tapcard_mailshot_list (campaign, contact_id, relationship, greeting, status)
+      VALUES (${campaign}, ${it.id}, ${relationship}, ${greeting}, ${status})
       ON CONFLICT DO NOTHING RETURNING contact_id
     `) as unknown[];
-    if (res.length) added++;
+    if (res.length) { if (it.send) queued++; else skipped++; }
   }
-  return added;
+  return { queued, skipped };
+}
+
+export type QueueRow = { id: number; name: string; email: string; greeting: string };
+
+/// Everyone queued and not yet sent, with the greeting that will be used.
+export async function mailshotQueue(campaign: string): Promise<QueueRow[]> {
+  await ensureMailshotSchema();
+  const rows = (await sql`
+    SELECT c.id, c.name, c.email, COALESCE(l.greeting, c.first_name) AS greeting
+    FROM tapcard_mailshot_list l JOIN tapcard_invite_contacts c ON c.id = l.contact_id
+    WHERE l.campaign = ${campaign} AND l.status = 'queued' AND NOT c.do_not_contact
+      AND NOT EXISTS (SELECT 1 FROM tapcard_invite_sends s WHERE s.contact_id = c.id AND s.campaign = ${campaign})
+    ORDER BY lower(c.name)
+  `) as QueueRow[];
+  return rows.map((r) => ({ ...r, greeting: safeFirstName(r.greeting) }));
+}
+
+export type QueueEdit = { id: number; greeting?: string; skip?: boolean };
+
+export async function updateMailshotQueue(campaign: string, edits: QueueEdit[]): Promise<number> {
+  await ensureMailshotSchema();
+  let n = 0;
+  for (const e of edits) {
+    if (e.skip) {
+      await sql`UPDATE tapcard_mailshot_list SET status = 'skipped' WHERE campaign = ${campaign} AND contact_id = ${e.id}`;
+      n++;
+    } else if (typeof e.greeting === "string") {
+      await sql`UPDATE tapcard_mailshot_list SET greeting = ${safeFirstName(e.greeting)} WHERE campaign = ${campaign} AND contact_id = ${e.id}`;
+      n++;
+    }
+  }
+  return n;
 }
 
 export type BouncedRow = { name: string; email: string; reason: string | null };
@@ -287,7 +330,7 @@ export async function mailshotStats(campaign: string): Promise<MailshotStats> {
   const queued = ((await sql`
     SELECT COUNT(*)::int AS n FROM tapcard_mailshot_list l
     JOIN tapcard_invite_contacts c ON c.id = l.contact_id
-    WHERE l.campaign = ${campaign} AND NOT c.do_not_contact
+    WHERE l.campaign = ${campaign} AND l.status = 'queued' AND NOT c.do_not_contact
       AND NOT EXISTS (SELECT 1 FROM tapcard_invite_sends s WHERE s.contact_id = l.contact_id AND s.campaign = ${campaign})
   `) as { n: number }[])[0].n;
   return {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAdminRequest } from "@/lib/adminRequest";
-import { addCandidatesToMailshot, contactsCandidates } from "@/lib/mailshot";
+import { addCandidatesToMailshot, contactsCandidates, type AddItem } from "@/lib/mailshot";
 
 // Preview (GET) and add (POST) the people in your contacts who have not had an invite yet.
 export async function GET(req: Request) {
@@ -15,10 +15,12 @@ export async function POST(req: Request) {
   if (!(await isAdminRequest())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await req.json().catch(() => null);
   const campaign = String(body?.campaign ?? "").trim().slice(0, 30);
-  const ids: number[] = Array.isArray(body?.ids) ? body.ids.filter((n: unknown) => Number.isInteger(n)) : [];
-  if (!campaign || !ids.length) return NextResponse.json({ error: "campaign and people are required" }, { status: 400 });
+  const items: AddItem[] = Array.isArray(body?.items)
+    ? body.items.filter((i: AddItem) => i && Number.isInteger(i.id)).map((i: AddItem) => ({ id: i.id, greeting: String(i.greeting ?? ""), send: i.send === true }))
+    : [];
+  if (!campaign || !items.length) return NextResponse.json({ error: "campaign and people are required" }, { status: 400 });
   // Only ever add people the preview would have offered (not unsubscribed, not bounced, business-looking).
   const allowed = new Set((await contactsCandidates(campaign, body?.includePersonal === true)).ok.map((r) => r.id));
-  const added = await addCandidatesToMailshot(campaign, ids.filter((id) => allowed.has(id)));
-  return NextResponse.json({ ok: true, added });
+  const result = await addCandidatesToMailshot(campaign, items.filter((i) => allowed.has(i.id)));
+  return NextResponse.json({ ok: true, ...result });
 }

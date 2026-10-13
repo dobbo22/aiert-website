@@ -23,7 +23,7 @@ export const maxDuration = 60;
 const HARD_DAILY_LIMIT = 300;
 const MAX_PER_CALL = 40;
 
-type Contact = { id: number; first_name: string; name: string; email: string; relationship?: Relationship };
+type Contact = { id: number; first_name: string; name: string; email: string; relationship?: Relationship; greeting?: string | null };
 
 export async function POST(req: Request) {
   try {
@@ -44,7 +44,8 @@ async function sendOne(resend: Resend, from: string, replyTo: string, campaign: 
   await ensureInviteSchema();
   const token = newInviteToken();
   const links = mailshotLinks(token);
-  const firstName = safeFirstName(contact.first_name);
+  // A greeting set in the queue wins (an empty one means just "Hi,"); otherwise the contact's first name.
+  const firstName = safeFirstName(contact.greeting !== undefined && contact.greeting !== null ? contact.greeting : contact.first_name);
   const subject = subjectFor(subjectIndex, firstName);
   const relationship: Relationship = contact.relationship === "personal" ? "personal" : "business";
   const text = mailshotText(firstName, links, relationship);
@@ -119,10 +120,10 @@ async function handle(req: Request) {
   }
   const n = Math.min(Math.max(Number(body?.count) || 25, 1), MAX_PER_CALL, room);
   const next = (await sql`
-    SELECT c.id, c.first_name, c.name, c.email, l.relationship
+    SELECT c.id, c.first_name, c.name, c.email, l.relationship, l.greeting
     FROM tapcard_mailshot_list l
     JOIN tapcard_invite_contacts c ON c.id = l.contact_id
-    WHERE l.campaign = ${campaign} AND NOT c.do_not_contact
+    WHERE l.campaign = ${campaign} AND l.status = 'queued' AND NOT c.do_not_contact
       AND NOT EXISTS (SELECT 1 FROM tapcard_invite_sends s WHERE s.contact_id = c.id AND s.campaign = ${campaign})
     ORDER BY l.added_at, c.id
     LIMIT ${n}

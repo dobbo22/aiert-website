@@ -12,6 +12,8 @@ type Summary = {
   personalExamples: string[];
 };
 
+type PRow = { id: number; name: string; sub: string; email: string; greeting: string; on: boolean };
+
 const pct = (n: number, d: number) => (d ? ` (${Math.round((n / d) * 100)}%)` : "");
 
 export default function MailshotPanel({
@@ -21,7 +23,9 @@ export default function MailshotPanel({
   const [stats, setStats] = useState<Stats | null>(initialStats);
   const [bounces, setBounces] = useState(initialBounces);
   const [includePersonalContacts, setIncludePersonalContacts] = useState(false);
-  const [picked, setPicked] = useState<Set<number>>(new Set());
+  const [rows, setRows] = useState<PRow[]>([]);
+  const [queue, setQueue] = useState<PRow[] | null>(null);
+  const [queueOrig, setQueueOrig] = useState<Record<number, string>>({});
   const [testWording, setTestWording] = useState<"business" | "personal">("business");
   const [cands, setCands] = useState<{ total: number; ok: { id: number; name: string; email: string; company: string }[]; personal: number; role: number; invalid: number } | null>(null);
   const [list, setList] = useState("");
@@ -54,14 +58,39 @@ export default function MailshotPanel({
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? "Couldn't load");
     setCands(data.candidates);
-    setPicked(new Set((data.candidates.ok as { id: number }[]).map((r) => r.id)));
+    setRows((data.candidates.ok as { id: number; name: string; email: string; company: string; greeting: string }[]).map((r) => ({ id: r.id, name: r.name || r.email, sub: r.company || r.email, email: r.email, greeting: r.greeting, on: true })));
   });
   const addContacts = run(async () => {
     if (!cands) return;
-    const data = await call("/api/admin/mailshot/from-contacts", { campaign, ids: cands.ok.map((r) => r.id).filter((id) => picked.has(id)), includePersonal: includePersonalContacts });
+    const data = await call("/api/admin/mailshot/from-contacts", {
+      campaign, includePersonal: includePersonalContacts,
+      items: rows.map((r) => ({ id: r.id, greeting: r.greeting, send: r.on })),
+    });
     setCands(null);
-    setMessage({ text: `Added ${data.added} from your contacts` });
+    setRows([]);
+    setMessage({ text: `Queued ${data.queued}${data.skipped ? `, ${data.skipped} marked don't send` : ""}` });
     await refresh();
+    await loadQueueNow();
+  });
+  async function loadQueueNow() {
+    const res = await fetch(`/api/admin/mailshot/queue?campaign=${encodeURIComponent(campaign)}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? "Couldn't load the queue");
+    const q = data.queue as { id: number; name: string; email: string; greeting: string }[];
+    setQueueOrig(Object.fromEntries(q.map((r) => [r.id, r.greeting])));
+    setQueue(q.map((r) => ({ id: r.id, name: r.name || r.email, sub: r.email, email: r.email, greeting: r.greeting, on: true })));
+  }
+  const loadQueue = run(loadQueueNow);
+  const saveQueue = run(async () => {
+    if (!queue) return;
+    const edits = queue
+      .filter((r) => !r.on || r.greeting !== queueOrig[r.id])
+      .map((r) => (r.on ? { id: r.id, greeting: r.greeting } : { id: r.id, skip: true }));
+    if (!edits.length) { setMessage({ text: "No changes to save" }); return; }
+    await call("/api/admin/mailshot/queue", { campaign, edits });
+    setMessage({ text: `Saved ${edits.length} change${edits.length === 1 ? "" : "s"}` });
+    await refresh();
+    await loadQueueNow();
   });
 
   const doImport = run(async () => {
@@ -153,33 +182,33 @@ export default function MailshotPanel({
       <section style={box}>
         <div style={row}>
           <button style={ghost} disabled={busy} onClick={checkContacts}>Check my contacts</button>
-          <label style={row}><input type="checkbox" checked={includePersonalContacts} onChange={(e) => { setIncludePersonalContacts(e.target.checked); setCands(null); }} /> Include Gmail-type addresses</label>
+          <label style={row}><input type="checkbox" checked={includePersonalContacts} onChange={(e) => { setIncludePersonalContacts(e.target.checked); setCands(null); setRows([]); }} /> Include Gmail-type addresses</label>
           {cands && (
             <>
               <span style={{ color: "#cbd5e1" }}>
-                {cands.ok.length} business addresses with no invite yet · held back: personal {cands.personal}, role {cands.role}, invalid {cands.invalid}
+                {cands.ok.length} with no invite yet · held back: personal {cands.personal}, role {cands.role}, invalid {cands.invalid}
               </span>
               <span style={{ flex: 1 }} />
-              <button style={btn} disabled={busy || picked.size === 0} onClick={addContacts}>Add {picked.size} to list</button>
+              <button style={btn} disabled={busy || rows.length === 0} onClick={addContacts}>
+                Queue {rows.filter((r) => r.on).length}{rows.some((r) => !r.on) ? ` · skip ${rows.filter((r) => !r.on).length}` : ""}
+              </button>
             </>
           )}
         </div>
-        {cands && cands.ok.length > 0 && (
-          <div style={{ marginTop: "0.75rem" }}>
-            <div style={{ ...row, marginBottom: "0.4rem" }}>
-              <button style={{ ...ghost, padding: "0.25rem 0.7rem" }} onClick={() => setPicked(new Set(cands.ok.map((r) => r.id)))}>Tick all</button>
-              <button style={{ ...ghost, padding: "0.25rem 0.7rem" }} onClick={() => setPicked(new Set())}>Untick all</button>
-            </div>
-            <div style={{ maxHeight: 340, overflowY: "auto", fontSize: "0.9rem", color: "#cbd5e1" }}>
-              {cands.ok.map((r) => (
-                <label key={r.id} style={{ display: "flex", gap: "0.5rem", alignItems: "center", padding: "0.15rem 0", cursor: "pointer" }}>
-                  <input type="checkbox" checked={picked.has(r.id)} onChange={(e) => setPicked((p) => { const n = new Set(p); if (e.target.checked) n.add(r.id); else n.delete(r.id); return n; })} />
-                  <span>{r.name || r.email} <span style={{ color: "#94a3b8" }}>· {r.company || r.email}</span></span>
-                </label>
-              ))}
-            </div>
-          </div>
-        )}
+        {cands && rows.length > 0 && <PeopleTable rows={rows} setRows={setRows} input={input} ghost={ghost} />}
+      </section>
+
+      <section style={box}>
+        <div style={row}>
+          <button style={ghost} disabled={busy} onClick={loadQueue}>Review queue{s ? ` (${s.queued})` : ""}</button>
+          {queue && (
+            <>
+              <span style={{ flex: 1 }} />
+              <button style={btn} disabled={busy} onClick={saveQueue}>Save changes</button>
+            </>
+          )}
+        </div>
+        {queue && <PeopleTable rows={queue} setRows={(fn) => setQueue((q) => (q ? (typeof fn === "function" ? fn(q) : fn) : q))} input={input} ghost={ghost} />}
       </section>
 
       {bounces.length > 0 && (
@@ -209,6 +238,45 @@ function Stat({ v, l }: { v: number; l: string }) {
     <div className="admin-stat">
       <span className="admin-stat-value">{v}</span>
       <span className="admin-stat-label">{l}</span>
+    </div>
+  );
+}
+
+// One row per person: tick = send, greeting = the name after "Hi" (empty gives just "Hi,"). Unticked = don't send.
+function PeopleTable({ rows, setRows, input, ghost }: {
+  rows: PRow[];
+  setRows: (fn: PRow[] | ((r: PRow[]) => PRow[])) => void;
+  input: React.CSSProperties;
+  ghost: React.CSSProperties;
+}) {
+  const [filter, setFilter] = useState("");
+  const f = filter.trim().toLowerCase();
+  const shown = f ? rows.filter((r) => (r.name + " " + r.email + " " + r.greeting).toLowerCase().includes(f)) : rows;
+  const patch = (id: number, p: Partial<PRow>) => setRows((all) => all.map((r) => (r.id === id ? { ...r, ...p } : r)));
+  const setAll = (on: boolean) => setRows((all) => all.map((r) => (shown.some((x) => x.id === r.id) ? { ...r, on } : r)));
+  return (
+    <div style={{ marginTop: "0.75rem" }}>
+      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center", marginBottom: "0.5rem" }}>
+        <input style={{ ...input, minWidth: 220 }} placeholder="Find a person…" value={filter} onChange={(e) => setFilter(e.target.value)} />
+        <button style={{ ...ghost, padding: "0.25rem 0.7rem" }} onClick={() => setAll(true)}>Send all shown</button>
+        <button style={{ ...ghost, padding: "0.25rem 0.7rem" }} onClick={() => setAll(false)}>Don't send any shown</button>
+        <span style={{ color: "#94a3b8", fontSize: "0.85rem" }}>{rows.filter((r) => r.on).length} to send · {rows.filter((r) => !r.on).length} don't send</span>
+      </div>
+      <div style={{ maxHeight: 460, overflowY: "auto", fontSize: "0.9rem", color: "#cbd5e1" }}>
+        {shown.map((r) => (
+          <div key={r.id} style={{ display: "grid", gridTemplateColumns: "auto minmax(0,1fr) 190px", gap: "0.6rem", alignItems: "center", padding: "0.2rem 0", opacity: r.on ? 1 : 0.45 }}>
+            <input type="checkbox" checked={r.on} onChange={(e) => patch(r.id, { on: e.target.checked })} title="Tick to send, untick for don't send" />
+            <div style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {r.name} <span style={{ color: "#94a3b8" }}>· {r.sub}</span>
+            </div>
+            <div style={{ display: "flex", gap: "0.3rem", alignItems: "center" }}>
+              <span style={{ color: "#94a3b8" }}>Hi</span>
+              <input style={{ ...input, width: 110, padding: "0.25rem 0.5rem" }} value={r.greeting} onChange={(e) => patch(r.id, { greeting: e.target.value })} placeholder="(none)" />
+              <span style={{ color: "#94a3b8" }}>,</span>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
