@@ -4,7 +4,7 @@ import DemoVideo from "./DemoVideo";
 
 const TITLE = "TapCard – your business card on your phone";
 const DESCRIPTION =
-  "Always be prepared, always up to date. Share your business card with a QR code or a link, and it stays in sync with everyone you've shared it with — even after they're saved. Free on iPhone and Android.";
+  "Always be prepared, always up to date. Share your business card with a QR code or a link, and it stays in sync with everyone you've shared it with — even after they're saved. Free to download, and free for life for the first 1,000 users.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -88,7 +88,7 @@ export default function TapCardHomePage() {
             <p className="mt-4 text-lg font-semibold text-cloud">Always be prepared. Always current.</p>
 
             <StoreBadges appStoreUrl={APP_STORE_URL} playStoreUrl={PLAY_STORE_URL} className="mt-8" />
-            <p className="mt-3 text-sm text-mist">Free to download on iPhone and Android.</p>
+            <p className="mt-3 text-sm text-mist">Free to download. The first 1,000 users on each phone get TapCard free for life.</p>
           </div>
 
           <DemoVideo />

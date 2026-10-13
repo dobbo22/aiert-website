@@ -3,7 +3,7 @@ import DocPage from "../DocPage";
 
 export const metadata: Metadata = {
   title: "Support – TapCard | AIERT Ltd",
-  description: "Help with TapCard, the free digital business card for iPhone.",
+  description: "Help with TapCard, the digital business card for iPhone and Android.",
 };
 
 // The App Store "Support URL" for TapCard (tapcard.aiert.co.uk/support).
@@ -60,8 +60,9 @@ export default function TapCardSupportPage() {
       <section>
         <h2>Common questions</h2>
         <ul>
+          <li><strong>Is TapCard free?</strong> It is free to download. The first 1,000 people on iPhone and the first 1,000 on Android get TapCard free for life. After that, sharing your card needs a small one-off unlock (from £0.99, no subscription). Saving other people&apos;s cards stays free.</li>
           <li><strong>What does the other person see?</strong> Only what is on the card you share: your name, job, company and the contact details and links you filled in. They never see your notes or categories for other people.</li>
-          <li><strong>Do they need the app?</strong> No. Your card opens in their browser and they tap Save to save you. On a phone they are also pointed to the free app so they can send theirs back.</li>
+          <li><strong>Do they need the app?</strong> No. Your card opens in their browser and they tap Save to save you. On a phone they are also pointed to the app so they can send theirs back.</li>
           <li><strong>What happens if I stop sharing a card?</strong> The online copy is deleted, so the link and QR code stop working. People who already saved you in their contacts keep what they saved.</li>
           <li><strong>What if someone stops sharing with me?</strong> Their card stays in your list, marked Withdrawn, with the last details you had and anything you added. Your phone contact is not changed.</li>
           <li><strong>Can I add a booking, menu or shop link to my card?</strong> Yes, on any card except Personal. Tap Edit, then Bookings &amp; links. Choose Book a table, Book a room, Book an appointment, View our menu, Order online, Shop online, Opening hours or Leave a review, or add your own row with any label. &ldquo;Start from my type of business&rdquo; fills in a sensible set for a restaurant, hotel, shop, salon or trades. They show as tappable rows on your card and web page, up to 10 per card.</li>

@@ -36,8 +36,8 @@ export default function SaveContactButton({
       </a>
       <p className="mt-2 text-center text-xs text-white">
         {goToStore
-          ? "Then get TapCard free, so you can send your card back."
-          : "Get TapCard free to make your own card."}
+          ? "Then get TapCard, so you can send your card back."
+          : "Get TapCard to make your own card."}
       </p>
       {openInAppHref && (
         <p className="mt-2 text-center text-xs text-white">

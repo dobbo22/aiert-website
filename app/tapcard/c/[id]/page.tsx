@@ -207,7 +207,7 @@ export default async function CardPage({
 
             {SEND_BACK_ENABLED && send === "1" && (
               <div className="mt-3 rounded-2xl bg-white/[0.07] p-4 text-left text-sm text-white">
-                <p className="font-semibold">Send your card back with TapCard (free)</p>
+                <p className="font-semibold">Send your card back with TapCard</p>
                 <ol className="mt-2 list-decimal space-y-1 pl-5">
                   <li>Get TapCard from the App Store.</li>
                   <li>Make your card in the app.</li>
@@ -281,7 +281,7 @@ export default async function CardPage({
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="https://www.aiert.co.uk/tapcard-icon.png" alt="" className="h-8 w-8 rounded-lg" />
-          <span>Get TapCard — make your own free card →</span>
+          <span>Get TapCard — make your own card →</span>
         </a>
 
         <div className="mt-8 space-y-3">

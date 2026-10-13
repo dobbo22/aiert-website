@@ -4,7 +4,7 @@ import { firstNameOf } from "@/lib/inviteTemplates";
 import { INVITE_LINK_ORIGIN, appStoreUrl, getSendByToken, platformFromUserAgent, playStoreUrl } from "@/lib/tapcardInvites";
 
 const TITLE = "A free gift: TapCard, the business card swapper";
-const DESCRIPTION = "Always be prepared. Your business card on your phone — swap cards with anyone in one tap. Free on iPhone.";
+const DESCRIPTION = "Always be prepared. Your business card on your phone — swap cards with anyone in one tap. Free to download, and free for life for the first 1,000 users.";
 const EXAMPLE_CARD = "https://www.aiert.co.uk/tapcard-email-card.png";
 
 // What WhatsApp, iMessage and LinkedIn show in the link preview bubble: on

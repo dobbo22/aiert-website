@@ -34,7 +34,7 @@ export default function HowItWorksPage() {
       <section>
         <h2>1. Make your card</h2>
         <p>
-          Download TapCard free and fill in your name, job title, company, phone, email, website and social links
+          Download TapCard and fill in your name, job title, company, phone, email, website and social links
           (LinkedIn, X, Instagram and more). Add a photo if you like. It takes a couple of minutes.
         </p>
       </section>
@@ -147,6 +147,15 @@ export default function HowItWorksPage() {
       </section>
 
       <section>
+        <h2>What does it cost?</h2>
+        <p>
+          TapCard is free to download. The first 1,000 people on iPhone, and the first 1,000 on Android, get it free for
+          life. After that, sharing your card needs a small one-off unlock (from £0.99). There is no subscription, and
+          the people you share with never pay or need the app.
+        </p>
+      </section>
+
+      <section>
         <h2>Always in sync</h2>
         <ul>
           <li>
@@ -177,7 +186,7 @@ export default function HowItWorksPage() {
       <section>
         <h2>Get TapCard</h2>
         <p>
-          <a href={APP_STORE_URL}>Get TapCard free on the App Store</a> (iPhone), or{" "}
+          <a href={APP_STORE_URL}>Get TapCard on the App Store</a> (iPhone), or{" "}
           <a href={PLAY_STORE_URL}>get it on Google Play</a> (Android).
         </p>
       </section>

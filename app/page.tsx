@@ -9,13 +9,13 @@ const TAPCARD_PLAY_STORE = "https://play.google.com/store/apps/details?id=com.ma
 export const metadata: Metadata = {
   title: "Aiert Ltd – TapCard, PowerSearch and MailBroom | Simple productivity apps",
   description:
-    "Aiert Ltd builds simple productivity apps for iPhone and Android: TapCard, a free digital business card; PowerSearch, which searches every email account at once; and MailBroom, which cleans up your inbox privately on your phone.",
+    "Aiert Ltd builds simple productivity apps for iPhone and Android: TapCard, a digital business card (free for the first 1,000 users); PowerSearch, which searches every email account at once; and MailBroom, which cleans up your inbox privately on your phone.",
   keywords: ["Aiert", "productivity apps", "TapCard", "digital business card", "PowerSearch", "email search", "MailBroom", "email cleaner", "inbox cleaner", "UK", "on-device"],
   metadataBase: new URL("https://www.aiert.co.uk"),
   openGraph: {
     title: "Aiert Ltd – Simple productivity apps for iPhone and Android",
     description:
-      "TapCard (free digital business card), PowerSearch (search every email account at once) and MailBroom (clean up your inbox).",
+      "TapCard (digital business card, free for the first 1,000 users), PowerSearch (search every email account at once) and MailBroom (clean up your inbox).",
     url: "https://www.aiert.co.uk",
     siteName: "AIERT Ltd",
     locale: "en_GB",
@@ -374,7 +374,7 @@ export default function Home() {
                     "QR code and Apple Wallet pass sharing",
                     "A clean shareable link for anyone without the app",
                     "Save Contact in one tap — no login required",
-                    "Free to download on iPhone and Android",
+                    "Free to download · first 1,000 users free for life",
                   ].map((f) => (
                     <li key={f} className="flex items-center gap-3 text-sm text-cloud">
                       <span className="text-gold">✓</span>
@@ -397,7 +397,7 @@ export default function Home() {
                   { label: "Sharing", value: "QR Code · Apple Wallet · Link" },
                   { label: "Privacy", value: "Shared Only When You Choose To" },
                   { label: "Platform", value: "iOS 17.0+ · Android" },
-                  { label: "Price", value: "Free download" },
+                  { label: "Price", value: "Free to download · free for life for the first 1,000 users" },
                 ].map((stat) => (
                   <div key={stat.label} className="stat-gold rounded-xl px-5 py-4">
                     <div className="text-xs mb-1 text-cloud">{stat.label}</div>

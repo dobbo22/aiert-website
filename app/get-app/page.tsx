@@ -6,7 +6,7 @@ import GetAppQr from "./GetAppQr";
 const APPS: Record<string, { name: string; title: string; text: string; image: string }> = {
   tapcard: {
     name: "TapCard",
-    title: "TapCard: free digital business card",
+    title: "TapCard: digital business card (free for the first 1,000 users)",
     text: "Share your card with a QR code or a link, and save people into your contacts in one tap. They don't need the app.",
     image: "https://www.aiert.co.uk/tapcard-wallet-hero.png",
   },

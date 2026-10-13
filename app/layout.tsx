@@ -9,13 +9,13 @@ const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Aiert Ltd – Simple productivity apps for iPhone and Android",
   description:
-    "Aiert Ltd is a UK company building simple productivity apps: TapCard, a free digital business card; PowerSearch, which searches every email account at once; and MailBroom, which cleans up your inbox.",
+    "Aiert Ltd is a UK company building simple productivity apps: TapCard, a digital business card (free for the first 1,000 users); PowerSearch, which searches every email account at once; and MailBroom, which cleans up your inbox.",
   keywords: ["Aiert", "TapCard", "digital business card", "PowerSearch", "email search", "MailBroom", "email cleaner", "productivity apps", "iPhone", "Android", "UK"],
   metadataBase: new URL("https://www.aiert.co.uk"),
   openGraph: {
     title: "Aiert Ltd – Simple productivity apps for iPhone and Android",
     description:
-      "TapCard (free digital business card), PowerSearch (search every email account at once) and MailBroom (clean up your inbox).",
+      "TapCard (digital business card, free for the first 1,000 users), PowerSearch (search every email account at once) and MailBroom (clean up your inbox).",
     url: "https://www.aiert.co.uk",
     siteName: "AIERT Ltd",
     locale: "en_GB",
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Aiert Ltd – Simple productivity apps for iPhone and Android",
-    description: "TapCard (free digital business card), PowerSearch (search every email account at once) and MailBroom (clean up your inbox).",
+    description: "TapCard (digital business card, free for the first 1,000 users), PowerSearch (search every email account at once) and MailBroom (clean up your inbox).",
   },
 };
 
