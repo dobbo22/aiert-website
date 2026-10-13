@@ -20,12 +20,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
   let destination = link.to;
   const pt = process.env.TAPCARD_APPSTORE_PROVIDER_TOKEN;
   if (link.appStoreId && pt) {
-    const query = new URLSearchParams({ pt, ct: "tapcard-web", mt: "8" });
+    const query = new URLSearchParams({ pt, ct: link.campaign ?? "tapcard-web", mt: "8" });
     destination = `https://apps.apple.com/app/apple-store/id${link.appStoreId}?${query}`;
   }
   // Android visitors get the Google Play listing instead of the App Store.
   if (link.playPackage && /android/i.test(req.headers.get("user-agent") ?? "")) {
-    destination = `https://play.google.com/store/apps/details?id=${link.playPackage}&referrer=${encodeURIComponent("utm_source=tapcard-web&utm_medium=card-page")}`;
+    destination = `https://play.google.com/store/apps/details?id=${link.playPackage}&referrer=${encodeURIComponent(`utm_source=${link.playSource ?? "tapcard-web"}&utm_medium=${link.playMedium ?? "card-page"}`)}`;
   }
   const res = NextResponse.redirect(destination, 302);
   res.headers.set("Cache-Control", "no-store");

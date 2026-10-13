@@ -12,21 +12,21 @@ const APPS: Record<AppKey, { name: string; tagline: string; icon: string; apple:
     name: "TapCard",
     tagline: "Digital business card · free for the first 1,000 users",
     icon: `${ICON}/tapcard-icon.png`,
-    apple: "https://apps.apple.com/app/id6816003159?pt=128647066&ct=qr-handout&mt=8",
-    google: "https://play.google.com/store/apps/details?id=com.mailbroom.tapcard&referrer=utm_source%3Dqr%26utm_medium%3Dhandout",
+    apple: "https://tapcard.aiert.co.uk/go/tapcard-web-qr-tapcard",
+    google: "https://tapcard.aiert.co.uk/go/tapcard-web-qr-tapcard",
   },
   powersearch: {
     name: "PowerSearch",
     tagline: "Search all your email accounts at once",
     icon: `${ICON}/powersearch-icon.png`,
-    apple: "https://apps.apple.com/app/powersearch/id6807772868?pt=128647066&ct=qr-handout&mt=8",
-    google: "https://play.google.com/store/apps/details?id=mailbroom.app&referrer=utm_source%3Dqr%26utm_medium%3Dhandout",
+    apple: "https://tapcard.aiert.co.uk/go/tapcard-web-qr-powersearch",
+    google: "https://tapcard.aiert.co.uk/go/tapcard-web-qr-powersearch",
   },
   mailbroom: {
     name: "MailBroom",
     tagline: "Clean up your mailbox in bulk",
     icon: `${ICON}/mailbroom-icon.png`,
-    apple: "https://apps.apple.com/app/mailbroom/id6766489663?pt=128647066&ct=qr-handout&mt=8",
+    apple: "https://tapcard.aiert.co.uk/go/tapcard-web-qr-mailbroom",
     google: null, // not on Google Play yet
   },
 };

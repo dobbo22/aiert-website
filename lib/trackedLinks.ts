@@ -13,6 +13,10 @@ export type TrackedLink = {
   appStoreId?: string;
   /** Google Play package: Android visitors are sent to Play instead of the App Store. */
   playPackage?: string;
+  /// App Store campaign name (ct=) and Google Play utm_source/utm_medium for this link; defaults to the card-page ones.
+  campaign?: string;
+  playSource?: string;
+  playMedium?: string;
   /// Logged by an app reporting a tap (/api/promo-event), not a redirect.
   inApp?: boolean;
 };
@@ -65,7 +69,11 @@ export const TRACKED_LINKS: Record<string, TrackedLink> = {
   // inside the TapCard apps, reported anonymously by the app.
   "tapcard-web-get-tapcard": { label: "TapCard card page → Get TapCard", to: "https://apps.apple.com/app/id6816003159", appStoreId: "6816003159", playPackage: "com.mailbroom.tapcard" },
   // The "Get the app" line in the message TapCard prepares when someone sends their card to a contact.
-  "tapcard-share-get-tapcard": { label: "TapCard sent message → Get TapCard", to: "https://apps.apple.com/app/id6816003159", appStoreId: "6816003159", playPackage: "com.mailbroom.tapcard" },
+  "tapcard-web-share-get-tapcard": { label: "TapCard sent message → Get TapCard", to: "https://apps.apple.com/app/id6816003159", appStoreId: "6816003159", playPackage: "com.mailbroom.tapcard", campaign: "tapcard-message", playSource: "tapcard-message", playMedium: "sent-card" },
+  // The Get the App handout page (www.aiert.co.uk/get-app): its QR codes point here, so every scan is counted.
+  "tapcard-web-qr-tapcard": { label: "Get-app QR → TapCard", to: "https://apps.apple.com/app/id6816003159", appStoreId: "6816003159", playPackage: "com.mailbroom.tapcard", campaign: "qr-handout", playSource: "qr", playMedium: "handout" },
+  "tapcard-web-qr-powersearch": { label: "Get-app QR → PowerSearch", to: "https://apps.apple.com/app/powersearch/id6807772868", appStoreId: "6807772868", playPackage: "mailbroom.app", campaign: "qr-handout", playSource: "qr", playMedium: "handout" },
+  "tapcard-web-qr-mailbroom": { label: "Get-app QR → MailBroom", to: "https://apps.apple.com/app/mailbroom/id6766489663", appStoreId: "6766489663", campaign: "qr-handout", playSource: "qr", playMedium: "handout" },
   "tapcard-web-mailbroom": { label: "TapCard card page → MailBroom", to: "https://apps.apple.com/app/mailbroom/id6766489663", appStoreId: "6766489663" },
   "tapcard-web-powersearch": { label: "TapCard card page → PowerSearch", to: "https://apps.apple.com/app/powersearch/id6807772868", appStoreId: "6807772868", playPackage: "mailbroom.app" },
   "tapcard-web-invite-mailbroom": { label: "TapCard invite email → MailBroom", to: "https://apps.apple.com/app/mailbroom/id6766489663", appStoreId: "6766489663" },
