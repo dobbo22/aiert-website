@@ -81,6 +81,20 @@ export default function MailshotPanel({
     setQueue(q.map((r) => ({ id: r.id, name: r.name || r.email, sub: r.email, email: r.email, greeting: r.greeting, on: true })));
   }
   const loadQueue = run(loadQueueNow);
+  const checkDomains = run(async () => {
+    const data = await call("/api/admin/mailshot/check-domains", { campaign });
+    setMessage({ text: `Checked ${data.domainsChecked} domains. Took ${data.removed} people off the queue at ${data.deadDomains.length} domains with no mail server${data.deadDomains.length ? `: ${data.deadDomains.slice(0, 12).join(", ")}${data.deadDomains.length > 12 ? "…" : ""}` : ""}` });
+    await refresh();
+    if (queue) await loadQueueNow();
+  });
+  const keepOnly = run(async () => {
+    const text = window.prompt("Paste the valid addresses from your email-checking service (one per line, or a CSV):") ?? "";
+    if (!text.trim()) return;
+    const data = await call("/api/admin/mailshot/keep-only", { campaign, text });
+    setMessage({ text: `Kept ${data.kept}, took ${data.skipped} off the queue` });
+    await refresh();
+    if (queue) await loadQueueNow();
+  });
   const removeForGood = async (r: PRow) => {
     if (!window.confirm(`Remove ${r.name} for good? They come off your contacts list here and will never be emailed again.`)) return;
     try {
@@ -214,6 +228,9 @@ export default function MailshotPanel({
       <section style={box}>
         <div style={row}>
           <button style={ghost} disabled={busy} onClick={loadQueue}>Review queue{s ? ` (${s.queued})` : ""}</button>
+          <button style={ghost} disabled={busy} onClick={checkDomains}>Check mail servers</button>
+          <a style={{ ...ghost, textDecoration: "none", display: "inline-block" }} href={`/api/admin/mailshot/export?campaign=${encodeURIComponent(campaign)}`}>Export queue (CSV)</a>
+          <button style={ghost} disabled={busy} onClick={keepOnly}>Keep only valid…</button>
           {queue && (
             <>
               <span style={{ flex: 1 }} />
