@@ -33,6 +33,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       acceptedTitle: r.accepted_title,
       acceptedCompany: r.accepted_company,
       acceptedWebsite: r.accepted_website,
+      openedAt: r.opened_at,
+      openCount: r.open_count,
     })),
   });
 }
@@ -69,7 +71,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   // back" submission belongs to.
   const link = `https://tapcard.aiert.co.uk/c/${id}${recipient.accept_token ? `?a=${recipient.accept_token}` : ""}`;
   const ownerName = card.name || "I";
-  const shareText = `This is my TapCard — ${ownerName}'s digital business card: ${link}. It always shows my latest contact details, even if I change job or number, so you'll never have an old version.`;
+  const shareText = `This is my TapCard — ${ownerName}'s digital business card: ${link}. It always shows my latest contact details, even if I change job or number, so you'll never have an old version.\n\nGet the app: https://tapcard.aiert.co.uk/go/tapcard-share-get-tapcard`;
 
   return NextResponse.json({ id: recipient.id, shareText });
 }

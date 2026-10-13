@@ -140,6 +140,9 @@ function ensureSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_card_recipients ADD COLUMN IF NOT EXISTS accepted_title TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_card_recipients ADD COLUMN IF NOT EXISTS accepted_company TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_card_recipients ADD COLUMN IF NOT EXISTS accepted_website TEXT NOT NULL DEFAULT ''`)
+      // When the person first opened the card link they were sent (never counts link-preview robots).
+      .then(() => sql`ALTER TABLE tapcard_card_recipients ADD COLUMN IF NOT EXISTS opened_at TIMESTAMPTZ`)
+      .then(() => sql`ALTER TABLE tapcard_card_recipients ADD COLUMN IF NOT EXISTS open_count INTEGER NOT NULL DEFAULT 0`)
       .catch((err) => {
         schemaReady = null; // let the next call retry rather than caching a failure
         throw err;
@@ -349,6 +352,8 @@ export interface TapCardRecipient {
   accepted_title: string;
   accepted_company: string;
   accepted_website: string;
+  opened_at: Date | string | null;
+  open_count: number;
 }
 
 /// Re-sending to the same person (same card + phone/email) just refreshes
@@ -373,6 +378,16 @@ export async function addCardRecipient(cardId: string, name: string, phone: stri
 export async function listRecipients(cardId: string): Promise<TapCardRecipient[]> {
   await ensureSchema();
   return (await sql`SELECT * FROM tapcard_card_recipients WHERE card_id = ${cardId} ORDER BY created_at`) as TapCardRecipient[];
+}
+
+/// The recipient opened the link that was sent to them (identified by the accept token on it).
+export async function markRecipientOpened(acceptToken: string): Promise<void> {
+  await ensureSchema();
+  await sql`
+    UPDATE tapcard_card_recipients
+    SET opened_at = COALESCE(opened_at, now()), open_count = open_count + 1
+    WHERE accept_token = ${acceptToken}
+  `;
 }
 
 /// "Stop sharing with this contact": removes one recipient from the card's list, so they

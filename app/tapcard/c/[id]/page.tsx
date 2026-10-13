@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { after } from "next/server";
-import { getCard, incrementViewCount } from "@/lib/tapcardDb";
+import { getCard, incrementViewCount, markRecipientOpened } from "@/lib/tapcardDb";
 import { paletteFor } from "@/lib/brandPalette";
 import { orgLogoUrlForCard } from "@/lib/tapcardBiz";
 import { BannerBrand, BrandProvider, FaviconBadge } from "../../CardBrand";
@@ -88,6 +88,12 @@ export default async function CardPage({
   // link previews / crawlers minus render — acceptable for a rough "how many
   // times has this been opened" number, not a precise unique-visitor metric.
   after(() => incrementViewCount(id));
+  // A card link sent to one person (it carries their personal code): note that they opened it, so the owner
+  // can see "Opened". Link-preview and search robots are ignored, or every send would look opened at once.
+  const ua = requestHeaders.get("user-agent") ?? "";
+  if (acceptToken && ua && !/bot|crawl|spider|preview|whatsapp|facebookexternalhit|slurp|headless|lighthouse|googleimageproxy|linkpresentation|python|curl|wget/i.test(ua)) {
+    after(() => markRecipientOpened(acceptToken));
+  }
 
   const contactLines: { action: string; value: string; href: string; icon: ContactIconName; iconBg: string }[] = [
     { action: "Call me", value: card.phone, href: `tel:${card.phone}`, icon: "phone", iconBg: "#22C55E" },

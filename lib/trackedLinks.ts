@@ -64,6 +64,8 @@ export const TRACKED_LINKS: Record<string, TrackedLink> = {
   // page (tapcard.aiert.co.uk/go/<slug>), and taps on the cross-promo cards
   // inside the TapCard apps, reported anonymously by the app.
   "tapcard-web-get-tapcard": { label: "TapCard card page → Get TapCard", to: "https://apps.apple.com/app/id6816003159", appStoreId: "6816003159", playPackage: "com.mailbroom.tapcard" },
+  // The "Get the app" line in the message TapCard prepares when someone sends their card to a contact.
+  "tapcard-share-get-tapcard": { label: "TapCard sent message → Get TapCard", to: "https://apps.apple.com/app/id6816003159", appStoreId: "6816003159", playPackage: "com.mailbroom.tapcard" },
   "tapcard-web-mailbroom": { label: "TapCard card page → MailBroom", to: "https://apps.apple.com/app/mailbroom/id6766489663", appStoreId: "6766489663" },
   "tapcard-web-powersearch": { label: "TapCard card page → PowerSearch", to: "https://apps.apple.com/app/powersearch/id6807772868", appStoreId: "6807772868", playPackage: "mailbroom.app" },
   "tapcard-web-invite-mailbroom": { label: "TapCard invite email → MailBroom", to: "https://apps.apple.com/app/mailbroom/id6766489663", appStoreId: "6766489663" },
