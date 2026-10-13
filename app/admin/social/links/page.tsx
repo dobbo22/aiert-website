@@ -21,6 +21,7 @@ export default async function SendInvitesPage() {
              COALESCE(BOOL_OR(s.first_click_at IS NOT NULL), false) AS clicked
       FROM tapcard_invite_contacts c
       LEFT JOIN tapcard_invite_sends s ON s.contact_id = c.id
+      WHERE NOT c.removed
       GROUP BY c.id
       ORDER BY lower(c.name)
     `) as SenderContact[];

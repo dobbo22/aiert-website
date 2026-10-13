@@ -110,6 +110,8 @@ export function ensureInviteSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_invite_clicks ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'direct'`)
       // What the click was for: 'app' (the Get the app link), 'how' (See how it works) or 'video' (the demo).
       .then(() => sql`ALTER TABLE tapcard_invite_clicks ADD COLUMN IF NOT EXISTS target TEXT NOT NULL DEFAULT 'app'`)
+      // Taken off the contacts list for good (the row is kept, with do_not_contact, so a re-import cannot bring them back).
+      .then(() => sql`ALTER TABLE tapcard_invite_contacts ADD COLUMN IF NOT EXISTS removed BOOLEAN NOT NULL DEFAULT false`)
       // Why a send bounced (from Resend's bounce event), so the Mailshot page can list who and why.
       .then(() => sql`ALTER TABLE tapcard_invite_sends ADD COLUMN IF NOT EXISTS bounce_reason TEXT`)
       // Profiles for the LinkedIn / Messenger channels (from the vCard's

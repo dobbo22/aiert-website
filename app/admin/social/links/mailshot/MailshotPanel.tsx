@@ -82,7 +82,7 @@ export default function MailshotPanel({
   }
   const loadQueue = run(loadQueueNow);
   const removeForGood = async (r: PRow) => {
-    if (!window.confirm(`Remove ${r.name} for good? They will never be emailed again, by the mailshot or by Send invites.`)) return;
+    if (!window.confirm(`Remove ${r.name} for good? They come off your contacts list here and will never be emailed again.`)) return;
     try {
       await call("/api/admin/mailshot/never", { ids: [r.id] });
       setRows((all) => all.filter((x) => x.id !== r.id));
