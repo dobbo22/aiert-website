@@ -437,9 +437,9 @@ export function mailshotHtml(firstName: string, links: MailshotLinks, relationsh
 // ---------- Restaurants ----------
 
 export const RESTAURANT_SUBJECTS = [
-  "A TapCard for {Name}",
+  "Never order business cards again, {Name}",
+  "A TapCard for {Name}: window, website, and every customer's phone",
   "{Name}: booking, menu and directions in one tap",
-  "Your restaurant's details, one tap from every customer's phone",
 ];
 
 export function restaurantSubject(index: number, name: string): string {
@@ -450,12 +450,13 @@ export function restaurantSubject(index: number, name: string): string {
 export function restaurantText(name: string, links: MailshotLinks): string {
   return `Hello ${name || "there"},
 
-I made a sample TapCard for ${name || "your restaurant"}: one card with your phone number, Book a table, your menu and directions, that customers get with a QR code or a link.
+I made a sample TapCard for ${name || "your restaurant"}: one card with your phone number, Book a table, your menu and directions. You never have to order business cards again.
 
-- Customers save you in one tap, with no app needed on their side
+- Put it in your window or on the door: customers scan the QR code and save you in one tap
+- Put it on your website, in emails and on social media as a link
 - Book a table, View our menu and Get directions are each one tap
-- A printable QR sign for the door, the tables or the till
-- Change your details once and every saved copy updates itself
+- Change your details once and every saved copy updates itself (new menu, new hours)
+- No app needed on the customer's side
 
 TapCard is free for life for the first 1,000 users.
 
@@ -479,13 +480,14 @@ export function restaurantHtml(name: string, links: MailshotLinks, cardImageUrl:
   return `<!doctype html><html><body style="margin:0;padding:0;background:#ffffff;">
 <div style="max-width:560px;margin:0 auto;padding:24px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#1f2937;">
 <p style="margin:0 0 16px;">Hello ${esc(name || "there")},</p>
-<p style="margin:0 0 16px;font-size:18px;line-height:1.45;"><strong>I made a sample TapCard for ${esc(name || "your restaurant")}:</strong> one card with your phone number, Book a table, your menu and directions, that customers get with a QR code or a link.</p>
+<p style="margin:0 0 16px;font-size:18px;line-height:1.45;"><strong>I made a sample TapCard for ${esc(name || "your restaurant")}:</strong> one card with your phone number, Book a table, your menu and directions. You never have to order business cards again.</p>
 <p style="margin:0 0 20px;text-align:center;"><a href="${esc(links.app)}"><img src="${esc(cardImageUrl)}" alt="A sample TapCard for ${esc(name || "your restaurant")}" width="300" style="width:300px;max-width:100%;border-radius:14px;border:1px solid #e5e7eb;"></a></p>
 <ul style="margin:0 0 20px;padding-left:20px;">
-<li style="${li}">Customers <strong>save you in one tap</strong>, with no app needed on their side</li>
+<li style="${li}">Put it <strong>in your window or on the door</strong>: customers scan the QR code and save you in one tap</li>
+<li style="${li}">Put it <strong>on your website</strong>, in emails and on social media as a link</li>
 <li style="${li}"><strong>Book a table, View our menu and Get directions</strong> are each one tap</li>
-<li style="${li}">A <strong>printable QR sign</strong> for the door, the tables or the till</li>
-<li style="${li}">Change your details once and <strong>every saved copy updates itself</strong></li>
+<li style="${li}">Change your details once and <strong>every saved copy updates itself</strong> (new menu, new hours)</li>
+<li style="${li}">No app needed on the customer's side</li>
 </ul>
 <p style="margin:0 0 20px;">TapCard is <strong>free for life for the first 1,000 users</strong>.</p>
 <p style="margin:0 0 20px;"><a href="${esc(links.app)}" style="${btn}">Get TapCard</a></p>
