@@ -140,3 +140,16 @@ New in these builds:
 - Helper scripts in /tmp are not kept: cancel-a-review = PATCH /v1/reviewSubmissions/<id> {canceled:true}; then `release-ios.js` re-attaches the build and submits.
 - Each resubmission puts the iPhone build back in Apple's queue; batch changes before submitting.
 - Website: guide (8 steps with pictures), FAQ, how-it-works and PowerSearch page updated.
+
+## 13 Oct 2026 (evening): offers, notifications, restaurants — TEST BUILDS ONLY, NOT RELEASED
+Test builds: TapCard iPhone 2.5 (39) on TestFlight (internal group), Android 1.3.23 (40) on Play internal. Nothing is in production.
+- **Special offers**: `lib/tapcardOffers.ts`; `/api/tapcard/cards/[id]/offer` (PUT/DELETE with edit token), `/offer/claim`, `/api/tapcard/offer-code/[code]` (status, redeem with staff PIN), staff page `/o/<code>`. Apps: Special offer screen (card editor), Claim + one-off QR on a received card.
+- **Announcements**: `/api/tapcard/cards/[id]/announcement` (one per 6 hours, 140 chars); included in the public card JSON.
+- **Follow / notifications (local only)**: per business, off until switched on; types: new offers, ending soon, menu/hours/detail changes, announcements; max 2 a week per business; Mute action. iPhone `Services/UpdateNotifier.swift` (BGAppRefresh + local notifications); Android `data/UpdateNotifier.kt` (WorkManager every 3h). No server tracking of followers. Real push (APNs/FCM) NOT built: needs an Apple push key + Firebase project + privacy policy/data-safety updates.
+- **Saved cards follow every change** the owner makes (website, address, links, socials, name), refreshed on the Contacts tab and when a card page opens.
+- **Card-name-only cards** (restaurants): Save works with just a business name; name = company.
+- **Link kinds** `tripadvisor`, `google_review`; **"Found on your website"** suggestions: `lib/siteLinks.ts` + `/api/tapcard/site-links?website=` (static HTML only; JS-only sites return little).
+- **QR codes** carry the TapCard icon + "TapCard from AIERT" (error correction H): apps (share, print sign, offer, offline vCard at M) and `/get-app`.
+- **Restaurant mailshot**: relationship `restaurant`; CSV import (name,email,phone,website,address,booking,menu); per-restaurant card picture (`/api/invite-card/<token>`, logo from website); email now has an offers box. Tracked like other mailshots (clicks app/how/video, delivered/bounced, unsubscribe; no opens). Do NOT send until the apps are released.
+- **Demo assets**: fictional "The Olive Table" card (live on server), demo booking page `/demo/olive-table/book`, video `TapCard/AppStore/tapcard-restaurant-demo.mp4` (also `public/tapcard-guide/restaurant-demo.mp4`), guide pictures in `public/tapcard-guide/`.
+- **Held, committed locally but NOT pushed (pushing deploys it)**: website copy for offers in guide / how-it-works / support, guide pictures + video. Push when the apps are live. Untracked stray files in this folder (Discord.dmg, PDFs, etc.) must never be committed.
