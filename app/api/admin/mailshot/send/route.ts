@@ -6,6 +6,9 @@ import { inviteEmailRoute } from "@/lib/inviteEmailRoute";
 import { INVITE_LINK_ORIGIN, ensureInviteSchema, newInviteToken } from "@/lib/tapcardInvites";
 import {
   MAILSHOT_SUBJECTS,
+  restaurantHtml,
+  restaurantSubject,
+  restaurantText,
   ensureMailshotSchema,
   mailshotHtml,
   mailshotLinks,
@@ -46,9 +49,9 @@ async function sendOne(resend: Resend, from: string, replyTo: string, campaign: 
   const links = mailshotLinks(token);
   // A greeting set in the queue wins (an empty one means just "Hi,"); otherwise the contact's first name.
   const firstName = safeFirstName(contact.greeting !== undefined && contact.greeting !== null ? contact.greeting : contact.first_name);
-  const subject = subjectFor(subjectIndex, firstName);
-  const relationship: Relationship = contact.relationship === "personal" ? "personal" : "business";
-  const text = mailshotText(firstName, links, relationship);
+  const subject = contact.relationship === "restaurant" ? restaurantSubject(subjectIndex, contact.name) : subjectFor(subjectIndex, firstName);
+  const relationship: Relationship = contact.relationship === "personal" ? "personal" : contact.relationship === "restaurant" ? "restaurant" : "business";
+  const text = relationship === "restaurant" ? restaurantText(contact.name, links) : mailshotText(firstName, links, relationship);
   const inserted = (await sql`
     INSERT INTO tapcard_invite_sends (token, contact_id, channel, campaign, subject, message)
     VALUES (${token}, ${contact.id}, 'email', ${campaign}, ${subject}, ${text})
@@ -62,7 +65,7 @@ async function sendOne(resend: Resend, from: string, replyTo: string, campaign: 
       replyTo,
       subject,
       text,
-      html: mailshotHtml(firstName, links, relationship),
+      html: relationship === "restaurant" ? restaurantHtml(contact.name, links, `${INVITE_LINK_ORIGIN}/api/invite-card/${token}`) : mailshotHtml(firstName, links, relationship),
       headers: {
         "List-Unsubscribe": `<${INVITE_LINK_ORIGIN}/api/unsubscribe/${token}>, <mailto:${replyTo}?subject=Unsubscribe>`,
         "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
@@ -95,14 +98,25 @@ async function handle(req: Request) {
   if (mode === "test") {
     const to = String(body?.testTo ?? "").trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return NextResponse.json({ error: "Enter an email address for the test" }, { status: 400 });
-    await sql`
-      INSERT INTO tapcard_invite_contacts (dedupe_key, name, first_name, email)
-      VALUES (${`e:${to}`}, ${String(body?.testName ?? "Martin")}, ${String(body?.testName ?? "Martin")}, ${to})
-      ON CONFLICT (dedupe_key) DO NOTHING
-    `;
-    const contact = ((await sql`SELECT id, first_name, name, email, do_not_contact FROM tapcard_invite_contacts WHERE dedupe_key = ${`e:${to}`}`) as (Contact & { do_not_contact: boolean })[])[0];
+    // A restaurant test uses a made-up restaurant (own record, so it never changes your normal contact).
+    const isRestaurantTest = body?.relationship === "restaurant";
+    const testKey = isRestaurantTest ? `r:test:${to}` : `e:${to}`;
+    if (isRestaurantTest) {
+      await sql`
+        INSERT INTO tapcard_invite_contacts (dedupe_key, name, first_name, email, phone, website, address, booking_url, menu_url, kind)
+        VALUES (${testKey}, 'The Olive Table', '', ${to}, '020 7946 0123', '', '12 Warrington Crescent, London W9', 'olivetable.example/book', 'olivetable.example/menu', 'restaurant')
+        ON CONFLICT (dedupe_key) DO NOTHING
+      `;
+    } else {
+      await sql`
+        INSERT INTO tapcard_invite_contacts (dedupe_key, name, first_name, email)
+        VALUES (${testKey}, ${String(body?.testName ?? "Martin")}, ${String(body?.testName ?? "Martin")}, ${to})
+        ON CONFLICT (dedupe_key) DO NOTHING
+      `;
+    }
+    const contact = ((await sql`SELECT id, first_name, name, email, do_not_contact FROM tapcard_invite_contacts WHERE dedupe_key = ${testKey}`) as (Contact & { do_not_contact: boolean })[])[0];
     if (contact.do_not_contact) return NextResponse.json({ error: `${to} has unsubscribed, so no test can be sent there` }, { status: 409 });
-    await sendOne(resend, from, route.replyTo, `${campaign}-test`, { ...contact, relationship: body?.relationship === "personal" ? "personal" : "business" }, subjectIndex);
+    await sendOne(resend, from, route.replyTo, `${campaign}-test`, { ...contact, relationship: body?.relationship === "personal" ? "personal" : body?.relationship === "restaurant" ? "restaurant" : "business" }, subjectIndex);
     return NextResponse.json({ ok: true, sent: 1, test: true, to });
   }
 

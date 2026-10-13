@@ -29,6 +29,11 @@ export type InviteCardPerson = {
   x_url?: string;
   instagram_url?: string;
   photo_url?: string;
+  /// Restaurants: shows Call, Book a table, View our menu, Visit our site and Get directions rows.
+  kind?: string;
+  address?: string;
+  booking_url?: string;
+  menu_url?: string;
 };
 
 /// The site's domain from whatever was typed ("https://www.acme.com/about" → acme.com).
@@ -120,7 +125,7 @@ async function logoDataUri(domain: string | null): Promise<string | null> {
   return uri;
 }
 
-type Icon = "phone" | "mail" | "globe";
+type Icon = "phone" | "mail" | "globe" | "calendar" | "menu" | "pin";
 
 /// Drawn, not font glyphs: the card renderer's font has no symbols.
 function RowIcon({ icon }: { icon: Icon }) {
@@ -133,6 +138,11 @@ function RowIcon({ icon }: { icon: Icon }) {
       )}
       {icon === "mail" && <rect {...stroke} x="2" y="4" width="20" height="16" rx="2" />}
       {icon === "mail" && <path {...stroke} d="M22 6l-10 7L2 6" />}
+      {icon === "calendar" && <rect {...stroke} x="3" y="4" width="18" height="18" rx="2" />}
+      {icon === "calendar" && <path {...stroke} d="M8 2v4M16 2v4M3 10h18" />}
+      {icon === "menu" && <path {...stroke} d="M3 6h18M3 12h18M3 18h18" />}
+      {icon === "pin" && <path {...stroke} d="M20 10c0 5-5.5 10.2-7.4 11.8a1 1 0 0 1-1.2 0C9.5 20.2 4 15 4 10a8 8 0 0 1 16 0z" />}
+      {icon === "pin" && <circle {...stroke} cx="12" cy="10" r="3" />}
       {icon === "globe" && <circle {...stroke} cx="12" cy="12" r="10" />}
       {icon === "globe" && (
         <path {...stroke} d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
@@ -173,9 +183,19 @@ export async function inviteCardImage(person: InviteCardPerson): Promise<ImageRe
   const logo = await logoDataUri(domain);
   const socials = socialsFor(person);
   const rows: { color: string; label: string; value: string; icon: Icon }[] = [];
-  if (person.phone) rows.push({ color: "#22c55e", label: "Call me", value: person.phone, icon: "phone" });
-  if (person.email) rows.push({ color: "#a855f7", label: "Email me", value: person.email, icon: "mail" });
-  if (domain) rows.push({ color: "#3b82f6", label: "Visit my site", value: domain, icon: "globe" });
+  const shortUrl = (u: string | undefined) => (u ?? "").replace(/^[a-z]+:\/\/(www\.)?/i, "").replace(/\/$/, "").slice(0, 34);
+  if (person.kind === "restaurant") {
+    // A restaurant's card: how a customer would book, see the menu and find it.
+    if (person.phone) rows.push({ color: "#22c55e", label: "Call us", value: person.phone, icon: "phone" });
+    if (person.booking_url || domain) rows.push({ color: "#0e8c99", label: "Book a table", value: shortUrl(person.booking_url) || (domain ?? ""), icon: "calendar" });
+    if (person.menu_url || domain) rows.push({ color: "#0e8c99", label: "View our menu", value: shortUrl(person.menu_url) || (domain ?? ""), icon: "menu" });
+    if (domain) rows.push({ color: "#3b82f6", label: "Visit our site", value: domain, icon: "globe" });
+    if (person.address) rows.push({ color: "#ef4444", label: "Get directions", value: person.address.slice(0, 36), icon: "pin" });
+  } else {
+    if (person.phone) rows.push({ color: "#22c55e", label: "Call me", value: person.phone, icon: "phone" });
+    if (person.email) rows.push({ color: "#a855f7", label: "Email me", value: person.email, icon: "mail" });
+    if (domain) rows.push({ color: "#3b82f6", label: "Visit my site", value: domain, icon: "globe" });
+  }
   const subtitle =
     [person.title, person.company].filter(Boolean).join(" · ") ||
     (domain ? domain.split(".")[0]!.replace(/^./, (c) => c.toUpperCase()) : "");

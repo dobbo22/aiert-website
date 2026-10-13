@@ -17,8 +17,8 @@ type PRow = { id: number; name: string; sub: string; email: string; greeting: st
 const pct = (n: number, d: number) => (d ? ` (${Math.round((n / d) * 100)}%)` : "");
 
 export default function MailshotPanel({
-  initialCampaign, initialStats, initialBounces, subjects, previewHtml,
-}: { initialCampaign: string; initialStats: Stats | null; initialBounces: { name: string; email: string; reason: string | null }[]; subjects: string[]; previewHtml: string }) {
+  initialCampaign, initialStats, initialBounces, subjects, restaurantSubjects, previewHtml, restaurantPreviewHtml,
+}: { initialCampaign: string; initialStats: Stats | null; initialBounces: { name: string; email: string; reason: string | null }[]; subjects: string[]; restaurantSubjects: string[]; previewHtml: string; restaurantPreviewHtml: string }) {
   const [campaign, setCampaign] = useState(initialCampaign);
   const [stats, setStats] = useState<Stats | null>(initialStats);
   const [bounces, setBounces] = useState(initialBounces);
@@ -27,7 +27,8 @@ export default function MailshotPanel({
   const [queue, setQueue] = useState<PRow[] | null>(null);
   const [skipped, setSkipped] = useState<{ id: number; name: string; email: string; reason: string }[] | null>(null);
   const [queueOrig, setQueueOrig] = useState<Record<number, string>>({});
-  const [testWording, setTestWording] = useState<"business" | "personal">("business");
+  const [testWording, setTestWording] = useState<"business" | "personal" | "restaurant">("business");
+  const [listType, setListType] = useState<"contacts" | "restaurants">("contacts");
   const [cands, setCands] = useState<{ total: number; ok: { id: number; name: string; email: string; company: string }[]; personal: number; role: number; invalid: number } | null>(null);
   const [list, setList] = useState("");
   const [includePersonal, setIncludePersonal] = useState(false);
@@ -137,7 +138,7 @@ export default function MailshotPanel({
   });
 
   const doImport = run(async () => {
-    const data = await call("/api/admin/mailshot/import", { campaign, text: list, includePersonal });
+    const data = await call("/api/admin/mailshot/import", { campaign, text: list, includePersonal, kind: listType === "restaurants" ? "restaurant" : undefined });
     setSummary(data.summary);
     setList("");
     await refresh();
@@ -189,13 +190,17 @@ export default function MailshotPanel({
           <label style={row}>Campaign <input style={input} value={campaign} maxLength={30} onChange={(e) => setCampaign(e.target.value.replace(/[^a-z0-9-]/gi, "-").toLowerCase())} onBlur={refresh} /></label>
           <label style={row}>Subject
             <select style={input} value={subjectIndex} onChange={(e) => setSubjectIndex(Number(e.target.value))}>
-              {subjects.map((t, i) => <option key={i} value={i}>{t}</option>)}
+              {(testWording === "restaurant" ? restaurantSubjects : subjects).map((t, i) => <option key={i} value={i}>{t}</option>)}
             </select>
           </label>
         </div>
-        <textarea style={{ ...input, width: "100%", minHeight: 110 }} placeholder="Paste the list (name and email on each line, or a CSV with email / first name / company columns)" value={list} onChange={(e) => setList(e.target.value)} />
+        <textarea style={{ ...input, width: "100%", minHeight: 110 }} placeholder={listType === "restaurants" ? "Paste the restaurant CSV: name, email, phone, website, address, booking, menu (header row first)" : "Paste the list (name and email on each line, or a CSV with email / first name / company columns)"} value={list} onChange={(e) => setList(e.target.value)} />
         <div style={{ ...row, marginTop: "0.6rem" }}>
           <input type="file" accept=".csv,.txt,.tsv,text/csv,text/plain" onChange={async (e) => { const f = e.target.files?.[0]; if (f) setList(await f.text()); e.target.value = ""; }} />
+          <select style={input} value={listType} onChange={(e) => setListType(e.target.value as "contacts" | "restaurants")}>
+            <option value="contacts">Contacts list</option>
+            <option value="restaurants">Restaurants (CSV)</option>
+          </select>
           <label style={row}><input type="checkbox" checked={includePersonal} onChange={(e) => setIncludePersonal(e.target.checked)} /> Include Gmail / Outlook-type addresses</label>
           <button style={btn} disabled={busy || !list.trim()} onClick={doImport}>Add to list</button>
         </div>
@@ -210,9 +215,10 @@ export default function MailshotPanel({
       <section style={box}>
         <div style={row}>
           <input style={{ ...input, minWidth: 260 }} type="email" placeholder="Send a test to…" value={testTo} onChange={(e) => setTestTo(e.target.value)} />
-          <select style={input} value={testWording} onChange={(e) => setTestWording(e.target.value as "business" | "personal")}>
+          <select style={input} value={testWording} onChange={(e) => { setTestWording(e.target.value as "business" | "personal" | "restaurant"); setSubjectIndex(0); }}>
             <option value="business">Business wording</option>
             <option value="personal">Personal wording</option>
+            <option value="restaurant">Restaurant email</option>
           </select>
           <button style={ghost} disabled={busy || !testTo} onClick={sendTest}>Send test</button>
           <span style={{ flex: 1 }} />
@@ -292,7 +298,7 @@ export default function MailshotPanel({
       )}
 
       <section style={box}>
-        <iframe title="Email preview" srcDoc={previewHtml} style={{ width: "100%", height: 760, border: 0, background: "#fff", borderRadius: 6 }} />
+        <iframe title="Email preview" srcDoc={testWording === "restaurant" ? restaurantPreviewHtml : previewHtml} style={{ width: "100%", height: 760, border: 0, background: "#fff", borderRadius: 6 }} />
       </section>
     </div>
   );

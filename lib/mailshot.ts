@@ -227,8 +227,13 @@ export type MailshotStats = {
   complained: number;
 };
 
-export type Relationship = "business" | "personal";
-const relationshipLine = (r: Relationship) => (r === "personal" ? "a personal contact of mine" : "a past business contact of mine");
+export type Relationship = "business" | "personal" | "restaurant";
+const footerReason = (r: Relationship) =>
+  r === "restaurant"
+    ? "your restaurant's contact address is listed publicly on your website, and this is a one-off note about a tool for restaurants"
+    : r === "personal"
+      ? "you're a personal contact of mine"
+      : "you're a past business contact of mine";
 
 export type CandidateRow = { id: number; name: string; email: string; company: string; greeting: string };
 export type ContactsCandidates = { total: number; ok: CandidateRow[]; personal: number; role: number; invalid: number };
@@ -394,7 +399,7 @@ Martin Dobson
 Aiert Ltd
 
 --
-You're receiving this because you're ${relationshipLine(relationship)}. ${MAILSHOT_COMPANY_LINE}. Privacy: https://www.aiert.co.uk/privacy
+You're receiving this because ${footerReason(relationship)}. ${MAILSHOT_COMPANY_LINE}. Privacy: https://www.aiert.co.uk/privacy
 Not interested? Unsubscribe here and I won't email you again: ${links.unsubscribe}
 `;
 }
@@ -425,6 +430,154 @@ export function mailshotHtml(firstName: string, links: MailshotLinks, relationsh
 <p style="margin:0 0 24px;"><a href="${esc(links.how)}" style="${link}">See how it works</a> &nbsp;·&nbsp; <a href="${esc(links.video)}" style="${link}">See everything it can do</a></p>
 <p style="margin:0 0 4px;">Martin Dobson</p>
 <p style="margin:0 0 28px;">Aiert Ltd</p>
-<p style="margin:0;font-size:12px;line-height:1.5;color:#6b7280;">You're receiving this because you're ${relationshipLine(relationship)}. ${esc(MAILSHOT_COMPANY_LINE)}. <a href="https://www.aiert.co.uk/privacy" style="color:#6b7280;">Privacy</a><br>Not interested? <a href="${esc(links.unsubscribe)}" style="color:#6b7280;">Unsubscribe here</a> and I won't email you again.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:#6b7280;">You're receiving this because ${footerReason(relationship)}. ${esc(MAILSHOT_COMPANY_LINE)}. <a href="https://www.aiert.co.uk/privacy" style="color:#6b7280;">Privacy</a><br>Not interested? <a href="${esc(links.unsubscribe)}" style="color:#6b7280;">Unsubscribe here</a> and I won't email you again.</p>
 </div></body></html>`;
+}
+
+// ---------- Restaurants ----------
+
+export const RESTAURANT_SUBJECTS = [
+  "A TapCard for {Name}",
+  "{Name}: booking, menu and directions in one tap",
+  "Your restaurant's details, one tap from every customer's phone",
+];
+
+export function restaurantSubject(index: number, name: string): string {
+  const t = RESTAURANT_SUBJECTS[Math.min(Math.max(index, 0), RESTAURANT_SUBJECTS.length - 1)];
+  return t.replaceAll("{Name}", name || "your restaurant");
+}
+
+export function restaurantText(name: string, links: MailshotLinks): string {
+  return `Hello ${name || "there"},
+
+I made a sample TapCard for ${name || "your restaurant"}: one card with your phone number, Book a table, your menu and directions, that customers get with a QR code or a link.
+
+- Customers save you in one tap, with no app needed on their side
+- Book a table, View our menu and Get directions are each one tap
+- A printable QR sign for the door, the tables or the till
+- Change your details once and every saved copy updates itself
+
+TapCard is free for life for the first 1,000 users.
+
+Get TapCard: ${links.app}
+See how it works: ${links.how}
+See everything it can do (with a short demo): ${links.video}
+
+Martin Dobson
+Aiert Ltd
+
+--
+You're receiving this because ${footerReason("restaurant")}. ${MAILSHOT_COMPANY_LINE}. Privacy: https://www.aiert.co.uk/privacy
+Not interested? Unsubscribe here and I won't email you again: ${links.unsubscribe}
+`;
+}
+
+export function restaurantHtml(name: string, links: MailshotLinks, cardImageUrl: string): string {
+  const btn = "display:inline-block;background:#4c2f93;color:#ffffff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:10px;";
+  const link = "color:#4c2f93;font-weight:600;";
+  const li = "margin:0 0 8px;";
+  return `<!doctype html><html><body style="margin:0;padding:0;background:#ffffff;">
+<div style="max-width:560px;margin:0 auto;padding:24px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#1f2937;">
+<p style="margin:0 0 16px;">Hello ${esc(name || "there")},</p>
+<p style="margin:0 0 16px;font-size:18px;line-height:1.45;"><strong>I made a sample TapCard for ${esc(name || "your restaurant")}:</strong> one card with your phone number, Book a table, your menu and directions, that customers get with a QR code or a link.</p>
+<p style="margin:0 0 20px;text-align:center;"><a href="${esc(links.app)}"><img src="${esc(cardImageUrl)}" alt="A sample TapCard for ${esc(name || "your restaurant")}" width="300" style="width:300px;max-width:100%;border-radius:14px;border:1px solid #e5e7eb;"></a></p>
+<ul style="margin:0 0 20px;padding-left:20px;">
+<li style="${li}">Customers <strong>save you in one tap</strong>, with no app needed on their side</li>
+<li style="${li}"><strong>Book a table, View our menu and Get directions</strong> are each one tap</li>
+<li style="${li}">A <strong>printable QR sign</strong> for the door, the tables or the till</li>
+<li style="${li}">Change your details once and <strong>every saved copy updates itself</strong></li>
+</ul>
+<p style="margin:0 0 20px;">TapCard is <strong>free for life for the first 1,000 users</strong>.</p>
+<p style="margin:0 0 20px;"><a href="${esc(links.app)}" style="${btn}">Get TapCard</a></p>
+<p style="margin:0 0 24px;"><a href="${esc(links.how)}" style="${link}">See how it works</a> &nbsp;·&nbsp; <a href="${esc(links.video)}" style="${link}">See everything it can do</a></p>
+<p style="margin:0 0 4px;">Martin Dobson</p>
+<p style="margin:0 0 28px;">Aiert Ltd</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:#6b7280;">You're receiving this because ${esc(footerReason("restaurant"))}. ${esc(MAILSHOT_COMPANY_LINE)}. <a href="https://www.aiert.co.uk/privacy" style="color:#6b7280;">Privacy</a><br>Not interested? <a href="${esc(links.unsubscribe)}" style="color:#6b7280;">Unsubscribe here</a> and I won't email you again.</p>
+</div></body></html>`;
+}
+
+export type RestaurantRow = { name: string; email: string; phone: string; website: string; address: string; booking: string; menu: string };
+
+/// A CSV (or tab-separated) list with a header row: name (or restaurant), email, phone, website, address, booking, menu.
+export function parseRestaurantList(text: string): RestaurantRow[] {
+  const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).filter((l) => l.trim());
+  if (lines.length < 2) return [];
+  const split = (line: string): string[] => {
+    const out: string[] = [];
+    let cur = "", q = false;
+    const delim = line.includes("\t") ? "\t" : ",";
+    for (const ch of line) {
+      if (ch === '"') q = !q;
+      else if (ch === delim && !q) { out.push(cur); cur = ""; }
+      else cur += ch;
+    }
+    out.push(cur);
+    return out.map((c) => c.trim());
+  };
+  const head = split(lines[0]).map((h) => h.toLowerCase());
+  const col = (names: string[]) => head.findIndex((h) => names.includes(h));
+  const c = {
+    name: col(["name", "restaurant", "restaurant name", "business"]),
+    email: col(["email", "e-mail", "email address"]),
+    phone: col(["phone", "telephone", "tel"]),
+    website: col(["website", "web", "site", "url"]),
+    address: col(["address", "location"]),
+    booking: col(["booking", "booking url", "book", "reservations"]),
+    menu: col(["menu", "menu url"]),
+  };
+  if (c.email < 0 || c.name < 0) return [];
+  const get = (cells: string[], i: number) => (i >= 0 ? (cells[i] ?? "").trim() : "");
+  return lines.slice(1).map((line) => {
+    const cells = split(line);
+    return {
+      name: tidyName(get(cells, c.name)).slice(0, 80), email: get(cells, c.email).toLowerCase(),
+      phone: get(cells, c.phone).slice(0, 40), website: get(cells, c.website).slice(0, 200),
+      address: get(cells, c.address).slice(0, 200), booking: get(cells, c.booking).slice(0, 300), menu: get(cells, c.menu).slice(0, 300),
+    };
+  }).filter((r) => r.email);
+}
+
+/// Adds restaurants to a campaign's list. Role addresses (info@, bookings@) are what restaurants publish, so they are
+/// allowed here; personal-domain addresses (Gmail etc.) are held back unless asked for, since a small restaurant using
+/// one may be a sole trader, who would need to have agreed to marketing email.
+export async function importRestaurants(campaign: string, rows: RestaurantRow[], includePersonal: boolean): Promise<ImportSummary> {
+  await ensureMailshotSchema();
+  const summary: ImportSummary = {
+    found: rows.length, added: 0, alreadyInList: 0,
+    skipped: { invalid: 0, role: 0, personal: 0, duplicates: 0, unsubscribed: 0 }, personalExamples: [],
+  };
+  const seen = new Set<string>();
+  for (const r of rows) {
+    const email = r.email.toLowerCase();
+    if (seen.has(email)) { summary.skipped.duplicates++; continue; }
+    seen.add(email);
+    const check = classifyEmail(email);
+    if (check === "invalid") { summary.skipped.invalid++; continue; }
+    if (check === "personal" && !includePersonal) {
+      summary.skipped.personal++;
+      if (summary.personalExamples.length < 8) summary.personalExamples.push(email);
+      continue;
+    }
+    const key = `e:${email}`;
+    await sql`
+      INSERT INTO tapcard_invite_contacts (dedupe_key, name, first_name, email, phone, company, website, address, booking_url, menu_url, kind)
+      VALUES (${key}, ${r.name}, '', ${email}, ${r.phone}, '', ${r.website}, ${r.address}, ${r.booking}, ${r.menu}, 'restaurant')
+      ON CONFLICT (dedupe_key) DO UPDATE SET
+        kind = 'restaurant', name = EXCLUDED.name,
+        phone = COALESCE(NULLIF(EXCLUDED.phone, ''), tapcard_invite_contacts.phone),
+        website = COALESCE(NULLIF(EXCLUDED.website, ''), tapcard_invite_contacts.website),
+        address = COALESCE(NULLIF(EXCLUDED.address, ''), tapcard_invite_contacts.address),
+        booking_url = COALESCE(NULLIF(EXCLUDED.booking_url, ''), tapcard_invite_contacts.booking_url),
+        menu_url = COALESCE(NULLIF(EXCLUDED.menu_url, ''), tapcard_invite_contacts.menu_url)
+    `;
+    const contact = ((await sql`SELECT id, do_not_contact FROM tapcard_invite_contacts WHERE dedupe_key = ${key}`) as { id: number; do_not_contact: boolean }[])[0];
+    if (!contact) continue;
+    if (contact.do_not_contact) { summary.skipped.unsubscribed++; continue; }
+    const res = (await sql`
+      INSERT INTO tapcard_mailshot_list (campaign, contact_id, relationship) VALUES (${campaign}, ${contact.id}, 'restaurant')
+      ON CONFLICT DO NOTHING RETURNING contact_id
+    `) as unknown[];
+    if (res.length) summary.added++; else summary.alreadyInList++;
+  }
+  return summary;
 }
