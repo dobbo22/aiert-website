@@ -2,7 +2,7 @@
 // Stored as JSON text on tapcard_cards.links. Only "Business" cards (and company cards)
 // keep them; a Personal card always has none.
 
-export type LinkKind = "book_table" | "book_room" | "appointment" | "menu" | "shop" | "order" | "hours" | "reviews" | "custom";
+export type LinkKind = "book_table" | "book_room" | "appointment" | "menu" | "shop" | "order" | "hours" | "reviews" | "tripadvisor" | "google_review" | "custom";
 
 export interface CardLink {
   kind: LinkKind;
@@ -14,7 +14,7 @@ export const MAX_CARD_LINKS = 10;
 
 // text-only kinds are shown as text (not a tappable link).
 const TEXT_KINDS: LinkKind[] = ["hours"];
-const KINDS: LinkKind[] = ["book_table", "book_room", "appointment", "menu", "shop", "order", "hours", "reviews", "custom"];
+const KINDS: LinkKind[] = ["book_table", "book_room", "appointment", "menu", "shop", "order", "hours", "reviews", "tripadvisor", "google_review", "custom"];
 const DEFAULT_LABELS: Record<LinkKind, string> = {
   book_table: "Book a table",
   book_room: "Book a room",
@@ -24,6 +24,8 @@ const DEFAULT_LABELS: Record<LinkKind, string> = {
   order: "Order online",
   hours: "Opening hours",
   reviews: "Leave a review",
+  tripadvisor: "Review us on Tripadvisor",
+  google_review: "Review us on Google",
   custom: "More",
 };
 
@@ -72,7 +74,7 @@ export function linkIcon(kind: LinkKind): LinkIcon {
     case "menu": return "menu";
     case "shop": case "order": return "bag";
     case "hours": return "clock";
-    case "reviews": return "star";
+    case "reviews": case "tripadvisor": case "google_review": return "star";
     default: return "link";
   }
 }

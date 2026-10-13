@@ -236,7 +236,7 @@ async function fetchIcon(url: string): Promise<Omit<SiteIcon, "themeColor" | "ad
 }
 
 /// Follows redirects by hand so every hop is re-checked as HTTPS to a public address.
-async function safeFetch(start: string): Promise<{ res: Response; url: URL } | null> {
+export async function safeFetch(start: string): Promise<{ res: Response; url: URL } | null> {
   let url: URL;
   try {
     url = new URL(start);
@@ -299,7 +299,7 @@ function isPublicAddress(ip: string): boolean {
   return !(v6 === "::" || v6 === "::1" || /^f[cd]/.test(v6) || /^fe[89ab]/.test(v6) || v6.startsWith("ff"));
 }
 
-async function readLimited(res: Response, max: number): Promise<Buffer | null> {
+export async function readLimited(res: Response, max: number): Promise<Buffer | null> {
   if (!res.body) return null;
   const reader = res.body.getReader();
   const chunks: Uint8Array[] = [];
