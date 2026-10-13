@@ -307,7 +307,7 @@ export async function inviteCardImage(person: InviteCardPerson): Promise<ImageRe
             </div>
           )}
           <div style={{ display: "flex", justifyContent: "center", color: "#9ca3af", fontSize: 17, marginTop: "auto", paddingTop: 18 }}>
-            Made with TapCard
+            TapCard from AIERT
           </div>
         </div>
       </div>
