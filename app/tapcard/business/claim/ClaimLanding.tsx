@@ -43,7 +43,7 @@ export default function ClaimLanding({ appStoreHref, playStoreHref, isDesktop }:
             )}
             <h1 className="mt-2 text-2xl font-bold">Your company TapCard is ready</h1>
             <ol className="mt-4 space-y-2 text-left text-white/80">
-              <li>1. Install TapCard (free).</li>
+              <li>1. Install TapCard (free to download).</li>
               <li>2. Come back to the email and tap the link again — your card opens in the app, already filled in.</li>
             </ol>
             <div className="mt-6 flex flex-col items-center gap-3">

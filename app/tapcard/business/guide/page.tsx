@@ -134,7 +134,7 @@ Sam Patel,sam@yourcompany.com,Account Manager`}</pre>
       <section>
         <h2>4. What your employees do</h2>
         <ol className="ml-5 space-y-1.5 [&>li]:list-decimal!">
-          <li>Install TapCard from the App Store or Google Play (free).</li>
+          <li>Install TapCard from the App Store or Google Play (free to download).</li>
           <li>
             Open your email <strong>on their phone</strong> and tap their invite link. TapCard opens and sets up their
             card, already filled in with their name, job title, email and your company details.

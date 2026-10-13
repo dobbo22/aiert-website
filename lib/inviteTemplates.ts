@@ -57,8 +57,8 @@ I've built an app called TapCard to solve exactly that. It keeps your business c
 
 {freeOffer}
 
-[Get TapCard free]({link})
-[Get TapCard free]({androidLink})
+[Get TapCard]({link})
+[Get TapCard]({androidLink})
 
 Here's what your TapCard could look like:
 
@@ -85,7 +85,7 @@ export const DEFAULT_SOCIAL_TEMPLATE = `Hi {firstName}, Martin Dobson here — [
 
 Have you ever been asked for your business card and not had one with you, or run out?
 
-I've built a free app called TapCard to solve exactly that. Your business card lives on your phone, ready to share instantly with a QR code or a link. When you swap details, their info saves straight into your contacts — no typing, no running out of cards.
+I've built an app called TapCard to solve exactly that. Your business card lives on your phone, ready to share instantly with a QR code or a link. When you swap details, their info saves straight into your contacts — no typing, no running out of cards.
 
 iPhone: {link}
 Android: {androidLink}

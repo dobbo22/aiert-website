@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { firstNameOf } from "@/lib/inviteTemplates";
 import { INVITE_LINK_ORIGIN, appStoreUrl, getSendByToken, platformFromUserAgent, playStoreUrl } from "@/lib/tapcardInvites";
 
-const TITLE = "A free gift: TapCard, the business card swapper";
+const TITLE = "A gift from Martin: TapCard, the business card swapper";
 const DESCRIPTION = "Always be prepared. Your business card on your phone — swap cards with anyone in one tap. Free to download, and free for life for the first 1,000 users.";
 const EXAMPLE_CARD = "https://www.aiert.co.uk/tapcard-email-card.png";
 
@@ -21,7 +21,7 @@ export async function generateMetadata({
   const shared = (await searchParams).via === "share";
   const send = shared ? null : await getSendByToken(token).catch(() => null);
   const firstName = send ? firstNameOf(send) : "";
-  const title = firstName ? `${firstName}, here's your TapCard — a free gift from Martin` : TITLE;
+  const title = firstName ? `${firstName}, here's your TapCard — a gift from Martin` : TITLE;
   const image = send
     ? { url: `${INVITE_LINK_ORIGIN}/api/invite-card/${token}`, alt: `${firstName}'s TapCard` }
     : { url: EXAMPLE_CARD, alt: "An example TapCard" };
@@ -60,7 +60,7 @@ export default async function InviteLandingPage({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="https://www.aiert.co.uk/tapcard-icon.png" alt="TapCard" className="mx-auto h-20 w-20 rounded-2xl" />
         <p className="mt-5 text-sm font-semibold uppercase tracking-wider text-teal">
-          {shared ? "A friend thought you'd like this" : firstName ? `A free gift for ${firstName}` : "A free gift for you"}
+          {shared ? "A friend thought you'd like this" : firstName ? `A gift for ${firstName}` : "A gift for you"}
         </p>
         <h1 className="mt-2 text-2xl font-bold">TapCard, the business card swapper</h1>
         <p className="mt-3 text-white/80">
