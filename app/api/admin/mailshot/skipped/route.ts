@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import sql from "@/lib/db";
 import { isAdminRequest } from "@/lib/adminRequest";
 import { ensureMailshotSchema } from "@/lib/mailshot";
-import { hasMail } from "../check-domains/route";
+import { hasMail } from "@/lib/dnsCheck";
 
 export const maxDuration = 60;
 
