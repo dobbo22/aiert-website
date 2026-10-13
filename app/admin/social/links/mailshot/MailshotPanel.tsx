@@ -121,10 +121,11 @@ export default function MailshotPanel({
       const data = await call("/api/admin/mailshot/send", { campaign, mode: "batch", subjectIndex, dailyCap, count: 25 });
       total += data.sent;
       if (data.stats) setStats(data.stats);
+      if (!data.sent && data.message) { setMessage({ text: data.message, error: true }); await refresh(); return; }
       if (data.failed) throw new Error(`Stopped after ${total} sent. ${(data.errors ?? []).join(" · ")}`);
       if (!data.sent) break;
     }
-    setMessage({ text: `Sent ${total}` });
+    setMessage({ text: total ? `Sent ${total}` : "Nothing was sent", error: total === 0 });
     await refresh();
   });
 

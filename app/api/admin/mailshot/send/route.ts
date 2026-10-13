@@ -108,9 +108,22 @@ async function handle(req: Request) {
 
   const stats = await mailshotStats(campaign);
   // Protect the sending address: if many have bounced, stop until the list has been cleaned.
-  if (stats.sent >= 25 && stats.bounced / stats.sent > 0.08) {
+  // Judged separately for past business contacts and personal contacts, so one old list's bounces don't block
+  // a different list, but a bad run in the list being sent now does stop it.
+  const nextKind = ((await sql`
+    SELECT l.relationship FROM tapcard_mailshot_list l JOIN tapcard_invite_contacts c ON c.id = l.contact_id
+    WHERE l.campaign = ${campaign} AND l.status = 'queued' AND NOT c.do_not_contact
+      AND NOT EXISTS (SELECT 1 FROM tapcard_invite_sends s WHERE s.contact_id = c.id AND s.campaign = ${campaign})
+    ORDER BY l.added_at, c.id LIMIT 1
+  `) as { relationship: string }[])[0]?.relationship ?? "business");
+  const kind = ((await sql`
+    SELECT COUNT(*)::int AS sent, COUNT(s.bounced_at)::int AS bounced
+    FROM tapcard_invite_sends s JOIN tapcard_mailshot_list l ON l.contact_id = s.contact_id AND l.campaign = s.campaign
+    WHERE s.campaign = ${campaign} AND l.relationship = ${nextKind}
+  `) as { sent: number; bounced: number }[])[0];
+  if (kind.sent >= 25 && kind.bounced / kind.sent > 0.08) {
     return NextResponse.json({
-      error: `Paused: ${stats.bounced} of ${stats.sent} bounced (over 8%). Check the bounced list and clean the list before sending more.`,
+      error: `Paused: ${kind.bounced} of ${kind.sent} bounced (over 8%) in this list. Check the bounced list and clean it before sending more.`,
     }, { status: 409 });
   }
   const dailyCap = Math.min(Math.max(Number(body?.dailyCap) || 50, 1), HARD_DAILY_LIMIT);
