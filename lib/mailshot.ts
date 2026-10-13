@@ -10,7 +10,7 @@ export const MAILSHOT_COMPANY_LINE =
 
 export const MAILSHOT_SUBJECTS = [
   "Tap a contact, see every email they've sent you",
-  "Imagine tapping a contact and seeing all their emails",
+  "What if your contacts list showed you every email from each person?",
   "Find any email from anyone in seconds",
   "{FirstName}, your contacts and your inbox, finally connected",
 ];
@@ -226,7 +226,9 @@ export function mailshotText(firstName: string, links: MailshotLinks): string {
   const hi = firstName ? `Hi ${firstName},` : "Hi,";
   return `${hi}
 
-Imagine tapping a contact and instantly seeing every email they've ever sent you, across all your email accounts. Then searching inside those emails for the invoice, the contract, the thing they said last March.
+What if your contacts list could show you every email from each person?
+
+Tap a contact and see everything they've ever sent you, across all your email accounts. Then search inside those emails for the invoice, the contract, the thing they said last March.
 
 That's PowerSearch. It works with TapCard, a digital business card app, so every contact in TapCard is one tap away from all their emails.
 
@@ -257,7 +259,8 @@ export function mailshotHtml(firstName: string, links: MailshotLinks): string {
   return `<!doctype html><html><body style="margin:0;padding:0;background:#ffffff;">
 <div style="max-width:560px;margin:0 auto;padding:24px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#1f2937;">
 <p style="margin:0 0 16px;">${hi}</p>
-<p style="margin:0 0 16px;font-size:18px;line-height:1.5;"><strong>Imagine tapping a contact and instantly seeing every email they've ever sent you</strong>, across all your email accounts. Then searching inside those emails for the invoice, the contract, the thing they said last March.</p>
+<p style="margin:0 0 16px;font-size:19px;line-height:1.4;"><strong>What if your contacts list could show you every email from each person?</strong></p>
+<p style="margin:0 0 16px;">Tap a contact and see everything they've ever sent you, across all your email accounts. Then search inside those emails for the invoice, the contract, the thing they said last March.</p>
 <p style="margin:0 0 16px;">That's <strong>PowerSearch</strong>. It works with <strong>TapCard</strong>, a digital business card app, so every contact in TapCard is one tap away from all their emails.</p>
 <ul style="margin:0 0 20px;padding-left:20px;">
 <li style="${li}"><strong>One tap</strong> from a contact to all their emails, across Gmail, Outlook, Microsoft 365 and most other accounts</li>
