@@ -41,17 +41,25 @@ const steps = [
     text: "On a Business card, tap Edit and find Bookings & links. Add Book a table, Book a room, Book an appointment, View our menu, Order online, Shop online, Opening hours or Leave a review, or make your own with any label, like Price list. Not sure where to start? Tap Start from my type of business and pick restaurant, hotel, shop, salon or trades. Each one shows as a tappable row on your card and on your web card. The Personal card does not have them.",
   },
   {
-    title: "6. Enhance a contact from their emails",
+    title: "6. Special offers: for your business",
+    text: "On a Business card, tap Edit, then Special offer. Write the offer (for example Free dessert with any main), choose an end date and a limit if you like, and set a staff PIN of 4 to 6 digits. Tap Post offer. Everyone who has your card in TapCard sees it the next time they open the app, with a green Offer badge on your name. You can see how many people claimed it and how many used it, replace it with a new one, or withdraw it at any time.",
+  },
+  {
+    title: "7. Special offers: if you get one",
+    text: "When a business you have saved posts an offer, you see an Offer badge on their contact. Open their card and tap Claim this offer. You get your own one-off QR code. Show it to the staff when you pay. They scan it with their phone camera, enter their PIN, and it is marked as used. It works once, then shows Used. Claiming is free and needs no sign-up, and the business only sees how many people claimed, not who.",
+  },
+  {
+    title: "8. Enhance a contact from their emails",
     img: "enhance.png",
     alt: "A contact card with added details marked with a small A, and the Enhance this contact button",
     text: "Open a contact and tap Enhance this contact. PowerSearch reads the signature in their latest emails, on your phone only, and lists what it found: phone numbers, job title, company, website, address and social links. If the contact has more than one email address, all of them are checked. Tick what you want and tap Add to TapCard. It needs the PowerSearch app (free for 7 days, then a one-off purchase). What you add appears on their card marked with a small A, in the normal tiles, and you can tap an item to use it or the x to remove it. Contacts you picked from your phone get the same card, with their contact photo if they have one.",
   },
   {
-    title: "7. Scan to add someone",
+    title: "9. Scan to add someone",
     text: "On My Cards, tap the camera button at the top left and scan someone's TapCard QR code. They are added to your contacts straight away.",
   },
   {
-    title: "8. Everything in one list",
+    title: "10. Everything in one list",
     img: "help.png",
     alt: "How TapCard works screen inside the app",
     text: "In the app, tap the … menu at the top right, then How TapCard works, for a short list of everything TapCard can do.",

@@ -149,6 +149,23 @@ export default function HowItWorksPage() {
       </section>
 
       <section>
+        <h2>9. Special offers</h2>
+        <p>
+          <strong>For a business:</strong> on a Business card tap <strong>Edit</strong>, then <strong>Special offer</strong>.
+          Write the offer, add an end date and a limit if you like, and set a 4 to 6 digit staff PIN. Everyone who has
+          your card in TapCard sees it the next time they open the app. Each person who taps <strong>Claim</strong> gets
+          their own one-off QR code. When they show it, scan it with your phone camera, type your PIN and tap
+          <strong> Mark as used</strong>. It works once. You can see how many claimed and how many used it, replace the
+          offer, or withdraw it. You give the discount yourself; TapCard does not take payments.
+        </p>
+        <p>
+          <strong>If you get an offer:</strong> a green <strong>Offer</strong> badge appears on the business in your
+          Contacts. Open it and tap <strong>Claim this offer</strong>. Show the QR code to the staff. It works once and
+          then shows <strong>Used</strong>. The business sees how many people claimed, not who.
+        </p>
+      </section>
+
+      <section>
         <h2>What does it cost?</h2>
         <p>
           TapCard is free to download. The first 1,000 people on iPhone, and the first 1,000 on Android, get it free for
