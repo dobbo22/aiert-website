@@ -240,11 +240,11 @@ That's PowerSearch. It works with TapCard, a digital business card app, so every
 
 ${MAILSHOT_M365_NOTE}
 
-TapCard is also your digital business card. Share it with a QR code or a link and people save you in one tap, with no app needed on their side. It is free for life for the first 1,000 users on each phone, and PowerSearch has a free 7-day trial.
+TapCard is also your digital business card. Share it with a QR code or a link and people save you in one tap, with no app needed on their side. Every card is one tap to call, message on WhatsApp, email, open their socials or get directions, and much more. It is free for life for the first 1,000 users on each phone, and PowerSearch has a free 7-day trial.
 
 Get the app: ${links.app}
 See how it works: ${links.how}
-Watch the short demo: ${links.video}
+See everything it can do (with a short demo): ${links.video}
 
 Martin Dobson
 Aiert Ltd
@@ -276,9 +276,9 @@ export function mailshotHtml(firstName: string, links: MailshotLinks): string {
 <td width="50%" valign="top" style="padding:0 6px 0 0;text-align:center;"><a href="${esc(links.video)}"><img src="${MAILSHOT_IMAGE_TAPCARD}" alt="A contact in TapCard with a Find emails in PowerSearch button" width="250" style="width:100%;max-width:250px;border-radius:14px;border:1px solid #e5e7eb;"></a><div style="font-size:12px;line-height:1.4;color:#6b7280;margin-top:6px;"><strong>1.</strong> Tap a contact in TapCard</div></td>
 <td width="50%" valign="top" style="padding:0 0 0 6px;text-align:center;"><a href="${esc(links.video)}"><img src="${MAILSHOT_IMAGE_POWERSEARCH}" alt="PowerSearch showing that contact's emails, searched for invoice" width="250" style="width:100%;max-width:250px;border-radius:14px;border:1px solid #e5e7eb;"></a><div style="font-size:12px;line-height:1.4;color:#6b7280;margin-top:6px;"><strong>2.</strong> See their emails, and search inside them</div></td>
 </tr></table>
-<p style="margin:0 0 20px;">TapCard is also your digital business card. Share it with a QR code or a link and people save you in one tap, with no app needed on their side. It is <strong>free for life for the first 1,000 users</strong> on each phone, and PowerSearch has a free 7-day trial.</p>
+<p style="margin:0 0 20px;">TapCard is also your digital business card. Share it with a QR code or a link and people save you in one tap, with no app needed on their side. Every card is <strong>one tap to call, message on WhatsApp, email, open their socials or get directions</strong>, and much more. It is <strong>free for life for the first 1,000 users</strong> on each phone, and PowerSearch has a free 7-day trial.</p>
 <p style="margin:0 0 20px;"><a href="${esc(links.app)}" style="${btn}">Get the app</a></p>
-<p style="margin:0 0 24px;"><a href="${esc(links.how)}" style="${link}">See how it works</a> &nbsp;·&nbsp; <a href="${esc(links.video)}" style="${link}">Watch the short demo</a></p>
+<p style="margin:0 0 24px;"><a href="${esc(links.how)}" style="${link}">See how it works</a> &nbsp;·&nbsp; <a href="${esc(links.video)}" style="${link}">See everything it can do</a></p>
 <p style="margin:0 0 4px;">Martin Dobson</p>
 <p style="margin:0 0 28px;">Aiert Ltd</p>
 <p style="margin:0;font-size:12px;line-height:1.5;color:#6b7280;">You're receiving this because you're a past business contact of mine. ${esc(MAILSHOT_COMPANY_LINE)}. <a href="https://www.aiert.co.uk/privacy" style="color:#6b7280;">Privacy</a><br>Not interested? <a href="${esc(links.unsubscribe)}" style="color:#6b7280;">Unsubscribe here</a> and I won't email you again.</p>
