@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "TapCard invites", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Unsubscribe", robots: { index: false, follow: false } };
 
 // "Don't send me these" from an invite email. A button (POST), not an
 // automatic unsubscribe on page load — see the GET handler in
@@ -20,12 +20,12 @@ export default async function UnsubscribePage({
         {done ? (
           <>
             <h1 className="text-xl font-bold">Done</h1>
-            <p className="mt-3 text-white/80">You won&apos;t get any more TapCard invites from Martin.</p>
+            <p className="mt-3 text-white/80">You won&apos;t get any more emails from Martin at Aiert.</p>
           </>
         ) : (
           <>
-            <h1 className="text-xl font-bold">Stop TapCard invites?</h1>
-            <p className="mt-3 text-white/80">Martin won&apos;t send you any more messages about TapCard.</p>
+            <h1 className="text-xl font-bold">Stop these emails?</h1>
+            <p className="mt-3 text-white/80">Martin at Aiert won&apos;t send you any more emails or messages about TapCard or PowerSearch.</p>
             <form method="post" action={`/api/unsubscribe/${token}`}>
               <button type="submit" className="mt-6 w-full rounded-xl bg-white px-4 py-3 font-semibold text-[#111318]">
                 Yes, stop them

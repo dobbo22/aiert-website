@@ -645,11 +645,6 @@ export default function InviteSender({
                 e.target.value = "";
               }}
             />
-            <small>
-              iCloud.com → Contacts → select all (⌘A) → ⚙︎ → Export vCard. LinkedIn → Settings → Data
-              privacy → Get a copy of your data → Connections, then import Connections.csv (matched to your
-              contacts by name). Re-import any time; existing people are updated, not duplicated.
-            </small>
             {showAddContact ? (
               <div className="invite-add-contact">
                 <input
@@ -685,10 +680,11 @@ export default function InviteSender({
           <label className="invite-field">
             <span>Campaign name</span>
             <input value={campaign} onChange={(e) => setCampaign(e.target.value.replace(/[^a-z0-9-]/gi, "-").toLowerCase())} maxLength={30} />
-            <small>Shows up in App Store Connect as {`${campaign}-email`}, {`${campaign}-whatsapp`}…</small>
           </label>
         </div>
 
+        <details className="invite-templates-fold">
+          <summary>Message templates</summary>
         <div className="invite-templates">
           <div>
             <label className="invite-field">
@@ -709,6 +705,7 @@ export default function InviteSender({
             <textarea rows={12} value={socialTemplate} onChange={(e) => setSocialTemplate(e.target.value)} />
           </label>
         </div>
+        </details>
       </section>
 
       {status && <p className={status.error ? "social-compose-error" : "social-compose-success"}>{status.text}</p>}
@@ -956,7 +953,6 @@ export default function InviteSender({
                     value={messageFor(focused, "whatsapp")}
                     onChange={(e) => setDrafts((d) => ({ ...d, [focused.id]: { ...d[focused.id], whatsapp: e.target.value } }))}
                   />
-                  <small>WhatsApp shows a preview of their link with a picture of their own TapCard.</small>
                 </>
               ) : (
                 <>

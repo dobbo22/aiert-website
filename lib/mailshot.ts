@@ -1,0 +1,268 @@
+import sql from "@/lib/db";
+import { INVITE_LINK_ORIGIN, ensureInviteSchema } from "@/lib/tapcardInvites";
+
+// The cold-email "mailshot" to past business contacts: list import and checks, the email itself, and the
+// results. Sending reuses the invite machinery (a tapcard_invite_sends row per person gives each recipient
+// their own tracked links and one-click unsubscribe — see app/api/admin/mailshot/send).
+
+export const MAILSHOT_COMPANY_LINE =
+  "Aiert Ltd, registered in England & Wales (No. 16587000), registered office 8 Clarendon Gardens, London, England, W9 1AY";
+
+export const MAILSHOT_SUBJECTS = [
+  "Your business card that never goes out of date",
+  "Meet someone, and everything about them fills itself in",
+  "Never lose a contact's details again",
+  "{FirstName}, 2 minutes to try something?",
+];
+
+const PERSONAL_DOMAINS = new Set([
+  "gmail.com", "googlemail.com", "hotmail.com", "hotmail.co.uk", "outlook.com", "outlook.co.uk", "live.com", "live.co.uk", "msn.com",
+  "yahoo.com", "yahoo.co.uk", "ymail.com", "icloud.com", "me.com", "mac.com", "aol.com", "aol.co.uk", "btinternet.com", "btopenworld.com",
+  "sky.com", "talktalk.net", "virginmedia.com", "ntlworld.com", "blueyonder.co.uk", "protonmail.com", "proton.me", "gmx.com", "gmx.co.uk",
+]);
+const ROLE_LOCALS = new Set([
+  "info", "sales", "admin", "support", "hello", "contact", "office", "enquiries", "enquiry", "accounts", "noreply", "no-reply", "reception",
+  "hr", "jobs", "careers", "marketing", "webmaster", "postmaster", "help", "team", "mail", "billing", "orders", "service", "customerservice",
+  "press", "media", "legal", "compliance", "finance", "bookings", "booking", "general", "reservations",
+]);
+
+export type MailshotRow = { email: string; firstName: string; name: string; company: string };
+export type RowCheck = "ok" | "invalid" | "role" | "personal";
+
+export function classifyEmail(email: string): RowCheck {
+  if (!/^[^\s@,;<>()]+@[^\s@,;<>()]+\.[^\s@,;<>()]{2,}$/.test(email)) return "invalid";
+  const [local, domain] = email.toLowerCase().split("@");
+  if (ROLE_LOCALS.has(local)) return "role";
+  if (PERSONAL_DOMAINS.has(domain)) return "personal";
+  return "ok";
+}
+
+function tidyName(raw: string): string {
+  return raw.replace(/["'<>()[\]]/g, " ").replace(/\s+/g, " ").trim().slice(0, 100);
+}
+function titleCase(s: string): string {
+  return s.split(" ").map((w) => (w.length > 1 && w === w.toUpperCase() ? w[0] + w.slice(1).toLowerCase() : w)).join(" ");
+}
+
+/// Reads a pasted list or a CSV file's text. With a header row (email / first name / name / company columns) it
+/// reads by column; otherwise it takes every email address it finds on each line and treats the rest of the
+/// line as the name ("Jane Smith <jane@x.com>", "jane@x.com, Jane Smith", "Jane Smith jane@x.com"…).
+export function parseMailshotList(text: string): MailshotRow[] {
+  const lines = text.replace(/^﻿/, "").split(/\r?\n/).filter((l) => l.trim());
+  if (!lines.length) return [];
+  const split = (line: string): string[] => {
+    const out: string[] = [];
+    let cur = "", q = false;
+    const delim = line.includes("\t") ? "\t" : line.includes(";") && !line.includes(",") ? ";" : ",";
+    for (const ch of line) {
+      if (ch === '"') q = !q;
+      else if (ch === delim && !q) { out.push(cur); cur = ""; }
+      else cur += ch;
+    }
+    out.push(cur);
+    return out.map((c) => c.trim());
+  };
+  const head = split(lines[0]).map((h) => h.toLowerCase());
+  const col = (names: string[]) => head.findIndex((h) => names.includes(h));
+  const emailCol = col(["email", "e-mail", "email address", "e-mail address", "email 1", "primary email"]);
+  const rows: MailshotRow[] = [];
+  if (emailCol >= 0 && !head[emailCol].includes("@")) {
+    const first = col(["first name", "firstname", "first", "given name", "forename"]);
+    const last = col(["last name", "lastname", "surname", "family name", "last"]);
+    const full = col(["name", "full name", "contact", "display name"]);
+    const comp = col(["company", "organisation", "organization", "business", "company name", "employer"]);
+    for (const line of lines.slice(1)) {
+      const c = split(line);
+      const email = (c[emailCol] ?? "").trim().toLowerCase();
+      if (!email) continue;
+      const firstName = tidyName(first >= 0 ? c[first] ?? "" : "");
+      const lastName = tidyName(last >= 0 ? c[last] ?? "" : "");
+      const name = tidyName(full >= 0 && c[full] ? c[full] : `${firstName} ${lastName}`);
+      rows.push({ email, firstName: titleCase(firstName || name.split(" ")[0] || ""), name: titleCase(name), company: tidyName(comp >= 0 ? c[comp] ?? "" : "") });
+    }
+    return rows;
+  }
+  for (const line of lines) {
+    const emails = line.match(/[^\s@,;<>()"']+@[^\s@,;<>()"']+\.[^\s@,;<>()"']+/g) ?? [];
+    if (!emails.length) continue;
+    let rest = line;
+    for (const e of emails) rest = rest.replace(e, " ");
+    const name = titleCase(tidyName(rest.replace(/[,;|]/g, " ")));
+    for (const e of emails) rows.push({ email: e.toLowerCase().replace(/[.,;]+$/, ""), firstName: name.split(" ")[0] ?? "", name, company: "" });
+  }
+  return rows;
+}
+
+let schemaReady: Promise<unknown> | null = null;
+export function ensureMailshotSchema(): Promise<unknown> {
+  if (!schemaReady) {
+    schemaReady = ensureInviteSchema()
+      .then(() => sql`
+        CREATE TABLE IF NOT EXISTS tapcard_mailshot_list (
+          campaign TEXT NOT NULL,
+          contact_id INTEGER NOT NULL REFERENCES tapcard_invite_contacts(id) ON DELETE CASCADE,
+          added_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          PRIMARY KEY (campaign, contact_id)
+        )
+      `)
+      .catch((err) => {
+        schemaReady = null;
+        throw err;
+      });
+  }
+  return schemaReady;
+}
+
+export type ImportSummary = {
+  found: number;
+  added: number;
+  alreadyInList: number;
+  skipped: { invalid: number; role: number; personal: number; duplicates: number; unsubscribed: number };
+  personalExamples: string[];
+};
+
+/// Adds the usable addresses to a campaign's list. Personal-looking addresses (Gmail etc.) and role addresses
+/// (info@…) are held back unless asked for, and anyone who has already unsubscribed is never added.
+export async function importMailshotList(campaign: string, rows: MailshotRow[], includePersonal: boolean): Promise<ImportSummary> {
+  await ensureMailshotSchema();
+  const summary: ImportSummary = {
+    found: rows.length, added: 0, alreadyInList: 0,
+    skipped: { invalid: 0, role: 0, personal: 0, duplicates: 0, unsubscribed: 0 }, personalExamples: [],
+  };
+  const seen = new Set<string>();
+  for (const row of rows) {
+    const email = row.email.toLowerCase();
+    if (seen.has(email)) { summary.skipped.duplicates++; continue; }
+    seen.add(email);
+    const check = classifyEmail(email);
+    if (check === "invalid") { summary.skipped.invalid++; continue; }
+    if (check === "role") { summary.skipped.role++; continue; }
+    if (check === "personal" && !includePersonal) {
+      summary.skipped.personal++;
+      if (summary.personalExamples.length < 8) summary.personalExamples.push(email);
+      continue;
+    }
+    const key = `e:${email}`;
+    const name = row.name || email.split("@")[0];
+    await sql`
+      INSERT INTO tapcard_invite_contacts (dedupe_key, name, first_name, email, company)
+      VALUES (${key}, ${name}, ${row.firstName}, ${email}, ${row.company})
+      ON CONFLICT (dedupe_key) DO NOTHING
+    `;
+    const contact = ((await sql`SELECT id, do_not_contact FROM tapcard_invite_contacts WHERE dedupe_key = ${key}`) as { id: number; do_not_contact: boolean }[])[0];
+    if (!contact) continue;
+    if (contact.do_not_contact) { summary.skipped.unsubscribed++; continue; }
+    const res = (await sql`
+      INSERT INTO tapcard_mailshot_list (campaign, contact_id) VALUES (${campaign}, ${contact.id})
+      ON CONFLICT DO NOTHING RETURNING contact_id
+    `) as unknown[];
+    if (res.length) summary.added++; else summary.alreadyInList++;
+  }
+  return summary;
+}
+
+export type MailshotStats = {
+  inList: number;
+  sent: number;
+  sentToday: number;
+  queued: number;
+  delivered: number;
+  bounced: number;
+  clickedAny: number;
+  clickedApp: number;
+  clickedHow: number;
+  clickedVideo: number;
+  unsubscribed: number;
+  complained: number;
+};
+
+export async function mailshotStats(campaign: string): Promise<MailshotStats> {
+  await ensureMailshotSchema();
+  const r = ((await sql`
+    SELECT
+      (SELECT COUNT(*)::int FROM tapcard_mailshot_list WHERE campaign = ${campaign}) AS in_list,
+      COUNT(s.id)::int AS sent,
+      COUNT(s.id) FILTER (WHERE s.sent_at >= (date_trunc('day', now() AT TIME ZONE 'Europe/London') AT TIME ZONE 'Europe/London'))::int AS sent_today,
+      COUNT(s.delivered_at)::int AS delivered,
+      COUNT(s.bounced_at)::int AS bounced,
+      COUNT(s.first_click_at)::int AS clicked_any,
+      COUNT(DISTINCT s.id) FILTER (WHERE EXISTS (SELECT 1 FROM tapcard_invite_clicks k WHERE k.send_id = s.id AND k.target = 'app'))::int AS clicked_app,
+      COUNT(DISTINCT s.id) FILTER (WHERE EXISTS (SELECT 1 FROM tapcard_invite_clicks k WHERE k.send_id = s.id AND k.target = 'how'))::int AS clicked_how,
+      COUNT(DISTINCT s.id) FILTER (WHERE EXISTS (SELECT 1 FROM tapcard_invite_clicks k WHERE k.send_id = s.id AND k.target = 'video'))::int AS clicked_video,
+      COUNT(DISTINCT s.id) FILTER (WHERE c.do_not_contact)::int AS unsubscribed
+    FROM tapcard_invite_sends s
+    JOIN tapcard_invite_contacts c ON c.id = s.contact_id
+    WHERE s.campaign = ${campaign}
+  `) as Record<string, number>[])[0];
+  const queued = ((await sql`
+    SELECT COUNT(*)::int AS n FROM tapcard_mailshot_list l
+    JOIN tapcard_invite_contacts c ON c.id = l.contact_id
+    WHERE l.campaign = ${campaign} AND NOT c.do_not_contact
+      AND NOT EXISTS (SELECT 1 FROM tapcard_invite_sends s WHERE s.contact_id = l.contact_id AND s.campaign = ${campaign})
+  `) as { n: number }[])[0].n;
+  return {
+    inList: r.in_list, sent: r.sent, sentToday: r.sent_today, queued, delivered: r.delivered, bounced: r.bounced,
+    clickedAny: r.clicked_any, clickedApp: r.clicked_app, clickedHow: r.clicked_how, clickedVideo: r.clicked_video,
+    unsubscribed: r.unsubscribed, complained: 0,
+  };
+}
+
+const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+export type MailshotLinks = { app: string; how: string; video: string; unsubscribe: string };
+
+export function mailshotLinks(token: string): MailshotLinks {
+  return {
+    app: `${INVITE_LINK_ORIGIN}/i/${token}`,
+    how: `${INVITE_LINK_ORIGIN}/i/${token}?to=how`,
+    video: `${INVITE_LINK_ORIGIN}/i/${token}?to=video`,
+    unsubscribe: `${INVITE_LINK_ORIGIN}/u/${token}`,
+  };
+}
+
+export const MAILSHOT_IMAGE = "https://www.aiert.co.uk/tapcard-guide/enhance.png";
+
+export function mailshotText(firstName: string, links: MailshotLinks): string {
+  const hi = firstName ? `Hi ${firstName},` : "Hi,";
+  return `${hi}
+
+Quick one, as a past business contact. I've built two phone apps that work well together.
+
+TAPCARD is a digital business card. Share it with a QR code or a link and people save you in one tap, with no app needed on their side. When your job or number changes, everyone's copy updates itself.
+
+POWERSEARCH finds every email from any person across all your accounts. TapCard can then read their email signatures, on your phone only, and fill in the details you were missing: mobile number, job title, website, address.
+
+TapCard is free for life for the first 1,000 users on each phone, and PowerSearch has a free 7-day trial.
+
+Get the app: ${links.app}
+See how it works: ${links.how}
+Watch the short demo: ${links.video}
+
+Martin Dobson
+Aiert Ltd
+
+--
+You're receiving this because you're a past business contact of mine. ${MAILSHOT_COMPANY_LINE}. Privacy: https://www.aiert.co.uk/privacy
+Not interested? Unsubscribe here and I won't email you again: ${links.unsubscribe}
+`;
+}
+
+export function mailshotHtml(firstName: string, links: MailshotLinks): string {
+  const hi = firstName ? `Hi ${esc(firstName)},` : "Hi,";
+  const btn = "display:inline-block;background:#4c2f93;color:#ffffff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:10px;";
+  const link = "color:#4c2f93;font-weight:600;";
+  return `<!doctype html><html><body style="margin:0;padding:0;background:#ffffff;">
+<div style="max-width:560px;margin:0 auto;padding:24px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#1f2937;">
+<p style="margin:0 0 16px;">${hi}</p>
+<p style="margin:0 0 16px;">Quick one, as a past business contact. I've built two phone apps that work well together.</p>
+<p style="margin:0 0 16px;"><strong>TapCard</strong> is a digital business card. Share it with a QR code or a link and people save you in one tap, with no app needed on their side. When your job or number changes, everyone's copy updates itself.</p>
+<p style="margin:0 0 16px;"><strong>PowerSearch</strong> finds every email from any person across all your accounts. TapCard can then read their email signatures, on your phone only, and fill in the details you were missing: mobile number, job title, website, address.</p>
+<p style="margin:0 0 20px;">TapCard is <strong>free for life for the first 1,000 users</strong> on each phone, and PowerSearch has a free 7-day trial.</p>
+<p style="margin:0 0 20px;"><a href="${esc(links.app)}" style="${btn}">Get the app</a></p>
+<p style="margin:0 0 20px;"><a href="${esc(links.video)}"><img src="${MAILSHOT_IMAGE}" alt="TapCard: a contact card with details filled in from their emails" width="260" style="width:260px;max-width:100%;border-radius:14px;border:1px solid #e5e7eb;"></a></p>
+<p style="margin:0 0 24px;"><a href="${esc(links.how)}" style="${link}">See how it works</a> &nbsp;·&nbsp; <a href="${esc(links.video)}" style="${link}">Watch the short demo</a></p>
+<p style="margin:0 0 4px;">Martin Dobson</p>
+<p style="margin:0 0 28px;">Aiert Ltd</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:#6b7280;">You're receiving this because you're a past business contact of mine. ${esc(MAILSHOT_COMPANY_LINE)}. <a href="https://www.aiert.co.uk/privacy" style="color:#6b7280;">Privacy</a><br>Not interested? <a href="${esc(links.unsubscribe)}" style="color:#6b7280;">Unsubscribe here</a> and I won't email you again.</p>
+</div></body></html>`;
+}

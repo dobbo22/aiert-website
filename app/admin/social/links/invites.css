@@ -175,3 +175,7 @@
   font-size: 0.85rem;
   width: 150px;
 }
+
+.invite-templates-fold { margin-top: 1rem; }
+.invite-templates-fold > summary { cursor: pointer; font-weight: 600; color: #cbd5e1; padding: 0.4rem 0; }
+.invite-templates-fold[open] > summary { margin-bottom: 0.75rem; }

@@ -136,37 +136,37 @@ export default async function TrackInvitesPage() {
         </div>
         <div className="admin-stat">
           <span className="admin-stat-value">{total.clicked}</span>
-          <span className="admin-stat-label">Recipients who clicked ({pct(total.clicked, total.sent)})</span>
+          <span className="admin-stat-label">Clicked ({pct(total.clicked, total.sent)})</span>
         </div>
         <div className="admin-stat">
           <span className="admin-stat-value">{total.spread}</span>
-          <span className="admin-stat-label">Others reached by forwarding or passing it on</span>
+          <span className="admin-stat-label">Reached by forwarding</span>
         </div>
         <div className="admin-stat">
           <span className="admin-stat-value">{totalInstalls}</span>
-          <span className="admin-stat-label">Installs reported by the stores</span>
+          <span className="admin-stat-label">Installs (stores)</span>
         </div>
       </div>
 
       {cardTotals && (
         <>
-          <h2 className="admin-subtitle invite-h2">Card page opens</h2>
+          <h2 className="admin-subtitle invite-h2">Card pages</h2>
           <div className="admin-stats">
             <div className="admin-stat">
               <span className="admin-stat-value">{cardTotals.views}</span>
-              <span className="admin-stat-label">Views across {cardTotals.cards} cards (people only, not link previews)</span>
+              <span className="admin-stat-label">Views ({cardTotals.cards} cards)</span>
             </div>
             <div className="admin-stat">
               <span className="admin-stat-value">{cardTotals.qrViews}</span>
-              <span className="admin-stat-label">From scanning a QR code ({pct(cardTotals.qrViews, cardTotals.views)})</span>
+              <span className="admin-stat-label">From a QR code ({pct(cardTotals.qrViews, cardTotals.views)})</span>
             </div>
             <div className="admin-stat">
               <span className="admin-stat-value">{Math.max(0, cardTotals.views - cardTotals.qrViews)}</span>
-              <span className="admin-stat-label">From a card link</span>
+              <span className="admin-stat-label">From a link</span>
             </div>
             <div className="admin-stat">
               <span className="admin-stat-value">{cardTotals.saves}</span>
-              <span className="admin-stat-label">Saved into a contacts list ({pct(cardTotals.saves, cardTotals.views)})</span>
+              <span className="admin-stat-label">Saved ({pct(cardTotals.saves, cardTotals.views)})</span>
             </div>
           </div>
         </>
@@ -225,43 +225,26 @@ export default async function TrackInvitesPage() {
       )}
 
       <h2 className="admin-subtitle invite-h2">Founder places</h2>
-      <p className="admin-mailbroom-note">
-        Each platform has its own independent {FREE_PLACES.toLocaleString("en-GB")}-place ladder. Counted when someone
-        opens a version of the app with the founder check.
-      </p>
-      <p className="admin-mailbroom-note">
-        {iosLadder ? (
-          <>
-            <strong>iPhone:</strong> <strong>{iosLadder.counted.toLocaleString("en-GB")}</strong> counted ·{" "}
-            <strong>{iosLadder.freePlacesLeft.toLocaleString("en-GB")}</strong> of {FREE_PLACES.toLocaleString("en-GB")} free
-            founder places left · a newcomer now pays <strong>{iosLadder.nextPrice}</strong> for life.
-          </>
-        ) : (
-          "Couldn't load the iPhone founder count."
-        )}
-      </p>
-      <p className="admin-mailbroom-note">
-        {androidLadder ? (
-          <>
-            <strong>Android:</strong> <strong>{androidLadder.counted.toLocaleString("en-GB")}</strong> counted ·{" "}
-            <strong>{androidLadder.freePlacesLeft.toLocaleString("en-GB")}</strong> of {FREE_PLACES.toLocaleString("en-GB")} free
-            founder places left · a newcomer now pays <strong>{androidLadder.nextPrice}</strong> for life.
-          </>
-        ) : (
-          "Couldn't load the Android founder count."
-        )}
-      </p>
-
+      <div className="admin-stats">
+        <div className="admin-stat">
+          <span className="admin-stat-value">{iosLadder ? iosLadder.freePlacesLeft.toLocaleString("en-GB") : "–"}</span>
+          <span className="admin-stat-label">iPhone places left of {FREE_PLACES.toLocaleString("en-GB")}</span>
+        </div>
+        <div className="admin-stat">
+          <span className="admin-stat-value">{iosLadder ? iosLadder.counted.toLocaleString("en-GB") : "–"}</span>
+          <span className="admin-stat-label">iPhone counted · next price {iosLadder?.nextPrice ?? "–"}</span>
+        </div>
+        <div className="admin-stat">
+          <span className="admin-stat-value">{androidLadder ? androidLadder.freePlacesLeft.toLocaleString("en-GB") : "–"}</span>
+          <span className="admin-stat-label">Android places left of {FREE_PLACES.toLocaleString("en-GB")}</span>
+        </div>
+        <div className="admin-stat">
+          <span className="admin-stat-value">{androidLadder ? androidLadder.counted.toLocaleString("en-GB") : "–"}</span>
+          <span className="admin-stat-label">Android counted · next price {androidLadder?.nextPrice ?? "–"}</span>
+        </div>
+      </div>
 
       <h2 className="admin-subtitle invite-h2">Clicks vs store installs</h2>
-      <p className="admin-mailbroom-note">
-        The stores don&apos;t say <em>who</em> installed, only how many came from each campaign link.
-        Type in the installs from <strong>App Store Connect → Analytics → Acquisition → Campaigns</strong>{" "}
-        (each row&apos;s campaign token is the &quot;Campaign&quot; there) and Play Console&apos;s
-        acquisition report, and this
-        compares them with the clicks. Forwarded clicks share the original medium&apos;s token; pass-it-on
-        links have their own (<code>…-share</code>).
-      </p>
       <div className="admin-table-wrap">
         <table className="admin-table">
           <thead>
@@ -333,17 +316,6 @@ export default async function TrackInvitesPage() {
         </table>
       </div>
 
-      <p className="admin-mailbroom-note invite-footnote">
-        <strong>How to read this.</strong> Each person&apos;s own link counts the first person to click it as
-        them; anyone else who clicks it later (on a different phone or computer) shows as{" "}
-        <strong>Forwarded to</strong>. Clicks on their pass-it-on link always count as{" "}
-        <strong>Passed on to</strong>. Both count people, not taps: the same person clicking twice counts
-        once. It can&apos;t tell you <em>who</em> they forwarded it to, and if the recipient opens their own
-        link on a second device, that will show as one forward. Link previews fetched by WhatsApp and
-        email scanners are never counted. Email &quot;opened&quot; is approximate (Apple Mail privacy
-        loads images for unread mail), and WhatsApp can&apos;t report delivery or reads, so only clicks
-        are tracked there.
-      </p>
     </div>
   );
 }

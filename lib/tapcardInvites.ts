@@ -108,6 +108,8 @@ export function ensureInviteSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_invite_clicks ADD COLUMN IF NOT EXISTS fingerprint TEXT`)
       .then(() => sql`ALTER TABLE tapcard_invite_clicks ADD COLUMN IF NOT EXISTS is_forward BOOLEAN NOT NULL DEFAULT false`)
       .then(() => sql`ALTER TABLE tapcard_invite_clicks ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'direct'`)
+      // What the click was for: 'app' (the Get the app link), 'how' (See how it works) or 'video' (the demo).
+      .then(() => sql`ALTER TABLE tapcard_invite_clicks ADD COLUMN IF NOT EXISTS target TEXT NOT NULL DEFAULT 'app'`)
       // Profiles for the LinkedIn / Messenger channels (from the vCard's
       // social profiles, a LinkedIn Connections.csv, or typed in).
       .then(() => sql`ALTER TABLE tapcard_invite_contacts ADD COLUMN IF NOT EXISTS linkedin_url TEXT NOT NULL DEFAULT ''`)
@@ -235,7 +237,7 @@ export function clickFingerprint(ip: string, ua: string): string {
 /// always referrals.
 export async function recordInviteClick(
   token: string,
-  click: { ua: string; country: string | null; visitorId: string; fingerprint: string; source: InviteSource },
+  click: { ua: string; country: string | null; visitorId: string; fingerprint: string; source: InviteSource; target?: "app" | "how" | "video" },
 ) {
   const platform = platformFromUserAgent(click.ua);
   await ensureInviteSchema();
@@ -258,8 +260,8 @@ export async function recordInviteClick(
   }
 
   await sql`
-    INSERT INTO tapcard_invite_clicks (send_id, platform, country, visitor_id, fingerprint, is_forward, source)
-    VALUES (${send.id}, ${platform}, ${click.country}, ${click.visitorId}, ${click.fingerprint}, ${isForward}, ${click.source})
+    INSERT INTO tapcard_invite_clicks (send_id, platform, country, visitor_id, fingerprint, is_forward, source, target)
+    VALUES (${send.id}, ${platform}, ${click.country}, ${click.visitorId}, ${click.fingerprint}, ${isForward}, ${click.source}, ${click.target ?? "app"})
   `;
   if (click.source === "direct" && !isForward) {
     await sql`
