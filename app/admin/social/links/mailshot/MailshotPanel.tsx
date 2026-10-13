@@ -81,6 +81,18 @@ export default function MailshotPanel({
     setQueue(q.map((r) => ({ id: r.id, name: r.name || r.email, sub: r.email, email: r.email, greeting: r.greeting, on: true })));
   }
   const loadQueue = run(loadQueueNow);
+  const removeForGood = async (r: PRow) => {
+    if (!window.confirm(`Remove ${r.name} for good? They will never be emailed again, by the mailshot or by Send invites.`)) return;
+    try {
+      await call("/api/admin/mailshot/never", { ids: [r.id] });
+      setRows((all) => all.filter((x) => x.id !== r.id));
+      setQueue((q) => (q ? q.filter((x) => x.id !== r.id) : q));
+      setMessage({ text: `${r.name} removed for good` });
+      await refresh();
+    } catch (err) {
+      setMessage({ text: err instanceof Error ? err.message : "Failed", error: true });
+    }
+  };
   const saveQueue = run(async () => {
     if (!queue) return;
     const edits = queue
@@ -195,7 +207,7 @@ export default function MailshotPanel({
             </>
           )}
         </div>
-        {cands && rows.length > 0 && <PeopleTable rows={rows} setRows={setRows} input={input} ghost={ghost} />}
+        {cands && rows.length > 0 && <PeopleTable rows={rows} setRows={setRows} input={input} ghost={ghost} onRemove={removeForGood} />}
       </section>
 
       <section style={box}>
@@ -208,7 +220,7 @@ export default function MailshotPanel({
             </>
           )}
         </div>
-        {queue && <PeopleTable rows={queue} setRows={(fn) => setQueue((q) => (q ? (typeof fn === "function" ? fn(q) : fn) : q))} input={input} ghost={ghost} />}
+        {queue && <PeopleTable rows={queue} setRows={(fn) => setQueue((q) => (q ? (typeof fn === "function" ? fn(q) : fn) : q))} input={input} ghost={ghost} onRemove={removeForGood} />}
       </section>
 
       {bounces.length > 0 && (
@@ -243,11 +255,12 @@ function Stat({ v, l }: { v: number; l: string }) {
 }
 
 // One row per person: tick = send, greeting = the name after "Hi" (empty gives just "Hi,"). Unticked = don't send.
-function PeopleTable({ rows, setRows, input, ghost }: {
+function PeopleTable({ rows, setRows, input, ghost, onRemove }: {
   rows: PRow[];
   setRows: (fn: PRow[] | ((r: PRow[]) => PRow[])) => void;
   input: React.CSSProperties;
   ghost: React.CSSProperties;
+  onRemove: (r: PRow) => void;
 }) {
   const [filter, setFilter] = useState("");
   const f = filter.trim().toLowerCase();
@@ -264,7 +277,7 @@ function PeopleTable({ rows, setRows, input, ghost }: {
       </div>
       <div style={{ maxHeight: 460, overflowY: "auto", fontSize: "0.9rem", color: "#cbd5e1" }}>
         {shown.map((r) => (
-          <div key={r.id} style={{ display: "grid", gridTemplateColumns: "auto minmax(0,1fr) 190px", gap: "0.6rem", alignItems: "center", padding: "0.2rem 0", opacity: r.on ? 1 : 0.45 }}>
+          <div key={r.id} style={{ display: "grid", gridTemplateColumns: "auto minmax(0,1fr) 190px auto", gap: "0.6rem", alignItems: "center", padding: "0.2rem 0", opacity: r.on ? 1 : 0.45 }}>
             <input type="checkbox" checked={r.on} onChange={(e) => patch(r.id, { on: e.target.checked })} title="Tick to send, untick for don't send" />
             <div style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {r.name} <span style={{ color: "#94a3b8" }}>· {r.sub}</span>
@@ -274,6 +287,7 @@ function PeopleTable({ rows, setRows, input, ghost }: {
               <input style={{ ...input, width: 110, padding: "0.25rem 0.5rem" }} value={r.greeting} onChange={(e) => patch(r.id, { greeting: e.target.value })} placeholder="(none)" />
               <span style={{ color: "#94a3b8" }}>,</span>
             </div>
+            <button style={{ ...ghost, padding: "0.15rem 0.5rem", fontSize: "0.8rem" }} title="Never email this person again (left the company, passed away…)" onClick={() => onRemove(r)}>Remove for good</button>
           </div>
         ))}
       </div>
