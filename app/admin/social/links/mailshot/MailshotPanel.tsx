@@ -15,10 +15,11 @@ type Summary = {
 const pct = (n: number, d: number) => (d ? ` (${Math.round((n / d) * 100)}%)` : "");
 
 export default function MailshotPanel({
-  initialCampaign, initialStats, subjects, previewHtml,
-}: { initialCampaign: string; initialStats: Stats | null; subjects: string[]; previewHtml: string }) {
+  initialCampaign, initialStats, initialBounces, subjects, previewHtml,
+}: { initialCampaign: string; initialStats: Stats | null; initialBounces: { name: string; email: string; reason: string | null }[]; subjects: string[]; previewHtml: string }) {
   const [campaign, setCampaign] = useState(initialCampaign);
   const [stats, setStats] = useState<Stats | null>(initialStats);
+  const [bounces, setBounces] = useState(initialBounces);
   const [list, setList] = useState("");
   const [includePersonal, setIncludePersonal] = useState(false);
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -36,7 +37,7 @@ export default function MailshotPanel({
   }
   async function refresh() {
     const res = await fetch(`/api/admin/mailshot/stats?campaign=${encodeURIComponent(campaign)}`);
-    if (res.ok) setStats((await res.json()).stats);
+    if (res.ok) { const d = await res.json(); setStats(d.stats); setBounces(d.bounces ?? []); }
   }
   const run = (fn: () => Promise<void>) => async () => {
     setBusy(true); setMessage(null);
@@ -125,6 +126,21 @@ export default function MailshotPanel({
         {s && <p style={{ marginTop: "0.6rem", color: "#94a3b8" }}>Sent today {s.sentToday} of {dailyCap}</p>}
         {message && <p className={message.error ? "social-compose-error" : "social-compose-success"} style={{ marginTop: "0.6rem" }}>{message.text}</p>}
       </section>
+
+      {bounces.length > 0 && (
+        <details style={box} open={s ? s.sent >= 20 && s.bounced / s.sent > 0.08 : false}>
+          <summary style={{ cursor: "pointer", fontWeight: 600, color: s && s.sent >= 20 && s.bounced / s.sent > 0.08 ? "#f87171" : "#e2e8f0" }}>
+            Bounced ({bounces.length}){s && s.sent ? ` · ${Math.round((s.bounced / s.sent) * 100)}% of sent` : ""}
+          </summary>
+          <table style={{ marginTop: "0.6rem", width: "100%", fontSize: "0.9rem", color: "#cbd5e1" }}>
+            <tbody>
+              {bounces.map((b) => (
+                <tr key={b.email}><td style={{ padding: "0.2rem 0.5rem 0.2rem 0" }}>{b.email}</td><td style={{ color: "#94a3b8" }}>{b.reason ?? "reason not recorded"}</td></tr>
+              ))}
+            </tbody>
+          </table>
+        </details>
+      )}
 
       <section style={box}>
         <iframe title="Email preview" srcDoc={previewHtml} style={{ width: "100%", height: 760, border: 0, background: "#fff", borderRadius: 6 }} />

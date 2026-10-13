@@ -103,6 +103,12 @@ async function handle(req: Request) {
   }
 
   const stats = await mailshotStats(campaign);
+  // Protect the sending address: if many have bounced, stop until the list has been cleaned.
+  if (stats.sent >= 25 && stats.bounced / stats.sent > 0.08) {
+    return NextResponse.json({
+      error: `Paused: ${stats.bounced} of ${stats.sent} bounced (over 8%). Check the bounced list and clean the list before sending more.`,
+    }, { status: 409 });
+  }
   const dailyCap = Math.min(Math.max(Number(body?.dailyCap) || 50, 1), HARD_DAILY_LIMIT);
   const room = dailyCap - stats.sentToday;
   if (room <= 0) {

@@ -31,7 +31,7 @@ export async function POST(req: Request) {
   const body = await req.text();
   if (!verify(body, req.headers, secret)) return NextResponse.json({ error: "Bad signature" }, { status: 401 });
 
-  const event = JSON.parse(body) as { type?: string; data?: { email_id?: string } };
+  const event = JSON.parse(body) as { type?: string; data?: { email_id?: string; bounce?: { type?: string; subType?: string; message?: string } } };
   const emailId = event.data?.email_id;
   if (!emailId) return NextResponse.json({ ok: true });
 
@@ -44,7 +44,18 @@ export async function POST(req: Request) {
       await sql`UPDATE tapcard_invite_sends SET opened_at = COALESCE(opened_at, now()) WHERE resend_id = ${emailId}`;
       break;
     case "email.bounced":
-      await sql`UPDATE tapcard_invite_sends SET bounced_at = COALESCE(bounced_at, now()) WHERE resend_id = ${emailId}`;
+      {
+        const b = event.data?.bounce;
+        const reason = [b?.type, b?.subType, b?.message].filter(Boolean).join(" · ").slice(0, 300) || null;
+        await sql`UPDATE tapcard_invite_sends SET bounced_at = COALESCE(bounced_at, now()), bounce_reason = COALESCE(${reason}, bounce_reason) WHERE resend_id = ${emailId}`;
+        // A permanent bounce means the address does not work: never try it again, in any campaign.
+        if (b?.type && /perm/i.test(b.type)) {
+          await sql`
+            UPDATE tapcard_invite_contacts SET do_not_contact = true
+            WHERE id = (SELECT contact_id FROM tapcard_invite_sends WHERE resend_id = ${emailId})
+          `;
+        }
+      }
       break;
     case "email.complained":
       // Marked as spam: never email them again.

@@ -44,6 +44,21 @@ function titleCase(s: string): string {
   return s.split(" ").map((w) => (w.length > 1 && w === w.toUpperCase() ? w[0] + w.slice(1).toLowerCase() : w)).join(" ");
 }
 
+
+const NOT_NAMES = new Set([...ROLE_LOCALS, "mr", "mrs", "ms", "dr", "the", "and", "group", "london", "uk", "ltd", "plc", "news", "email", "enquiry", "dept", "department", "admin", "web", "online"]);
+
+/// "charles.bond@x.com" -> "Charles". Only for first.last style addresses, never for initials, role words or
+/// a single run of letters ("gwlawson"), so a wrong name is unlikely; otherwise the greeting is just "Hi,".
+export function guessFirstName(email: string): string {
+  const local = email.split("@")[0].toLowerCase();
+  const parts = local.split(/[._-]/).filter(Boolean);
+  if (parts.length < 2) return "";
+  const first = parts[0];
+  if (!/^[a-z]{3,15}$/.test(first) || NOT_NAMES.has(first)) return "";
+  if (parts[parts.length - 1].length < 3 || NOT_NAMES.has(parts[parts.length - 1])) return "";
+  return first[0].toUpperCase() + first.slice(1);
+}
+
 /// Reads a pasted list or a CSV file's text. With a header row (email / first name / name / company columns) it
 /// reads by column; otherwise it takes every email address it finds on each line and treats the rest of the
 /// line as the name ("Jane Smith <jane@x.com>", "jane@x.com, Jane Smith", "Jane Smith jane@x.com"…).
@@ -78,7 +93,7 @@ export function parseMailshotList(text: string): MailshotRow[] {
       const firstName = tidyName(first >= 0 ? c[first] ?? "" : "");
       const lastName = tidyName(last >= 0 ? c[last] ?? "" : "");
       const name = tidyName(full >= 0 && c[full] ? c[full] : `${firstName} ${lastName}`);
-      rows.push({ email, firstName: titleCase(firstName || name.split(" ")[0] || ""), name: titleCase(name), company: tidyName(comp >= 0 ? c[comp] ?? "" : "") });
+      rows.push({ email, firstName: titleCase(firstName || name.split(" ")[0] || guessFirstName(email)), name: titleCase(name), company: tidyName(comp >= 0 ? c[comp] ?? "" : "") });
     }
     return rows;
   }
@@ -88,7 +103,11 @@ export function parseMailshotList(text: string): MailshotRow[] {
     let rest = line;
     for (const e of emails) rest = rest.replace(e, " ");
     const name = titleCase(tidyName(rest.replace(/[,;|]/g, " ")));
-    for (const e of emails) rows.push({ email: e.toLowerCase().replace(/[.,;]+$/, ""), firstName: name.split(" ")[0] ?? "", name, company: "" });
+    for (const e of emails) {
+      const address = e.toLowerCase().replace(/[.,;]+$/, "");
+      const first = emails.length === 1 && name ? name.split(" ")[0] : guessFirstName(address);
+      rows.push({ email: address, firstName: first, name: emails.length === 1 ? name : first, company: "" });
+    }
   }
   return rows;
 }
@@ -175,6 +194,18 @@ export type MailshotStats = {
   unsubscribed: number;
   complained: number;
 };
+
+export type BouncedRow = { name: string; email: string; reason: string | null };
+
+export async function mailshotBounces(campaign: string): Promise<BouncedRow[]> {
+  await ensureMailshotSchema();
+  return (await sql`
+    SELECT c.name, c.email, s.bounce_reason AS reason
+    FROM tapcard_invite_sends s JOIN tapcard_invite_contacts c ON c.id = s.contact_id
+    WHERE s.campaign = ${campaign} AND s.bounced_at IS NOT NULL
+    ORDER BY s.bounced_at DESC
+  `) as BouncedRow[];
+}
 
 export async function mailshotStats(campaign: string): Promise<MailshotStats> {
   await ensureMailshotSchema();
