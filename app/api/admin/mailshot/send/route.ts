@@ -115,7 +115,7 @@ async function handle(req: Request) {
     WHERE l.campaign = ${campaign} AND l.status = 'queued' AND NOT c.do_not_contact
       AND NOT EXISTS (SELECT 1 FROM tapcard_invite_sends s WHERE s.contact_id = c.id AND s.campaign = ${campaign})
     ORDER BY l.added_at, c.id LIMIT 1
-  `) as { relationship: string }[])[0]?.relationship ?? "business");
+  `) as { relationship: string }[])[0]?.relationship ?? "business";
   const kind = ((await sql`
     SELECT COUNT(*)::int AS sent, COUNT(s.bounced_at)::int AS bounced
     FROM tapcard_invite_sends s JOIN tapcard_mailshot_list l ON l.contact_id = s.contact_id AND l.campaign = s.campaign
