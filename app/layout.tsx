@@ -7,15 +7,15 @@ import "./globals.css";
 const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "AIERT Ltd – AI-Powered Financial Technology",
+  title: "Aiert Ltd – Simple productivity apps for iPhone and Android",
   description:
-    "AIERT Ltd is a UK-based artificial intelligence and financial technology company. We build intelligent platforms that empower investors and traders through data-driven insights.",
-  keywords: ["AIERT", "AI", "fintech", "financial technology", "MailBroom", "email cleaner", "UK", "investment", "trading platform"],
+    "Aiert Ltd is a UK company building simple productivity apps: TapCard, a free digital business card; PowerSearch, which searches every email account at once; and MailBroom, which cleans up your inbox.",
+  keywords: ["Aiert", "TapCard", "digital business card", "PowerSearch", "email search", "MailBroom", "email cleaner", "productivity apps", "iPhone", "Android", "UK"],
   metadataBase: new URL("https://www.aiert.co.uk"),
   openGraph: {
-    title: "AIERT Ltd – AI-Powered Financial Technology",
+    title: "Aiert Ltd – Simple productivity apps for iPhone and Android",
     description:
-      "UK-based AI & fintech company building intelligent platforms. Home of MailBroom — the AI-powered email cleaner.",
+      "TapCard (free digital business card), PowerSearch (search every email account at once) and MailBroom (clean up your inbox).",
     url: "https://www.aiert.co.uk",
     siteName: "AIERT Ltd",
     locale: "en_GB",
@@ -23,8 +23,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "AIERT Ltd – AI-Powered Financial Technology",
-    description: "UK-based AI & fintech company. Home of MailBroom.",
+    title: "Aiert Ltd – Simple productivity apps for iPhone and Android",
+    description: "TapCard (free digital business card), PowerSearch (search every email account at once) and MailBroom (clean up your inbox).",
   },
 };
 
