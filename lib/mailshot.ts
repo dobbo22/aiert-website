@@ -9,10 +9,10 @@ export const MAILSHOT_COMPANY_LINE =
   "Aiert Ltd, registered in England & Wales (No. 16587000), registered office 8 Clarendon Gardens, London, England, W9 1AY";
 
 export const MAILSHOT_SUBJECTS = [
-  "Your business card that never goes out of date",
-  "Meet someone, and everything about them fills itself in",
-  "Never lose a contact's details again",
-  "{FirstName}, 2 minutes to try something?",
+  "Tap a contact, see every email they've sent you",
+  "Imagine tapping a contact and seeing all their emails",
+  "Find any email from anyone in seconds",
+  "{FirstName}, your contacts and your inbox, finally connected",
 ];
 
 const PERSONAL_DOMAINS = new Set([
@@ -220,19 +220,21 @@ export function mailshotLinks(token: string): MailshotLinks {
   };
 }
 
-export const MAILSHOT_IMAGE = "https://www.aiert.co.uk/tapcard-guide/enhance.png";
+export const MAILSHOT_IMAGE = "https://www.aiert.co.uk/powersearch-guide/3-drill-down.png";
 
 export function mailshotText(firstName: string, links: MailshotLinks): string {
   const hi = firstName ? `Hi ${firstName},` : "Hi,";
   return `${hi}
 
-Quick one, as a past business contact. I've built two phone apps that work well together.
+Imagine tapping a contact and instantly seeing every email they've ever sent you, across all your email accounts. Then searching inside those emails for the invoice, the contract, the thing they said last March.
 
-TAPCARD is a digital business card. Share it with a QR code or a link and people save you in one tap, with no app needed on their side. When your job or number changes, everyone's copy updates itself.
+That's PowerSearch. It works with TapCard, a digital business card app, so every contact in TapCard is one tap away from all their emails.
 
-POWERSEARCH finds every email from any person across all your accounts. TapCard can then read their email signatures, on your phone only, and fill in the details you were missing: mobile number, job title, website, address.
+- One tap from a contact to all their emails, across Gmail, Outlook, Microsoft 365 and most other accounts
+- Search inside them: subject, message text, even attachments
+- Private: your emails stay on your phone
 
-TapCard is free for life for the first 1,000 users on each phone, and PowerSearch has a free 7-day trial.
+TapCard is also your digital business card. Share it with a QR code or a link and people save you in one tap, with no app needed on their side. It is free for life for the first 1,000 users on each phone, and PowerSearch has a free 7-day trial.
 
 Get the app: ${links.app}
 See how it works: ${links.how}
@@ -251,15 +253,20 @@ export function mailshotHtml(firstName: string, links: MailshotLinks): string {
   const hi = firstName ? `Hi ${esc(firstName)},` : "Hi,";
   const btn = "display:inline-block;background:#4c2f93;color:#ffffff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:10px;";
   const link = "color:#4c2f93;font-weight:600;";
+  const li = "margin:0 0 8px;";
   return `<!doctype html><html><body style="margin:0;padding:0;background:#ffffff;">
 <div style="max-width:560px;margin:0 auto;padding:24px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#1f2937;">
 <p style="margin:0 0 16px;">${hi}</p>
-<p style="margin:0 0 16px;">Quick one, as a past business contact. I've built two phone apps that work well together.</p>
-<p style="margin:0 0 16px;"><strong>TapCard</strong> is a digital business card. Share it with a QR code or a link and people save you in one tap, with no app needed on their side. When your job or number changes, everyone's copy updates itself.</p>
-<p style="margin:0 0 16px;"><strong>PowerSearch</strong> finds every email from any person across all your accounts. TapCard can then read their email signatures, on your phone only, and fill in the details you were missing: mobile number, job title, website, address.</p>
-<p style="margin:0 0 20px;">TapCard is <strong>free for life for the first 1,000 users</strong> on each phone, and PowerSearch has a free 7-day trial.</p>
+<p style="margin:0 0 16px;font-size:18px;line-height:1.5;"><strong>Imagine tapping a contact and instantly seeing every email they've ever sent you</strong>, across all your email accounts. Then searching inside those emails for the invoice, the contract, the thing they said last March.</p>
+<p style="margin:0 0 16px;">That's <strong>PowerSearch</strong>. It works with <strong>TapCard</strong>, a digital business card app, so every contact in TapCard is one tap away from all their emails.</p>
+<ul style="margin:0 0 20px;padding-left:20px;">
+<li style="${li}"><strong>One tap</strong> from a contact to all their emails, across Gmail, Outlook, Microsoft 365 and most other accounts</li>
+<li style="${li}"><strong>Search inside them:</strong> subject, message text, even attachments</li>
+<li style="${li}"><strong>Private:</strong> your emails stay on your phone</li>
+</ul>
+<p style="margin:0 0 20px;"><a href="${esc(links.video)}"><img src="${MAILSHOT_IMAGE}" alt="PowerSearch showing one contact's emails, searched for 'invoice'" width="240" style="width:240px;max-width:100%;border-radius:14px;border:1px solid #e5e7eb;"></a></p>
+<p style="margin:0 0 20px;">TapCard is also your digital business card. Share it with a QR code or a link and people save you in one tap, with no app needed on their side. It is <strong>free for life for the first 1,000 users</strong> on each phone, and PowerSearch has a free 7-day trial.</p>
 <p style="margin:0 0 20px;"><a href="${esc(links.app)}" style="${btn}">Get the app</a></p>
-<p style="margin:0 0 20px;"><a href="${esc(links.video)}"><img src="${MAILSHOT_IMAGE}" alt="TapCard: a contact card with details filled in from their emails" width="260" style="width:260px;max-width:100%;border-radius:14px;border:1px solid #e5e7eb;"></a></p>
 <p style="margin:0 0 24px;"><a href="${esc(links.how)}" style="${link}">See how it works</a> &nbsp;·&nbsp; <a href="${esc(links.video)}" style="${link}">Watch the short demo</a></p>
 <p style="margin:0 0 4px;">Martin Dobson</p>
 <p style="margin:0 0 28px;">Aiert Ltd</p>
