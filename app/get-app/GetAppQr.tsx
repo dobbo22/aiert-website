@@ -54,7 +54,7 @@ export default function GetAppQr() {
   const url = platform && app ? APPS[app][platform] : null;
   useEffect(() => {
     if (!url) { setSvg(""); return; }
-    QRCode.toString(url, { type: "svg", errorCorrectionLevel: "M", margin: 0, color: { dark: "#000000", light: "#ffffff" } })
+    QRCode.toString(url, { type: "svg", errorCorrectionLevel: "H", margin: 0, color: { dark: "#000000", light: "#ffffff" } })
       .then(setSvg)
       .catch(() => setSvg(""));
   }, [url]);
@@ -119,12 +119,22 @@ export default function GetAppQr() {
                 <div className="text-sm">{platform === "apple" ? "App Store" : "Google Play"}</div>
               </div>
             </div>
-            <div
-              role="img"
-              aria-label={`QR code for ${APPS[app].name} on ${platform === "apple" ? "the App Store" : "Google Play"}`}
-              className="mx-auto mt-4 aspect-square w-full max-w-[22rem] [&>svg]:h-full [&>svg]:w-full"
-              dangerouslySetInnerHTML={{ __html: svg }}
-            />
+            <div className="relative mx-auto mt-4 aspect-square w-full max-w-[22rem]">
+              <div
+                role="img"
+                aria-label={`QR code for ${APPS[app].name} on ${platform === "apple" ? "the App Store" : "Google Play"}`}
+                className="h-full w-full [&>svg]:h-full [&>svg]:w-full"
+                dangerouslySetInnerHTML={{ __html: svg }}
+              />
+              {/* The app's icon in the middle; the code has the highest error correction, so it still scans. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={APPS[app].icon}
+                alt=""
+                className="absolute left-1/2 top-1/2 h-[21%] w-[21%] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-[1.5%]"
+              />
+            </div>
+            <p className="mt-2 text-sm font-semibold">{APPS[app].name} from AIERT</p>
             <p className="mt-4 text-base font-semibold">Point your phone camera at the code</p>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
