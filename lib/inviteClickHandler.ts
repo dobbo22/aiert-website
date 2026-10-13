@@ -24,7 +24,8 @@ const TWO_YEARS = 60 * 60 * 24 * 365 * 2;
 export async function handleInviteClick(req: NextRequest, token: string, source: InviteSource) {
   // ?to=how / ?to=video: the mailshot's "See how it works" and demo links — logged as clicks, then sent to those pages.
   const to = new URL(req.url).searchParams.get("to");
-  const target = to === "how" ? "how" : to === "video" ? "video" : "app";
+  // ?to=guide (restaurant email): the guide page with the restaurant demo video, counted as a "video" click.
+  const target = to === "how" ? "how" : to === "video" || to === "guide" ? "video" : "app";
   const ua = req.headers.get("user-agent") ?? "";
   const bot = isBotUserAgent(ua);
   const platform = platformFromUserAgent(ua);
@@ -52,7 +53,7 @@ export async function handleInviteClick(req: NextRequest, token: string, source:
   if (!bot && platform === "android") destination = playStoreUrl(campaign, storeChannel);
 
   if (target === "how") destination = `${INVITE_LINK_ORIGIN}/how-it-works`;
-  if (target === "video") destination = `${INVITE_LINK_ORIGIN}/`;
+  if (target === "video") destination = to === "guide" ? `${INVITE_LINK_ORIGIN}/guide` : `${INVITE_LINK_ORIGIN}/`;
   const res = NextResponse.redirect(destination, 302);
   res.headers.set("Cache-Control", "no-store");
   if (!existingVisitor && !bot) {

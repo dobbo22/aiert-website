@@ -465,7 +465,7 @@ TapCard is free for life for the first 1,000 users.
 
 Get TapCard: ${links.app}
 See how it works: ${links.how}
-See everything it can do (with a short demo): ${links.video}
+Watch the 1-minute restaurant demo: ${links.app}?to=guide
 
 Martin Dobson
 Aiert Ltd
@@ -504,7 +504,7 @@ export function restaurantHtml(name: string, links: MailshotLinks, cardImageUrl:
 </div>
 <p style="margin:0 0 20px;">TapCard is <strong>free for life for the first 1,000 users</strong>.</p>
 <p style="margin:0 0 20px;"><a href="${esc(links.app)}" style="${btn}">Get TapCard</a></p>
-<p style="margin:0 0 24px;"><a href="${esc(links.how)}" style="${link}">See how it works</a> &nbsp;·&nbsp; <a href="${esc(links.video)}" style="${link}">See everything it can do</a></p>
+<p style="margin:0 0 24px;"><a href="${esc(links.how)}" style="${link}">See how it works</a> &nbsp;·&nbsp; <a href="${esc(links.app + '?to=guide')}" style="${link}">Watch the 1-minute demo</a></p>
 <p style="margin:0 0 4px;">Martin Dobson</p>
 <p style="margin:0 0 28px;">Aiert Ltd</p>
 <p style="margin:0;font-size:12px;line-height:1.5;color:#6b7280;">You're receiving this because ${esc(footerReason("restaurant"))}. ${esc(MAILSHOT_COMPANY_LINE)}. <a href="https://www.aiert.co.uk/privacy" style="color:#6b7280;">Privacy</a><br>Not interested? <a href="${esc(links.unsubscribe)}" style="color:#6b7280;">Unsubscribe here</a> and I won't email you again.</p>
