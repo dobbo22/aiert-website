@@ -458,6 +458,9 @@ I made a sample TapCard for ${name || "your restaurant"}: one card with your pho
 - Change your details once and every saved copy updates itself (new menu, new hours)
 - No app needed on the customer's side
 
+Free marketing built in: special offers
+Everyone who saves your card becomes someone you can reach, with no mailing list to build. Post an offer from your card, for example "Free dessert with any main", with an end date and a limit if you like. People who have your card see it in TapCard, tap Claim, and get their own one-off QR code. When they show it, scan it with your phone camera, type your staff PIN, and it is marked as used, so it can never be used twice. You see how many people claimed and how many came in.
+
 TapCard is free for life for the first 1,000 users.
 
 Get TapCard: ${links.app}
@@ -489,6 +492,16 @@ export function restaurantHtml(name: string, links: MailshotLinks, cardImageUrl:
 <li style="${li}">Change your details once and <strong>every saved copy updates itself</strong> (new menu, new hours)</li>
 <li style="${li}">No app needed on the customer's side</li>
 </ul>
+<div style="margin:0 0 20px;padding:16px 18px;background:#f5f3ff;border-radius:12px;">
+<p style="margin:0 0 8px;font-size:17px;"><strong>Free marketing built in: special offers</strong></p>
+<p style="margin:0 0 10px;">Everyone who saves your card becomes someone you can reach, with no mailing list to build.</p>
+<ol style="margin:0;padding-left:20px;">
+<li style="${li}"><strong>Post an offer</strong> from your card, such as &ldquo;Free dessert with any main&rdquo;, with an end date and a limit if you like.</li>
+<li style="${li}">People who have your card <strong>see it in TapCard</strong>, tap Claim, and get their own <strong>one-off QR code</strong>.</li>
+<li style="${li}">When they show it, <strong>scan it with your phone camera</strong>, type your staff PIN, and it is marked as used. It can never be used twice.</li>
+<li style="margin:0;">You see <strong>how many claimed</strong> and how many came in.</li>
+</ol>
+</div>
 <p style="margin:0 0 20px;">TapCard is <strong>free for life for the first 1,000 users</strong>.</p>
 <p style="margin:0 0 20px;"><a href="${esc(links.app)}" style="${btn}">Get TapCard</a></p>
 <p style="margin:0 0 24px;"><a href="${esc(links.how)}" style="${link}">See how it works</a> &nbsp;·&nbsp; <a href="${esc(links.video)}" style="${link}">See everything it can do</a></p>
