@@ -31,6 +31,7 @@ export interface TapCardRecord {
   edit_token_hash: string | null;
   view_count: number;
   save_count: number;
+  qr_view_count: number;
   /// Wallet pass design: "artwork" (default), "photo" or "brand" — lib/tapcardPassArt.ts.
   pass_style: string;
   /// The "brand" style's gradient/accent colour, e.g. "#1a73e8" — extracted
@@ -46,7 +47,7 @@ export interface TapCardRecord {
 /// pass_style is optional: app builds that predate it don't send one, and
 /// an update without it keeps the card's current style. brand_color is
 /// never accepted from the client at all — see lib/siteBrandColor.ts.
-type TapCardInput = Omit<TapCardRecord, "id" | "photo_url" | "edit_token_hash" | "view_count" | "save_count" | "pass_style" | "brand_color" | "updated_at" | "links"> & {
+type TapCardInput = Omit<TapCardRecord, "id" | "photo_url" | "edit_token_hash" | "view_count" | "save_count" | "qr_view_count" | "pass_style" | "brand_color" | "updated_at" | "links"> & {
   photo_url?: string | null;
   links?: string;
   pass_style?: string;
@@ -81,6 +82,8 @@ function ensureSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS grouping_id TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS view_count INTEGER NOT NULL DEFAULT 0`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS save_count INTEGER NOT NULL DEFAULT 0`)
+      // How many of the views came through the QR code link (/s/<id>) rather than a plain card link.
+      .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS qr_view_count INTEGER NOT NULL DEFAULT 0`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS twitter_url TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS instagram_url TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS facebook_url TEXT NOT NULL DEFAULT ''`)
@@ -231,9 +234,17 @@ export async function deleteCard(id: string): Promise<boolean> {
 // Fire-and-forget from the public page/vcard routes (see app/tapcard/c/[id]) —
 // callers wrap these in next/server's after() so the visitor's response isn't
 // held up by the write, and a failed increment never breaks the page itself.
-export async function incrementViewCount(id: string): Promise<void> {
+export async function incrementViewCount(id: string, viaQr = false): Promise<void> {
   await ensureSchema();
-  await sql`UPDATE tapcard_cards SET view_count = view_count + 1 WHERE id = ${id}`;
+  await sql`UPDATE tapcard_cards SET view_count = view_count + 1, qr_view_count = qr_view_count + ${viaQr ? 1 : 0} WHERE id = ${id}`;
+}
+
+/// Totals across every card: views (and how many came from a QR code), and saves.
+export async function cardPageTotals(): Promise<{ cards: number; views: number; qrViews: number; saves: number }> {
+  await ensureSchema();
+  const rows = (await sql`SELECT COUNT(*)::int AS cards, COALESCE(SUM(view_count),0)::int AS views, COALESCE(SUM(qr_view_count),0)::int AS qr_views, COALESCE(SUM(save_count),0)::int AS saves FROM tapcard_cards`) as { cards: number; views: number; qr_views: number; saves: number }[];
+  const r = rows[0];
+  return { cards: r.cards, views: r.views, qrViews: r.qr_views, saves: r.saves };
 }
 
 export async function incrementSaveCount(id: string): Promise<void> {

@@ -1,6 +1,7 @@
 import sql from "@/lib/db";
 import { campaignToken, ensureInviteSchema } from "@/lib/tapcardInvites";
 import { FREE_PLACES, ladderStatus } from "@/lib/tapcardFounders";
+import { cardPageTotals } from "@/lib/tapcardDb";
 import ResetSendButton from "./ResetSendButton";
 import StoreStatsInput from "./StoreStatsInput";
 
@@ -46,9 +47,11 @@ export default async function TrackInvitesPage() {
   let spreaders: SpreaderRow[] = [];
   let iosLadder: Awaited<ReturnType<typeof ladderStatus>> | null = null;
   let androidLadder: Awaited<ReturnType<typeof ladderStatus>> | null = null;
+  let cardTotals: Awaited<ReturnType<typeof cardPageTotals>> | null = null;
   let error: string | null = null;
 
   try {
+    cardTotals = await cardPageTotals().catch(() => null);
     await ensureInviteSchema();
     [iosLadder, androidLadder] = await Promise.all([ladderStatus("ios"), ladderStatus("android")]);
     [channels, campaigns, stores, sends, spreaders] = (await Promise.all([
@@ -144,6 +147,30 @@ export default async function TrackInvitesPage() {
           <span className="admin-stat-label">Installs reported by the stores</span>
         </div>
       </div>
+
+      {cardTotals && (
+        <>
+          <h2 className="admin-subtitle invite-h2">Card page opens</h2>
+          <div className="admin-stats">
+            <div className="admin-stat">
+              <span className="admin-stat-value">{cardTotals.views}</span>
+              <span className="admin-stat-label">Views across {cardTotals.cards} cards (people only, not link previews)</span>
+            </div>
+            <div className="admin-stat">
+              <span className="admin-stat-value">{cardTotals.qrViews}</span>
+              <span className="admin-stat-label">From scanning a QR code ({pct(cardTotals.qrViews, cardTotals.views)})</span>
+            </div>
+            <div className="admin-stat">
+              <span className="admin-stat-value">{Math.max(0, cardTotals.views - cardTotals.qrViews)}</span>
+              <span className="admin-stat-label">From a card link</span>
+            </div>
+            <div className="admin-stat">
+              <span className="admin-stat-value">{cardTotals.saves}</span>
+              <span className="admin-stat-label">Saved into a contacts list ({pct(cardTotals.saves, cardTotals.views)})</span>
+            </div>
+          </div>
+        </>
+      )}
 
       <h2 className="admin-subtitle invite-h2">By medium</h2>
       <div className="admin-table-wrap">

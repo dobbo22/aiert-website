@@ -87,7 +87,10 @@ export default async function CardPage({
   // Counted here rather than via a client-side beacon so it also captures
   // link previews / crawlers minus render — acceptable for a rough "how many
   // times has this been opened" number, not a precise unique-visitor metric.
-  after(() => incrementViewCount(id));
+  // Robots (link previews, search engines) are not people looking at the card.
+  const viewUa = requestHeaders.get("user-agent") ?? "";
+  const isRobot = !viewUa || /bot|crawl|spider|preview|whatsapp|facebookexternalhit|slurp|headless|lighthouse|googleimageproxy|linkpresentation|python|curl|wget/i.test(viewUa);
+  if (!isRobot) after(() => incrementViewCount(id, via === "qr"));
   // A card link sent to one person (it carries their personal code): note that they opened it, so the owner
   // can see "Opened". Link-preview and search robots are ignored, or every send would look opened at once.
   const ua = requestHeaders.get("user-agent") ?? "";
