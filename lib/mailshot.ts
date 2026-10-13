@@ -137,6 +137,15 @@ export function ensureMailshotSchema(): Promise<unknown> {
       // The name used in "Hi …," (null = use the contact's first name; empty = just "Hi,"), and queued or skipped (don't send).
       .then(() => sql`ALTER TABLE tapcard_mailshot_list ADD COLUMN IF NOT EXISTS greeting TEXT`)
       .then(() => sql`ALTER TABLE tapcard_mailshot_list ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'queued'`)
+      // Anyone whose address bounced for good (anything but an explicit temporary bounce) is never emailed again,
+      // in any campaign or on a re-import.
+      .then(() => sql`
+        UPDATE tapcard_invite_contacts SET do_not_contact = true
+        WHERE NOT do_not_contact AND id IN (
+          SELECT contact_id FROM tapcard_invite_sends
+          WHERE bounced_at IS NOT NULL AND COALESCE(bounce_reason, '') NOT ILIKE 'transient%'
+        )
+      `)
       // One-off repair: contacts imported from a pasted list got an email-like fragment as their name.
       .then(async () => {
         const bad = (await sql`SELECT id, email FROM tapcard_invite_contacts WHERE first_name LIKE '%@%' OR name LIKE '%@%'`) as { id: number; email: string }[];
@@ -322,7 +331,7 @@ export async function mailshotStats(campaign: string): Promise<MailshotStats> {
       COUNT(DISTINCT s.id) FILTER (WHERE EXISTS (SELECT 1 FROM tapcard_invite_clicks k WHERE k.send_id = s.id AND k.target = 'app'))::int AS clicked_app,
       COUNT(DISTINCT s.id) FILTER (WHERE EXISTS (SELECT 1 FROM tapcard_invite_clicks k WHERE k.send_id = s.id AND k.target = 'how'))::int AS clicked_how,
       COUNT(DISTINCT s.id) FILTER (WHERE EXISTS (SELECT 1 FROM tapcard_invite_clicks k WHERE k.send_id = s.id AND k.target = 'video'))::int AS clicked_video,
-      COUNT(DISTINCT s.id) FILTER (WHERE c.do_not_contact)::int AS unsubscribed
+      COUNT(DISTINCT s.id) FILTER (WHERE c.do_not_contact AND s.bounced_at IS NULL)::int AS unsubscribed
     FROM tapcard_invite_sends s
     JOIN tapcard_invite_contacts c ON c.id = s.contact_id
     WHERE s.campaign = ${campaign}
