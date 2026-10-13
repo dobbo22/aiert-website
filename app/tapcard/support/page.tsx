@@ -60,6 +60,7 @@ export default function TapCardSupportPage() {
       <section>
         <h2>Common questions</h2>
         <ul>
+          <li><strong>Can I see where my card went?</strong> When you send your card to someone from your contacts, their page in TapCard shows how it was sent (WhatsApp, email or text message) and when, and later <strong>Opened</strong> with the date once they open the link, then <strong>Accepted</strong> if they share their details back. TapCard opens WhatsApp, your mail app or Messages with the message ready for you to send, so it can show that you started the send but cannot see inside those apps. The message includes a link to your card and a link to get the app.</li>
           <li><strong>Is TapCard free?</strong> It is free to download. The first 1,000 people on iPhone and the first 1,000 on Android get TapCard free for life. After that, sharing your card needs a small one-off unlock (from £0.99, no subscription). Saving other people&apos;s cards stays free.</li>
           <li><strong>What does the other person see?</strong> Only what is on the card you share: your name, job, company and the contact details and links you filled in. They never see your notes or categories for other people.</li>
           <li><strong>Do they need the app?</strong> No. Your card opens in their browser and they tap Save to save you. On a phone they are also pointed to the app so they can send theirs back.</li>
