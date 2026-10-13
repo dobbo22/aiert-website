@@ -1,0 +1,72 @@
+TITLE: You met them last month. Where did you leave it? How TapCard and PowerSearch work together
+
+SUBTITLE: A digital business card and a multi-account email finder, joined with one tap.
+
+---
+
+[Paste this link on its own line at the very top, as the hero video]
+https://www.youtube.com/watch?v=5hUSzlbZ9nw
+
+You meet someone at an event. You swap details. A few weeks later you're about to call them, and you can't remember what you agreed last time. The email is in there somewhere. But which of your three inboxes?
+
+That gap, between "we met" and "I know where we left off", is why we built two small apps and joined them together.
+
+STEP 1: SHARE YOUR DETAILS WITHOUT THE FUMBLING (TAPCARD)
+
+TapCard is a digital business card for your phone, and it's free to download.
+
+• Show your QR code and they scan it with their camera. Your card opens in their browser and they can save you to their contacts in one tap. They don't need the app.
+• Or send a link, or add your card to Apple Wallet or Google Wallet so it's always one tap away.
+• Keep a Business card and a Personal card. Your company logo appears automatically, and you can add LinkedIn, X, Instagram and Facebook.
+• When someone sends you their card, send yours back in a tap. Or pick people from your phone's contacts and send your card by WhatsApp, text or email.
+
+TapCard in 30 seconds:
+https://www.youtube.com/watch?v=oLD0sDIsV7I
+
+STEP 2: FIND THE EMAIL IN SECONDS (POWERSEARCH)
+
+Most of us have mail spread across Gmail, Microsoft 365 or Outlook, iCloud and an old work account. PowerSearch searches all of them at once.
+
+• Add every account. Gmail, Microsoft 365, iCloud, or any IMAP mailbox.
+• One search box. Filter by sender, subject or anything, narrow by date with a tap, and use operators like from:, has:pdf and after:.
+• Results are grouped by sender, so you find the person first and the message second.
+• Reply, Reply All or Forward from your own email app.
+
+It's private by design. PowerSearch syncs headers only: sender, subject, date and folder. It never downloads or stores an email's body. That's fetched live, the moment you open a message. There's no PowerSearch server, so nothing passes through us.
+
+[IMAGE: PowerSearch screenshot: search results grouped by sender (play/screenshots/2-sender-results.png)]
+
+BETTER TOGETHER
+
+Here's the bit we're most pleased with. Open any contact in TapCard and tap "Find emails in PowerSearch". PowerSearch opens, locked to that person, showing every email from every address they have saved, across all your accounts. It works on iPhone and Android.
+
+[IMAGE: a TapCard contact screen showing the "Find emails in PowerSearch" button, beside the PowerSearch result (play/screenshots/3-drill-down.png)]
+
+WHERE IT HELPS
+
+• Before a meeting: see the last thread and what was agreed.
+• After an event: you've just swapped cards, so check what history you already have with them.
+• Chasing an invoice or a contract: every attachment from one person, in one list.
+• Taking over a client: find the full conversation history without asking around.
+• Recruiting and sales: check what you've already said to someone before you reach out again.
+
+TapCard in action:
+https://www.youtube.com/watch?v=NKz19zbdGCY
+
+WHY WE BUILT IT THIS WAY
+
+We're a small team and we're early, so we made choices we can stand behind. TapCard is free to download. PowerSearch has a free 7-day trial, then one one-time purchase. No subscription. Your email stays between your phone and your mail provider.
+
+GET THEM
+
+TapCard (free to download, and free for life for the first 1,000 users)
+• iPhone: https://apps.apple.com/app/id6816003159
+• Android: https://play.google.com/store/apps/details?id=com.mailbroom.tapcard
+
+PowerSearch
+• iPhone: https://apps.apple.com/app/powersearch/id6807772868
+• Android: https://play.google.com/store/apps/details?id=mailbroom.app
+
+If this is useful, follow me and AIERT for what we build next. And I'd like to know: what's the one email you can never find when you need it? Tell me in the comments. If you know someone who spends their week hunting through inboxes, share this with them.
+
+#ProductivityTools #Networking #EmailProductivity #Startups #DigitalBusinessCard
