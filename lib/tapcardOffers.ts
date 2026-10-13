@@ -1,0 +1,238 @@
+// One special offer per card (cards are public; the owner's edit token sets it).
+// Anyone with the card can claim it and gets a one-off code (shown as a QR code
+// in the app, opening tapcard.aiert.co.uk/o/<code>). The business marks the
+// code as used by entering the offer's staff PIN on that page — no accounts.
+import crypto from "crypto";
+import sql from "@/lib/db";
+import { hashSecret } from "@/lib/tapcardAuth";
+
+export interface OfferRow {
+  id: number;
+  card_id: string;
+  text: string;
+  expires_at: string | null;
+  max_claims: number | null;
+  pin_hash: string;
+  pin_fails: number;
+  created_at: string;
+}
+
+let ready: Promise<unknown> | null = null;
+function ensureOfferSchema(): Promise<unknown> {
+  if (!ready) {
+    ready = sql`
+      CREATE TABLE IF NOT EXISTS tapcard_offers (
+        id BIGSERIAL PRIMARY KEY,
+        card_id TEXT NOT NULL,
+        text TEXT NOT NULL,
+        expires_at TIMESTAMPTZ,
+        max_claims INTEGER,
+        pin_hash TEXT NOT NULL,
+        pin_fails INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )
+    `
+      .then(() => sql`CREATE INDEX IF NOT EXISTS tapcard_offers_card ON tapcard_offers (card_id)`)
+      .then(() => sql`
+        CREATE TABLE IF NOT EXISTS tapcard_offer_claims (
+          id BIGSERIAL PRIMARY KEY,
+          offer_id BIGINT NOT NULL,
+          claimant_hash TEXT NOT NULL,
+          code TEXT NOT NULL UNIQUE,
+          claimed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          redeemed_at TIMESTAMPTZ,
+          UNIQUE (offer_id, claimant_hash)
+        )
+      `)
+      .catch((err) => {
+        ready = null;
+        throw err;
+      });
+  }
+  return ready;
+}
+
+export const MAX_OFFER_TEXT = 140;
+const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+function newCode(): string {
+  const bytes = crypto.randomBytes(10);
+  return Array.from(bytes, (b) => CODE_ALPHABET[b % CODE_ALPHABET.length]).join("");
+}
+
+function pinHash(offerSalt: string, pin: string): string {
+  return hashSecret(`tapcard-offer-pin:${offerSalt}:${pin}`);
+}
+
+export function isValidPin(pin: unknown): pin is string {
+  return typeof pin === "string" && /^\d{4,6}$/.test(pin);
+}
+
+/// The card's offer, or null if none / expired.
+export async function currentOffer(cardId: string, includeExpired = false): Promise<OfferRow | null> {
+  await ensureOfferSchema();
+  const row = ((await sql`
+    SELECT * FROM tapcard_offers WHERE card_id = ${cardId} ORDER BY id DESC LIMIT 1
+  `) as OfferRow[])[0];
+  if (!row) return null;
+  if (!includeExpired && row.expires_at && new Date(row.expires_at).getTime() < Date.now()) return null;
+  return row;
+}
+
+export async function offerCounts(offerId: number): Promise<{ claimed: number; redeemed: number }> {
+  const r = ((await sql`
+    SELECT COUNT(*)::int AS claimed, COUNT(redeemed_at)::int AS redeemed
+    FROM tapcard_offer_claims WHERE offer_id = ${offerId}
+  `) as { claimed: number; redeemed: number }[])[0];
+  return r ?? { claimed: 0, redeemed: 0 };
+}
+
+/// What the public card JSON carries: no PIN, nothing about who claimed.
+export async function publicOffer(cardId: string) {
+  const o = await currentOffer(cardId);
+  if (!o) return null;
+  const { claimed } = await offerCounts(o.id);
+  return {
+    id: o.id,
+    text: o.text,
+    expiresAt: o.expires_at,
+    claimsLeft: o.max_claims == null ? null : Math.max(0, o.max_claims - claimed),
+    postedAt: o.created_at,
+  };
+}
+
+export interface OfferInput {
+  text: unknown;
+  expiresAt?: unknown;
+  maxClaims?: unknown;
+  pin: unknown;
+}
+
+/// Replaces the card's offer. Old claims stay on the old offer row, so they stop
+/// working the moment a new offer is posted.
+export async function setOffer(cardId: string, input: OfferInput): Promise<{ ok: true; id: number } | { ok: false; error: string }> {
+  await ensureOfferSchema();
+  const text = typeof input.text === "string" ? input.text.trim().slice(0, MAX_OFFER_TEXT) : "";
+  if (!text) return { ok: false, error: "offer text is required" };
+  if (!isValidPin(input.pin)) return { ok: false, error: "pin must be 4 to 6 digits" };
+  let expires: string | null = null;
+  if (typeof input.expiresAt === "string" && input.expiresAt) {
+    const t = new Date(input.expiresAt);
+    if (Number.isNaN(t.getTime())) return { ok: false, error: "expiresAt is not a date" };
+    if (t.getTime() < Date.now()) return { ok: false, error: "expiresAt is in the past" };
+    expires = t.toISOString();
+  }
+  let max: number | null = null;
+  if (input.maxClaims != null && input.maxClaims !== "") {
+    const n = Number(input.maxClaims);
+    if (!Number.isInteger(n) || n < 1 || n > 100000) return { ok: false, error: "maxClaims must be a whole number from 1" };
+    max = n;
+  }
+  const salt = crypto.randomBytes(8).toString("hex");
+  const hash = `${salt}:${pinHash(salt, input.pin)}`;
+  const row = ((await sql`
+    INSERT INTO tapcard_offers (card_id, text, expires_at, max_claims, pin_hash)
+    VALUES (${cardId}, ${text}, ${expires}, ${max}, ${hash})
+    RETURNING id
+  `) as { id: number }[])[0];
+  return { ok: true, id: row.id };
+}
+
+export async function clearOffers(cardId: string): Promise<void> {
+  await ensureOfferSchema();
+  // Offer rows are kept (so old codes read "no longer valid"); a cleared state is an expired marker.
+  await sql`UPDATE tapcard_offers SET expires_at = now() - interval '1 second' WHERE card_id = ${cardId}`;
+}
+
+export type ClaimResult =
+  | { ok: true; code: string; redeemed: boolean }
+  | { ok: false; error: "no_offer" | "sold_out" };
+
+/// Same claimant (a random id the app keeps) always gets the same code back.
+export async function claimOffer(cardId: string, claimant: string): Promise<ClaimResult> {
+  await ensureOfferSchema();
+  const offer = await currentOffer(cardId);
+  if (!offer) return { ok: false, error: "no_offer" };
+  const who = hashSecret(`tapcard-claimant:${claimant}`);
+  const existing = ((await sql`
+    SELECT code, redeemed_at FROM tapcard_offer_claims WHERE offer_id = ${offer.id} AND claimant_hash = ${who}
+  `) as { code: string; redeemed_at: string | null }[])[0];
+  if (existing) return { ok: true, code: existing.code, redeemed: !!existing.redeemed_at };
+  if (offer.max_claims != null) {
+    const { claimed } = await offerCounts(offer.id);
+    if (claimed >= offer.max_claims) return { ok: false, error: "sold_out" };
+  }
+  const code = newCode();
+  const inserted = (await sql`
+    INSERT INTO tapcard_offer_claims (offer_id, claimant_hash, code)
+    VALUES (${offer.id}, ${who}, ${code})
+    ON CONFLICT (offer_id, claimant_hash) DO NOTHING
+    RETURNING code
+  `) as { code: string }[];
+  if (inserted.length) return { ok: true, code, redeemed: false };
+  const again = ((await sql`
+    SELECT code, redeemed_at FROM tapcard_offer_claims WHERE offer_id = ${offer.id} AND claimant_hash = ${who}
+  `) as { code: string; redeemed_at: string | null }[])[0];
+  return { ok: true, code: again.code, redeemed: !!again.redeemed_at };
+}
+
+export interface CodeStatus {
+  state: "valid" | "used" | "expired" | "replaced" | "unknown";
+  offerText?: string;
+  cardId?: string;
+  cardName?: string;
+  expiresAt?: string | null;
+  redeemedAt?: string | null;
+}
+
+export async function codeStatus(code: string): Promise<CodeStatus> {
+  await ensureOfferSchema();
+  if (!/^[A-Z0-9]{10}$/.test(code)) return { state: "unknown" };
+  const row = ((await sql`
+    SELECT c.redeemed_at, o.id AS offer_id, o.card_id, o.text, o.expires_at,
+           (SELECT MAX(id) FROM tapcard_offers WHERE card_id = o.card_id) AS latest_id,
+           (SELECT COALESCE(NULLIF(company, ''), name) FROM tapcard_cards WHERE id = o.card_id) AS card_name
+    FROM tapcard_offer_claims c JOIN tapcard_offers o ON o.id = c.offer_id
+    WHERE c.code = ${code}
+  `) as {
+    redeemed_at: string | null; offer_id: number; card_id: string; text: string;
+    expires_at: string | null; latest_id: number; card_name: string | null;
+  }[])[0];
+  if (!row) return { state: "unknown" };
+  const base = { offerText: row.text, cardId: row.card_id, cardName: row.card_name ?? "", expiresAt: row.expires_at, redeemedAt: row.redeemed_at };
+  if (row.redeemed_at) return { state: "used", ...base };
+  if (Number(row.latest_id) !== Number(row.offer_id)) return { state: "replaced", ...base };
+  if (row.expires_at && new Date(row.expires_at).getTime() < Date.now()) return { state: "expired", ...base };
+  return { state: "valid", ...base };
+}
+
+const MAX_PIN_FAILS = 10;
+
+export type RedeemResult =
+  | { ok: true; offerText: string }
+  | { ok: false; error: "bad_pin" | "locked" | "not_valid"; state?: CodeStatus["state"] };
+
+export async function redeemCode(code: string, pin: unknown): Promise<RedeemResult> {
+  const status = await codeStatus(code);
+  if (status.state !== "valid") return { ok: false, error: "not_valid", state: status.state };
+  const o = ((await sql`
+    SELECT o.id, o.pin_hash, o.pin_fails FROM tapcard_offers o
+    JOIN tapcard_offer_claims c ON c.offer_id = o.id WHERE c.code = ${code}
+  `) as { id: number; pin_hash: string; pin_fails: number }[])[0];
+  if (!o) return { ok: false, error: "not_valid", state: "unknown" };
+  if (o.pin_fails >= MAX_PIN_FAILS) return { ok: false, error: "locked" };
+  const [salt, stored] = o.pin_hash.split(":");
+  const given = isValidPin(pin) ? pinHash(salt, pin) : "";
+  const match = given.length === stored.length && crypto.timingSafeEqual(Buffer.from(given), Buffer.from(stored));
+  if (!match) {
+    await sql`UPDATE tapcard_offers SET pin_fails = pin_fails + 1 WHERE id = ${o.id}`;
+    return { ok: false, error: "bad_pin" };
+  }
+  // Atomic: only the first redeem of a code succeeds.
+  const done = (await sql`
+    UPDATE tapcard_offer_claims SET redeemed_at = now() WHERE code = ${code} AND redeemed_at IS NULL RETURNING id
+  `) as { id: number }[];
+  if (!done.length) return { ok: false, error: "not_valid", state: "used" };
+  await sql`UPDATE tapcard_offers SET pin_fails = 0 WHERE id = ${o.id}`;
+  return { ok: true, offerText: status.offerText ?? "" };
+}
