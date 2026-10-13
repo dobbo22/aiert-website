@@ -21,6 +21,8 @@ export default function MailshotPanel({
   const [stats, setStats] = useState<Stats | null>(initialStats);
   const [bounces, setBounces] = useState(initialBounces);
   const [includePersonalContacts, setIncludePersonalContacts] = useState(false);
+  const [picked, setPicked] = useState<Set<number>>(new Set());
+  const [testWording, setTestWording] = useState<"business" | "personal">("business");
   const [cands, setCands] = useState<{ total: number; ok: { id: number; name: string; email: string; company: string }[]; personal: number; role: number; invalid: number } | null>(null);
   const [list, setList] = useState("");
   const [includePersonal, setIncludePersonal] = useState(false);
@@ -52,10 +54,11 @@ export default function MailshotPanel({
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? "Couldn't load");
     setCands(data.candidates);
+    setPicked(new Set((data.candidates.ok as { id: number }[]).map((r) => r.id)));
   });
   const addContacts = run(async () => {
     if (!cands) return;
-    const data = await call("/api/admin/mailshot/from-contacts", { campaign, ids: cands.ok.map((r) => r.id), includePersonal: includePersonalContacts });
+    const data = await call("/api/admin/mailshot/from-contacts", { campaign, ids: cands.ok.map((r) => r.id).filter((id) => picked.has(id)), includePersonal: includePersonalContacts });
     setCands(null);
     setMessage({ text: `Added ${data.added} from your contacts` });
     await refresh();
@@ -68,7 +71,7 @@ export default function MailshotPanel({
     await refresh();
   });
   const sendTest = run(async () => {
-    const data = await call("/api/admin/mailshot/send", { campaign, mode: "test", testTo, subjectIndex });
+    const data = await call("/api/admin/mailshot/send", { campaign, mode: "test", testTo, subjectIndex, relationship: testWording });
     setMessage({ text: `Test sent to ${data.to}` });
   });
   const sendToday = run(async () => {
@@ -134,6 +137,10 @@ export default function MailshotPanel({
       <section style={box}>
         <div style={row}>
           <input style={{ ...input, minWidth: 260 }} type="email" placeholder="Send a test to…" value={testTo} onChange={(e) => setTestTo(e.target.value)} />
+          <select style={input} value={testWording} onChange={(e) => setTestWording(e.target.value as "business" | "personal")}>
+            <option value="business">Business wording</option>
+            <option value="personal">Personal wording</option>
+          </select>
           <button style={ghost} disabled={busy || !testTo} onClick={sendTest}>Send test</button>
           <span style={{ flex: 1 }} />
           <label style={row}>Per day <input style={{ ...input, width: 80 }} type="number" min={1} max={300} value={dailyCap} onChange={(e) => setDailyCap(Number(e.target.value))} /></label>
@@ -153,15 +160,24 @@ export default function MailshotPanel({
                 {cands.ok.length} business addresses with no invite yet · held back: personal {cands.personal}, role {cands.role}, invalid {cands.invalid}
               </span>
               <span style={{ flex: 1 }} />
-              <button style={btn} disabled={busy || !cands.ok.length} onClick={addContacts}>Add {cands.ok.length} to list</button>
+              <button style={btn} disabled={busy || picked.size === 0} onClick={addContacts}>Add {picked.size} to list</button>
             </>
           )}
         </div>
         {cands && cands.ok.length > 0 && (
-          <div style={{ marginTop: "0.75rem", maxHeight: 260, overflowY: "auto", fontSize: "0.9rem", color: "#cbd5e1" }}>
-            {cands.ok.map((r) => (
-              <div key={r.id} style={{ padding: "0.15rem 0" }}>{r.name || r.email} <span style={{ color: "#94a3b8" }}>· {r.company || r.email}</span></div>
-            ))}
+          <div style={{ marginTop: "0.75rem" }}>
+            <div style={{ ...row, marginBottom: "0.4rem" }}>
+              <button style={{ ...ghost, padding: "0.25rem 0.7rem" }} onClick={() => setPicked(new Set(cands.ok.map((r) => r.id)))}>Tick all</button>
+              <button style={{ ...ghost, padding: "0.25rem 0.7rem" }} onClick={() => setPicked(new Set())}>Untick all</button>
+            </div>
+            <div style={{ maxHeight: 340, overflowY: "auto", fontSize: "0.9rem", color: "#cbd5e1" }}>
+              {cands.ok.map((r) => (
+                <label key={r.id} style={{ display: "flex", gap: "0.5rem", alignItems: "center", padding: "0.15rem 0", cursor: "pointer" }}>
+                  <input type="checkbox" checked={picked.has(r.id)} onChange={(e) => setPicked((p) => { const n = new Set(p); if (e.target.checked) n.add(r.id); else n.delete(r.id); return n; })} />
+                  <span>{r.name || r.email} <span style={{ color: "#94a3b8" }}>· {r.company || r.email}</span></span>
+                </label>
+              ))}
+            </div>
           </div>
         )}
       </section>

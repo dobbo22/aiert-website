@@ -101,7 +101,7 @@ async function handle(req: Request) {
     `;
     const contact = ((await sql`SELECT id, first_name, name, email, do_not_contact FROM tapcard_invite_contacts WHERE dedupe_key = ${`e:${to}`}`) as (Contact & { do_not_contact: boolean })[])[0];
     if (contact.do_not_contact) return NextResponse.json({ error: `${to} has unsubscribed, so no test can be sent there` }, { status: 409 });
-    await sendOne(resend, from, route.replyTo, `${campaign}-test`, contact, subjectIndex);
+    await sendOne(resend, from, route.replyTo, `${campaign}-test`, { ...contact, relationship: body?.relationship === "personal" ? "personal" : "business" }, subjectIndex);
     return NextResponse.json({ ok: true, sent: 1, test: true, to });
   }
 
