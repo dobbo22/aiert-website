@@ -220,7 +220,9 @@ export function mailshotLinks(token: string): MailshotLinks {
   };
 }
 
-export const MAILSHOT_IMAGE = "https://www.aiert.co.uk/powersearch-guide/3-drill-down.png";
+export const MAILSHOT_IMAGE_TAPCARD = "https://www.aiert.co.uk/mailshot/tapcard-contact.png";
+export const MAILSHOT_IMAGE_POWERSEARCH = "https://www.aiert.co.uk/mailshot/powersearch-emails.png";
+export const MAILSHOT_M365_NOTE = "* Some company Microsoft 365 accounts need your IT administrator to approve the connection.";
 
 export function mailshotText(firstName: string, links: MailshotLinks): string {
   const hi = firstName ? `Hi ${firstName},` : "Hi,";
@@ -232,9 +234,11 @@ Tap a contact and see everything they've ever sent you, across all your email ac
 
 That's PowerSearch. It works with TapCard, a digital business card app, so every contact in TapCard is one tap away from all their emails.
 
-- One tap from a contact to all their emails, across Gmail, Outlook, Microsoft 365 and most other accounts
+- One tap from a contact to all their emails, across Gmail, Outlook, Microsoft 365* and most other accounts
 - Search inside them: subject, message text, even attachments
 - Private: your emails stay on your phone
+
+${MAILSHOT_M365_NOTE}
 
 TapCard is also your digital business card. Share it with a QR code or a link and people save you in one tap, with no app needed on their side. It is free for life for the first 1,000 users on each phone, and PowerSearch has a free 7-day trial.
 
@@ -263,11 +267,15 @@ export function mailshotHtml(firstName: string, links: MailshotLinks): string {
 <p style="margin:0 0 16px;">Tap a contact and see everything they've ever sent you, across all your email accounts. Then search inside those emails for the invoice, the contract, the thing they said last March.</p>
 <p style="margin:0 0 16px;">That's <strong>PowerSearch</strong>. It works with <strong>TapCard</strong>, a digital business card app, so every contact in TapCard is one tap away from all their emails.</p>
 <ul style="margin:0 0 20px;padding-left:20px;">
-<li style="${li}"><strong>One tap</strong> from a contact to all their emails, across Gmail, Outlook, Microsoft 365 and most other accounts</li>
+<li style="${li}"><strong>One tap</strong> from a contact to all their emails, across Gmail, Outlook, Microsoft 365* and most other accounts</li>
 <li style="${li}"><strong>Search inside them:</strong> subject, message text, even attachments</li>
 <li style="${li}"><strong>Private:</strong> your emails stay on your phone</li>
 </ul>
-<p style="margin:0 0 20px;"><a href="${esc(links.video)}"><img src="${MAILSHOT_IMAGE}" alt="PowerSearch showing one contact's emails, searched for 'invoice'" width="240" style="width:240px;max-width:100%;border-radius:14px;border:1px solid #e5e7eb;"></a></p>
+<p style="margin:-8px 0 20px;font-size:12px;line-height:1.5;color:#6b7280;">${esc(MAILSHOT_M365_NOTE)}</p>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 20px;"><tr>
+<td width="50%" valign="top" style="padding:0 6px 0 0;text-align:center;"><a href="${esc(links.video)}"><img src="${MAILSHOT_IMAGE_TAPCARD}" alt="A contact in TapCard with a Find emails in PowerSearch button" width="250" style="width:100%;max-width:250px;border-radius:14px;border:1px solid #e5e7eb;"></a><div style="font-size:12px;line-height:1.4;color:#6b7280;margin-top:6px;"><strong>1.</strong> Tap a contact in TapCard</div></td>
+<td width="50%" valign="top" style="padding:0 0 0 6px;text-align:center;"><a href="${esc(links.video)}"><img src="${MAILSHOT_IMAGE_POWERSEARCH}" alt="PowerSearch showing that contact's emails, searched for invoice" width="250" style="width:100%;max-width:250px;border-radius:14px;border:1px solid #e5e7eb;"></a><div style="font-size:12px;line-height:1.4;color:#6b7280;margin-top:6px;"><strong>2.</strong> See their emails, and search inside them</div></td>
+</tr></table>
 <p style="margin:0 0 20px;">TapCard is also your digital business card. Share it with a QR code or a link and people save you in one tap, with no app needed on their side. It is <strong>free for life for the first 1,000 users</strong> on each phone, and PowerSearch has a free 7-day trial.</p>
 <p style="margin:0 0 20px;"><a href="${esc(links.app)}" style="${btn}">Get the app</a></p>
 <p style="margin:0 0 24px;"><a href="${esc(links.how)}" style="${link}">See how it works</a> &nbsp;·&nbsp; <a href="${esc(links.video)}" style="${link}">Watch the short demo</a></p>
