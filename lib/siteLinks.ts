@@ -5,7 +5,7 @@
 import { normalizeDomain, readLimited, safeFetch } from "@/lib/siteIcon";
 import { sanitizeLinks, type CardLink, type LinkKind } from "@/lib/tapcardLinks";
 
-const MAX_HTML = 512 * 1024;
+const MAX_HTML = 2 * 1024 * 1024;
 
 const BOOK_HOSTS = /(^|\.)(opentable\.[a-z.]+|resy\.com|sevenrooms\.com|exploretock\.com|tock\.com|thefork\.[a-z.]+|quandoo\.[a-z.]+|resdiary\.com|bookatable\.[a-z.]+|designmynight\.com|tablein\.com|bookingbug\.com)$/i;
 const ROOM_HOSTS = /(^|\.)(booking\.com|synxis\.com|littlehotelier\.com|thebookingbutton\.[a-z.]+)$/i;
@@ -96,7 +96,7 @@ export async function findSiteLinks(websiteOrDomain: string): Promise<CardLink[]
     else if (same) {
       if (/^(book(ing)?s?( a)? ?table|reserve( a table)?|reservations?|book online)$/.test(t) || /\/(reservations?|book-a-table|booking)\/?$/.test(path)) pick(found, "book_table", href);
       else if (/^(book (a )?room|rooms? (&|and) rates|check availability)$/.test(t)) pick(found, "book_room", href);
-      else if (/^(our |view |see |the )?(food |drinks? |lunch |dinner |brunch |sunday |wine |a la carte |takeaway )*menus?( ?pdf)?$/.test(t) || /\/(menus?|food-and-drink|our-menu)\/?$/.test(path) || /menu[^/]*\.pdf$/.test(path)) pick(found, "menu", href);
+      else if ((t.includes("menu") && t.length <= 30 && !/gift|cookie|privacy|vouchers?/.test(t)) || /^\/(menus?|food-and-drink|our-menu)\/?$/.test(path) || /menu[^/]*\.pdf$/.test(path)) pick(found, "menu", href);
       else if (/^(order( online| now)?|takeaway|click (&|and) collect)$/.test(t) || /\/(order|order-online)\/?$/.test(path)) pick(found, "order", href);
       else if (/^(shop|online shop|store|shop online)$/.test(t) || /\/(shop|store)\/?$/.test(path)) pick(found, "shop", href);
     }
