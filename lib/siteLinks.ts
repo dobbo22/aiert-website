@@ -87,6 +87,8 @@ export async function findSiteLinks(websiteOrDomain: string): Promise<CardLink[]
     const path = href.pathname.toLowerCase();
     const t = text.toLowerCase();
     const same = h === siteHost;
+    // A link back to the homepage itself (or a section of it) is not a menu or booking page.
+    if (same && (path === "/" || path === "")) continue;
     if (/(^|\.)tripadvisor\./i.test(h)) pick(found, "tripadvisor", href);
     else if (/(^|\.)g\.page$/i.test(h) || (/(^|\.)google\.[a-z.]+$/i.test(h) && /\/(maps\/.*review|local\/writereview)/.test(path))) pick(found, "google_review", href);
     else if (BOOK_HOSTS.test(h)) pick(found, "book_table", href);
