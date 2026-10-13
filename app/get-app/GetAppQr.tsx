@@ -10,7 +10,7 @@ const ICON = "https://www.aiert.co.uk";
 const APPS: Record<AppKey, { name: string; tagline: string; icon: string; apple: string; google: string | null }> = {
   tapcard: {
     name: "TapCard",
-    tagline: "Digital business card",
+    tagline: "Digital business card · free for the first 1,000 users",
     icon: `${ICON}/tapcard-icon.png`,
     apple: "https://apps.apple.com/app/id6816003159?pt=128647066&ct=qr-handout&mt=8",
     google: "https://play.google.com/store/apps/details?id=com.mailbroom.tapcard&referrer=utm_source%3Dqr%26utm_medium%3Dhandout",
