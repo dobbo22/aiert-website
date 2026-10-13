@@ -42,10 +42,14 @@ const steps = [
   },
   {
     title: "6. Special offers: for your business",
+    img: "offer-business.png",
+    alt: "The Special offer screen showing a live offer, how many people claimed it and how many used it",
     text: "On a Business card, tap Edit, then Special offer. Write the offer (for example Free dessert with any main), choose an end date and a limit if you like, and set a staff PIN of 4 to 6 digits. Tap Post offer. Everyone who has your card in TapCard sees it the next time they open the app, with a green Offer badge on your name. You can see how many people claimed it and how many used it, replace it with a new one, or withdraw it at any time.",
   },
   {
     title: "7. Special offers: if you get one",
+    img: "offer-customer.png",
+    alt: "An offer on a saved card with a one-off QR code to show the staff",
     text: "When a business you have saved posts an offer, you see an Offer badge on their contact. Open their card and tap Claim this offer. You get your own one-off QR code. Show it to the staff when you pay. They scan it with their phone camera, enter their PIN, and it is marked as used. It works once, then shows Used. Claiming is free and needs no sign-up, and the business only sees how many people claimed, not who.",
   },
   {
@@ -75,6 +79,21 @@ export default function TapCardGuidePage() {
           A quick picture tour of TapCard. Screens shown are from the iPhone app; Android looks the same.
           More help is on the <a href="/how-it-works">How it works</a> and <a href="/support">Support</a> pages.
         </p>
+      </section>
+      <section>
+        <h2>Watch: a restaurant with TapCard</h2>
+        <p>
+          A restaurant sets up its card, prints the QR code for the window, and a customer scans it, books a table and
+          claims a special offer.
+        </p>
+        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+        <video
+          src={`${IMG}/restaurant-demo.mp4`}
+          controls
+          playsInline
+          preload="none"
+          className="mx-auto mt-3 w-full max-w-[300px] rounded-3xl border border-slate"
+        />
       </section>
       {steps.map((s) => (
         <section key={s.title}>
