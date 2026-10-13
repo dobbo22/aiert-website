@@ -69,7 +69,9 @@ export default async function CardPage({
   const sendBackHref = host.startsWith("tapcard.")
     ? `https://www.aiert.co.uk/tapcard/c/${id}?send=1`
     : `${TAPCARD_ORIGIN}/c/${id}?send=1`;
-  const firstName = card.name.split(/\s+/)[0] || card.name;
+  // A business-name-only card (restaurant, shop) has no personal first name: use the whole name.
+  const isBusinessName = card.company.trim() !== "" && card.name.trim().toLowerCase() === card.company.trim().toLowerCase();
+  const firstName = isBusinessName ? card.name : card.name.split(/\s+/)[0] || card.name;
   const isMobile = /android|iphone|ipad|ipod/i.test(requestHeaders.get("user-agent") ?? "");
 
   // QR codes point at /s/[id] (see ../../s/[id]/page.tsx), which renders
