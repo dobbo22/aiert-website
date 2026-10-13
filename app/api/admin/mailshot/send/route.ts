@@ -11,6 +11,7 @@ import {
   mailshotLinks,
   mailshotStats,
   mailshotText,
+  safeFirstName,
   type Relationship,
 } from "@/lib/mailshot";
 
@@ -43,7 +44,7 @@ async function sendOne(resend: Resend, from: string, replyTo: string, campaign: 
   await ensureInviteSchema();
   const token = newInviteToken();
   const links = mailshotLinks(token);
-  const firstName = contact.first_name || "";
+  const firstName = safeFirstName(contact.first_name);
   const subject = subjectFor(subjectIndex, firstName);
   const relationship: Relationship = contact.relationship === "personal" ? "personal" : "business";
   const text = mailshotText(firstName, links, relationship);

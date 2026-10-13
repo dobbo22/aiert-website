@@ -37,6 +37,12 @@ export function classifyEmail(email: string): RowCheck {
   return "ok";
 }
 
+/// A first name must look like a name: letters only (with ' or -), never an email address or leftover text.
+export function safeFirstName(raw: string | null | undefined): string {
+  const v = (raw ?? "").trim().split(/\s+/)[0] ?? "";
+  return /^[A-Za-z][A-Za-z'’-]{1,24}$/.test(v) ? v[0].toUpperCase() + v.slice(1) : "";
+}
+
 function tidyName(raw: string): string {
   return raw.replace(/["'<>()[\]]/g, " ").replace(/\s+/g, " ").trim().slice(0, 100);
 }
@@ -102,11 +108,13 @@ export function parseMailshotList(text: string): MailshotRow[] {
     if (!emails.length) continue;
     let rest = line;
     for (const e of emails) rest = rest.replace(e, " ");
-    const name = titleCase(tidyName(rest.replace(/[,;|]/g, " ")));
+    const leftover = tidyName(rest.replace(/[,;|]/g, " "));
+    // Leftover text only counts as a name for a single address on the line, and never if it holds an @ or digits.
+    const name = emails.length === 1 && !/[@\d]/.test(leftover) ? titleCase(leftover) : "";
     for (const e of emails) {
       const address = e.toLowerCase().replace(/[.,;]+$/, "");
-      const first = emails.length === 1 && name ? name.split(" ")[0] : guessFirstName(address);
-      rows.push({ email: address, firstName: first, name: emails.length === 1 ? name : first, company: "" });
+      const first = name ? safeFirstName(name) : guessFirstName(address);
+      rows.push({ email: address, firstName: first, name: name || first, company: "" });
     }
   }
   return rows;
@@ -126,6 +134,14 @@ export function ensureMailshotSchema(): Promise<unknown> {
       `)
       // Which wording the footer uses: 'business' (a past business contact) or 'personal' (a personal contact).
       .then(() => sql`ALTER TABLE tapcard_mailshot_list ADD COLUMN IF NOT EXISTS relationship TEXT NOT NULL DEFAULT 'business'`)
+      // One-off repair: contacts imported from a pasted list got an email-like fragment as their name.
+      .then(async () => {
+        const bad = (await sql`SELECT id, email FROM tapcard_invite_contacts WHERE first_name LIKE '%@%' OR name LIKE '%@%'`) as { id: number; email: string }[];
+        for (const c of bad) {
+          const first = guessFirstName(c.email);
+          await sql`UPDATE tapcard_invite_contacts SET first_name = ${first}, name = ${first || c.email.split("@")[0]} WHERE id = ${c.id}`;
+        }
+      })
       .catch((err) => {
         schemaReady = null;
         throw err;
