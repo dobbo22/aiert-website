@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import DocPage from "../DocPage";
+import StoreBadges from "../../StoreBadges";
 
 const DESCRIPTION =
   "Your business card on your phone: share it with a QR code or a link, swap details in seconds, and stay in sync automatically — even after it's saved.";
@@ -16,8 +17,9 @@ export const metadata: Metadata = {
   },
 };
 
-const APP_STORE_URL = "https://apps.apple.com/app/id6816003159";
-const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.mailbroom.tapcard";
+// Campaign tags so installs from this page show up as "how-it-works" in the App Store and Play consoles.
+const APP_STORE_URL = "https://apps.apple.com/app/id6816003159?pt=128647066&ct=how-it-works&mt=8";
+const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.mailbroom.tapcard&referrer=utm_source%3Dtapcard-web%26utm_medium%3Dhow-it-works";
 
 // Linked from the invite email ("See exactly how it works") —
 // tapcard.aiert.co.uk/how-it-works.
@@ -185,10 +187,7 @@ export default function HowItWorksPage() {
 
       <section>
         <h2>Get TapCard</h2>
-        <p>
-          <a href={APP_STORE_URL}>Get TapCard on the App Store</a> (iPhone), or{" "}
-          <a href={PLAY_STORE_URL}>get it on Google Play</a> (Android).
-        </p>
+        <StoreBadges appStoreUrl={APP_STORE_URL} playStoreUrl={PLAY_STORE_URL} className="mt-3" />
       </section>
     </DocPage>
   );
