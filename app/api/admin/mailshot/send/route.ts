@@ -103,8 +103,16 @@ async function handle(req: Request) {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return NextResponse.json({ error: "Enter an email address for the test" }, { status: 400 });
     // A restaurant test uses a made-up restaurant (own record, so it never changes your normal contact).
     const isRestaurantTest = body?.relationship === "restaurant";
-    const testKey = isRestaurantTest ? `r:test:${to}` : `e:${to}`;
-    if (isRestaurantTest) {
+    const useNewFortune = isRestaurantTest && body?.sample === "newfortune";
+    const testKey = isRestaurantTest ? (useNewFortune ? `r:test:nf:${to}` : `r:test:${to}`) : `e:${to}`;
+    if (useNewFortune) {
+      // A real restaurant's published details (a test only: it goes to the address you typed).
+      await sql`
+        INSERT INTO tapcard_invite_contacts (dedupe_key, name, first_name, email, phone, website, address, booking_url, menu_url, kind)
+        VALUES (${testKey}, 'New Fortune Cookie', '', ${to}, '+44 20 7727 7260', 'nfcrestaurant.co.uk', 'W2 4QJ', '', 'nfcrestaurant.co.uk/menu', 'restaurant')
+        ON CONFLICT (dedupe_key) DO UPDATE SET name = EXCLUDED.name, phone = EXCLUDED.phone, website = EXCLUDED.website, address = EXCLUDED.address, booking_url = EXCLUDED.booking_url, menu_url = EXCLUDED.menu_url, kind = EXCLUDED.kind
+      `;
+    } else if (isRestaurantTest) {
       await sql`
         INSERT INTO tapcard_invite_contacts (dedupe_key, name, first_name, email, phone, website, address, booking_url, menu_url, kind)
         VALUES (${testKey}, 'The Olive Table', '', ${to}, '020 7946 0123', '', '12 Warrington Crescent, London W9', 'olivetable.example/book', 'olivetable.example/menu', 'restaurant')

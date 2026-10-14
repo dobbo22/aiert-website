@@ -28,6 +28,7 @@ export default function MailshotPanel({
   const [skipped, setSkipped] = useState<{ id: number; name: string; email: string; reason: string }[] | null>(null);
   const [queueOrig, setQueueOrig] = useState<Record<number, string>>({});
   const [testWording, setTestWording] = useState<"business" | "personal" | "restaurant">("business");
+  const [testSample, setTestSample] = useState<"olive" | "newfortune">("newfortune");
   const [listType, setListType] = useState<"contacts" | "restaurants">("contacts");
   const [cands, setCands] = useState<{ total: number; ok: { id: number; name: string; email: string; company: string }[]; personal: number; role: number; invalid: number } | null>(null);
   const [list, setList] = useState("");
@@ -158,7 +159,7 @@ export default function MailshotPanel({
     await refresh();
   });
   const sendTest = run(async () => {
-    const data = await call("/api/admin/mailshot/send", { campaign, mode: "test", testTo, subjectIndex, relationship: testWording });
+    const data = await call("/api/admin/mailshot/send", { campaign, mode: "test", testTo, subjectIndex, relationship: testWording, sample: testWording === "restaurant" ? testSample : undefined });
     setMessage({ text: `Test sent to ${data.to}` });
   });
   const sendToday = run(async () => {
@@ -234,6 +235,12 @@ export default function MailshotPanel({
             <option value="personal">Personal wording</option>
             <option value="restaurant">Restaurant email</option>
           </select>
+          {testWording === "restaurant" && (
+            <select style={input} value={testSample} onChange={(e) => setTestSample(e.target.value as "olive" | "newfortune")}>
+              <option value="newfortune">New Fortune Cookie (real details)</option>
+              <option value="olive">The Olive Table (made up)</option>
+            </select>
+          )}
           <button style={ghost} disabled={busy || !testTo} onClick={sendTest}>Send test</button>
           <span style={{ flex: 1 }} />
           <label style={row}>Per day <input style={{ ...input, width: 80 }} type="number" min={1} max={300} value={dailyCap} onChange={(e) => setDailyCap(Number(e.target.value))} /></label>
