@@ -24,6 +24,10 @@ const FEATURES = [
     title: "One subscription, no App Store paywall",
     body: "Employees share their card from day one — the personal lifetime-unlock paywall doesn't apply to company-provisioned cards.",
   },
+  {
+    title: "Offers and numbers for every location",
+    body: "Restaurant groups and multi-site businesses get TapCard Promote on every location card. Post special offers (each with a one-off QR code) and news from the admin page or the app, and see each location's card views, QR scans, saves and offers claimed and used in one place, with a CSV download.",
+  },
 ];
 
 export default function TapCardBusinessPage() {
