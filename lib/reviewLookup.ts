@@ -42,9 +42,15 @@ async function googleLink(name: string, address: string): Promise<string | undef
     headers: { "Content-Type": "application/json", "X-Goog-Api-Key": key, "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress" },
     body: JSON.stringify({ textQuery: `${name} ${address}`.trim(), maxResultCount: 1, regionCode: "GB" }),
   }).catch(() => null);
-  if (!res?.ok) return undefined;
+  if (!res?.ok) {
+    console.error("review lookup: google places failed", res?.status, res ? (await res.text().catch(() => "")).slice(0, 300) : "no response");
+    return undefined;
+  }
   const p = ((await res.json().catch(() => ({}))) as { places?: { id?: string; displayName?: { text?: string }; formattedAddress?: string }[] }).places?.[0];
-  if (!p?.id || !similar(p.displayName?.text ?? "", name) || !samePostcode(address, p.formattedAddress ?? "")) return undefined;
+  if (!p?.id || !similar(p.displayName?.text ?? "", name) || !samePostcode(address, p.formattedAddress ?? "")) {
+    console.error("review lookup: google match rejected", p?.displayName?.text, p?.formattedAddress);
+    return undefined;
+  }
   return `https://search.google.com/local/writereview?placeid=${encodeURIComponent(p.id)}`;
 }
 
