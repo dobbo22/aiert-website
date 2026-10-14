@@ -428,3 +428,34 @@ export async function orgLogoBytesForCard(card: object): Promise<Buffer | null> 
     return null;
   }
 }
+
+// Company cards an admin has removed. The card API normally re-creates a card when a phone sends an id the server no
+// longer has (so "Stop sharing" then re-sharing just works); for these ids it must not, or a removed employee's phone
+// would bring a company card back to life. The apps also use this to take the card off the phone.
+let removedReady: Promise<unknown> | null = null;
+function ensureRemovedSchema(): Promise<unknown> {
+  if (!removedReady) {
+    removedReady = sql`
+      CREATE TABLE IF NOT EXISTS tapcard_removed_cards (
+        card_id TEXT PRIMARY KEY,
+        org_id TEXT NOT NULL,
+        removed_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )
+    `.catch((err) => {
+      removedReady = null;
+      throw err;
+    });
+  }
+  return removedReady;
+}
+
+export async function markCardRemovedByCompany(cardId: string, orgId: string): Promise<void> {
+  await ensureRemovedSchema();
+  await sql`INSERT INTO tapcard_removed_cards (card_id, org_id) VALUES (${cardId}, ${orgId}) ON CONFLICT DO NOTHING`;
+}
+
+export async function wasRemovedByCompany(cardId: string): Promise<boolean> {
+  await ensureRemovedSchema();
+  const rows = (await sql`SELECT 1 FROM tapcard_removed_cards WHERE card_id = ${cardId} LIMIT 1`) as unknown[];
+  return rows.length > 0;
+}

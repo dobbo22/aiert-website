@@ -3,6 +3,7 @@ import { del, put } from "@vercel/blob";
 import { deleteCard, getCard, publicCardJSON, updateCard } from "@/lib/tapcardDb";
 import { canEdit, readEditToken } from "@/lib/tapcardAuth";
 import { publicAnnouncement, publicOffer } from "@/lib/tapcardOffers";
+import { wasRemovedByCompany } from "@/lib/tapcardBiz";
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
@@ -11,7 +12,11 @@ const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const card = await getCard(id);
-  if (!card) return NextResponse.json({ error: "not found" }, { status: 404 });
+  if (!card) {
+    // 410 (not 404) for a card its company removed, so the owner's phone can tell and take it off.
+    if (await wasRemovedByCompany(id).catch(() => false)) return NextResponse.json({ error: "removed", removedByCompany: true }, { status: 410 });
+    return NextResponse.json({ error: "not found" }, { status: 404 });
+  }
   // The special offer (if any) rides along so a saved card's next refresh shows it in the app's updates.
   const offer = await publicOffer(id).catch(() => null);
   const announcement = await publicAnnouncement(id).catch(() => null);

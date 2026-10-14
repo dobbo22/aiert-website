@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse, after } from "next/server";
+import { wasRemovedByCompany } from "@/lib/tapcardBiz";
 import { countRecentCreates, createCard, getCard, listNotifiableRecipients, markRecipientNotified, setAddressIfEmpty, setBrandColor, updateCard } from "@/lib/tapcardDb";
 import { canEdit, clientIpHash, hashSecret, readEditToken } from "@/lib/tapcardAuth";
 import { parsePassStyle } from "@/lib/tapcardPassStyle";
@@ -142,6 +143,10 @@ export async function POST(req: NextRequest) {
         if (watchedChanged && !body.suppressNotify) await notifyRecipientsOfChange(card.id, card.name, fields);
       });
       return NextResponse.json({ id: body.id });
+    }
+    // A card its company removed is never re-created from a phone that still has it.
+    if (await wasRemovedByCompany(body.id).catch(() => false)) {
+      return NextResponse.json({ error: "This card was removed by your company.", removedByCompany: true }, { status: 410 });
     }
     // Falls through to create — an id the iOS app has locally but that no
     // longer exists server-side (e.g. after a "Stop sharing" delete)
