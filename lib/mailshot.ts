@@ -133,6 +133,8 @@ export function ensureMailshotSchema(): Promise<unknown> {
           PRIMARY KEY (campaign, contact_id)
         )
       `)
+      // When the restaurant first opened its 24-hour preview (/v/<token>); the 24 hours start then.
+      .then(() => sql`ALTER TABLE tapcard_invite_sends ADD COLUMN IF NOT EXISTS preview_first_at TIMESTAMPTZ`)
       // Which wording the footer uses: 'business' (a past business contact) or 'personal' (a personal contact).
       .then(() => sql`ALTER TABLE tapcard_mailshot_list ADD COLUMN IF NOT EXISTS relationship TEXT NOT NULL DEFAULT 'business'`)
       // The name used in "Hi …," (null = use the contact's first name; empty = just "Hi,"), and queued or skipped (don't send).
@@ -224,6 +226,7 @@ export type MailshotStats = {
   clickedApp: number;
   clickedHow: number;
   clickedVideo: number;
+  previewed: number;
   unsubscribed: number;
   complained: number;
 };
@@ -339,6 +342,7 @@ export async function mailshotStats(campaign: string): Promise<MailshotStats> {
       COUNT(DISTINCT s.id) FILTER (WHERE EXISTS (SELECT 1 FROM tapcard_invite_clicks k WHERE k.send_id = s.id AND k.target = 'app'))::int AS clicked_app,
       COUNT(DISTINCT s.id) FILTER (WHERE EXISTS (SELECT 1 FROM tapcard_invite_clicks k WHERE k.send_id = s.id AND k.target = 'how'))::int AS clicked_how,
       COUNT(DISTINCT s.id) FILTER (WHERE EXISTS (SELECT 1 FROM tapcard_invite_clicks k WHERE k.send_id = s.id AND k.target = 'video'))::int AS clicked_video,
+      COUNT(s.preview_first_at)::int AS previewed,
       COUNT(DISTINCT s.id) FILTER (WHERE c.do_not_contact AND s.bounced_at IS NULL)::int AS unsubscribed
     FROM tapcard_invite_sends s
     JOIN tapcard_invite_contacts c ON c.id = s.contact_id
@@ -352,14 +356,14 @@ export async function mailshotStats(campaign: string): Promise<MailshotStats> {
   `) as { n: number }[])[0].n;
   return {
     inList: r.in_list, sent: r.sent, sentToday: r.sent_today, queued, delivered: r.delivered, bounced: r.bounced,
-    clickedAny: r.clicked_any, clickedApp: r.clicked_app, clickedHow: r.clicked_how, clickedVideo: r.clicked_video,
+    clickedAny: r.clicked_any, clickedApp: r.clicked_app, clickedHow: r.clicked_how, clickedVideo: r.clicked_video, previewed: r.previewed,
     unsubscribed: r.unsubscribed, complained: 0,
   };
 }
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-export type MailshotLinks = { app: string; how: string; video: string; unsubscribe: string };
+export type MailshotLinks = { app: string; how: string; video: string; unsubscribe: string; preview: string; previewQr: string; phoneImage: string };
 
 export function mailshotLinks(token: string): MailshotLinks {
   return {
@@ -367,6 +371,10 @@ export function mailshotLinks(token: string): MailshotLinks {
     how: `${INVITE_LINK_ORIGIN}/i/${token}?to=how`,
     video: `${INVITE_LINK_ORIGIN}/i/${token}?to=video`,
     unsubscribe: `${INVITE_LINK_ORIGIN}/u/${token}`,
+    // The restaurant's own 24-hour preview (QR code and link), and its card picture on a phone screen.
+    preview: `${INVITE_LINK_ORIGIN}/v/${token}`,
+    previewQr: `${INVITE_LINK_ORIGIN}/api/preview-qr/${token}`,
+    phoneImage: `${INVITE_LINK_ORIGIN}/api/invite-card/${token}?frame=1`,
   };
 }
 
@@ -472,6 +480,8 @@ Everyone who saves your card becomes someone you can reach, with no mailing list
 Promote is free for your first 3 months, then £49.99 a year (or £9.99 a month), and it includes sharing your own card. TapCard is free for your customers, always.
 ${codeLinesText(codes)}
 
+See your TapCard working (a preview that stays live for 24 hours once you open it): ${links.preview}
+
 Get TapCard: ${links.app}
 See how it works: ${links.how}
 Watch the 1-minute restaurant demo: ${links.app}?to=guide
@@ -493,7 +503,10 @@ export function restaurantHtml(name: string, links: MailshotLinks, cardImageUrl:
 <div style="max-width:560px;margin:0 auto;padding:24px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#1f2937;">
 <p style="margin:0 0 16px;">Hello ${esc(name || "there")},</p>
 <p style="margin:0 0 16px;font-size:18px;line-height:1.45;"><strong>I made a sample TapCard for ${esc(name || "your restaurant")}:</strong> one card with your phone number, Book a table, your menu and directions. You never have to order business cards again.</p>
-<p style="margin:0 0 20px;text-align:center;"><a href="${esc(links.app)}"><img src="${esc(cardImageUrl)}" alt="A sample TapCard for ${esc(name || "your restaurant")}" width="300" style="width:300px;max-width:100%;border-radius:14px;border:1px solid #e5e7eb;"></a></p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;"><tr>
+<td width="55%" valign="middle" align="center" style="padding-right:10px;"><a href="${esc(links.preview)}"><img src="${esc(cardImageUrl)}" alt="Your TapCard on a phone" width="230" style="width:230px;max-width:100%;"></a></td>
+<td width="45%" valign="middle" align="center" style="font-size:14px;line-height:1.45;"><img src="${esc(links.previewQr)}" alt="QR code for your TapCard preview" width="150" style="width:150px;max-width:100%;border:1px solid #e5e7eb;border-radius:10px;"><br><strong>Scan with your phone</strong> to see your TapCard working: tap to call, book, see the menu or get directions.<br><span style="color:#6b7280;font-size:12px;">Or <a href="${esc(links.preview)}" style="color:#4c2f93;">open it here</a>. The preview stays live for 24 hours once you open it.</span></td>
+</tr></table>
 <ul style="margin:0 0 20px;padding-left:20px;">
 <li style="${li}">Put it <strong>in your window or on the door</strong>: customers scan the QR code and save you in one tap</li>
 <li style="${li}">Put it <strong>on your website</strong>, in emails and on social media as a link</li>

@@ -68,7 +68,7 @@ async function sendOne(resend: Resend, from: string, replyTo: string, campaign: 
       replyTo,
       subject,
       text,
-      html: relationship === "restaurant" ? restaurantHtml(contact.name, links, `${INVITE_LINK_ORIGIN}/api/invite-card/${token}`, codes) : mailshotHtml(firstName, links, relationship),
+      html: relationship === "restaurant" ? restaurantHtml(contact.name, links, links.phoneImage, codes) : mailshotHtml(firstName, links, relationship),
       headers: {
         "List-Unsubscribe": `<${INVITE_LINK_ORIGIN}/api/unsubscribe/${token}>, <mailto:${replyTo}?subject=Unsubscribe>`,
         "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",

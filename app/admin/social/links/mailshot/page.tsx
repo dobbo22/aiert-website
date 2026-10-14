@@ -15,7 +15,7 @@ export default async function MailshotPage() {
     error = err instanceof Error ? err.message : "Couldn't load";
   }
   const previewHtml = mailshotHtml("Alex", mailshotLinks("preview"));
-  const restaurantPreviewHtml = restaurantHtml("The Olive Table", mailshotLinks("preview"), "https://tapcard.aiert.co.uk/api/restaurant-sample");
+  const restaurantPreviewHtml = restaurantHtml("The Olive Table", mailshotLinks("preview"), "https://tapcard.aiert.co.uk/api/restaurant-sample?frame=1");
   return (
     <div>
       {error && <p className="social-compose-error">{error}</p>}

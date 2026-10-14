@@ -4,7 +4,7 @@ import { useState } from "react";
 
 type Stats = {
   inList: number; sent: number; sentToday: number; queued: number; delivered: number; bounced: number;
-  clickedAny: number; clickedApp: number; clickedHow: number; clickedVideo: number; unsubscribed: number;
+  clickedAny: number; clickedApp: number; clickedHow: number; clickedVideo: number; previewed: number; unsubscribed: number;
 };
 type Summary = {
   found: number; added: number; alreadyInList: number;
@@ -195,6 +195,7 @@ export default function MailshotPanel({
           <Stat v={s.clickedApp} l={`Get the app${pct(s.clickedApp, s.sent)}`} />
           <Stat v={s.clickedHow} l="How it works" />
           <Stat v={s.clickedVideo} l="Demo" />
+          <Stat v={s.previewed} l="Opened preview" />
           <Stat v={s.clickedAny} l={`Any click${pct(s.clickedAny, s.sent)}`} />
           <Stat v={s.unsubscribed} l="Unsubscribed" />
         </div>

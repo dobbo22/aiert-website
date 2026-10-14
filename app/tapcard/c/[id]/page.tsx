@@ -364,7 +364,9 @@ function extractDomain(website: string): string | null {
 /// default" means in practice, and only Android actually has one. Desktop
 /// gets a plain Google Maps web search, the only option that needs no app.
 function mapsUrl(address: string, userAgent: string): string {
-  const query = encodeURIComponent(address);
+  // A bare UK postcode gets ", UK" so Maps doesn't have to guess the country.
+  const a = address.trim();
+  const query = encodeURIComponent(/^[A-Za-z]{1,2}\d[A-Za-z\d]?\s*\d[A-Za-z]{2}$/.test(a) ? `${a}, UK` : address);
   if (/Android/i.test(userAgent)) return `geo:0,0?q=${query}`;
   if (/iPhone|iPad|iPod/i.test(userAgent)) return `https://maps.apple.com/?q=${query}`;
   return `https://www.google.com/maps/search/?api=1&query=${query}`;
