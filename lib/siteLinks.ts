@@ -58,7 +58,7 @@ function formatHours(specs: { days: number[]; opens: string; closes: string }[])
   return parts.join("; ");
 }
 
-interface HoursPlace { postcode: string; specs: { days: number[]; opens: string; closes: string }[] }
+interface HoursPlace { postcode: string; street: string; name: string; specs: { days: number[]; opens: string; closes: string }[] }
 
 const POSTCODE = /\b([A-Z]{1,2}\d[A-Z\d]?)\s*(\d[A-Z]{2})\b/i;
 export function postcodeOf(text: string | undefined | null): string {
@@ -66,11 +66,25 @@ export function postcodeOf(text: string | undefined | null): string {
   return m ? `${m[1]}${m[2]}`.toUpperCase() : "";
 }
 
-// The hours for the branch at `postcode`; with no postcode, only when the site has one unambiguous set.
-export function hoursFor(places: HoursPlace[], postcode: string): string | undefined {
-  if (postcode) {
-    const match = places.find((p) => p.postcode === postcode);
-    return match ? formatHours(match.specs).slice(0, 200) || undefined : undefined;
+const ABBREV: Record<string, string> = { st: "street", rd: "road", ave: "avenue", av: "avenue", ln: "lane", pl: "place", sq: "square", gdns: "gardens", cres: "crescent", dr: "drive", ct: "court", pk: "park", hse: "house" };
+// "7 Boundary St," -> "7 boundary street" so a card's address and a website's streetAddress compare equal.
+export function addressKey(text: string | undefined | null): string {
+  return (text ?? "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(Boolean).map((w) => ABBREV[w] ?? w).join(" ");
+}
+
+// The hours for this card's branch: same postcode, else same street address, else a branch name that appears in
+// the address and nowhere else. With nothing to go on, only when the site has one unambiguous set.
+export function hoursFor(places: HoursPlace[], postcode: string, address = ""): string | undefined {
+  const out = (p: HoursPlace) => formatHours(p.specs).slice(0, 200) || undefined;
+  const key = addressKey(address);
+  if (postcode || key) {
+    const byPostcode = postcode ? places.find((p) => p.postcode && p.postcode === postcode) : undefined;
+    if (byPostcode) return out(byPostcode);
+    const byStreet = key ? places.find((p) => p.street.length >= 6 && (` ${key} `).includes(` ${p.street} `)) : undefined;
+    if (byStreet) return out(byStreet);
+    const byName = key ? places.filter((p) => p.name.length >= 4 && (` ${key} `).includes(` ${p.name} `)) : [];
+    if (byName.length === 1) return out(byName[0]);
+    return undefined;
   }
   const sets = [...new Set(places.map((p) => formatHours(p.specs)).filter(Boolean))];
   return sets.length === 1 ? sets[0].slice(0, 200) : undefined;
@@ -99,7 +113,8 @@ export function jsonLdUrls(html: string): { menu?: string; sameAs: string[]; pla
         if (specs.length) {
           const addr = o.address as Record<string, unknown> | string | undefined;
           const pc = typeof addr === "string" ? addr : typeof addr?.postalCode === "string" ? addr.postalCode : "";
-          places.push({ postcode: postcodeOf(pc), specs });
+          const street = typeof addr === "object" && typeof addr?.streetAddress === "string" ? addressKey(addr.streetAddress) : "";
+          places.push({ postcode: postcodeOf(pc), street, name: addressKey(typeof o.name === "string" ? o.name : ""), specs });
         }
         if (Array.isArray(o.sameAs)) for (const s of o.sameAs) if (typeof s === "string") sameAs.push(s);
         if (typeof o.sameAs === "string") sameAs.push(o.sameAs);
@@ -165,7 +180,7 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string): 
   // Opening hours: the homepage's structured data, then up to two same-site branch/contact pages.
   const postcode = postcodeOf(address);
   const places = [...ld.places];
-  let hours = hoursFor(places, postcode);
+  let hours = hoursFor(places, postcode, address);
   if (!hours) {
     const pages = anchors(html, base)
       .filter(({ href, text }) => href.hostname.replace(/^www\./, "") === siteHost && /(locations?|restaurants?|branches|find[- ]us|contact|visit)/i.test(`${text} ${href.pathname}`))
@@ -175,7 +190,7 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string): 
       if (!more || !(more.res.headers.get("content-type") ?? "").includes("text/html")) continue;
       const b = await readLimited(more.res, MAX_HTML);
       if (b) places.push(...jsonLdUrls(b.toString("utf8")).places);
-      hours = hoursFor(places, postcode);
+      hours = hoursFor(places, postcode, address);
       if (hours) break;
     }
   }
