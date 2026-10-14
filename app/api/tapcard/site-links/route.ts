@@ -6,6 +6,7 @@ import { findSiteLinks } from "@/lib/siteLinks";
 export async function GET(req: NextRequest) {
   const website = req.nextUrl.searchParams.get("website") ?? "";
   if (!website || website.length > 200) return NextResponse.json({ links: [] });
-  const links = await findSiteLinks(website).catch(() => []);
+  const address = (req.nextUrl.searchParams.get("address") ?? "").slice(0, 300);
+  const links = await findSiteLinks(website, address).catch(() => []);
   return NextResponse.json({ links }, { headers: { "Cache-Control": "public, max-age=300" } });
 }

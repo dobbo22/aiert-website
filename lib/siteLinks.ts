@@ -58,9 +58,27 @@ function formatHours(specs: { days: number[]; opens: string; closes: string }[])
   return parts.join("; ");
 }
 
-function jsonLdUrls(html: string): { menu?: string; sameAs: string[]; hours?: string } {
+interface HoursPlace { postcode: string; specs: { days: number[]; opens: string; closes: string }[] }
+
+const POSTCODE = /\b([A-Z]{1,2}\d[A-Z\d]?)\s*(\d[A-Z]{2})\b/i;
+export function postcodeOf(text: string | undefined | null): string {
+  const m = POSTCODE.exec(text ?? "");
+  return m ? `${m[1]}${m[2]}`.toUpperCase() : "";
+}
+
+// The hours for the branch at `postcode`; with no postcode, only when the site has one unambiguous set.
+export function hoursFor(places: HoursPlace[], postcode: string): string | undefined {
+  if (postcode) {
+    const match = places.find((p) => p.postcode === postcode);
+    return match ? formatHours(match.specs).slice(0, 200) || undefined : undefined;
+  }
+  const sets = [...new Set(places.map((p) => formatHours(p.specs)).filter(Boolean))];
+  return sets.length === 1 ? sets[0].slice(0, 200) : undefined;
+}
+
+export function jsonLdUrls(html: string): { menu?: string; sameAs: string[]; places: HoursPlace[] } {
   const sameAs: string[] = [];
-  const specs: { days: number[]; opens: string; closes: string }[] = [];
+  const places: HoursPlace[] = [];
   let menu: string | undefined;
   const re = /<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi;
   let m: RegExpExecArray | null;
@@ -72,10 +90,16 @@ function jsonLdUrls(html: string): { menu?: string; sameAs: string[]; hours?: st
         const o = n as Record<string, unknown>;
         for (const k of ["hasMenu", "menu"]) if (typeof o[k] === "string" && /^https?:/i.test(o[k] as string)) menu ??= o[k] as string;
         const spec = o.openingHoursSpecification;
+        const specs: HoursPlace["specs"] = [];
         for (const sp of Array.isArray(spec) ? spec : spec ? [spec] : []) {
           const x = sp as Record<string, unknown>;
           const dow = (Array.isArray(x.dayOfWeek) ? x.dayOfWeek : [x.dayOfWeek]).map((d) => DAY_INDEX[String(d).split("/").pop()!.toLowerCase()]).filter((d) => d !== undefined);
           if (dow.length && typeof x.opens === "string" && typeof x.closes === "string") specs.push({ days: dow, opens: x.opens, closes: x.closes });
+        }
+        if (specs.length) {
+          const addr = o.address as Record<string, unknown> | string | undefined;
+          const pc = typeof addr === "string" ? addr : typeof addr?.postalCode === "string" ? addr.postalCode : "";
+          places.push({ postcode: postcodeOf(pc), specs });
         }
         if (Array.isArray(o.sameAs)) for (const s of o.sameAs) if (typeof s === "string") sameAs.push(s);
         if (typeof o.sameAs === "string") sameAs.push(o.sameAs);
@@ -84,7 +108,7 @@ function jsonLdUrls(html: string): { menu?: string; sameAs: string[]; hours?: st
       walk(JSON.parse(m[1]));
     } catch { /* ignore bad JSON-LD */ }
   }
-  return { menu, sameAs, hours: specs.length ? formatHours(specs).slice(0, 200) || undefined : undefined };
+  return { menu, sameAs, places };
 }
 
 function pick(found: Map<LinkKind, string>, kind: LinkKind, url: URL | string) {
@@ -94,7 +118,7 @@ function pick(found: Map<LinkKind, string>, kind: LinkKind, url: URL | string) {
   found.set(kind, u.replace(/^http:\/\//i, "https://"));
 }
 
-export async function findSiteLinks(websiteOrDomain: string): Promise<CardLink[]> {
+export async function findSiteLinks(websiteOrDomain: string, address?: string): Promise<CardLink[]> {
   let host = websiteOrDomain.trim();
   try { host = new URL(/^[a-z]+:\/\//i.test(host) ? host : `https://${host}`).hostname; } catch { /* keep */ }
   const domain = normalizeDomain(host);
@@ -116,7 +140,6 @@ export async function findSiteLinks(websiteOrDomain: string): Promise<CardLink[]
     } catch { /* ignore */ }
   }
   if (ld.menu) pick(found, "menu", ld.menu);
-  if (ld.hours) found.set("hours", ld.hours);
 
   for (const { href, text } of anchors(html, base)) {
     const h = href.hostname.replace(/^www\./, "");
@@ -139,5 +162,24 @@ export async function findSiteLinks(websiteOrDomain: string): Promise<CardLink[]
       else if (/^(shop|online shop|store|shop online)$/.test(t) || /\/(shop|store)\/?$/.test(path)) pick(found, "shop", href);
     }
   }
+  // Opening hours: the homepage's structured data, then up to two same-site branch/contact pages.
+  const postcode = postcodeOf(address);
+  const places = [...ld.places];
+  let hours = hoursFor(places, postcode);
+  if (!hours) {
+    const pages = anchors(html, base)
+      .filter(({ href, text }) => href.hostname.replace(/^www\./, "") === siteHost && /(locations?|restaurants?|branches|find[- ]us|contact|visit)/i.test(`${text} ${href.pathname}`))
+      .map(({ href }) => href.toString()).filter((u, i, a) => a.indexOf(u) === i).slice(0, 2);
+    for (const u of pages) {
+      const more = await safeFetch(u);
+      if (!more || !(more.res.headers.get("content-type") ?? "").includes("text/html")) continue;
+      const b = await readLimited(more.res, MAX_HTML);
+      if (b) places.push(...jsonLdUrls(b.toString("utf8")).places);
+      hours = hoursFor(places, postcode);
+      if (hours) break;
+    }
+  }
+  if (hours) found.set("hours", hours);
+
   return sanitizeLinks([...found].map(([kind, value]) => ({ kind, label: "", value })));
 }
