@@ -54,6 +54,14 @@ function ensureOfferSchema(): Promise<unknown> {
         )
       `)
       .then(() => sql`CREATE INDEX IF NOT EXISTS tapcard_announcements_card ON tapcard_announcements (card_id)`)
+      .then(() => sql`
+        CREATE TABLE IF NOT EXISTS tapcard_followers (
+          card_id TEXT NOT NULL,
+          follower_hash TEXT NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          PRIMARY KEY (card_id, follower_hash)
+        )
+      `)
       .catch((err) => {
         ready = null;
         throw err;
@@ -186,6 +194,20 @@ export async function claimOffer(cardId: string, claimant: string): Promise<Clai
   return { ok: true, code: again.code, redeemed: !!again.redeemed_at };
 }
 
+/// Followers are only ever a count: a one-way hash of a random per-install id, never shown or listed.
+export async function setFollower(cardId: string, follower: string, follow: boolean): Promise<void> {
+  await ensureOfferSchema();
+  const who = hashSecret(`tapcard-follower:${follower}`);
+  if (follow) await sql`INSERT INTO tapcard_followers (card_id, follower_hash) VALUES (${cardId}, ${who}) ON CONFLICT DO NOTHING`;
+  else await sql`DELETE FROM tapcard_followers WHERE card_id = ${cardId} AND follower_hash = ${who}`;
+}
+
+export async function followerCount(cardId: string): Promise<number> {
+  await ensureOfferSchema();
+  const r = (await sql`SELECT COUNT(*)::int AS n FROM tapcard_followers WHERE card_id = ${cardId}`) as { n: number }[];
+  return Number(r[0]?.n ?? 0);
+}
+
 export interface CodeStatus {
   state: "valid" | "used" | "expired" | "replaced" | "unknown";
   offerText?: string;
@@ -287,6 +309,7 @@ export interface OrgPromoteRow {
   views: number;
   qrViews: number;
   saves: number;
+  followers: number;
   offerText: string | null;
   offerExpires: string | null;
   offerClaimed: number;
@@ -306,6 +329,7 @@ export async function orgPromoteRows(orgId: string): Promise<OrgPromoteRow[]> {
       (SELECT COUNT(*)::int FROM tapcard_offer_claims cl WHERE cl.offer_id = o.id AND cl.redeemed_at IS NOT NULL) AS offer_redeemed,
       (SELECT COUNT(*)::int FROM tapcard_offer_claims cl JOIN tapcard_offers oo ON oo.id = cl.offer_id WHERE oo.card_id = c.id) AS claimed_total,
       (SELECT COUNT(*)::int FROM tapcard_offer_claims cl JOIN tapcard_offers oo ON oo.id = cl.offer_id WHERE oo.card_id = c.id AND cl.redeemed_at IS NOT NULL) AS redeemed_total,
+      (SELECT COUNT(*)::int FROM tapcard_followers f WHERE f.card_id = c.id) AS followers,
       a.text AS news, a.created_at AS news_at
     FROM tapcard_cards c
     LEFT JOIN LATERAL (SELECT id, text, expires_at FROM tapcard_offers WHERE card_id = c.id ORDER BY id DESC LIMIT 1) o ON true
@@ -316,7 +340,7 @@ export async function orgPromoteRows(orgId: string): Promise<OrgPromoteRow[]> {
   const live = (iso: string | null) => (iso && new Date(iso).getTime() < Date.now() ? null : iso);
   return rows.map((r) => ({
     id: String(r.id), name: String(r.name ?? ""), label: String(r.label ?? ""), company: String(r.company ?? ""),
-    views: Number(r.view_count ?? 0), qrViews: Number(r.qr_view_count ?? 0), saves: Number(r.save_count ?? 0),
+    views: Number(r.view_count ?? 0), qrViews: Number(r.qr_view_count ?? 0), saves: Number(r.save_count ?? 0), followers: Number(r.followers ?? 0),
     offerText: r.offer_text && !(r.offer_expires && new Date(String(r.offer_expires)).getTime() < Date.now()) ? String(r.offer_text) : null,
     offerExpires: live(r.offer_expires ? new Date(String(r.offer_expires)).toISOString() : null),
     offerClaimed: Number(r.offer_claimed ?? 0), offerRedeemed: Number(r.offer_redeemed ?? 0),

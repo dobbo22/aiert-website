@@ -47,8 +47,8 @@ export async function GET() {
   const { orgPromoteRows } = await import("@/lib/tapcardOffers");
   const rows = await orgPromoteRows(session.orgId);
   const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const head = ["Location", "Card views", "QR scans", "Saves", "Current offer", "Claimed (this offer)", "Used (this offer)", "Claimed (all time)", "Used (all time)", "News"];
-  const lines = rows.map((r) => [r.company || r.name, r.views, r.qrViews, r.saves, r.offerText ?? "", r.offerClaimed, r.offerRedeemed, r.claimedTotal, r.redeemedTotal, r.news ?? ""].map(esc).join(","));
+  const head = ["Location", "Card views", "QR scans", "Saves", "Following", "Current offer", "Claimed (this offer)", "Used (this offer)", "Claimed (all time)", "Used (all time)", "News"];
+  const lines = rows.map((r) => [r.company || r.name, r.views, r.qrViews, r.saves, r.followers, r.offerText ?? "", r.offerClaimed, r.offerRedeemed, r.claimedTotal, r.redeemedTotal, r.news ?? ""].map(esc).join(","));
   return new Response([head.map(esc).join(","), ...lines].join("\n"), {
     headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": 'attachment; filename="tapcard-locations.csv"' },
   });
