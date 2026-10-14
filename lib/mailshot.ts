@@ -472,7 +472,7 @@ I made a sample TapCard for ${name || "your restaurant"}: one card with your pho
 - Put it on your website, in emails and on social media as a link
 - Book a table, View our menu and Get directions are each one tap
 - Change your details once and every saved copy updates itself (new menu, new hours)
-- No app needed on the customer's side
+- Customers don't need an app to save you. With the free TapCard app they can also claim your offers and follow your news
 
 Special offers and news with TapCard Promote
 Everyone who saves your card becomes someone you can reach, with no mailing list to build. Post an offer from your card, for example "Free dessert with any main", with an end date and a limit if you like. People who have your card see it in TapCard, tap Claim, and get their own one-off QR code. When they show it, scan it with your phone camera, type your staff PIN, and it is marked as used, so it can never be used twice. You see how many people claimed and how many came in.
@@ -512,7 +512,7 @@ export function restaurantHtml(name: string, links: MailshotLinks, cardImageUrl:
 <li style="${li}">Put it <strong>on your website</strong>, in emails and on social media as a link</li>
 <li style="${li}"><strong>Book a table, View our menu and Get directions</strong> are each one tap</li>
 <li style="${li}">Change your details once and <strong>every saved copy updates itself</strong> (new menu, new hours)</li>
-<li style="${li}">No app needed on the customer's side</li>
+<li style="${li}">Customers <strong>don't need an app to save you</strong>. With the <strong>free TapCard app</strong> they can also claim your offers and follow your news</li>
 </ul>
 <div style="margin:0 0 20px;padding:16px 18px;background:#f5f3ff;border-radius:12px;">
 <p style="margin:0 0 8px;font-size:17px;"><strong>Special offers and news with TapCard Promote</strong></p>
