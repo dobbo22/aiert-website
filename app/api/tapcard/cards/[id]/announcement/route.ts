@@ -18,7 +18,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!card) return NextResponse.json({ error: "not found" }, { status: 404 });
   if (!(await canEdit(card, readEditToken(req)))) return NextResponse.json({ error: "forbidden" }, { status: 403 });
   if (!isBusinessLabel(card.label)) return NextResponse.json({ error: "announcements are for business cards" }, { status: 400 });
-  if (!(await promoteAllowed(id))) return NextResponse.json({ error: "Posting news needs TapCard Promote." }, { status: 402 });
+  if (!(await promoteAllowed(id))) return NextResponse.json({ error: "Posting news needs TapCard Promote on this card. One subscription covers one card; email enquiries@aiert.co.uk to add more locations." }, { status: 402 });
   const body = (await req.json().catch(() => null)) as { text?: unknown } | null;
   const r = await setAnnouncement(id, body?.text);
   if (!r.ok) return NextResponse.json({ error: r.error }, { status: 400 });

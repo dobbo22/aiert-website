@@ -109,9 +109,33 @@ export async function verifyAndroid(purchaseToken: string): Promise<Verified> {
   return { until, trial, platform: "android", productId: PROMOTE_ANDROID_ID, originalId: purchaseToken.slice(0, 24) };
 }
 
+/// One Promote subscription covers ONE card. A second card on the same subscription is refused, unless the owner
+/// moves it (at most once every 30 days, so it can't be passed around between restaurants).
+export class PromoteLimitError extends Error {
+  constructor(public otherCardId: string, public canMove: boolean) {
+    super(canMove
+      ? "This Promote subscription is already on another of your cards. You can move it to this card."
+      : "This Promote subscription is already on another of your cards, and was moved recently. Email enquiries@aiert.co.uk to add more locations.");
+  }
+}
+const MOVE_COOLDOWN_DAYS = 30;
+
 /// Stores what the store confirmed for this card, keeping the later of the two end dates.
-export async function saveVerified(cardId: string, v: Verified): Promise<PromoteStatus> {
+export async function saveVerified(cardId: string, v: Verified, opts: { move?: boolean } = {}): Promise<PromoteStatus> {
   await ensureSchema();
+  if (v.originalId) {
+    const other = ((await sql`
+      SELECT card_id, updated_at FROM tapcard_promote
+      WHERE original_id = ${v.originalId} AND card_id <> ${cardId} AND until > now()
+      ORDER BY updated_at DESC LIMIT 1
+    `) as { card_id: string; updated_at: string }[])[0];
+    if (other) {
+      const movedLongAgo = Date.now() - new Date(other.updated_at).getTime() > MOVE_COOLDOWN_DAYS * 86_400_000;
+      if (!opts.move || !movedLongAgo) throw new PromoteLimitError(other.card_id, movedLongAgo);
+      // Move it: the old card stops being covered.
+      await sql`UPDATE tapcard_promote SET until = now(), updated_at = now() WHERE card_id = ${other.card_id}`;
+    }
+  }
   await sql`
     INSERT INTO tapcard_promote (card_id, until, trial, platform, product_id, original_id)
     VALUES (${cardId}, ${v.until.toISOString()}, ${v.trial}, ${v.platform}, ${v.productId}, ${v.originalId})
