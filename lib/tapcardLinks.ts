@@ -78,3 +78,13 @@ export function linkIcon(kind: LinkKind): LinkIcon {
     default: return "link";
   }
 }
+
+// "Call me" on a person's card; "Call us" on a business card; "Call to book" when the business has a menu or
+// hours but no online booking, so the phone number is the way to book.
+export function callActionLabel(links: { kind: string }[]): string {
+  const kinds = new Set(links.map((l) => l.kind));
+  const bizKinds = ["book_table", "book_room", "appointment", "menu", "order", "shop", "hours", "reviews", "tripadvisor", "google_review"];
+  if (!bizKinds.some((k) => kinds.has(k))) return "Call me";
+  const canBook = kinds.has("book_table") || kinds.has("book_room") || kinds.has("appointment");
+  return !canBook && (kinds.has("menu") || kinds.has("hours")) ? "Call to book" : "Call us";
+}

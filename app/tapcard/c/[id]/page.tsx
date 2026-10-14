@@ -8,7 +8,7 @@ import { orgLogoUrlForCard } from "@/lib/tapcardBiz";
 import { BannerBrand, BrandProvider, FaviconBadge } from "../../CardBrand";
 import ContactIcon, { type ContactIconName } from "../../ContactIcon";
 import AcceptRecipientForm from "../../AcceptRecipientForm";
-import { isTapLink, linkIcon, parseStoredLinks } from "@/lib/tapcardLinks";
+import { callActionLabel, isTapLink, linkIcon, parseStoredLinks } from "@/lib/tapcardLinks";
 import SaveContactButton from "../../SaveContactButton";
 
 // App Store Connect record "TapCard: Digital Business Card" (id 6816003159).
@@ -101,7 +101,7 @@ export default async function CardPage({
   }
 
   const contactLines: { action: string; value: string; href: string; icon: ContactIconName; iconBg: string }[] = [
-    { action: "Call me", value: card.phone, href: `tel:${card.phone}`, icon: "phone", iconBg: "#22C55E" },
+    { action: callActionLabel(parseStoredLinks(card.links)), value: card.phone, href: `tel:${card.phone}`, icon: "phone", iconBg: "#22C55E" },
     // A full row (like the address), not one of the small "follow me" tiles.
     { action: "Message me on WhatsApp", value: whatsappDisplay(card.whatsapp_url), href: card.whatsapp_url, icon: "whatsapp", iconBg: "#25D366" },
     { action: "Email me", value: card.email, href: `mailto:${card.email}`, icon: "mail", iconBg: "#A855F7" },
