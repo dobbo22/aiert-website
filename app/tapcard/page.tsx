@@ -108,6 +108,12 @@ export default function TapCardHomePage() {
             See how it works
           </a>
           <a
+            href="/promote"
+            className="rounded-xl px-6 py-3 font-semibold text-cloud ring-1 ring-slate hover:ring-mist"
+          >
+            For restaurants &amp; shops
+          </a>
+          <a
             href="/support"
             className="rounded-xl px-6 py-3 font-semibold text-cloud ring-1 ring-slate hover:ring-mist"
           >
@@ -119,6 +125,7 @@ export default function TapCardHomePage() {
           <p>
             TapCard is made by AIERT Ltd, registered in England &amp; Wales, No. 16587000.{" "}
             <a href="/how-it-works" className="text-gold underline">How it works</a> ·{" "}
+            <a href="/promote" className="text-gold underline">For businesses</a> ·{" "}
             <a href="/support" className="text-gold underline">Support</a> ·{" "}
             <a href="/privacy" className="text-gold underline">Privacy</a> ·{" "}
             <a href="mailto:enquiries@aiert.co.uk" className="text-gold underline">enquiries@aiert.co.uk</a>

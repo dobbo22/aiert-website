@@ -162,6 +162,9 @@ export default function HowItWorksPage() {
           replace the offer, or withdraw it. You give the discount yourself; TapCard does not take payments.
         </p>
         <p>
+          Running a restaurant, café, salon or shop? See <a href="/promote">what you can do with TapCard Promote</a>.
+        </p>
+        <p>
           <strong>If you get an offer:</strong> a green <strong>Offer</strong> badge appears on the business in your
           Contacts. Open it and tap <strong>Claim this offer</strong>. Show the QR code to the staff. It works once and
           then shows <strong>Used</strong>. The business sees how many people claimed, not who.

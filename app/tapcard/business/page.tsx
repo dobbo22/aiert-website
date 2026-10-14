@@ -63,7 +63,22 @@ export default function TapCardBusinessPage() {
           ))}
         </section>
 
+        <section className="mt-12 rounded-2xl bg-charcoal p-8 ring-1 ring-gold/40">
+          <p className="text-sm font-semibold uppercase tracking-wider text-teal">For restaurants, cafés, salons and shops</p>
+          <h2 className="mt-2 text-2xl font-black text-cloud">One-touch marketing for every location</h2>
+          <p className="mt-3 text-lg leading-relaxed text-cloud">
+            Each branch gets its own card with its own address, phone, opening hours and booking link. From the admin page or the app you can post
+            a <strong>special offer</strong> or a <strong>news flash</strong> to the people who follow that branch. They are told straight away, claim
+            their own one-off QR code, and your staff scan it and enter a PIN. Head office sees every location&apos;s followers, offers claimed and
+            used in one place.
+          </p>
+          <p className="mt-4">
+            <a href="/promote" className="btn-gold inline-block rounded-xl px-6 py-3 font-semibold">See what you can do with Promote</a>
+          </p>
+        </section>
+
         <footer className="mt-16 border-t border-slate pt-6 text-sm text-cloud">
+          <a href="/promote" className="text-gold underline">TapCard Promote</a> ·{" "}
           <a href="/business/guide" className="text-gold underline">Admin guide</a> ·{" "}
           <a href="/business/security" className="text-gold underline">Security &amp; privacy</a> ·{" "}
           <a href="/privacy" className="text-gold underline">Privacy policy</a> · AIERT Ltd
