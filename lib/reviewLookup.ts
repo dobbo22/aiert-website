@@ -76,7 +76,12 @@ export async function findReviewLinks(name: string, address: string): Promise<Re
   if (n.length < 3 || (a.length < 6 && n.length < 6)) return {};
   await ensureSchema();
   const keyHash = crypto.createHash("sha256").update(`${n.toLowerCase()}|${a.toLowerCase()}`).digest("hex");
-  const cached = (await sql`SELECT google, tripadvisor FROM tapcard_review_cache WHERE key_hash = ${keyHash} AND fetched_at > now() - ${TTL_DAYS + " days"}::interval`) as { google: string; tripadvisor: string }[];
+  // Found links are kept for 30 days; "found nothing" only for an hour, so a failed lookup or a key added later is retried.
+  const cached = (await sql`
+    SELECT google, tripadvisor FROM tapcard_review_cache
+    WHERE key_hash = ${keyHash}
+      AND ((google <> '' OR tripadvisor <> '') AND fetched_at > now() - ${TTL_DAYS + " days"}::interval OR fetched_at > now() - interval '1 hour')
+  `) as { google: string; tripadvisor: string }[];
   if (cached[0]) return { google: cached[0].google || undefined, tripadvisor: cached[0].tripadvisor || undefined };
   const today = (await sql`SELECT COUNT(*)::int AS n FROM tapcard_review_cache WHERE fetched_at > now() - interval '1 day'`) as { n: number }[];
   if ((today[0]?.n ?? 0) >= DAILY_CAP) return {};
