@@ -58,7 +58,11 @@ function formatHours(specs: { days: number[]; opens: string; closes: string }[])
   return parts.join("; ");
 }
 
-interface HoursPlace { postcode: string; street: string; name: string; phone: string; addressText: string; label: string; specs: { days: number[]; opens: string; closes: string }[] }
+interface HoursPlace { postcode: string; street: string; name: string; phone: string; addressText: string; label: string; specs: { days: number[]; opens: string; closes: string }[]; hoursText?: string }
+
+function placeHours(p: HoursPlace): string {
+  return (p.hoursText ?? formatHours(p.specs)).slice(0, 200);
+}
 
 const POSTCODE = /\b([A-Z]{1,2}\d[A-Z\d]?)\s*(\d[A-Z]{2})\b/i;
 export function postcodeOf(text: string | undefined | null): string {
@@ -76,6 +80,8 @@ export function addressKey(text: string | undefined | null): string {
 // appears in the card's name/address and nowhere else. With nothing to go on, only a site with a single place.
 export function matchPlace(places: HoursPlace[], postcode: string, address = ""): HoursPlace | undefined {
   const key = addressKey(address);
+  // One place on the whole site: that is the one, unless the card's postcode says it is somewhere else.
+  if (places.length === 1 && (!postcode || !places[0].postcode || places[0].postcode === postcode)) return places[0];
   if (postcode || key) {
     const byPostcode = postcode ? places.find((p) => p.postcode && p.postcode === postcode) : undefined;
     if (byPostcode) return byPostcode;
@@ -84,8 +90,53 @@ export function matchPlace(places: HoursPlace[], postcode: string, address = "")
     const byName = key ? places.filter((p) => p.name.length >= 4 && (` ${key} `).includes(` ${p.name} `)) : [];
     return byName.length === 1 ? byName[0] : undefined;
   }
-  const sets = new Set(places.map((p) => formatHours(p.specs)).filter(Boolean));
+  const sets = new Set(places.map((p) => placeHours(p)).filter(Boolean));
   return sets.size === 1 ? places[0] : undefined;
+}
+
+const DAY_WORDS = /\b(mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun)[a-z]*\b/i;
+const TIME = /\d{1,2}[:.]\d{2}|\d{1,2}\s?(am|pm)\b/i;
+const TITLE_DAY: Record<string, string> = { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" };
+
+function decodeEntities(t: string): string {
+  return t.replace(/&nbsp;|&#160;/g, " ").replace(/&amp;/g, "&").replace(/&rsquo;|&#8217;/g, "\u2019").replace(/&#x27;|&#39;/g, "'").replace(/&ndash;|&#8211;/g, "\u2013").replace(/&[a-z]+;/g, " ");
+}
+
+function pageLines(html: string): string[] {
+  const t = html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, "").replace(/<(br|\/p|\/div|\/h\d|\/li|\/tr|\/span)[^>]*>/gi, "\n").replace(/<[^>]+>/g, " ");
+  return decodeEntities(t).split("\n").map((l) => l.replace(/[\s\u200b]+/g, " ").trim()).filter(Boolean);
+}
+
+// "MON - THU     11:30 - 15:00 / 17:30 - 22:30" -> "Mon\u2013Thu 11:30\u201315:00 / 17:30\u201322:30"
+function tidyHoursLine(line: string): string {
+  return line
+    .replace(new RegExp(DAY_WORDS.source, "gi"), (w) => TITLE_DAY[w.toLowerCase().slice(0, 3)] ?? w)
+    .replace(/\s*[-\u2013\u2014]\s*/g, "\u2013").replace(/\s+/g, " ").replace(/\s*&\s*/g, " & ").trim();
+}
+
+// A site with no structured data but a plain "Find us / Opening hours" block: one address, one phone, one set of
+// hours. Only used when the page has exactly one such block, so a wrong branch is never guessed.
+export function textPlace(html: string): HoursPlace | null {
+  const lines = pageLines(html);
+  const hIdx = lines.findIndex((l) => /^(opening|opening times|opening hours|hours|our hours|trading hours)\b[^a-z0-9]*$/i.test(l.replace(/[:\s]+$/, "")) || /^opening (hours|times)\b/i.test(l));
+  if (hIdx < 0) return null;
+  const hoursLines: string[] = [];
+  for (let k = hIdx + 1; k < Math.min(lines.length, hIdx + 12); k++) {
+    if (DAY_WORDS.test(lines[k]) && TIME.test(lines[k]) && lines[k].length < 90) hoursLines.push(tidyHoursLine(lines[k]));
+    else if (hoursLines.length) break;
+  }
+  if (!hoursLines.length) return null;
+  // The address: the nearest preceding line that has a UK postcode and is not a company/registered-office line.
+  let addr = "", addrIdx = -1;
+  for (let k = hIdx - 1; k >= Math.max(0, hIdx - 12); k--) {
+    if (POSTCODE.test(lines[k]) && !/registered|limited|ltd|plc|\u00a9|copyright/i.test(lines[k]) && lines[k].length < 140) { addr = lines[k]; addrIdx = k; break; }
+  }
+  let phone = "";
+  for (let k = Math.max(0, hIdx - 12); k < hIdx; k++) {
+    const m = /(?:\+44\s?|\b0)\d[\d\s()]{8,13}\d/.exec(lines[k]);
+    if (m) { phone = m[0].replace(/\s+/g, " ").trim().slice(0, 40); break; }
+  }
+  return { postcode: postcodeOf(addr), street: "", name: "", phone, addressText: addr.slice(0, 200), label: "", specs: [], hoursText: hoursLines.join("; ") };
 }
 
 export function jsonLdUrls(html: string): { menu?: string; sameAs: string[]; places: HoursPlace[] } {
@@ -190,8 +241,9 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
   const where = `${name ?? ""} ${address ?? ""}`;
   const postcode = postcodeOf(address);
   const places = [...ld.places];
+  if (!places.length) { const tp = textPlace(html); if (tp) places.push(tp); }
   let place = matchPlace(places, postcode, where);
-  let hours = place ? formatHours(place.specs).slice(0, 200) || undefined : undefined;
+  let hours = place ? placeHours(place) || undefined : undefined;
   if (!hours) {
     const pages = anchors(html, base)
       .filter(({ href, text }) => href.hostname.replace(/^www\./, "") === siteHost && /(locations?|restaurants?|branches|find[- ]us|contact|visit)/i.test(`${text} ${href.pathname}`))
@@ -200,9 +252,14 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
       const more = await safeFetch(u);
       if (!more || !(more.res.headers.get("content-type") ?? "").includes("text/html")) continue;
       const b = await readLimited(more.res, MAX_HTML);
-      if (b) places.push(...jsonLdUrls(b.toString("utf8")).places);
+      if (b) {
+        const text = b.toString("utf8");
+        const more2 = jsonLdUrls(text).places;
+        if (more2.length) places.push(...more2);
+        else if (!places.length) { const tp = textPlace(text); if (tp) places.push(tp); }
+      }
       place = matchPlace(places, postcode, where);
-      hours = place ? formatHours(place.specs).slice(0, 200) || undefined : undefined;
+      hours = place ? placeHours(place) || undefined : undefined;
       if (hours) break;
     }
   }
@@ -219,10 +276,10 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
   if (!place && places.length > 1) {
     const key = addressKey(where);
     const seenNames = new Set<string>();
-    const all = places.filter((p) => p.label && formatHours(p.specs) && !seenNames.has(p.label) && !!seenNames.add(p.label));
+    const all = places.filter((p) => p.label && placeHours(p) && !seenNames.has(p.label) && !!seenNames.add(p.label));
     const near = (p: HoursPlace) => (key && p.addressText && addressKey(p.addressText).split(" ").some((w) => w.length >= 4 && ` ${key} `.includes(` ${w} `)) ? 0 : 1);
     branches = all.sort((a, b) => near(a) - near(b)).slice(0, 40).map((p) => ({
-      name: p.label, address: p.addressText, phone: p.phone, hours: formatHours(p.specs).slice(0, 200),
+      name: p.label, address: p.addressText, phone: p.phone, hours: placeHours(p),
     }));
   }
   return { links: sanitizeLinks([...found].map(([kind, value]) => ({ kind, label: "", value }))), details, branches };
