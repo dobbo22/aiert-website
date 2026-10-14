@@ -41,13 +41,17 @@ export interface TapCardRecord {
   brand_color: string;
   /// Business cards only: booking / menu / shop links and custom rows, as JSON text — lib/tapcardLinks.ts.
   links: string;
+  /// "person" (someone's own business card), "business" (a restaurant, shop, salon...) or "" when the owner never said:
+  /// then the apps work it out from the links, as before. Chosen by the owner when the card is created.
+  card_kind: string;
   updated_at: Date | string;
 }
 
 /// pass_style is optional: app builds that predate it don't send one, and
 /// an update without it keeps the card's current style. brand_color is
 /// never accepted from the client at all — see lib/siteBrandColor.ts.
-type TapCardInput = Omit<TapCardRecord, "id" | "photo_url" | "edit_token_hash" | "view_count" | "save_count" | "qr_view_count" | "pass_style" | "brand_color" | "updated_at" | "links"> & {
+type TapCardInput = Omit<TapCardRecord, "id" | "photo_url" | "edit_token_hash" | "view_count" | "save_count" | "qr_view_count" | "pass_style" | "brand_color" | "updated_at" | "links" | "card_kind"> & {
+  card_kind?: string;
   photo_url?: string | null;
   links?: string;
   pass_style?: string;
@@ -96,6 +100,7 @@ function ensureSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS brand_color TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS address TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS links TEXT NOT NULL DEFAULT '[]'`)
+      .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS card_kind TEXT NOT NULL DEFAULT ''`)
       // "Send your card back": a receiver's app returning its own (already
       // public) card to the card it scanned. Only the two ids are stored —
       // the returned details are read live from tapcard_cards, so nothing is
@@ -167,10 +172,10 @@ export async function createCard(input: TapCardInput, editTokenHash: string, cre
   await sql`
     INSERT INTO tapcard_cards (id, label, grouping_id, name, title, company, phone, email, website, address, linkedin_url,
                                twitter_url, instagram_url, facebook_url, facebook_is_page, tiktok_url, whatsapp_url, photo_url,
-                               edit_token_hash, creator_ip_hash, pass_style, links)
+                               edit_token_hash, creator_ip_hash, pass_style, links, card_kind)
     VALUES (${id}, ${input.label}, ${input.grouping_id}, ${input.name}, ${input.title}, ${input.company}, ${input.phone}, ${input.email}, ${input.website}, ${input.address}, ${input.linkedin_url},
             ${input.twitter_url}, ${input.instagram_url}, ${input.facebook_url}, ${input.facebook_is_page}, ${input.tiktok_url}, ${input.whatsapp_url}, ${input.photo_url ?? null},
-            ${editTokenHash}, ${creatorIpHash}, ${input.pass_style ?? "artwork"}, ${input.links ?? "[]"})
+            ${editTokenHash}, ${creatorIpHash}, ${input.pass_style ?? "artwork"}, ${input.links ?? "[]"}, ${input.card_kind ?? ""})
   `;
   return id;
 }
@@ -189,6 +194,7 @@ export async function updateCard(id: string, input: TapCardInput): Promise<boole
         photo_url = COALESCE(${input.photo_url ?? null}, photo_url),
         pass_style = COALESCE(${input.pass_style ?? null}, pass_style),
         links = COALESCE(${input.links ?? null}, links),
+        card_kind = COALESCE(${input.card_kind ?? null}, card_kind),
         updated_at = now()
     WHERE id = ${id}
     RETURNING id
@@ -279,6 +285,7 @@ export function publicCardJSON(card: TapCardRecord) {
     // an actual (if unlikely) colour hex string without a sentinel value.
     brandColor: card.brand_color || null,
     links: parseStoredLinks(card.links),
+    cardKind: card.card_kind || null,
   };
 }
 

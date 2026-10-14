@@ -15,6 +15,7 @@ const NOTIFY_WATCHLIST = ["title", "company", "phone", "email"] as const;
 
 interface CardBody {
   id?: string;
+  cardKind?: string;
   label?: string;
   groupingID?: string;
   name?: string;
@@ -97,6 +98,8 @@ function sanitize(body: CardBody) {
     tiktok_url: socialUrl(body.tiktokURL, "tiktok"),
     whatsapp_url: whatsAppUrl(body.whatsAppURL),
     pass_style: parsePassStyle(body.passStyle),
+    // The owner's answer to "is this card for you or for a business?"; an app that doesn't send it leaves it untouched.
+    card_kind: body.cardKind === undefined ? undefined : body.cardKind === "person" || body.cardKind === "business" ? body.cardKind : "",
     // Personal cards never keep links; an app that doesn't send the field leaves them untouched.
     links: body.links === undefined ? undefined : JSON.stringify(isBusinessLabel(body.label) ? sanitizeLinks(body.links) : []),
   };
