@@ -30,7 +30,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const existing = await getCard(id);
-  if (!existing) return NextResponse.json({ error: "not found" }, { status: 404 });
+  // Deleting a card that is already gone (removed by its company, or stopped elsewhere) is a success: there is nothing
+  // left to remove, and older apps refuse to delete the card from the phone while this answered 404.
+  if (!existing) return NextResponse.json({ ok: true, alreadyGone: true });
   if (!(await canEdit(existing, readEditToken(req)))) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
