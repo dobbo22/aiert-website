@@ -14,7 +14,7 @@ const steps = [
     title: "1. Share your card",
     img: "share.png",
     alt: "TapCard share screen with a QR code and Share, Send and Print buttons",
-    text: "Your QR code is the quickest way. Anyone scans it with their camera and saves you, with no app needed. Under it, Share sends your link, Send picks people from your contacts, and Print makes a QR sign. Add your card to Apple Wallet or Google Wallet and choose a design.",
+    text: "Your QR code is the quickest way. Anyone scans it with their camera and saves you, with no app needed. Under it, Share sends your link, Send picks people from your contacts, and Print makes a QR sign headed with your business name. Most phones have no printer, so choose Email me the sign and print it from a computer. Add your card to Apple Wallet or Google Wallet and choose a design.",
   },
   {
     title: "2. No signal? Use Offline QR",

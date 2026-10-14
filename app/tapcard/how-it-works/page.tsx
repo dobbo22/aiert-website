@@ -57,7 +57,7 @@ export default function HowItWorksPage() {
           </li>
           <li>
             <strong>Print a QR sign:</strong> make a poster for a reception desk, till or window. Use a separate card
-            for it, so only the details you want to be public are shown.
+            for it, so only the details you want to be public are shown. The sign carries your business name as its heading, and Email me the sign sends it to you as a PDF to print from a computer.
           </li>
           <li>
             <strong>No signal?</strong> Tap <strong>Offline QR</strong>. It shows a QR code that holds your contact
