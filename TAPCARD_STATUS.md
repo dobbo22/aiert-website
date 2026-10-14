@@ -185,3 +185,8 @@ New in these builds:
 - **Welcome gift for followers**: offer claimable only by followers (check `tapcard_followers`), option in the Promote box, promised in the follow pop-up's "Are you sure?" step.
 - **Location setup in TapCard for Business**: website/address/phone per location in the invite rows (carried in the signed invite link), a "restaurant group" template preset with those fields unlocked, then a brands layer (needs app changes).
 - **Follower reach tiers** (250/500) and quoting real follower counts in the restaurant email.
+
+## 15 Oct 2026: business free trial is 30 days
+- `TRIAL_DAYS = 30` (`lib/tapcardBizBilling.ts`). Trial sign-up stores `current_period_end`; older trials fall back to created_at + 30 days (`trialEndsAt`). `isOrgActive` (billing active and trial not ended) now drives invites, Promote company cover and the admin pages; a paid band is unaffected. Admin shows "Trial ended" and the Billing tab shows "Trial ends <date>".
+- Reminder: daily cron `/api/cron/biz-trial-reminders` (vercel.json, 08:00) emails the company's admins once, 3 days before the trial ends (`trial_reminded_at`).
+- Decided: Promote company cover for a trial company ends with the trial. Still to decide: per-location price for restaurant groups (bands are £20/£40/£70/£120 a year per 10/25/50/100 people, which undercuts single-card Promote at £49.99).
