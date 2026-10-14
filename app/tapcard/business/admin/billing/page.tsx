@@ -1,5 +1,5 @@
 import { requireBizSession } from "@/lib/tapcardBizSession";
-import { getOrg } from "@/lib/tapcardBiz";
+import { getOrg, orgStatusLabel, trialEndsAt } from "@/lib/tapcardBiz";
 import { bandById } from "@/lib/tapcardBizBilling";
 import BillingPortalButton from "./BillingPortalButton";
 import UpgradePicker from "./UpgradePicker";
@@ -16,12 +16,12 @@ export default async function BizBillingPage() {
     <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
       <h2 className="text-lg font-bold text-cloud">Billing</h2>
       <dl className="mt-4 space-y-2 text-cloud">
-        <Row label="Status" value={org.billing_status} />
+        <Row label="Status" value={orgStatusLabel(org)} />
         <Row label="Plan" value={org.seat_band === "trial" ? "Free trial" : band?.label ?? (org.seat_band || "–")} />
         <Row label="Seats" value={String(org.seat_limit || "–")} />
         <Row
-          label="Renews"
-          value={org.current_period_end ? new Date(org.current_period_end).toLocaleDateString("en-GB") : "–"}
+          label={org.seat_band === "trial" ? "Trial ends" : "Renews"}
+          value={(org.seat_band === "trial" ? trialEndsAt(org) : org.current_period_end ? new Date(org.current_period_end) : null)?.toLocaleDateString("en-GB") ?? "–"}
         />
       </dl>
 
@@ -31,7 +31,7 @@ export default async function BizBillingPage() {
         <div className="mt-6">
           <p className="text-cloud">
             {org.seat_band === "trial"
-              ? "You're on the free trial (1 seat). Upgrade to a paid band to add your whole team:"
+              ? "You're on the 30-day free trial (1 seat). Choose a paid band before it ends to keep your cards covered and add your whole team:"
               : "No payment method on file yet. Pick a band to get started:"}
           </p>
           <UpgradePicker />

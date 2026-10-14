@@ -1,5 +1,5 @@
 import { requireBizSession } from "@/lib/tapcardBizSession";
-import { getOrg, listOrgCards } from "@/lib/tapcardBiz";
+import { getOrg, isOrgActive, listOrgCards } from "@/lib/tapcardBiz";
 import InvitePeople from "./InvitePeople";
 import RemoveCardButton from "./RemoveCardButton";
 
@@ -15,7 +15,7 @@ export default async function BizEmployeesPage() {
 
   return (
     <div className="space-y-8">
-      <InvitePeople billingActive={org.billing_status === "active"} orgName={org.name} domain={org.domain} />
+      <InvitePeople billingActive={isOrgActive(org)} orgName={org.name} domain={org.domain} />
 
       <div className="rounded-2xl bg-charcoal ring-1 ring-white/10">
         <div className="flex items-baseline justify-between px-4 pt-4">

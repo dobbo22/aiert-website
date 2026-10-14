@@ -28,6 +28,9 @@ export const SEAT_BANDS: SeatBand[] = [
 /// app/api/tapcard/biz/trial/route.ts, which activates the org directly
 /// rather than going through Checkout.
 export const TRIAL_SEAT_LIMIT = 1;
+/// The free trial lasts this many days from sign-up; the admin gets a reminder a few days before it ends.
+export const TRIAL_DAYS = 30;
+export const TRIAL_REMINDER_DAYS = 3;
 
 export function bandById(id: string): SeatBand | undefined {
   return SEAT_BANDS.find((b) => b.id === id);

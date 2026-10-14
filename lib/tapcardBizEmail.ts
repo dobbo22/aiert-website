@@ -41,3 +41,15 @@ export async function sendBizLoginEmail(email: string, link: string): Promise<vo
   `;
   await send(email, "Sign in to TapCard for Business", html, `Sign in: ${link}\n\nThis link works once and expires in 15 minutes.`);
 }
+
+export async function sendBizTrialReminderEmail(email: string, company: string, endsOn: string): Promise<void> {
+  const link = "https://tapcard.aiert.co.uk/business/admin/billing";
+  const html = `
+    <p>Your free TapCard for Business trial for <strong>${company.replace(/</g, "&lt;")}</strong> ends on <strong>${endsOn}</strong>.</p>
+    <p>After that, invites stop and your company cards are no longer covered for Promote (special offers and news). To keep everything working, choose a plan:</p>
+    <p><a href="${link}">${link}</a></p>
+    <p>Plans start at £20 a year for up to 10 people. If you're not going to carry on, there's nothing to do.</p>
+  `;
+  await send(email, `Your TapCard for Business trial ends on ${endsOn}`, html,
+    `Your free TapCard for Business trial for ${company} ends on ${endsOn}.\n\nAfter that, invites stop and your company cards are no longer covered for Promote. To keep everything working, choose a plan: ${link}\n\nPlans start at £20 a year for up to 10 people. If you're not going to carry on, there's nothing to do.`);
+}

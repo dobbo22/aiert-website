@@ -1,5 +1,5 @@
 import { requireBizSession } from "@/lib/tapcardBizSession";
-import { countOrgCards, getOrg } from "@/lib/tapcardBiz";
+import { countOrgCards, getOrg, isOrgActive, orgStatusLabel } from "@/lib/tapcardBiz";
 
 export default async function BizAdminOverview() {
   const session = await requireBizSession();
@@ -14,7 +14,7 @@ export default async function BizAdminOverview() {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
           <p className="text-sm text-mist">Billing</p>
-          <p className="mt-1 text-xl font-bold text-cloud capitalize">{org.billing_status}</p>
+          <p className="mt-1 text-xl font-bold text-cloud capitalize">{orgStatusLabel(org)}</p>
         </div>
         <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
           <p className="text-sm text-mist">Active cards</p>
@@ -24,11 +24,12 @@ export default async function BizAdminOverview() {
         </div>
       </div>
 
-      {org.billing_status !== "active" && (
+      {!isOrgActive(org) && (
         <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-gold/40">
           <p className="text-cloud">
-            Billing isn&apos;t active yet, so invites can&apos;t be created and employees can&apos;t activate their cards. If you just paid, this
-            usually updates within a minute — refresh to check.
+            {org.billing_status === "active"
+              ? "Your free trial has ended, so invites can't be created and company cards are no longer covered for Promote. Choose a plan on the Billing tab to carry on."
+              : "Billing isn't active yet, so invites can't be created and employees can't activate their cards. If you just paid, this usually updates within a minute — refresh to check."}
           </p>
         </div>
       )}

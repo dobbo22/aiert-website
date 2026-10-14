@@ -6,7 +6,7 @@
 import crypto from "crypto";
 import sql from "@/lib/db";
 import { verifyAppleJwsRaw } from "@/lib/tapcardFounders";
-import { getOrg } from "@/lib/tapcardBiz";
+import { getOrg, isOrgActive } from "@/lib/tapcardBiz";
 
 const BUNDLE_ID = "com.mailbroom.tapcard";
 export const PROMOTE_IOS_IDS = [
@@ -56,7 +56,7 @@ async function companyCover(cardId: string): Promise<PromoteStatus | null> {
   const row = ((await sql`SELECT org_id FROM tapcard_cards WHERE id = ${cardId}`) as { org_id: string | null }[])[0];
   if (!row?.org_id) return null;
   const org = await getOrg(row.org_id);
-  if (!org || org.billing_status !== "active") return null;
+  if (!org || !isOrgActive(org)) return null;
   const until = org.current_period_end ? new Date(org.current_period_end).toISOString() : null;
   return { active: true, until, trial: false, company: true };
 }

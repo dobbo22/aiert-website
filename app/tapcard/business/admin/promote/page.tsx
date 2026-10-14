@@ -1,5 +1,5 @@
 import { requireBizSession } from "@/lib/tapcardBizSession";
-import { getOrg } from "@/lib/tapcardBiz";
+import { getOrg, isOrgActive } from "@/lib/tapcardBiz";
 import { orgPromoteRows } from "@/lib/tapcardOffers";
 import LocationPromote from "./LocationPromote";
 
@@ -13,7 +13,7 @@ export default async function BizPromotePage() {
   if (!org) return null;
   const rows = await orgPromoteRows(org.id);
   const sum = (f: (r: (typeof rows)[number]) => number) => rows.reduce((n, r) => n + f(r), 0);
-  const active = org.billing_status === "active";
+  const active = isOrgActive(org);
   const stat = (v: number, l: string) => (
     <div className="rounded-2xl bg-charcoal px-4 py-3 ring-1 ring-white/10"><div className="text-2xl font-black text-cloud">{v}</div><div className="text-sm text-cloud">{l}</div></div>
   );

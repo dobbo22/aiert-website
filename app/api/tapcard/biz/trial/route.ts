@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { addAdmin, createOrg, domainHasUsedTrial, domainOf, markTrialUsed, setOrgBilling } from "@/lib/tapcardBiz";
 import { createLoginToken } from "@/lib/tapcardBizAuth";
 import { sendBizLoginEmail } from "@/lib/tapcardBizEmail";
-import { TRIAL_SEAT_LIMIT } from "@/lib/tapcardBizBilling";
+import { TRIAL_DAYS, TRIAL_SEAT_LIMIT } from "@/lib/tapcardBizBilling";
 
 interface Body {
   companyName?: string;
@@ -41,7 +41,10 @@ export async function POST(req: NextRequest) {
   }
 
   const org = await createOrg(companyName, domain);
-  await setOrgBilling(org.id, { billing_status: "active", seat_band: "trial", seat_limit: TRIAL_SEAT_LIMIT });
+  await setOrgBilling(org.id, {
+    billing_status: "active", seat_band: "trial", seat_limit: TRIAL_SEAT_LIMIT,
+    current_period_end: new Date(Date.now() + TRIAL_DAYS * 86_400_000),
+  });
   await markTrialUsed(org.id);
   await addAdmin(org.id, email, "admin");
 

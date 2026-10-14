@@ -50,6 +50,7 @@ export interface BizOrg {
 }
 
 import { DEFAULT_LOCKED_FIELDS, LOCKABLE_FIELDS } from "@/lib/tapcardBizFields";
+import { TRIAL_DAYS } from "@/lib/tapcardBizBilling";
 export { DEFAULT_LOCKED_FIELDS, LOCKABLE_FIELDS };
 
 let schemaReady: Promise<unknown> | null = null;
@@ -83,6 +84,7 @@ export function ensureSchema(): Promise<unknown> {
       )
     `
       .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS trial_used BOOLEAN NOT NULL DEFAULT false`)
+      .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS trial_reminded_at TIMESTAMPTZ`)
       .then(() => sql`
         CREATE TABLE IF NOT EXISTS tapcard_biz_admins (
           id TEXT PRIMARY KEY,
@@ -184,8 +186,34 @@ export async function getOrg(id: string): Promise<BizOrg | null> {
 /// must keep working even if billing lapses later (see the plan's
 /// reasoning — breaking a card already out in the world over a billing
 /// hiccup is a bad, highly visible failure that isn't the employee's fault).
-export function orgCanProvision(org: Pick<BizOrg, "billing_status">): boolean {
-  return org.billing_status === "active";
+export function orgCanProvision(org: Pick<BizOrg, "billing_status" | "seat_band" | "current_period_end" | "created_at">): boolean {
+  return isOrgActive(org);
+}
+
+type TrialFields = Pick<BizOrg, "seat_band" | "current_period_end" | "created_at">;
+
+/// When a free-trial company's trial ends: its stored end date, or 30 days after it was created for trials made
+/// before the end date was recorded. null for a paid company.
+export function trialEndsAt(org: TrialFields): Date | null {
+  if (org.seat_band !== "trial") return null;
+  if (org.current_period_end) return new Date(org.current_period_end);
+  return new Date(new Date(org.created_at).getTime() + TRIAL_DAYS * 86_400_000);
+}
+
+export function isTrialExpired(org: TrialFields): boolean {
+  const end = trialEndsAt(org);
+  return !!end && end.getTime() < Date.now();
+}
+
+/// Billing is active, and a free trial hasn't run out. The one check behind invites, Promote cover and the admin pages.
+export function isOrgActive(org: Pick<BizOrg, "billing_status"> & TrialFields): boolean {
+  return org.billing_status === "active" && !isTrialExpired(org);
+}
+
+/// Wording for the admin: Active, Trial ended, or the stored status.
+export function orgStatusLabel(org: Pick<BizOrg, "billing_status"> & TrialFields): string {
+  if (org.billing_status === "active" && isTrialExpired(org)) return "Trial ended";
+  return org.billing_status;
 }
 
 /// No logo_url: the logo has its own route (setOrgLogo).
