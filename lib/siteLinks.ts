@@ -58,7 +58,7 @@ function formatHours(specs: { days: number[]; opens: string; closes: string }[])
   return parts.join("; ");
 }
 
-interface HoursPlace { postcode: string; street: string; name: string; specs: { days: number[]; opens: string; closes: string }[] }
+interface HoursPlace { postcode: string; street: string; name: string; phone: string; addressText: string; specs: { days: number[]; opens: string; closes: string }[] }
 
 const POSTCODE = /\b([A-Z]{1,2}\d[A-Z\d]?)\s*(\d[A-Z]{2})\b/i;
 export function postcodeOf(text: string | undefined | null): string {
@@ -72,22 +72,20 @@ export function addressKey(text: string | undefined | null): string {
   return (text ?? "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(Boolean).map((w) => ABBREV[w] ?? w).join(" ");
 }
 
-// The hours for this card's branch: same postcode, else same street address, else a branch name that appears in
-// the address and nowhere else. With nothing to go on, only when the site has one unambiguous set.
-export function hoursFor(places: HoursPlace[], postcode: string, address = ""): string | undefined {
-  const out = (p: HoursPlace) => formatHours(p.specs).slice(0, 200) || undefined;
+// This card's branch on a multi-branch site: same postcode, else same street address, else a branch name that
+// appears in the card's name/address and nowhere else. With nothing to go on, only a site with a single place.
+export function matchPlace(places: HoursPlace[], postcode: string, address = ""): HoursPlace | undefined {
   const key = addressKey(address);
   if (postcode || key) {
     const byPostcode = postcode ? places.find((p) => p.postcode && p.postcode === postcode) : undefined;
-    if (byPostcode) return out(byPostcode);
+    if (byPostcode) return byPostcode;
     const byStreet = key ? places.find((p) => p.street.length >= 6 && (` ${key} `).includes(` ${p.street} `)) : undefined;
-    if (byStreet) return out(byStreet);
+    if (byStreet) return byStreet;
     const byName = key ? places.filter((p) => p.name.length >= 4 && (` ${key} `).includes(` ${p.name} `)) : [];
-    if (byName.length === 1) return out(byName[0]);
-    return undefined;
+    return byName.length === 1 ? byName[0] : undefined;
   }
-  const sets = [...new Set(places.map((p) => formatHours(p.specs)).filter(Boolean))];
-  return sets.length === 1 ? sets[0].slice(0, 200) : undefined;
+  const sets = new Set(places.map((p) => formatHours(p.specs)).filter(Boolean));
+  return sets.size === 1 ? places[0] : undefined;
 }
 
 export function jsonLdUrls(html: string): { menu?: string; sameAs: string[]; places: HoursPlace[] } {
@@ -114,7 +112,13 @@ export function jsonLdUrls(html: string): { menu?: string; sameAs: string[]; pla
           const addr = o.address as Record<string, unknown> | string | undefined;
           const pc = typeof addr === "string" ? addr : typeof addr?.postalCode === "string" ? addr.postalCode : "";
           const street = typeof addr === "object" && typeof addr?.streetAddress === "string" ? addressKey(addr.streetAddress) : "";
-          places.push({ postcode: postcodeOf(pc), street, name: addressKey(typeof o.name === "string" ? o.name : ""), specs });
+          const text = typeof addr === "object" && addr
+            ? [addr.streetAddress, addr.addressLocality, addr.postalCode].filter((x) => typeof x === "string" && x).join(", ")
+            : typeof addr === "string" ? addr : "";
+          places.push({
+            postcode: postcodeOf(pc), street, name: addressKey(typeof o.name === "string" ? o.name : ""),
+            phone: typeof o.telephone === "string" ? o.telephone.slice(0, 40) : "", addressText: text.slice(0, 200), specs,
+          });
         }
         if (Array.isArray(o.sameAs)) for (const s of o.sameAs) if (typeof s === "string") sameAs.push(s);
         if (typeof o.sameAs === "string") sameAs.push(o.sameAs);
@@ -133,15 +137,18 @@ function pick(found: Map<LinkKind, string>, kind: LinkKind, url: URL | string) {
   found.set(kind, u.replace(/^http:\/\//i, "https://"));
 }
 
-export async function findSiteLinks(websiteOrDomain: string, address?: string): Promise<CardLink[]> {
+export interface SiteDetails { address?: string; phone?: string }
+
+// `address` is whatever the card has so far; `name` is the card's name (e.g. "Dishoom Shoreditch"), used to pick the branch.
+export async function findSiteLinks(websiteOrDomain: string, address?: string, name?: string): Promise<{ links: CardLink[]; details: SiteDetails }> {
   let host = websiteOrDomain.trim();
   try { host = new URL(/^[a-z]+:\/\//i.test(host) ? host : `https://${host}`).hostname; } catch { /* keep */ }
   const domain = normalizeDomain(host);
-  if (!domain) return [];
+  if (!domain) return { links: [], details: {} };
   const page = await safeFetch(`https://${domain}/`);
-  if (!page || !(page.res.headers.get("content-type") ?? "").includes("text/html")) return [];
+  if (!page || !(page.res.headers.get("content-type") ?? "").includes("text/html")) return { links: [], details: {} };
   const buf = await readLimited(page.res, MAX_HTML);
-  if (!buf) return [];
+  if (!buf) return { links: [], details: {} };
   const html = buf.toString("utf8");
   const base = page.url;
   const siteHost = base.hostname.replace(/^www\./, "");
@@ -178,9 +185,11 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string): 
     }
   }
   // Opening hours: the homepage's structured data, then up to two same-site branch/contact pages.
+  const where = `${name ?? ""} ${address ?? ""}`;
   const postcode = postcodeOf(address);
   const places = [...ld.places];
-  let hours = hoursFor(places, postcode, address);
+  let place = matchPlace(places, postcode, where);
+  let hours = place ? formatHours(place.specs).slice(0, 200) || undefined : undefined;
   if (!hours) {
     const pages = anchors(html, base)
       .filter(({ href, text }) => href.hostname.replace(/^www\./, "") === siteHost && /(locations?|restaurants?|branches|find[- ]us|contact|visit)/i.test(`${text} ${href.pathname}`))
@@ -190,11 +199,17 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string): 
       if (!more || !(more.res.headers.get("content-type") ?? "").includes("text/html")) continue;
       const b = await readLimited(more.res, MAX_HTML);
       if (b) places.push(...jsonLdUrls(b.toString("utf8")).places);
-      hours = hoursFor(places, postcode, address);
+      place = matchPlace(places, postcode, where);
+      hours = place ? formatHours(place.specs).slice(0, 200) || undefined : undefined;
       if (hours) break;
     }
   }
   if (hours) found.set("hours", hours);
+  const details: SiteDetails = {};
+  if (place && hours) {
+    if (place.addressText) details.address = place.addressText;
+    if (place.phone) details.phone = place.phone;
+  }
 
-  return sanitizeLinks([...found].map(([kind, value]) => ({ kind, label: "", value })));
+  return { links: sanitizeLinks([...found].map(([kind, value]) => ({ kind, label: "", value }))), details };
 }
