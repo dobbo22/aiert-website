@@ -29,12 +29,59 @@ function csvCell(value: string): string {
   return /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
 }
 
+// ---- Typing people in: the email is worked out from the name, in the company's own format.
+// The format starts as first.last and is learned from the first email the admin types or corrects.
+type Pattern = "first.last" | "firstlast" | "first_last" | "first-last" | "f.last" | "flast" | "first.l" | "firstl" | "first" | "last";
+const PATTERNS: Pattern[] = ["first.last", "firstlast", "first_last", "first-last", "f.last", "flast", "first.l", "firstl", "first", "last"];
+
+function nameParts(name: string): { first: string; last: string } | null {
+  const clean = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z\s'-]/g, "").replace(/['\u2019]/g, "");
+  const words = clean.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return null;
+  return { first: words[0], last: words.length > 1 ? words[words.length - 1] : "" };
+}
+
+function localPart(name: string, pattern: Pattern): string {
+  const p = nameParts(name);
+  if (!p) return "";
+  const { first, last } = p;
+  if (!last) return first;
+  switch (pattern) {
+    case "first.last": return `${first}.${last}`;
+    case "firstlast": return `${first}${last}`;
+    case "first_last": return `${first}_${last}`;
+    case "first-last": return `${first}-${last}`;
+    case "f.last": return `${first[0]}.${last}`;
+    case "flast": return `${first[0]}${last}`;
+    case "first.l": return `${first}.${last[0]}`;
+    case "firstl": return `${first}${last[0]}`;
+    case "first": return first;
+    case "last": return last;
+  }
+}
+
+function learnPattern(name: string, email: string): Pattern | null {
+  const local = email.split("@")[0]?.toLowerCase();
+  if (!local || !nameParts(name)?.last) return null;
+  return PATTERNS.find((pt) => localPart(name, pt) === local) ?? null;
+}
+
 /// The admin's staff file is read here, in their browser, and never
 /// uploaded or kept by TapCard: only name/email/title go to
 /// /api/tapcard/biz/invites to be signed into links, which come straight
 /// back and are sent from the admin's own email (lib/tapcardBizInvite.ts).
-export default function InvitePeople({ billingActive, orgName }: { billingActive: boolean; orgName: string }) {
-  const [people, setPeople] = useState<Person[]>([]);
+type Row = Person & { key: number; emailEdited: boolean };
+let rowKey = 1;
+const newRow = (): Row => ({ key: rowKey++, name: "", email: "", title: "", emailEdited: false });
+
+export default function InvitePeople({ billingActive, orgName, domain }: { billingActive: boolean; orgName: string; domain: string }) {
+  const [rows, setRows] = useState<Row[]>([newRow()]);
+  const [pattern, setPattern] = useState<Pattern>("first.last");
+  const [learned, setLearned] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [imported, setImported] = useState<Person[]>([]);
+  const typed = rows.filter((r) => r.name.trim() && r.email.includes("@"));
+  const people: Person[] = [...typed.map(({ name, email, title }) => ({ name, email, title })), ...imported];
   const [fileName, setFileName] = useState<string | null>(null);
   const [invites, setInvites] = useState<Invite[]>([]);
   const [working, setWorking] = useState(false);
@@ -47,13 +94,44 @@ export default function InvitePeople({ billingActive, orgName }: { billingActive
     `1. Install TapCard from the App Store or Google Play.\n2. Tap this link on your phone to set up your card:\n${i.link}\n\n` +
     `The link works once and expires in 30 days.`;
 
+  function autoEmail(name: string, pt: Pattern): string {
+    const local = localPart(name, pt);
+    return local && domain ? `${local}@${domain}` : "";
+  }
+
+  function setName(key: number, name: string) {
+    setRows((rs) => rs.map((r) => (r.key === key ? { ...r, name, email: r.emailEdited ? r.email : autoEmail(name, pattern) } : r)));
+  }
+
+  function setEmail(key: number, email: string) {
+    setRows((rs) => rs.map((r) => (r.key === key ? { ...r, email, emailEdited: true } : r)));
+  }
+
+  // The first time a typed email matches a known format for that name, use that format for everyone after.
+  function learnFrom(row: Row) {
+    if (learned) return;
+    const found = learnPattern(row.name, row.email);
+    if (!found) return;
+    setPattern(found);
+    setLearned(true);
+    setRows((rs) => rs.map((r) => (r.key !== row.key && !r.emailEdited ? { ...r, email: autoEmail(r.name, found) } : r)));
+  }
+
+  function setTitle(key: number, title: string) {
+    setRows((rs) => rs.map((r) => (r.key === key ? { ...r, title } : r)));
+  }
+
+  function addRow() {
+    setRows((rs) => [...rs, newRow()]);
+  }
+
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
     const text = await file.text();
     setFileName(file.name);
-    setPeople(file.name.toLowerCase().endsWith(".vcf") ? parseVcf(text) : parseCsv(text));
+    setImported(file.name.toLowerCase().endsWith(".vcf") ? parseVcf(text) : parseCsv(text));
     setInvites([]);
     setError(null);
   }
@@ -73,6 +151,9 @@ export default function InvitePeople({ billingActive, orgName }: { billingActive
         return;
       }
       setInvites(people.map((p, i) => ({ ...p, link: data.invites[i].link })));
+      setRows([newRow()]);
+      setImported([]);
+      setFileName(null);
     } catch {
       setError("Couldn't create the links — try again.");
     } finally {
@@ -100,9 +181,9 @@ export default function InvitePeople({ billingActive, orgName }: { billingActive
     <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
       <h2 className="text-lg font-bold text-cloud">Invite people</h2>
       <p className="mt-1 text-sm text-mist">
-        Choose your staff list — a vCard (.vcf) exported from Outlook/M365, Google or iCloud, or a CSV with columns name,
-        email, title. It&apos;s read on this computer only: TapCard never uploads or keeps your staff list. You get one
-        invite link per person to send from your own email.
+        Type each person&apos;s name and we fill in the email{domain ? ` (@${domain})` : ""}. Change the first one if your company
+        uses a different format, for example j.smith, and the rest follow it. You get one invite link per person to send from
+        your own email. Nothing you type here is stored by TapCard.
       </p>
 
       {!billingActive && (
@@ -111,12 +192,46 @@ export default function InvitePeople({ billingActive, orgName }: { billingActive
         </p>
       )}
 
-      <div className="mt-4 flex flex-wrap items-center gap-4">
-        <input type="file" accept=".csv,.vcf,text/csv,text/vcard" onChange={handleFile} disabled={!billingActive} className="text-cloud" />
-        {fileName && (
-          <span className="text-sm text-mist">
-            {fileName} — {people.length} {people.length === 1 ? "person" : "people"} with an email address
-          </span>
+      <div className="mt-4 space-y-2">
+        <div className="hidden grid-cols-[1.2fr_1.5fr_1fr] gap-2 text-xs text-mist sm:grid">
+          <span>Name</span><span>Email</span><span>Job title (optional)</span>
+        </div>
+        {rows.map((r, idx) => (
+          <div key={r.key} className="grid gap-2 sm:grid-cols-[1.2fr_1.5fr_1fr]">
+            <input
+              value={r.name} onChange={(e) => setName(r.key, e.target.value)} disabled={!billingActive}
+              placeholder="First and last name" aria-label="Name" autoFocus={idx === rows.length - 1 && idx > 0}
+              className="rounded-xl bg-slate/40 px-3 py-2 text-cloud"
+            />
+            <input
+              value={r.email} onChange={(e) => setEmail(r.key, e.target.value)} onBlur={() => learnFrom(r)} disabled={!billingActive}
+              placeholder={domain ? `name@${domain}` : "name@company.com"} aria-label="Email" type="email"
+              className="rounded-xl bg-slate/40 px-3 py-2 text-cloud"
+            />
+            <input
+              value={r.title} onChange={(e) => setTitle(r.key, e.target.value)} disabled={!billingActive}
+              placeholder="e.g. Manager" aria-label="Job title"
+              onKeyDown={(e) => { if (e.key === "Enter" && idx === rows.length - 1 && r.name.trim()) { e.preventDefault(); addRow(); } }}
+              className="rounded-xl bg-slate/40 px-3 py-2 text-cloud"
+            />
+          </div>
+        ))}
+        <div className="flex flex-wrap items-center gap-4 pt-1">
+          <button type="button" onClick={addRow} disabled={!billingActive} className="text-gold underline">+ Add another person</button>
+          {learned && <span className="text-sm text-mist">Using your format: {localPart("Jane Smith", pattern)}@{domain}</span>}
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <button type="button" onClick={() => setShowImport(!showImport)} className="text-sm text-mist underline">
+          {showImport ? "Hide list import" : "Have a staff list instead? Import a .vcf or CSV"}
+        </button>
+        {showImport && (
+          <div className="mt-2 flex flex-wrap items-center gap-4">
+            <input type="file" accept=".csv,.vcf,text/csv,text/vcard" onChange={handleFile} disabled={!billingActive} className="text-cloud" />
+            {fileName && <span className="text-sm text-mist">{fileName}: {imported.length} {imported.length === 1 ? "person" : "people"} added</span>}
+            <span className="text-sm text-mist">CSV columns: name, email, title. Read on this computer only.</span>
+          </div>
         )}
       </div>
 

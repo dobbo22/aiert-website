@@ -15,7 +15,7 @@ export default async function BizEmployeesPage() {
 
   return (
     <div className="space-y-8">
-      <InvitePeople billingActive={org.billing_status === "active"} orgName={org.name} />
+      <InvitePeople billingActive={org.billing_status === "active"} orgName={org.name} domain={org.domain} />
 
       <div className="rounded-2xl bg-charcoal ring-1 ring-white/10">
         <div className="flex items-baseline justify-between px-4 pt-4">
