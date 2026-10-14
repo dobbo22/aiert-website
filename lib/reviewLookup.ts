@@ -10,6 +10,8 @@ const DAILY_CAP = 300;
 const TTL_DAYS = 30;
 
 export interface ReviewLinks { google?: string; tripadvisor?: string }
+// Diagnostic only: the last provider status (never the key), shown with ?debug=1.
+export const reviewNotes: string[] = [];
 
 let ready: Promise<unknown> | null = null;
 function ensureSchema(): Promise<unknown> {
@@ -43,12 +45,15 @@ async function googleLink(name: string, address: string): Promise<string | undef
     body: JSON.stringify({ textQuery: `${name} ${address}`.trim(), maxResultCount: 1, regionCode: "GB" }),
   }).catch(() => null);
   if (!res?.ok) {
-    console.error("review lookup: google places failed", res?.status, res ? (await res.text().catch(() => "")).slice(0, 300) : "no response");
+    const body = res ? (await res.text().catch(() => "")).slice(0, 300) : "no response";
+    console.error("review lookup: google places failed", res?.status, body);
+    reviewNotes.push(`google ${res?.status ?? "no response"}: ${body.replace(/AIza[0-9A-Za-z_-]+/g, "[key]")}`);
     return undefined;
   }
   const p = ((await res.json().catch(() => ({}))) as { places?: { id?: string; displayName?: { text?: string }; formattedAddress?: string }[] }).places?.[0];
   if (!p?.id || !similar(p.displayName?.text ?? "", name) || !samePostcode(address, p.formattedAddress ?? "")) {
     console.error("review lookup: google match rejected", p?.displayName?.text, p?.formattedAddress);
+    reviewNotes.push(`google match rejected: ${p?.displayName?.text ?? "no place"} / ${p?.formattedAddress ?? ""}`);
     return undefined;
   }
   return `https://search.google.com/local/writereview?placeid=${encodeURIComponent(p.id)}`;
