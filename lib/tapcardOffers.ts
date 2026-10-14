@@ -277,3 +277,50 @@ export async function clearAnnouncement(cardId: string): Promise<void> {
   await ensureOfferSchema();
   await sql`UPDATE tapcard_announcements SET withdrawn = true WHERE card_id = ${cardId}`;
 }
+
+// ---- TapCard for Business: one row per location (company card) for the admin dashboard.
+export interface OrgPromoteRow {
+  id: string;
+  name: string;
+  label: string;
+  company: string;
+  views: number;
+  qrViews: number;
+  saves: number;
+  offerText: string | null;
+  offerExpires: string | null;
+  offerClaimed: number;
+  offerRedeemed: number;
+  claimedTotal: number;
+  redeemedTotal: number;
+  news: string | null;
+  newsAt: string | null;
+}
+
+export async function orgPromoteRows(orgId: string): Promise<OrgPromoteRow[]> {
+  await ensureOfferSchema();
+  const rows = (await sql`
+    SELECT c.id, c.name, c.label, c.company, c.view_count, c.qr_view_count, c.save_count,
+      o.text AS offer_text, o.expires_at AS offer_expires,
+      (SELECT COUNT(*)::int FROM tapcard_offer_claims cl WHERE cl.offer_id = o.id) AS offer_claimed,
+      (SELECT COUNT(*)::int FROM tapcard_offer_claims cl WHERE cl.offer_id = o.id AND cl.redeemed_at IS NOT NULL) AS offer_redeemed,
+      (SELECT COUNT(*)::int FROM tapcard_offer_claims cl JOIN tapcard_offers oo ON oo.id = cl.offer_id WHERE oo.card_id = c.id) AS claimed_total,
+      (SELECT COUNT(*)::int FROM tapcard_offer_claims cl JOIN tapcard_offers oo ON oo.id = cl.offer_id WHERE oo.card_id = c.id AND cl.redeemed_at IS NOT NULL) AS redeemed_total,
+      a.text AS news, a.created_at AS news_at
+    FROM tapcard_cards c
+    LEFT JOIN LATERAL (SELECT id, text, expires_at FROM tapcard_offers WHERE card_id = c.id ORDER BY id DESC LIMIT 1) o ON true
+    LEFT JOIN LATERAL (SELECT text, created_at FROM tapcard_announcements WHERE card_id = c.id AND NOT withdrawn ORDER BY id DESC LIMIT 1) a ON true
+    WHERE c.org_id = ${orgId}
+    ORDER BY c.company, c.name
+  `) as Record<string, unknown>[];
+  const live = (iso: string | null) => (iso && new Date(iso).getTime() < Date.now() ? null : iso);
+  return rows.map((r) => ({
+    id: String(r.id), name: String(r.name ?? ""), label: String(r.label ?? ""), company: String(r.company ?? ""),
+    views: Number(r.view_count ?? 0), qrViews: Number(r.qr_view_count ?? 0), saves: Number(r.save_count ?? 0),
+    offerText: r.offer_text && !(r.offer_expires && new Date(String(r.offer_expires)).getTime() < Date.now()) ? String(r.offer_text) : null,
+    offerExpires: live(r.offer_expires ? new Date(String(r.offer_expires)).toISOString() : null),
+    offerClaimed: Number(r.offer_claimed ?? 0), offerRedeemed: Number(r.offer_redeemed ?? 0),
+    claimedTotal: Number(r.claimed_total ?? 0), redeemedTotal: Number(r.redeemed_total ?? 0),
+    news: r.news ? String(r.news) : null, newsAt: r.news_at ? new Date(String(r.news_at)).toISOString() : null,
+  }));
+}

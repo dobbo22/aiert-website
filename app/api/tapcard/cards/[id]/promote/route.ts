@@ -23,7 +23,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const verified = body?.platform === "android" ? await verifyAndroid(String(body.purchaseToken ?? "")) : await verifyIos(String(body?.jws ?? ""));
     return NextResponse.json(await saveVerified(id, verified, { move: body?.move === true }));
   } catch (err) {
-    if (err instanceof PromoteLimitError) return NextResponse.json({ error: err.message, code: "on_another_card", canMove: err.canMove }, { status: 409 });
+    if (err instanceof PromoteLimitError) return NextResponse.json({ error: err.message, code: "on_another_card", canMove: err.canMove, limit: err.limit }, { status: 409 });
     return NextResponse.json({ error: err instanceof Error ? err.message : "Couldn't verify the subscription" }, { status: 400 });
   }
 }

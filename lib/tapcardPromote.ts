@@ -6,10 +6,21 @@
 import crypto from "crypto";
 import sql from "@/lib/db";
 import { verifyAppleJwsRaw } from "@/lib/tapcardFounders";
+import { getOrg } from "@/lib/tapcardBiz";
 
 const BUNDLE_ID = "com.mailbroom.tapcard";
-export const PROMOTE_IOS_IDS = ["com.mailbroom.tapcard.promote.year", "com.mailbroom.tapcard.promote.month"];
-export const PROMOTE_ANDROID_ID = "promote";
+export const PROMOTE_IOS_IDS = [
+  "com.mailbroom.tapcard.promote.year", "com.mailbroom.tapcard.promote.month",
+  "com.mailbroom.tapcard.promotegroup.year", "com.mailbroom.tapcard.promotegroup.month",
+];
+// Android: two subscription products, "promote" (one card) and "promote_group" (up to GROUP_CARDS cards).
+export const PROMOTE_ANDROID_IDS = ["promote", "promote_group"];
+export const GROUP_CARDS = 5;
+
+/// How many cards one subscription covers: 1, or GROUP_CARDS on the group plan.
+export function cardsCovered(productId: string): number {
+  return /promotegroup|promote_group/.test(productId) ? GROUP_CARDS : 1;
+}
 
 let ready: Promise<unknown> | null = null;
 function ensureSchema(): Promise<unknown> {
@@ -36,10 +47,24 @@ export interface PromoteStatus {
   active: boolean;
   until: string | null;
   trial: boolean;
+  /// true when a paid TapCard for Business company covers this card (no in-app subscription needed).
+  company?: boolean;
+}
+
+/// A company card is covered while its company's TapCard for Business billing is active.
+async function companyCover(cardId: string): Promise<PromoteStatus | null> {
+  const row = ((await sql`SELECT org_id FROM tapcard_cards WHERE id = ${cardId}`) as { org_id: string | null }[])[0];
+  if (!row?.org_id) return null;
+  const org = await getOrg(row.org_id);
+  if (!org || org.billing_status !== "active") return null;
+  const until = org.current_period_end ? new Date(org.current_period_end).toISOString() : null;
+  return { active: true, until, trial: false, company: true };
 }
 
 export async function promoteStatus(cardId: string): Promise<PromoteStatus> {
   await ensureSchema();
+  const company = await companyCover(cardId).catch(() => null);
+  if (company) return company;
   const row = ((await sql`SELECT until, trial FROM tapcard_promote WHERE card_id = ${cardId}`) as { until: string; trial: boolean }[])[0];
   if (!row) return { active: false, until: null, trial: false };
   return { active: new Date(row.until).getTime() > Date.now(), until: new Date(row.until).toISOString(), trial: row.trial };
@@ -51,7 +76,7 @@ export async function promoteAllowed(cardId: string): Promise<boolean> {
   return (await promoteStatus(cardId)).active;
 }
 
-interface Verified { until: Date; trial: boolean; platform: "ios" | "android"; productId: string; originalId: string }
+interface Verified { until: Date; trial: boolean; platform: "ios" | "android"; productId: string; originalId: string; plan?: string }
 
 export async function verifyIos(jws: string): Promise<Verified> {
   const p = verifyAppleJwsRaw(jws) as {
@@ -98,7 +123,7 @@ export async function verifyAndroid(purchaseToken: string): Promise<Verified> {
     startTime?: string;
     lineItems?: { productId?: string; expiryTime?: string; offerDetails?: { offerId?: string } }[];
   };
-  const item = j.lineItems?.find((l) => l.productId === PROMOTE_ANDROID_ID);
+  const item = j.lineItems?.find((l) => l.productId && PROMOTE_ANDROID_IDS.includes(l.productId));
   if (!item?.expiryTime) throw new Error("Not a Promote subscription");
   const okStates = ["SUBSCRIPTION_STATE_ACTIVE", "SUBSCRIPTION_STATE_IN_GRACE_PERIOD", "SUBSCRIPTION_STATE_CANCELED"];
   if (!j.subscriptionState || !okStates.includes(j.subscriptionState)) throw new Error("This subscription isn't active");
@@ -106,16 +131,20 @@ export async function verifyAndroid(purchaseToken: string): Promise<Verified> {
   if (until.getTime() <= Date.now()) throw new Error("This subscription has ended");
   const started = j.startTime ? new Date(j.startTime).getTime() : 0;
   const trial = item.offerDetails?.offerId === "trial3m" && Date.now() < started + 95 * 24 * 3600 * 1000;
-  return { until, trial, platform: "android", productId: PROMOTE_ANDROID_ID, originalId: purchaseToken.slice(0, 24) };
+  return { until, trial, platform: "android", productId: item.productId!, originalId: purchaseToken.slice(0, 24) };
 }
 
 /// One Promote subscription covers ONE card. A second card on the same subscription is refused, unless the owner
 /// moves it (at most once every 30 days, so it can't be passed around between restaurants).
 export class PromoteLimitError extends Error {
-  constructor(public otherCardId: string, public canMove: boolean) {
-    super(canMove
-      ? "This Promote subscription is already on another of your cards. You can move it to this card."
-      : "This Promote subscription is already on another of your cards, and was moved recently. Email enquiries@aiert.co.uk to add more locations.");
+  constructor(public otherCardId: string, public canMove: boolean, public limit = 1) {
+    super(limit > 1
+      ? (canMove
+        ? `This group plan already covers ${limit} cards. You can move one to this card.`
+        : `This group plan already covers ${limit} cards, and one was moved recently. Email enquiries@aiert.co.uk to add more.`)
+      : (canMove
+        ? "This Promote subscription is already on another of your cards. You can move it to this card, or upgrade to the group plan."
+        : "This Promote subscription is already on another of your cards, and was moved recently. Upgrade to the group plan, or email enquiries@aiert.co.uk."));
   }
 }
 const MOVE_COOLDOWN_DAYS = 30;
@@ -124,16 +153,18 @@ const MOVE_COOLDOWN_DAYS = 30;
 export async function saveVerified(cardId: string, v: Verified, opts: { move?: boolean } = {}): Promise<PromoteStatus> {
   await ensureSchema();
   if (v.originalId) {
-    const other = ((await sql`
+    const others = (await sql`
       SELECT card_id, updated_at FROM tapcard_promote
       WHERE original_id = ${v.originalId} AND card_id <> ${cardId} AND until > now()
-      ORDER BY updated_at DESC LIMIT 1
-    `) as { card_id: string; updated_at: string }[])[0];
-    if (other) {
-      const movedLongAgo = Date.now() - new Date(other.updated_at).getTime() > MOVE_COOLDOWN_DAYS * 86_400_000;
-      if (!opts.move || !movedLongAgo) throw new PromoteLimitError(other.card_id, movedLongAgo);
-      // Move it: the old card stops being covered.
-      await sql`UPDATE tapcard_promote SET until = now(), updated_at = now() WHERE card_id = ${other.card_id}`;
+      ORDER BY updated_at ASC
+    `) as { card_id: string; updated_at: string }[];
+    const limit = cardsCovered(v.productId);
+    if (others.length >= limit) {
+      // Full. The oldest card can be moved to this one, once every 30 days.
+      const oldest = others[0];
+      const movedLongAgo = Date.now() - new Date(oldest.updated_at).getTime() > MOVE_COOLDOWN_DAYS * 86_400_000;
+      if (!opts.move || !movedLongAgo) throw new PromoteLimitError(oldest.card_id, movedLongAgo, limit);
+      await sql`UPDATE tapcard_promote SET until = now(), updated_at = now() WHERE card_id = ${oldest.card_id}`;
     }
   }
   await sql`
