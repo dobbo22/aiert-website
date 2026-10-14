@@ -119,9 +119,12 @@ export default function TapCardPrivacyPage() {
         <p>
           Following a business is private. The notifications you choose to get (new offers, an offer ending soon, menu
           and detail changes, announcements) are worked out on your phone by checking the businesses&apos; public
-          cards. We do not record who follows whom, and the business cannot see that you follow it. You can turn them
-          off per business, or each notification&apos;s Mute button. When you claim an offer, the business sees only
-          how many people claimed and used it, never who.
+          cards. When you opt in, your app tells our server only that one more phone follows that business, using a
+          random id the app keeps on your phone (not your name, email, phone number or card), which we store in
+          scrambled (hashed) form so it cannot be turned back into anything about you. The business sees a single
+          number, how many people follow it, and never who. Turning notifications off, or a notification&apos;s Mute
+          button, takes you out of that number. When you claim an offer, the business sees only how many people
+          claimed and used it, never who.
         </p>
       </section>
 
