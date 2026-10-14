@@ -103,6 +103,11 @@ export type AppTransactionPayload = {
 /// Verifies an App Store–signed JWS (ES256, x5c chain to Apple's root) and
 /// returns its payload. Throws if anything doesn't check out.
 export function verifyAppleJws(jws: string, rootFingerprint = APPLE_ROOT_CA_G3_FINGERPRINT): AppTransactionPayload {
+  return verifyAppleJwsRaw(jws, rootFingerprint) as unknown as AppTransactionPayload;
+}
+
+/// Same verification, for any App Store–signed payload (transactions, renewal info…).
+export function verifyAppleJwsRaw(jws: string, rootFingerprint = APPLE_ROOT_CA_G3_FINGERPRINT): Record<string, unknown> {
   const parts = jws.split(".");
   if (parts.length !== 3) throw new Error("Not a JWS");
   const header = JSON.parse(Buffer.from(parts[0], "base64url").toString("utf8")) as { alg?: string; x5c?: string[] };
@@ -125,7 +130,7 @@ export function verifyAppleJws(jws: string, rootFingerprint = APPLE_ROOT_CA_G3_F
     Buffer.from(parts[2], "base64url"),
   );
   if (!ok) throw new Error("Bad signature");
-  return JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8")) as AppTransactionPayload;
+  return JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8")) as Record<string, unknown>;
 }
 
 // ------------------------------------------------------------------ claims
