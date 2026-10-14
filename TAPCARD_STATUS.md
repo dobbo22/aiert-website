@@ -179,3 +179,9 @@ New in these builds:
 - Chains: one card per branch under a TapCard for Business company (company billing covers Promote).
 - Release state: iPhone 3.0 build 3 WAITING_FOR_REVIEW (builds 1 and 2 pulled); Android 1.4.0 (46) in Google review (needs Publish). After approval: set `TAPCARD_PROMOTE_ENFORCE=1`, generate 250 Apple codes, import Play codes, then the restaurant email.
 - **Company card removal (15 Oct)**: removing a card in the admin now records it in `tapcard_removed_cards`; `GET /api/cards/<id>` answers 410 (not 404) for it and `POST /api/cards` refuses to re-create it (410). Apps check company cards on foreground (`dropCardsRemovedByCompany`): the card is removed from the phone, or, for the first two cards (Business/Personal), detached from the company and kept as an ordinary card. Before this, a removed card stayed on the phone and could be re-created by the next edit.
+
+## Parked for later (15 Oct 2026)
+- **Tripadvisor review links**: code is live (`lib/reviewLookup.ts`); needs `TRIPADVISOR_API_KEY` (Tripadvisor Content API, free tier) in Vercel (Sensitive, Production), then redeploy. Google works (`GOOGLE_PLACES_API_KEY`, Places API (New) enabled).
+- **Welcome gift for followers**: offer claimable only by followers (check `tapcard_followers`), option in the Promote box, promised in the follow pop-up's "Are you sure?" step.
+- **Location setup in TapCard for Business**: website/address/phone per location in the invite rows (carried in the signed invite link), a "restaurant group" template preset with those fields unlocked, then a brands layer (needs app changes).
+- **Follower reach tiers** (250/500) and quoting real follower counts in the restaurant email.
