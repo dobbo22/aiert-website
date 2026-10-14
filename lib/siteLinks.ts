@@ -58,7 +58,7 @@ function formatHours(specs: { days: number[]; opens: string; closes: string }[])
   return parts.join("; ");
 }
 
-interface HoursPlace { postcode: string; street: string; name: string; phone: string; addressText: string; specs: { days: number[]; opens: string; closes: string }[] }
+interface HoursPlace { postcode: string; street: string; name: string; phone: string; addressText: string; label: string; specs: { days: number[]; opens: string; closes: string }[] }
 
 const POSTCODE = /\b([A-Z]{1,2}\d[A-Z\d]?)\s*(\d[A-Z]{2})\b/i;
 export function postcodeOf(text: string | undefined | null): string {
@@ -117,7 +117,8 @@ export function jsonLdUrls(html: string): { menu?: string; sameAs: string[]; pla
             : typeof addr === "string" ? addr : "";
           places.push({
             postcode: postcodeOf(pc), street, name: addressKey(typeof o.name === "string" ? o.name : ""),
-            phone: typeof o.telephone === "string" ? o.telephone.slice(0, 40) : "", addressText: text.slice(0, 200), specs,
+            phone: typeof o.telephone === "string" ? o.telephone.slice(0, 40) : "", addressText: text.slice(0, 200),
+            label: typeof o.name === "string" ? o.name.slice(0, 60) : "", specs,
           });
         }
         if (Array.isArray(o.sameAs)) for (const s of o.sameAs) if (typeof s === "string") sameAs.push(s);
@@ -138,17 +139,18 @@ function pick(found: Map<LinkKind, string>, kind: LinkKind, url: URL | string) {
 }
 
 export interface SiteDetails { address?: string; phone?: string }
+export interface SiteBranch { name: string; address: string; phone: string; hours: string }
 
 // `address` is whatever the card has so far; `name` is the card's name (e.g. "Dishoom Shoreditch"), used to pick the branch.
-export async function findSiteLinks(websiteOrDomain: string, address?: string, name?: string): Promise<{ links: CardLink[]; details: SiteDetails }> {
+export async function findSiteLinks(websiteOrDomain: string, address?: string, name?: string): Promise<{ links: CardLink[]; details: SiteDetails; branches: SiteBranch[] }> {
   let host = websiteOrDomain.trim();
   try { host = new URL(/^[a-z]+:\/\//i.test(host) ? host : `https://${host}`).hostname; } catch { /* keep */ }
   const domain = normalizeDomain(host);
-  if (!domain) return { links: [], details: {} };
+  if (!domain) return { links: [], details: {}, branches: [] };
   const page = await safeFetch(`https://${domain}/`);
-  if (!page || !(page.res.headers.get("content-type") ?? "").includes("text/html")) return { links: [], details: {} };
+  if (!page || !(page.res.headers.get("content-type") ?? "").includes("text/html")) return { links: [], details: {}, branches: [] };
   const buf = await readLimited(page.res, MAX_HTML);
-  if (!buf) return { links: [], details: {} };
+  if (!buf) return { links: [], details: {}, branches: [] };
   const html = buf.toString("utf8");
   const base = page.url;
   const siteHost = base.hostname.replace(/^www\./, "");
@@ -211,5 +213,17 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
     if (place.phone) details.phone = place.phone;
   }
 
-  return { links: sanitizeLinks([...found].map(([kind, value]) => ({ kind, label: "", value }))), details };
+  // No confident match on a multi-branch site: let the person pick (a few branches whose name or town matches
+  // what they typed first, then the rest), so a wrong guess is never filled in.
+  let branches: SiteBranch[] = [];
+  if (!place && places.length > 1) {
+    const key = addressKey(where);
+    const seenNames = new Set<string>();
+    const all = places.filter((p) => p.label && formatHours(p.specs) && !seenNames.has(p.label) && !!seenNames.add(p.label));
+    const near = (p: HoursPlace) => (key && p.addressText && addressKey(p.addressText).split(" ").some((w) => w.length >= 4 && ` ${key} `.includes(` ${w} `)) ? 0 : 1);
+    branches = all.sort((a, b) => near(a) - near(b)).slice(0, 40).map((p) => ({
+      name: p.label, address: p.addressText, phone: p.phone, hours: formatHours(p.specs).slice(0, 200),
+    }));
+  }
+  return { links: sanitizeLinks([...found].map(([kind, value]) => ({ kind, label: "", value }))), details, branches };
 }
