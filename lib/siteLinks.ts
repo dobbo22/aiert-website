@@ -30,8 +30,37 @@ function anchors(html: string, base: URL): Anchor[] {
   return out;
 }
 
-function jsonLdUrls(html: string): { menu?: string; sameAs: string[] } {
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DAY_INDEX: Record<string, number> = { monday: 0, tuesday: 1, wednesday: 2, thursday: 3, friday: 4, saturday: 5, sunday: 6 };
+
+// "Mon-Fri 12:00-22:00; Sat 11:00-23:00" from schema.org openingHoursSpecification / openingHours.
+function formatHours(specs: { days: number[]; opens: string; closes: string }[]): string {
+  const groups = new Map<string, number[]>();
+  for (const s of specs) {
+    const key = `${s.opens.slice(0, 5)}\u2013${s.closes.slice(0, 5)}`;
+    groups.set(key, [...(groups.get(key) ?? []), ...s.days]);
+  }
+  // A day listed with two different times (several branches, or inconsistent data): don't guess.
+  const seen = new Set<number>();
+  for (const days of groups.values()) for (const d of new Set(days)) { if (seen.has(d)) return ""; seen.add(d); }
+  const parts: string[] = [];
+  for (const [times, days] of groups) {
+    const sorted = [...new Set(days)].sort((a, b) => a - b);
+    const ranges: string[] = [];
+    for (let i = 0; i < sorted.length; ) {
+      let j = i;
+      while (j + 1 < sorted.length && sorted[j + 1] === sorted[j] + 1) j++;
+      ranges.push(j - i >= 2 ? `${DAYS[sorted[i]]}\u2013${DAYS[sorted[j]]}` : sorted.slice(i, j + 1).map((d) => DAYS[d]).join(", "));
+      i = j + 1;
+    }
+    parts.push(`${ranges.join(", ")} ${times}`);
+  }
+  return parts.join("; ");
+}
+
+function jsonLdUrls(html: string): { menu?: string; sameAs: string[]; hours?: string } {
   const sameAs: string[] = [];
+  const specs: { days: number[]; opens: string; closes: string }[] = [];
   let menu: string | undefined;
   const re = /<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi;
   let m: RegExpExecArray | null;
@@ -42,6 +71,12 @@ function jsonLdUrls(html: string): { menu?: string; sameAs: string[] } {
         if (!n || typeof n !== "object") return;
         const o = n as Record<string, unknown>;
         for (const k of ["hasMenu", "menu"]) if (typeof o[k] === "string" && /^https?:/i.test(o[k] as string)) menu ??= o[k] as string;
+        const spec = o.openingHoursSpecification;
+        for (const sp of Array.isArray(spec) ? spec : spec ? [spec] : []) {
+          const x = sp as Record<string, unknown>;
+          const dow = (Array.isArray(x.dayOfWeek) ? x.dayOfWeek : [x.dayOfWeek]).map((d) => DAY_INDEX[String(d).split("/").pop()!.toLowerCase()]).filter((d) => d !== undefined);
+          if (dow.length && typeof x.opens === "string" && typeof x.closes === "string") specs.push({ days: dow, opens: x.opens, closes: x.closes });
+        }
         if (Array.isArray(o.sameAs)) for (const s of o.sameAs) if (typeof s === "string") sameAs.push(s);
         if (typeof o.sameAs === "string") sameAs.push(o.sameAs);
         for (const v of Object.values(o)) if (v && typeof v === "object") walk(v);
@@ -49,7 +84,7 @@ function jsonLdUrls(html: string): { menu?: string; sameAs: string[] } {
       walk(JSON.parse(m[1]));
     } catch { /* ignore bad JSON-LD */ }
   }
-  return { menu, sameAs };
+  return { menu, sameAs, hours: specs.length ? formatHours(specs).slice(0, 200) || undefined : undefined };
 }
 
 function pick(found: Map<LinkKind, string>, kind: LinkKind, url: URL | string) {
@@ -81,6 +116,7 @@ export async function findSiteLinks(websiteOrDomain: string): Promise<CardLink[]
     } catch { /* ignore */ }
   }
   if (ld.menu) pick(found, "menu", ld.menu);
+  if (ld.hours) found.set("hours", ld.hours);
 
   for (const { href, text } of anchors(html, base)) {
     const h = href.hostname.replace(/^www\./, "");
