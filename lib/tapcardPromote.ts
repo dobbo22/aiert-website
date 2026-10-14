@@ -143,8 +143,8 @@ export class PromoteLimitError extends Error {
         ? `This group plan already covers ${limit} cards. You can move one to this card.`
         : `This group plan already covers ${limit} cards, and one was moved recently. Email enquiries@aiert.co.uk to add more.`)
       : (canMove
-        ? "This Promote subscription is already on another of your cards. You can move it to this card, or upgrade to the group plan."
-        : "This Promote subscription is already on another of your cards, and was moved recently. Upgrade to the group plan, or email enquiries@aiert.co.uk."));
+        ? "This Promote subscription is already on another of your cards. You can move it to this card. For several locations, email enquiries@aiert.co.uk about TapCard for Business."
+        : "This Promote subscription is already on another of your cards, and was moved recently. For several locations, email enquiries@aiert.co.uk about TapCard for Business."));
   }
 }
 const MOVE_COOLDOWN_DAYS = 30;
