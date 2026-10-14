@@ -4,6 +4,7 @@ import sql from "@/lib/db";
 import { isAdminRequest } from "@/lib/adminRequest";
 import { inviteEmailRoute } from "@/lib/inviteEmailRoute";
 import { INVITE_LINK_ORIGIN, ensureInviteSchema, newInviteToken } from "@/lib/tapcardInvites";
+import { codesForContact } from "@/lib/promoCodes";
 import {
   MAILSHOT_SUBJECTS,
   restaurantHtml,
@@ -43,7 +44,7 @@ function subjectFor(index: number, firstName: string): string {
   return firstName ? template.replaceAll("{FirstName}", firstName) : template.replace("{FirstName}, ", "").replace("{FirstName}", "");
 }
 
-async function sendOne(resend: Resend, from: string, replyTo: string, campaign: string, contact: Contact, subjectIndex: number) {
+async function sendOne(resend: Resend, from: string, replyTo: string, campaign: string, contact: Contact, subjectIndex: number, isTest = false) {
   await ensureInviteSchema();
   const token = newInviteToken();
   const links = mailshotLinks(token);
@@ -51,7 +52,9 @@ async function sendOne(resend: Resend, from: string, replyTo: string, campaign: 
   const firstName = safeFirstName(contact.greeting !== undefined && contact.greeting !== null ? contact.greeting : contact.first_name);
   const subject = contact.relationship === "restaurant" ? restaurantSubject(subjectIndex, contact.name) : subjectFor(subjectIndex, firstName);
   const relationship: Relationship = contact.relationship === "personal" ? "personal" : contact.relationship === "restaurant" ? "restaurant" : "business";
-  const text = relationship === "restaurant" ? restaurantText(contact.name, links) : mailshotText(firstName, links, relationship);
+  // A restaurant's own free-months codes (a test shows made-up ones and takes nothing from the pool).
+  const codes = relationship === "restaurant" ? (isTest ? { ios: "EXAMPLE0CODE", android: "EXAMPLE0CODE" } : await codesForContact(contact.id)) : undefined;
+  const text = relationship === "restaurant" ? restaurantText(contact.name, links, codes) : mailshotText(firstName, links, relationship);
   const inserted = (await sql`
     INSERT INTO tapcard_invite_sends (token, contact_id, channel, campaign, subject, message)
     VALUES (${token}, ${contact.id}, 'email', ${campaign}, ${subject}, ${text})
@@ -65,7 +68,7 @@ async function sendOne(resend: Resend, from: string, replyTo: string, campaign: 
       replyTo,
       subject,
       text,
-      html: relationship === "restaurant" ? restaurantHtml(contact.name, links, `${INVITE_LINK_ORIGIN}/api/invite-card/${token}`) : mailshotHtml(firstName, links, relationship),
+      html: relationship === "restaurant" ? restaurantHtml(contact.name, links, `${INVITE_LINK_ORIGIN}/api/invite-card/${token}`, codes) : mailshotHtml(firstName, links, relationship),
       headers: {
         "List-Unsubscribe": `<${INVITE_LINK_ORIGIN}/api/unsubscribe/${token}>, <mailto:${replyTo}?subject=Unsubscribe>`,
         "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
@@ -116,7 +119,7 @@ async function handle(req: Request) {
     }
     const contact = ((await sql`SELECT id, first_name, name, email, do_not_contact FROM tapcard_invite_contacts WHERE dedupe_key = ${testKey}`) as (Contact & { do_not_contact: boolean })[])[0];
     if (contact.do_not_contact) return NextResponse.json({ error: `${to} has unsubscribed, so no test can be sent there` }, { status: 409 });
-    await sendOne(resend, from, route.replyTo, `${campaign}-test`, { ...contact, relationship: body?.relationship === "personal" ? "personal" : body?.relationship === "restaurant" ? "restaurant" : "business" }, subjectIndex);
+    await sendOne(resend, from, route.replyTo, `${campaign}-test`, { ...contact, relationship: body?.relationship === "personal" ? "personal" : body?.relationship === "restaurant" ? "restaurant" : "business" }, subjectIndex, true);
     return NextResponse.json({ ok: true, sent: 1, test: true, to });
   }
 

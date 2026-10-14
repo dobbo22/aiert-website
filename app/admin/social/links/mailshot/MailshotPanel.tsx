@@ -38,6 +38,9 @@ export default function MailshotPanel({
   const [dailyCap, setDailyCap] = useState(50);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ text: string; error?: boolean } | null>(null);
+  const [promoPlatform, setPromoPlatform] = useState<"ios" | "android">("ios");
+  const [promoText, setPromoText] = useState("");
+  const [promoStats, setPromoStats] = useState<{ ios: { free: number; assigned: number }; android: { free: number; assigned: number } } | null>(null);
 
   async function call(path: string, body: unknown) {
     const res = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -54,6 +57,17 @@ export default function MailshotPanel({
     try { await fn(); } catch (err) { setMessage({ text: err instanceof Error ? err.message : "Failed", error: true }); }
     setBusy(false);
   };
+
+  const loadPromo = async () => {
+    const r = await fetch("/api/admin/mailshot/promo-codes");
+    if (r.ok) setPromoStats(await r.json());
+  };
+  const importPromo = run(async () => {
+    const d = await call("/api/admin/mailshot/promo-codes", { platform: promoPlatform, text: promoText });
+    setPromoStats(d.stats);
+    setPromoText("");
+    setMessage({ text: `Added ${d.added} code${d.added === 1 ? "" : "s"}${d.skipped ? ` (${d.skipped} already there)` : ""}.` });
+  });
 
   const checkContacts = run(async () => {
     const res = await fetch(`/api/admin/mailshot/from-contacts?campaign=${encodeURIComponent(campaign)}${includePersonalContacts ? "&personal=1" : ""}`);
@@ -246,6 +260,20 @@ export default function MailshotPanel({
           )}
         </div>
         {cands && rows.length > 0 && <PeopleTable rows={rows} setRows={setRows} input={input} ghost={ghost} onRemove={removeForGood} />}
+      </section>
+
+      <section style={box}>
+        <details onToggle={(e) => { if ((e.target as HTMLDetailsElement).open) loadPromo(); }}>
+          <summary style={{ cursor: "pointer" }}>Restaurant free-months codes{promoStats ? ` (iPhone ${promoStats.ios.free} left, Android ${promoStats.android.free} left)` : ""}</summary>
+          <div style={{ ...row, marginTop: "0.6rem" }}>
+            <select style={input} value={promoPlatform} onChange={(e) => setPromoPlatform(e.target.value as "ios" | "android")}>
+              <option value="ios">iPhone (Apple offer codes)</option>
+              <option value="android">Android (Google Play promo codes)</option>
+            </select>
+            <button style={btn} disabled={busy || !promoText.trim()} onClick={importPromo}>Import codes</button>
+          </div>
+          <textarea style={{ ...input, width: "100%", minHeight: 90, marginTop: "0.6rem" }} value={promoText} onChange={(e) => setPromoText(e.target.value)} placeholder="One code per line, or paste the CSV from the store" />
+        </details>
       </section>
 
       <section style={box}>

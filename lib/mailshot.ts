@@ -1,4 +1,5 @@
 import sql from "@/lib/db";
+import { redeemUrl } from "@/lib/promoCodes";
 import { INVITE_LINK_ORIGIN, ensureInviteSchema } from "@/lib/tapcardInvites";
 
 // The cold-email "mailshot" to past business contacts: list import and checks, the email itself, and the
@@ -447,7 +448,14 @@ export function restaurantSubject(index: number, name: string): string {
   return t.replaceAll("{Name}", name || "your restaurant");
 }
 
-export function restaurantText(name: string, links: MailshotLinks): string {
+export type RestaurantCodes = { ios?: string; android?: string };
+
+function codeLinesText(codes?: RestaurantCodes): string {
+  if (!codes || (!codes.ios && !codes.android)) return "";
+  return `\nAs one of the first restaurants on TapCard, your first 6 months of Promote are free (instead of 3). Tap the link for your phone:\n${codes.ios ? `iPhone: ${redeemUrl("ios", codes.ios)}\n` : ""}${codes.android ? `Android: ${redeemUrl("android", codes.android)}\n` : ""}`;
+}
+
+export function restaurantText(name: string, links: MailshotLinks, codes?: RestaurantCodes): string {
   return `Hello ${name || "there"},
 
 I made a sample TapCard for ${name || "your restaurant"}: one card with your phone number, Book a table, your menu and directions. You never have to order business cards again.
@@ -458,10 +466,11 @@ I made a sample TapCard for ${name || "your restaurant"}: one card with your pho
 - Change your details once and every saved copy updates itself (new menu, new hours)
 - No app needed on the customer's side
 
-Free marketing built in: special offers
+Special offers and news with TapCard Promote
 Everyone who saves your card becomes someone you can reach, with no mailing list to build. Post an offer from your card, for example "Free dessert with any main", with an end date and a limit if you like. People who have your card see it in TapCard, tap Claim, and get their own one-off QR code. When they show it, scan it with your phone camera, type your staff PIN, and it is marked as used, so it can never be used twice. You see how many people claimed and how many came in.
 
-TapCard is free for life for the first 1,000 users.
+Promote is free for your first 3 months, then £49.99 a year (or £9.99 a month), and it includes sharing your own card. TapCard is free for your customers, always.
+${codeLinesText(codes)}
 
 Get TapCard: ${links.app}
 See how it works: ${links.how}
@@ -476,7 +485,7 @@ Not interested? Unsubscribe here and I won't email you again: ${links.unsubscrib
 `;
 }
 
-export function restaurantHtml(name: string, links: MailshotLinks, cardImageUrl: string): string {
+export function restaurantHtml(name: string, links: MailshotLinks, cardImageUrl: string, codes?: RestaurantCodes): string {
   const btn = "display:inline-block;background:#4c2f93;color:#ffffff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:10px;";
   const link = "color:#4c2f93;font-weight:600;";
   const li = "margin:0 0 8px;";
@@ -493,7 +502,7 @@ export function restaurantHtml(name: string, links: MailshotLinks, cardImageUrl:
 <li style="${li}">No app needed on the customer's side</li>
 </ul>
 <div style="margin:0 0 20px;padding:16px 18px;background:#f5f3ff;border-radius:12px;">
-<p style="margin:0 0 8px;font-size:17px;"><strong>Free marketing built in: special offers</strong></p>
+<p style="margin:0 0 8px;font-size:17px;"><strong>Special offers and news with TapCard Promote</strong></p>
 <p style="margin:0 0 10px;">Everyone who saves your card becomes someone you can reach, with no mailing list to build.</p>
 <ol style="margin:0;padding-left:20px;">
 <li style="${li}"><strong>Post an offer</strong> from your card, such as &ldquo;Free dessert with any main&rdquo;, with an end date and a limit if you like.</li>
@@ -502,7 +511,8 @@ export function restaurantHtml(name: string, links: MailshotLinks, cardImageUrl:
 <li style="margin:0;">You see <strong>how many claimed</strong> and how many came in.</li>
 </ol>
 </div>
-<p style="margin:0 0 20px;">TapCard is <strong>free for life for the first 1,000 users</strong>.</p>
+<p style="margin:0 0 20px;">Promote is <strong>free for your first 3 months</strong>, then £49.99 a year (or £9.99 a month), and it includes sharing your own card. TapCard is free for your customers, always.</p>
+${codes && (codes.ios || codes.android) ? `<div style="margin:0 0 20px;padding:14px 16px;background:#ecfdf5;border-radius:12px;"><p style="margin:0 0 8px;"><strong>As one of the first restaurants on TapCard, your first 6 months of Promote are free</strong> (instead of 3). Tap the link for your phone:</p><p style="margin:0;">${codes.ios ? `<a href="${esc(redeemUrl("ios", codes.ios))}" style="${link}">On iPhone</a>` : ""}${codes.ios && codes.android ? " &nbsp;·&nbsp; " : ""}${codes.android ? `<a href="${esc(redeemUrl("android", codes.android))}" style="${link}">On Android</a>` : ""}</p></div>` : ""}
 <p style="margin:0 0 20px;"><a href="${esc(links.app)}" style="${btn}">Get TapCard</a></p>
 <p style="margin:0 0 24px;"><a href="${esc(links.how)}" style="${link}">See how it works</a> &nbsp;·&nbsp; <a href="${esc(links.app + '?to=guide')}" style="${link}">Watch the 1-minute demo</a></p>
 <p style="margin:0 0 4px;">Martin Dobson</p>
