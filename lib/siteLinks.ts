@@ -3,6 +3,7 @@
 // Only links the page itself contains (nothing guessed or invented); the owner
 // ticks which to keep.
 import { normalizeDomain, readLimited, safeFetch } from "@/lib/siteIcon";
+import { findReviewLinks } from "@/lib/reviewLookup";
 import { sanitizeLinks, type CardLink, type LinkKind } from "@/lib/tapcardLinks";
 
 const MAX_HTML = 2 * 1024 * 1024;
@@ -281,6 +282,12 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
     branches = all.sort((a, b) => near(a) - near(b)).slice(0, 40).map((p) => ({
       name: p.label, address: p.addressText, phone: p.phone, hours: placeHours(p),
     }));
+  }
+  // Reviews the site itself doesn't link to: ask Google / Tripadvisor by name and address (needs the API keys).
+  if ((name || address) && (!found.has("google_review") || !found.has("tripadvisor"))) {
+    const reviews = await findReviewLinks(name ?? "", address ?? details.address ?? "").catch(() => ({}) as { google?: string; tripadvisor?: string });
+    if (reviews.google && !found.has("google_review")) found.set("google_review", reviews.google);
+    if (reviews.tripadvisor && !found.has("tripadvisor")) found.set("tripadvisor", reviews.tripadvisor);
   }
   return { links: sanitizeLinks([...found].map(([kind, value]) => ({ kind, label: "", value }))), details, branches };
 }
