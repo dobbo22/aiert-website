@@ -44,13 +44,13 @@ const steps = [
     title: "6. Special offers: for your business",
     img: "offer-business.png",
     alt: "The Special offer screen showing a live offer, how many people claimed it and how many used it",
-    text: "On a Business card, tap Edit, then Special offer. Write the offer (for example Free dessert with any main), choose an end date and a limit if you like, and set a staff PIN of 4 to 6 digits. Tap Post offer. Everyone who has your card in TapCard sees it the next time they open the app, with a green Offer badge on your name. You can see how many people claimed it and how many used it, replace it with a new one, or withdraw it at any time.",
+    text: "On your Business card in My Cards, find Promote your business and tap Create an offer. Promote is a subscription for businesses: 3 months free, then £49.99 a year or £9.99 a month, and it includes sharing your own card. Write the offer (for example Free dessert with any main), choose how long it lasts and how many people can claim it, and set a staff PIN of 4 to 6 digits. Tap Post offer. Everyone who has your card sees it, with a green Offer badge on your name, and people who follow you get a notification. You can see how many claimed it and how many used it, post a news line, replace the offer, or withdraw it at any time. You can manage or cancel Promote from the same box.",
   },
   {
     title: "7. Special offers: if you get one",
     img: "offer-customer.png",
     alt: "An offer on a saved card with a one-off QR code to show the staff",
-    text: "When a business you have saved posts an offer, you see an Offer badge on their contact. Open their card and tap Claim this offer. You get your own one-off QR code. Show it to the staff when you pay. They scan it with their phone camera, enter their PIN, and it is marked as used. It works once, then shows Used. Claiming is free and needs no sign-up, and the business only sees how many people claimed, not who.",
+    text: "When a business you have saved posts an offer, you see an Offer badge on their contact. Open their card and tap Claim this offer. You get your own one-off QR code. Show it to the staff when you pay. They scan it with their phone camera (or type the code at tapcard.aiert.co.uk/redeem on a till with no camera), enter their PIN, and it is marked as used. It works once, then shows Used. Open the business's card and tap Get updates if you want a notification when it posts a new offer, news or a menu change. It is off until you switch it on, and you choose what you get. Claiming is free and needs no sign-up, and the business only sees how many people claimed, not who.",
   },
   {
     title: "8. Enhance a contact from their emails",

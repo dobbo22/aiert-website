@@ -99,11 +99,29 @@ export default function TapCardPrivacyPage() {
       <section>
         <h2>Founder places and the lifetime unlock</h2>
         <p>
-          The first 1,000 people get TapCard free for life. To count them, the app sends our server Apple&apos;s signed
-          record of when your Apple ID first downloaded TapCard. We keep only a one-way hash of its identifier, that
+          The first 1,000 people get TapCard free for life. To count them, when you first share your own card the app
+          sends our server Apple&apos;s signed record of when your Apple ID first downloaded TapCard. We keep only a one-way hash of its identifier, that
           download date, your place in the count and the price offered to you. It contains no name, email or card
           details, and isn&apos;t used to track you. Lifetime unlock purchases are handled by Apple; we never see your
           payment details.
+        </p>
+      </section>
+
+      <section>
+        <h2>TapCard Promote subscriptions and updates from businesses</h2>
+        <p>
+          TapCard Promote is an auto-renewing subscription bought through Apple or Google; we never see your payment
+          details. To let a business post offers and news, its app sends our server the store&apos;s signed proof of the
+          subscription (Apple&apos;s signed transaction or the Google Play purchase token) together with the card&apos;s
+          secret edit token. We check it with Apple or Google and keep only the card it belongs to, the subscription
+          end date, whether it is a free trial, and which plan. Redeeming a restaurant offer code is done by the store.
+        </p>
+        <p>
+          Following a business is private. The notifications you choose to get (new offers, an offer ending soon, menu
+          and detail changes, announcements) are worked out on your phone by checking the businesses&apos; public
+          cards. We do not record who follows whom, and the business cannot see that you follow it. You can turn them
+          off per business, or each notification&apos;s Mute button. When you claim an offer, the business sees only
+          how many people claimed and used it, never who.
         </p>
       </section>
 

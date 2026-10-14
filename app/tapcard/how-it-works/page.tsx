@@ -151,12 +151,15 @@ export default function HowItWorksPage() {
       <section>
         <h2>9. Special offers</h2>
         <p>
-          <strong>For a business:</strong> on a Business card tap <strong>Edit</strong>, then <strong>Special offer</strong>.
-          Write the offer, add an end date and a limit if you like, and set a 4 to 6 digit staff PIN. Everyone who has
-          your card in TapCard sees it the next time they open the app. Each person who taps <strong>Claim</strong> gets
-          their own one-off QR code. When they show it, scan it with your phone camera, type your PIN and tap
-          <strong> Mark as used</strong>. It works once. You can see how many claimed and how many used it, replace the
-          offer, or withdraw it. You give the discount yourself; TapCard does not take payments.
+          <strong>For a business:</strong> on your Business card in <strong>My Cards</strong>, find
+          <strong> Promote your business</strong> and tap <strong>Create an offer</strong>. Promote is a subscription
+          that starts with 3 months free, then £49.99 a year or £9.99 a month, and it includes sharing your own card.
+          Write the offer, choose how long it lasts and how many people can claim it, and set a 4 to 6 digit staff PIN.
+          Everyone who has your card sees it, and people who follow you get a notification. Each person who taps
+          <strong> Claim</strong> gets their own one-off QR code. When they show it, scan it with your phone camera (or
+          type the code at tapcard.aiert.co.uk/redeem on a till with no camera), enter your PIN and tap
+          <strong> Mark as used</strong>. It works once. You can see how many claimed and how many used it, post news,
+          replace the offer, or withdraw it. You give the discount yourself; TapCard does not take payments.
         </p>
         <p>
           <strong>If you get an offer:</strong> a green <strong>Offer</strong> badge appears on the business in your
@@ -168,9 +171,10 @@ export default function HowItWorksPage() {
       <section>
         <h2>What does it cost?</h2>
         <p>
-          TapCard is free to download. The first 1,000 people on iPhone, and the first 1,000 on Android, get it free for
-          life. After that, sharing your card needs a small one-off unlock (from £0.99). There is no subscription, and
-          the people you share with never pay or need the app.
+          TapCard is free to download and always free for the people you share with, who never pay or need the app. The
+          first 1,000 people on iPhone, and the first 1,000 on Android, share their own card free for life (counted
+          when they first share a card). After that, sharing needs a small one-off unlock (from £0.99). Businesses can
+          instead subscribe to TapCard Promote, which includes sharing and starts with 3 months free.
         </p>
       </section>
 
