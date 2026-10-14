@@ -155,7 +155,7 @@ export default function HowItWorksPage() {
           <strong> Promote your business</strong> and tap <strong>Create an offer</strong>. Promote is a subscription
           that starts with 3 months free, then £49.99 a year or £9.99 a month, and it includes sharing your own card.
           Write the offer, choose how long it lasts and how many people can claim it, and set a 4 to 6 digit staff PIN.
-          Everyone who has your card sees it, and people who follow you get a notification. Each person who taps
+          Everyone who has your card sees it, and people who follow you get a notification (they choose to follow with one tap; you see how many follow you, never who). Each person who taps
           <strong> Claim</strong> gets their own one-off QR code. When they show it, scan it with your phone camera (or
           type the code at tapcard.aiert.co.uk/redeem on a till with no camera), enter your PIN and tap
           <strong> Mark as used</strong>. It works once. You can see how many claimed and how many used it, post news,
