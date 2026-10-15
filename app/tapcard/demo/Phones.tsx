@@ -60,14 +60,14 @@ function CardFace({ name, typed, stage, rows, socials, interactive, domain, onOp
   const d = encodeURIComponent(domain);
   return (
     <div className="pb-6 text-center">
-      <div className="flex h-20 items-center justify-center bg-gradient-to-br from-[#2b2f77] to-[#111318] px-6">
+      <div className="flex h-28 items-start justify-center bg-gradient-to-br from-[#2b2f77] to-[#111318] px-6 pt-3">
         {domain && !logoFailed ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={`/api/logo?domain=${d}`} alt="" onError={() => setLogoFailed(true)} className="max-h-14 max-w-full rounded-md object-contain [animation:fadein_0.6s_ease]" />
+          <img src={`/api/logo?domain=${d}`} alt="" onError={() => setLogoFailed(true)} className="max-h-[3.6rem] max-w-full rounded-md object-contain [animation:fadein_0.6s_ease]" />
         ) : null}
       </div>
       <div className="px-4">
-      <div className="-mt-8 mx-auto flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-[#1c1f27] ring-4 ring-[#111318] transition-all duration-500" style={{ opacity: stage >= 2 ? 1 : 0, transform: stage >= 2 ? "scale(1)" : "scale(0.6)" }}>
+      <div className="-mt-7 mx-auto flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-[#1c1f27] ring-4 ring-[#111318] transition-all duration-500" style={{ opacity: stage >= 2 ? 1 : 0, transform: stage >= 2 ? "scale(1)" : "scale(0.6)" }}>
         {domain && !iconFailed ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={`/api/favicon?domain=${d}`} alt="" onError={() => setIconFailed(true)} className="h-12 w-12 object-contain" />
