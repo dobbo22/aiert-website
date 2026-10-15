@@ -30,7 +30,7 @@ export function GET(req: Request) {
           // a plain /c/<id> link). Match the literal /vcard suffix instead.
           // Business invites are /business/claim#<invite> — the invite is a
           // fragment, which path matching ignores, so the bare path.
-          paths: [`NOT ${prefix}/c/*/vcard`, `${prefix}/c/*`, `${prefix}/business/claim`],
+          paths: [`NOT ${prefix}/c/*/vcard`, `${prefix}/c/*`, `${prefix}/business/claim`, `${prefix}/start/*`],
         },
       ],
     },
