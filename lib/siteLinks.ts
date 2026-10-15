@@ -161,7 +161,11 @@ export function textPlaces(html: string): HoursPlace[] {
       block.unshift(l);
     }
     // Lines that are only the county ("Essex") belong to the address; a lone nav word ("Home") does not.
-    const text = [...block, line].join(", ").replace(/,\s*,/g, ",");
+    // A block labelled "Registered address / office" is the company's paperwork address, not a place customers go.
+    if (block.some((l) => /registered|head office|company number/i.test(l))) return;
+    // Emoji and bare labels ("Address:", "Find us") are not part of the address.
+    const cleaned = block.map((l) => l.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\uFE0F]/gu, "").trim()).filter((l) => /[A-Za-z0-9]/.test(l) && !/^(address|our address|find us|visit us|where to find us|location)\s*:?$/i.test(l));
+    const text = [...cleaned, line].join(", ").replace(/,\s*,/g, ",");
     if (block.length === 0 && line.replace(POSTCODE, "").trim().length < 3) return;
     let phone = "";
     for (let k = i; k <= Math.min(lines.length - 1, i + 3); k++) {
@@ -171,7 +175,7 @@ export function textPlaces(html: string): HoursPlace[] {
     seen.add(postcode);
     const hours = withHours && withHours.postcode === postcode ? withHours : null;
     out.push({
-      postcode, street: "", name: "", phone, addressText: text.slice(0, 200), label: block[0] ?? "", specs: [],
+      postcode, street: "", name: "", phone, addressText: text.slice(0, 200), label: cleaned[0] ?? "", specs: [],
       hoursText: hours?.hoursText,
     });
   });
