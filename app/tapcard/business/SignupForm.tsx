@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SEAT_BANDS } from "@/lib/tapcardBizBilling";
 
 const TRIAL_ID = "trial";
@@ -12,6 +12,13 @@ export default function SignupForm() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [trialSent, setTrialSent] = useState(false);
+
+  // The app's guided setup sends people here with their business name filled in (?company=...).
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const company = q.get("company");
+    if (company) setCompanyName(company.slice(0, 200));
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
