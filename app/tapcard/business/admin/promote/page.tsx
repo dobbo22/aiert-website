@@ -28,6 +28,7 @@ export default async function BizPromotePage() {
         {stat(sum((r) => r.views), "Card views")}
         {stat(sum((r) => r.qrViews), "QR scans")}
         {stat(sum((r) => r.saves), "Saves")}
+        {stat(sum((r) => r.installs), "Installs from your sign")}
         {stat(sum((r) => r.followers), "Following")}
         {stat(sum((r) => r.claimedTotal), "Offers claimed")}
         {stat(sum((r) => r.redeemedTotal), "Offers used")}
@@ -42,7 +43,7 @@ export default async function BizPromotePage() {
           <section key={r.id} className="rounded-2xl bg-charcoal p-4 ring-1 ring-white/10 text-cloud">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h3 className="text-lg font-bold">{r.company || r.name}</h3>
-              <p className="text-sm">{r.views} views · {r.qrViews} QR scans · {r.saves} saves · {r.followers} following</p>
+              <p className="text-sm">{r.views} views · {r.qrViews} QR scans · {r.installs} installs · {r.saves} saves · {r.followers} following</p>
             </div>
             <div className="mt-2 grid gap-1 text-sm sm:grid-cols-2">
               <p><strong>Offer:</strong> {r.offerText ? `${r.offerText} (${r.offerClaimed} claimed, ${r.offerRedeemed} used${r.offerExpires ? `, ends ${new Date(r.offerExpires).toLocaleDateString("en-GB")}` : ""})` : "none live"}</p>

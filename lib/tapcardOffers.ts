@@ -65,6 +65,15 @@ function ensureOfferSchema(): Promise<unknown> {
           PRIMARY KEY (card_id, follower_hash)
         )
       `)
+      .then(() => sql`
+        CREATE TABLE IF NOT EXISTS tapcard_card_installs (
+          card_id TEXT NOT NULL,
+          install_hash TEXT NOT NULL,
+          platform TEXT NOT NULL DEFAULT '',
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          PRIMARY KEY (card_id, install_hash)
+        )
+      `)
       .catch((err) => {
         ready = null;
         throw err;
@@ -205,6 +214,21 @@ export async function setFollower(cardId: string, follower: string, follow: bool
   else await sql`DELETE FROM tapcard_followers WHERE card_id = ${cardId} AND follower_hash = ${who}`;
 }
 
+/// An install that came from scanning this business's QR code or link: the app was installed after a visit to the business's
+/// card page and opened on that business. Counted once per install (a one-way hash of the app's random id), never listed.
+export async function recordInstall(cardId: string, install: string, platform: string): Promise<void> {
+  await ensureOfferSchema();
+  const who = hashSecret(`tapcard-install:${install}`);
+  const plat = platform === "ios" || platform === "android" ? platform : "";
+  await sql`INSERT INTO tapcard_card_installs (card_id, install_hash, platform) VALUES (${cardId}, ${who}, ${plat}) ON CONFLICT DO NOTHING`;
+}
+
+export async function installCount(cardId: string): Promise<number> {
+  await ensureOfferSchema();
+  const r = (await sql`SELECT COUNT(*)::int AS n FROM tapcard_card_installs WHERE card_id = ${cardId}`) as { n: number }[];
+  return Number(r[0]?.n ?? 0);
+}
+
 export async function followerCount(cardId: string): Promise<number> {
   await ensureOfferSchema();
   const r = (await sql`SELECT COUNT(*)::int AS n FROM tapcard_followers WHERE card_id = ${cardId}`) as { n: number }[];
@@ -313,6 +337,8 @@ export interface OrgPromoteRow {
   qrViews: number;
   saves: number;
   followers: number;
+  /// Installs that came from this card's QR code or link.
+  installs: number;
   offerText: string | null;
   offerExpires: string | null;
   offerClaimed: number;
@@ -333,6 +359,7 @@ export async function orgPromoteRows(orgId: string): Promise<OrgPromoteRow[]> {
       (SELECT COUNT(*)::int FROM tapcard_offer_claims cl JOIN tapcard_offers oo ON oo.id = cl.offer_id WHERE oo.card_id = c.id) AS claimed_total,
       (SELECT COUNT(*)::int FROM tapcard_offer_claims cl JOIN tapcard_offers oo ON oo.id = cl.offer_id WHERE oo.card_id = c.id AND cl.redeemed_at IS NOT NULL) AS redeemed_total,
       (SELECT COUNT(*)::int FROM tapcard_followers f WHERE f.card_id = c.id) AS followers,
+      (SELECT COUNT(*)::int FROM tapcard_card_installs i WHERE i.card_id = c.id) AS installs,
       a.text AS news, a.created_at AS news_at
     FROM tapcard_cards c
     LEFT JOIN LATERAL (SELECT id, text, expires_at FROM tapcard_offers WHERE card_id = c.id ORDER BY id DESC LIMIT 1) o ON true
@@ -343,7 +370,7 @@ export async function orgPromoteRows(orgId: string): Promise<OrgPromoteRow[]> {
   const live = (iso: string | null) => (iso && new Date(iso).getTime() < Date.now() ? null : iso);
   return rows.map((r) => ({
     id: String(r.id), name: String(r.name ?? ""), label: String(r.label ?? ""), company: String(r.company ?? ""),
-    views: Number(r.view_count ?? 0), qrViews: Number(r.qr_view_count ?? 0), saves: Number(r.save_count ?? 0), followers: Number(r.followers ?? 0),
+    views: Number(r.view_count ?? 0), qrViews: Number(r.qr_view_count ?? 0), saves: Number(r.save_count ?? 0), followers: Number(r.followers ?? 0), installs: Number(r.installs ?? 0),
     offerText: r.offer_text && !(r.offer_expires && new Date(String(r.offer_expires)).getTime() < Date.now()) ? String(r.offer_text) : null,
     offerExpires: live(r.offer_expires ? new Date(String(r.offer_expires)).toISOString() : null),
     offerClaimed: Number(r.offer_claimed ?? 0), offerRedeemed: Number(r.offer_redeemed ?? 0),

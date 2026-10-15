@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCard } from "@/lib/tapcardDb";
-import { followerCount } from "@/lib/tapcardOffers";
+import { followerCount, installCount } from "@/lib/tapcardOffers";
 
 // Same no-auth model as the rest of TapCard's API (see cards/route.ts) — the
 // unguessable id is the credential, and view/save counts carry no more
@@ -13,6 +13,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     views: card.view_count,
     saves: card.save_count,
     followers: await followerCount(id),
+    // People who installed TapCard after scanning this card's QR code or opening its link.
+    installs: await installCount(id),
     // Views that came from scanning the QR code, and from a plain card link.
     qrViews: card.qr_view_count,
     linkViews: Math.max(0, card.view_count - card.qr_view_count),

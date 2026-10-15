@@ -10,12 +10,13 @@ import ContactIcon, { type ContactIconName } from "../../ContactIcon";
 import AcceptRecipientForm from "../../AcceptRecipientForm";
 import { callActionLabel, isTapLink, linkIcon, parseStoredLinks } from "@/lib/tapcardLinks";
 import SaveContactButton from "../../SaveContactButton";
+import CarryCardToInstall from "../../CarryCardToInstall";
 
 // App Store Connect record "TapCard: Digital Business Card" (id 6816003159).
 const TAPCARD_ORIGIN = "https://tapcard.aiert.co.uk";
 // Through tapcard.aiert.co.uk/go/<slug> (app/tapcard/go), which counts the
 // click and adds App Store campaign attribution — see lib/trackedLinks.ts.
-const TAPCARD_APP_STORE_URL = `${TAPCARD_ORIGIN}/go/tapcard-web-get-tapcard`;
+const TAPCARD_APP_STORE_PATH = `${TAPCARD_ORIGIN}/go/tapcard-web-get-tapcard`;
 const MAILBROOM_APP_STORE_URL = `${TAPCARD_ORIGIN}/go/tapcard-web-mailbroom`;
 const POWERSEARCH_APP_STORE_URL = `${TAPCARD_ORIGIN}/go/tapcard-web-powersearch`;
 
@@ -55,6 +56,8 @@ export default async function CardPage({
   searchParams: Promise<{ send?: string; via?: string; a?: string }>;
 }) {
   const { id } = await params;
+  // The store links carry this business: on Android through the Play install referrer, on iPhone by copying its link when tapped.
+  const TAPCARD_APP_STORE_URL = `${TAPCARD_APP_STORE_PATH}?card=${encodeURIComponent(id)}`;
   const { send, via, a: acceptToken } = await searchParams;
   const card = await getCard(id);
   if (!card) notFound();
@@ -195,7 +198,9 @@ export default async function CardPage({
               <p className="mt-1 text-sm text-white">{[card.title, card.company].filter(Boolean).join(" · ")}</p>
             )}
 
+            <CarryCardToInstall cardLink={`${TAPCARD_ORIGIN}/c/${id}`} />
             <SaveContactButton
+              cardLink={`${TAPCARD_ORIGIN}/c/${id}`}
               vcardHref={`${TAPCARD_ORIGIN}/c/${id}/vcard`}
               storeHref={TAPCARD_APP_STORE_URL}
               openInAppHref={via === "qr" ? openInAppHref : undefined}

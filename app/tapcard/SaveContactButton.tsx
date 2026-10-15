@@ -5,12 +5,15 @@
 // Android) so they can get TapCard and send their own card back. The link is
 // a plain download, so saving still works if the script doesn't run.
 export default function SaveContactButton({
+  cardLink,
   vcardHref,
   storeHref,
   openInAppHref,
   firstName,
   goToStore,
 }: {
+  /// This card's own link: on iPhone it is copied before the store opens, so TapCard can open on this business after installing.
+  cardLink: string;
   vcardHref: string;
   storeHref: string;
   openInAppHref?: string;
@@ -23,6 +26,9 @@ export default function SaveContactButton({
         href={vcardHref}
         onClick={() => {
           if (!goToStore) return;
+          if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+            try { void navigator.clipboard?.writeText(cardLink); } catch { /* the store opens either way */ }
+          }
           // Give the phone time to start the save before the store opens.
           window.setTimeout(() => {
             window.location.href = storeHref;
