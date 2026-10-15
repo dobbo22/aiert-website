@@ -103,18 +103,15 @@ function CardFace({ name, typed, stage, rows, socials, interactive, domain, onOp
 
 // A tapped link, opened over the phone's screen. Pages that allow it are shown for real; the rest (Facebook, Instagram,
 // X, Maps refuse to be framed) get a preview page, so it never shows a blank box.
-function InPhoneBrowser({ row, name, onClose }: { row: Row; name: string; onClose: () => void }) {
+function InPhoneBrowser({ row, name, website, onClose }: { row: Row; name: string; website: string; onClose: () => void }) {
   const isCall = !!row.href?.startsWith("tel:");
   const url = row.href && !isCall ? row.href : "";
-  const [frameable, setFrameable] = useState<boolean | null>(null);
-  useEffect(() => {
-    if (!url || !/^https:\/\//i.test(url)) return;
-    let cancelled = false;
-    fetch(`/api/demo/frameable?url=${encodeURIComponent(url)}`).then((r) => r.json()).then((d) => { if (!cancelled) setFrameable(d.frameable === true); }).catch(() => { if (!cancelled) setFrameable(false); });
-    return () => { cancelled = true; };
-  }, [url]);
-  const host = (() => { try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return ""; } })();
-  const checking = !isCall && !!url && /^https:\/\//i.test(url) && frameable === null;
+  const hostOf = (u: string) => { try { return new URL(/^https?:\/\//i.test(u) ? u : `https://${u}`).hostname.toLowerCase().replace(/^www\./, ""); } catch { return ""; } };
+  const host = hostOf(url);
+  // The business's own pages are shown as a snapshot inside the screen; Facebook, Instagram, X and Maps can't be, so
+  // those get a preview page.
+  const ownPage = !!url && /^https:\/\//i.test(url) && !!host && host === hostOf(website) && !row.social;
+  const [loaded, setLoaded] = useState(false);
   const social = !!row.social;
   return (
     <div className="absolute inset-0 z-20 flex flex-col bg-[#f2f3f5] text-[#111318] [animation:fadein_0.25s_ease]">
@@ -131,14 +128,19 @@ function InPhoneBrowser({ row, name, onClose }: { row: Row; name: string; onClos
             <p className="text-sm text-white/70">{row.detail}</p>
             <p className="mt-6 text-sm text-white/70">Calling…</p>
           </div>
-        ) : checking ? (
-          <div className="flex h-full items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-black/10 border-t-black/60" /></div>
-        ) : frameable ? (
-          <iframe src={url} title={row.title} sandbox="allow-scripts allow-same-origin allow-forms allow-popups" referrerPolicy="no-referrer" className="h-full w-full border-0 bg-white" />
+        ) : ownPage ? (
+          <>
+            {!loaded ? <div className="absolute inset-0 flex items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-black/10 border-t-black/60" /></div> : null}
+            <iframe
+              src={`/api/demo/page?url=${encodeURIComponent(url)}&site=${encodeURIComponent(website)}`}
+              title={row.title} sandbox="allow-popups allow-popups-to-escape-sandbox" referrerPolicy="no-referrer"
+              onLoad={() => setLoaded(true)} className="h-full w-full border-0 bg-white"
+            />
+          </>
         ) : (
           <div className="flex h-full flex-col items-center overflow-y-auto px-5 pt-8 text-center">
             <span className="flex h-20 w-20 items-center justify-center rounded-2xl text-white shadow-lg" style={{ background: row.color }}><ContactIcon name={row.icon} large /></span>
-            <p className="mt-4 text-lg font-bold">{social ? row.title : row.title}</p>
+            <p className="mt-4 text-lg font-bold">{row.title}</p>
             <p className="text-sm font-semibold">{name}</p>
             <p className="mt-1 max-w-full truncate text-xs text-[#555]">{row.detail}</p>
             {social ? <div className="mt-4 rounded-full bg-[#0866FF] px-8 py-2 text-sm font-semibold text-white">Follow</div> : null}
@@ -423,8 +425,8 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
   return (
     <div>
       <div className="flex flex-wrap justify-center gap-6">
-        <Phone label="Your business" overlay={browseA ? <InPhoneBrowser row={browseA} name={name} onClose={() => setBrowseA(null)} /> : null}>{showPhoneA()}</Phone>
-        <Phone label="Alex Morgan, a customer" overlay={browseB ? <InPhoneBrowser row={browseB} name={name} onClose={() => setBrowseB(null)} /> : null}>{showPhoneB()}</Phone>
+        <Phone label="Your business" overlay={browseA ? <InPhoneBrowser row={browseA} name={name} website={website} onClose={() => setBrowseA(null)} /> : null}>{showPhoneA()}</Phone>
+        <Phone label="Alex Morgan, a customer" overlay={browseB ? <InPhoneBrowser row={browseB} name={name} website={website} onClose={() => setBrowseB(null)} /> : null}>{showPhoneB()}</Phone>
       </div>
       <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
         {revealed >= 1 && built ? <button disabled={running} onClick={share} className="btn-gold rounded-xl px-5 py-3 text-sm font-semibold disabled:opacity-50">1. Share my card</button> : null}
