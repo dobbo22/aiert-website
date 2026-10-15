@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { buildPrebuiltCard, hashIp, recentCounts, storePrebuilt } from "@/lib/tapcardPrebuilt";
+import { applyChoices, buildPrebuiltCard, hashIp, recentCounts, storePrebuilt } from "@/lib/tapcardPrebuilt";
 import { sendPrebuiltEmail } from "@/lib/tapcardPrebuiltEmail";
 
 // POST { name, website?, email, consent: true, company? (honeypot) } -> builds the card from the website, emails the
@@ -18,14 +18,25 @@ export async function POST(req: NextRequest) {
   if (body.consent !== true) return NextResponse.json({ error: "consent" }, { status: 400 });
   if (website && !/^(https?:\/\/)?[^\s/]+\.[a-z]{2,}(\/\S*)?$/i.test(website)) return NextResponse.json({ error: "website" }, { status: 400 });
 
+  // preview: build and show the card, nothing saved and nothing sent. The send call carries the visitor's choices.
+  const preview = body.preview === true;
+  const keep = Array.isArray(body.keep) ? body.keep.filter((x): x is string => typeof x === "string").slice(0, 30) : null;
+  const extra = (Array.isArray(body.extra) ? body.extra : []).slice(0, 2).map((e) => {
+    const r = (e ?? {}) as Record<string, unknown>;
+    return { label: String(r.label ?? ""), value: String(r.value ?? "") };
+  });
+
   const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim();
   const ipHash = hashIp(ip);
   const { byIp, byEmail } = await recentCounts(ipHash, email);
   if (byIp >= 5 || byEmail >= 3) return NextResponse.json({ error: "rate_limited" }, { status: 429 });
 
-  const { card, branches } = await buildPrebuiltCard(name, website, address);
+  const built = await buildPrebuiltCard(name, website, address);
+  const branches = built.branches;
+  const card = preview ? built.card : applyChoices(built.card, keep, extra);
   // Several addresses on the site and none chosen yet: ask which is theirs before anything is saved or sent.
   if (branches.length > 1 && !address) return NextResponse.json({ needsBranch: true, branches: branches.slice(0, 12) });
+  if (preview) return NextResponse.json({ ok: true, preview: true, card });
   const token = await storePrebuilt(email, name, website, card, ipHash);
   const link = `https://tapcard.aiert.co.uk/start/${token}`;
   let emailed = true;

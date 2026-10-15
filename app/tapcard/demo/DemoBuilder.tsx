@@ -9,20 +9,20 @@ interface Card {
   facebookUrl: string; instagramUrl: string; twitterUrl: string; linkedInUrl: string; tiktokUrl: string; branchCount: number;
 }
 
-type Phase = "form" | "building" | "done";
+type Phase = "form" | "building" | "choose" | "done";
 
 // One row of the card, revealed in turn so the card visibly assembles itself.
-interface Row { key: string; title: string; detail: string; color: string }
+interface Row { key: string; id: string; title: string; detail: string; color: string }
 
 function rowsFor(card: Card): Row[] {
   const rows: Row[] = [];
-  if (card.phone) rows.push({ key: "phone", title: "Call us", detail: card.phone, color: "#22C55E" });
-  if (card.website) rows.push({ key: "web", title: "Website", detail: card.website.replace(/^https?:\/\//, "").replace(/\/$/, ""), color: "#3B82F6" });
-  if (card.address) rows.push({ key: "addr", title: "Find us", detail: card.address, color: "#F97316" });
-  for (const l of card.links) rows.push({ key: `l-${l.kind}-${l.value}`, title: l.label, detail: l.kind === "hours" ? l.value : l.value.replace(/^https?:\/\/(www\.)?/, ""), color: l.kind === "hours" ? "#EAB308" : "#A855F7" });
-  const socials: [string, string][] = [["Facebook", card.facebookUrl], ["Instagram", card.instagramUrl], ["X", card.twitterUrl], ["LinkedIn", card.linkedInUrl], ["TikTok", card.tiktokUrl]];
-  for (const [n, u] of socials) if (u) rows.push({ key: `s-${n}`, title: n, detail: u.replace(/^https?:\/\/(www\.)?/, ""), color: "#EC4899" });
-  return rows.slice(0, 9);
+  if (card.phone) rows.push({ key: "phone", id: "phone", title: "Call us", detail: card.phone, color: "#22C55E" });
+  if (card.website) rows.push({ key: "web", id: "website", title: "Website", detail: card.website.replace(/^https?:\/\//, "").replace(/\/$/, ""), color: "#3B82F6" });
+  if (card.address) rows.push({ key: "addr", id: "address", title: "Find us", detail: card.address, color: "#F97316" });
+  for (const l of card.links) rows.push({ key: `l-${l.kind}-${l.value}`, id: `link:${l.kind}`, title: l.label, detail: l.kind === "hours" ? l.value : l.value.replace(/^https?:\/\/(www\.)?/, ""), color: l.kind === "hours" ? "#EAB308" : "#A855F7" });
+  const socials: [string, string, string][] = [["Facebook", "facebook", card.facebookUrl], ["Instagram", "instagram", card.instagramUrl], ["X", "twitter", card.twitterUrl], ["LinkedIn", "linkedin", card.linkedInUrl], ["TikTok", "tiktok", card.tiktokUrl]];
+  for (const [n, id, u] of socials) if (u) rows.push({ key: `s-${n}`, id: `social:${id}`, title: n, detail: u.replace(/^https?:\/\/(www\.)?/, ""), color: "#EC4899" });
+  return rows.slice(0, 10);
 }
 
 export default function DemoBuilder() {
@@ -41,6 +41,9 @@ export default function DemoBuilder() {
   const [stage, setStage] = useState(0); // 0 blank, 1 name, 2 icon/pill, 3 rows, 4 qr
   const [qr, setQr] = useState("");
   const [typed, setTyped] = useState("");
+  const [keep, setKeep] = useState<Set<string>>(new Set());
+  const [extras, setExtras] = useState<{ label: string; value: string }[]>([{ label: "", value: "" }, { label: "", value: "" }]);
+  const [sending, setSending] = useState(false);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
@@ -56,7 +59,7 @@ export default function DemoBuilder() {
       const res = await fetch("/api/demo/build", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, website, email, consent, company: trap, address: chosen ?? address }),
+        body: JSON.stringify({ name, website, email, consent, company: trap, address: chosen ?? address, preview: true }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -77,9 +80,9 @@ export default function DemoBuilder() {
         return;
       }
       const c = data.card as Card;
-      setCard(c); setEmailed(data.emailed !== false);
-      // The email carries /start/<token>; the on-page QR points at the same card.
-      void QRCode.toDataURL(String(data.link ?? "https://tapcard.aiert.co.uk/"), { margin: 1, width: 200, color: { dark: "#111318", light: "#ffffff" } }).then(setQr);
+      setCard(c);
+      setKeep(new Set(rowsFor(c).map((r) => r.id)));
+      void QRCode.toDataURL("https://tapcard.aiert.co.uk/", { margin: 1, width: 200, color: { dark: "#111318", light: "#ffffff" } }).then(setQr);
       const rows = rowsFor(c);
       setStage(1);
       // Type the name in, then reveal the rest a step at a time.
@@ -91,14 +94,46 @@ export default function DemoBuilder() {
       later(t, () => setStage(3));
       rows.forEach((_, i) => later(t + (i + 1) * 650, () => setShown(i + 1)));
       t += (rows.length + 1) * 650 + 400;
-      later(t, () => { setStage(4); setPhase("done"); });
+      later(t, () => { setStage(4); setPhase("choose"); });
     } catch {
       setPhase("form");
       setError("Couldn't reach the server. Check your connection and try again.");
     }
   }
 
-  const rows = card ? rowsFor(card) : [];
+  async function send() {
+    if (!card) return;
+    setSending(true); setError(null);
+    try {
+      const res = await fetch("/api/demo/build", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name, website, email, consent, company: trap, address: card.address || address,
+          keep: [...keep], extra: extras.filter((e) => e.label.trim() && e.value.trim()),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error === "rate_limited" ? "That's a lot of cards from one place today. Please try again tomorrow." : data.error === "extra" ? "Extra links need to start with https://" : "Something went wrong. Please try again.");
+        return;
+      }
+      setEmailed(data.emailed !== false);
+      if (data.link) void QRCode.toDataURL(String(data.link), { margin: 1, width: 200, color: { dark: "#111318", light: "#ffffff" } }).then(setQr);
+      setPhase("done");
+    } catch {
+      setError("Couldn't reach the server. Check your connection and try again.");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  const allRows = card ? rowsFor(card) : [];
+  const extraRows: Row[] = extras.filter((e) => e.label.trim() && /^https:\/\//i.test(e.value.trim())).map((e, i) => ({
+    key: `x-${i}`, id: `extra:${i}`, title: e.label.trim(), detail: e.value.trim().replace(/^https?:\/\/(www\.)?/, ""), color: "#A855F7",
+  }));
+  // While choosing, the card on the phone shows only what is ticked, plus the visitor's own links.
+  const rows = phase === "choose" || phase === "done" ? [...allRows.filter((r) => keep.has(r.id)), ...extraRows] : allRows;
 
   return (
     <section className="mt-10 grid items-start gap-10 md:grid-cols-2">
@@ -144,6 +179,41 @@ export default function DemoBuilder() {
               {phase === "building" ? "Building your card…" : "Build my TapCard"}
             </button>
           </form>
+        ) : phase === "choose" ? (
+          <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-gold/40">
+            <h2 className="text-2xl font-black text-cloud">Your card is built. Make it yours.</h2>
+            <p className="mt-2 text-cloud">Untick anything you don't want. The phone updates as you go.</p>
+            <ul className="mt-4 space-y-2">
+              {allRows.map((r) => (
+                <li key={r.key}>
+                  <label className="flex cursor-pointer items-center gap-3 rounded-xl bg-white/10 px-3 py-3 text-cloud">
+                    <input type="checkbox" className="h-5 w-5" checked={keep.has(r.id)}
+                      onChange={(e) => setKeep((prev) => { const n = new Set(prev); if (e.target.checked) n.add(r.id); else n.delete(r.id); return n; })} />
+                    <span className="min-w-0">
+                      <span className="block font-semibold">{r.title}</span>
+                      <span className="block truncate text-sm">{r.detail}</span>
+                    </span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-5 font-semibold text-cloud">Add your own links <span className="font-normal">(optional)</span></p>
+            {extras.map((e, i) => (
+              <div key={i} className="mt-2 grid grid-cols-5 gap-2">
+                <input aria-label={`Link ${i + 1} name`} value={e.label} maxLength={40} placeholder="Book a table"
+                  onChange={(ev) => setExtras((p) => p.map((x, j) => (j === i ? { ...x, label: ev.target.value } : x)))}
+                  className="col-span-2 rounded-xl bg-white px-3 py-2 text-[#111318]" />
+                <input aria-label={`Link ${i + 1} address`} value={e.value} maxLength={300} placeholder="https://…" inputMode="url"
+                  onChange={(ev) => setExtras((p) => p.map((x, j) => (j === i ? { ...x, value: ev.target.value } : x)))}
+                  className="col-span-3 rounded-xl bg-white px-3 py-2 text-[#111318]" />
+              </div>
+            ))}
+            {error ? <p role="alert" className="mt-4 rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white">{error}</p> : null}
+            <button onClick={() => void send()} disabled={sending} className="btn-gold mt-5 w-full rounded-xl px-6 py-3 font-semibold disabled:opacity-50">
+              {sending ? "Sending…" : "Email me my card"}
+            </button>
+            <p className="mt-2 text-xs text-cloud">We'll email {email}. Nothing is sent until you press the button.</p>
+          </div>
         ) : (
           <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-gold/40">
             <h2 className="text-2xl font-black text-cloud">{emailed ? "Your link is on its way" : "Your card is built"}</h2>
@@ -188,7 +258,7 @@ export default function DemoBuilder() {
                 <h3 className="mt-4 min-h-[2rem] text-2xl font-bold">{typed}</h3>
                 <span className="mt-2 inline-block rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider transition-opacity duration-500" style={{ opacity: stage >= 2 ? 1 : 0 }}>Business</span>
                 <ul className="mt-5 space-y-2 text-left">
-                  {rows.slice(0, shown).map((r) => (
+                  {rows.slice(0, phase === "choose" || phase === "done" ? rows.length : shown).map((r) => (
                     <li key={r.key} className="flex items-center gap-3 rounded-xl bg-white/10 px-3 py-2 [animation:fadein_0.5s_ease]">
                       <span className="h-8 w-8 flex-none rounded-full" style={{ background: r.color }} />
                       <span className="min-w-0">

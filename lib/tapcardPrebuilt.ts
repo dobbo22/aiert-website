@@ -115,3 +115,27 @@ export async function getPrebuilt(token: string): Promise<PrebuiltCard | null> {
   await sql`UPDATE tapcard_prebuilt SET claimed_at = COALESCE(claimed_at, now()) WHERE token = ${token}`;
   return rows[0].payload;
 }
+
+
+/// What the visitor chose to keep on the card, by id: "phone", "address", "website", "link:<kind>", "social:<name>".
+/// Anything not listed is dropped. `extra` are links they added themselves (https only).
+export function applyChoices(card: PrebuiltCard, keep: string[] | null, extra: { label: string; value: string }[]): PrebuiltCard {
+  const out: PrebuiltCard = { ...card };
+  if (keep) {
+    const k = new Set(keep);
+    if (!k.has("phone")) out.phone = "";
+    if (!k.has("address")) out.address = "";
+    if (!k.has("website")) out.website = "";
+    out.links = card.links.filter((l) => k.has(`link:${l.kind}`));
+    if (!k.has("social:facebook")) out.facebookUrl = "";
+    if (!k.has("social:instagram")) out.instagramUrl = "";
+    if (!k.has("social:twitter")) out.twitterUrl = "";
+    if (!k.has("social:linkedin")) out.linkedInUrl = "";
+    if (!k.has("social:tiktok")) out.tiktokUrl = "";
+  }
+  const added = extra
+    .map((e) => ({ kind: "custom" as const, label: e.label.trim().slice(0, 40), value: e.value.trim().slice(0, 300) }))
+    .filter((e) => e.label && /^https:\/\/[^\s]+\.[^\s]+$/i.test(e.value));
+  out.links = sanitizeLinks([...out.links, ...added]).slice(0, 10);
+  return out;
+}
