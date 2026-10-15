@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function RedeemForm({ code }: { code: string }) {
   const [pin, setPin] = useState("");
@@ -20,7 +20,27 @@ export default function RedeemForm({ code }: { code: string }) {
     setState(data.error === "bad_pin" ? "bad" : data.error === "locked" ? "locked" : "used");
   }
 
-  if (state === "done") return <p className="mt-6 rounded-xl bg-green-600 px-4 py-3 font-semibold">Marked as used</p>;
+  // After a tick, try to close the page. Browsers only allow that for pages a script opened, so otherwise
+  // the tick stays and tells staff they can go back.
+  useEffect(() => {
+    if (state !== "done") return;
+    const t = setTimeout(() => {
+      window.close();
+      if (window.history.length > 1) window.history.back();
+    }, 1800);
+    return () => clearTimeout(t);
+  }, [state]);
+
+  if (state === "done")
+    return (
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-green-600 text-white" role="status">
+        <svg viewBox="0 0 24 24" className="h-40 w-40" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M4 12.5l5 5L20 6.5" />
+        </svg>
+        <p className="mt-4 text-2xl font-bold">Marked as used</p>
+        <p className="mt-2 text-sm">You can close this page.</p>
+      </div>
+    );
   if (state === "used") return <p className="mt-6 rounded-xl bg-white/10 px-4 py-3 font-semibold">Already used</p>;
   return (
     <form onSubmit={submit} className="mt-6">
