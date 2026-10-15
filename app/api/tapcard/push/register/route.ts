@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { forgetDevice, registerDevice } from "@/lib/tapcardPush";
+import { apnsConfigured, fcmConfigured, forgetDevice, registerDevice } from "@/lib/tapcardPush";
 
 // An app install tells us its push token (Apple or Google), keyed by its random per-install id, which is hashed. No name,
 // email or contact details. Send an empty token to forget the device (when the person turns notifications off everywhere).
@@ -13,6 +13,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
   if (token.length < 20 || token.length > 400 || /\s/.test(token)) return NextResponse.json({ error: "invalid token" }, { status: 400 });
-  await registerDevice(follower, body?.platform === "android" ? "android" : "ios", token);
-  return NextResponse.json({ ok: true });
+  const platform = body?.platform === "android" ? "android" : "ios";
+  await registerDevice(follower, platform, token);
+  // `push` tells the app the server really will push to it, so it can stop posting its own local notifications.
+  return NextResponse.json({ ok: true, push: platform === "android" ? fcmConfigured() : apnsConfigured() });
 }
