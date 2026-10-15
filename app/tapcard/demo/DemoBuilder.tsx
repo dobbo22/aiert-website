@@ -16,6 +16,23 @@ type Phase = "form" | "building" | "choose" | "done";
 // One row of the card, revealed in turn so the card visibly assembles itself.
 export interface Row { key: string; id: string; title: string; detail: string; color: string; icon: ContactIconName; href?: string; social?: boolean }
 
+// Common slips in the part after the @, offered back as a one-tap fix.
+const EMAIL_FIXES: Record<string, string> = {
+  "gmial.com": "gmail.com", "gmai.com": "gmail.com", "gmail.con": "gmail.com", "gmail.co": "gmail.com", "gamil.com": "gmail.com", "gnail.com": "gmail.com",
+  "hotmial.com": "hotmail.com", "hotmail.con": "hotmail.com", "hotmai.com": "hotmail.com", "hotmal.com": "hotmail.com",
+  "yahooo.com": "yahoo.com", "yaho.com": "yahoo.com", "yahoo.con": "yahoo.com", "outlok.com": "outlook.com", "outlook.con": "outlook.com",
+  "icloud.con": "icloud.com", "iclould.com": "icloud.com", "btopenworld.con": "btopenworld.com", "btinternet.con": "btinternet.com",
+  "gmail.cm": "gmail.com", "hotmail.co": "hotmail.com", "yahoo.co": "yahoo.com",
+};
+function emailFix(email: string): string | null {
+  const at = email.lastIndexOf("@");
+  if (at < 1) return null;
+  const domain = email.slice(at + 1).toLowerCase();
+  let fixed = EMAIL_FIXES[domain];
+  if (!fixed && /\.cco\.uk$|\.co\.ukk$|\.couk$/.test(domain)) fixed = domain.replace(/\.cco\.uk$|\.co\.ukk$|\.couk$/, ".co.uk");
+  return fixed ? `${email.slice(0, at)}@${fixed}` : null;
+}
+
 const webUrl = (v: string) => (/^https?:\/\//i.test(v) ? v : `https://${v}`);
 const ICONS: Record<string, ContactIconName> = {
   shop: "bag", order: "bag", menu: "menu", hours: "clock", google_review: "star", tripadvisor: "star", reviews: "star",
@@ -55,6 +72,8 @@ export default function DemoBuilder() {
   const [branches, setBranches] = useState<{ name: string; address: string; phone: string; hours: string }[] | null>(null);
   const [trap, setTrap] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [siteFix, setSiteFix] = useState<string | null>(null);
+  const [siteBad, setSiteBad] = useState(false);
   const [card, setCard] = useState<Card | null>(null);
   const [emailed, setEmailed] = useState(true);
   const [shown, setShown] = useState(0);
@@ -71,6 +90,7 @@ export default function DemoBuilder() {
   async function submit(e: React.FormEvent, chosen?: string) {
     e.preventDefault();
     setError(null);
+    setSiteBad(false); setSiteFix(null);
     setBranches(null);
     setPhase("building");
     setStage(0); setShown(0); setTyped("");
@@ -82,9 +102,11 @@ export default function DemoBuilder() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
+        if (data.error === "website_unreachable") { setSiteBad(true); setSiteFix(typeof data.suggestion === "string" ? data.suggestion : null); }
         setPhase("form");
         setError(
-          data.error === "rate_limited" ? "That&apos;s a lot of cards from one place today. Please try again tomorrow."
+          data.error === "rate_limited" ? "That’s a lot of cards from one place today. Please try again tomorrow."
+          : data.error === "website_unreachable" ? "We couldn’t find that website. Please check the spelling."
           : data.error === "email" ? "That email address doesn't look right."
           : data.error === "website" ? "That website address doesn't look right. Try something like yourbusiness.co.uk."
           : data.error === "consent" ? "Please tick the box so we can email your link."
@@ -133,7 +155,7 @@ export default function DemoBuilder() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error === "rate_limited" ? "That&apos;s a lot of cards from one place today. Please try again tomorrow." : data.error === "extra" ? "Extra links need to start with https://" : "Something went wrong. Please try again.");
+        setError(data.error === "rate_limited" ? "That’s a lot of cards from one place today. Please try again tomorrow." : data.error === "extra" ? "Extra links need to start with https://" : "Something went wrong. Please try again.");
         return;
       }
       setEmailed(data.emailed !== false);
@@ -171,14 +193,29 @@ export default function DemoBuilder() {
               {DEMO_KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
             </select>
             <label className="mt-4 block text-sm font-semibold text-cloud" htmlFor="site">Website <span className="font-normal">(so we can build it from your own pages)</span></label>
-            <input id="site" value={website} onChange={(e) => setWebsite(e.target.value)} maxLength={200} disabled={phase === "building"} inputMode="url"
-              className="mt-1 w-full rounded-xl bg-white px-4 py-3 text-[#111318]" placeholder="therosegardenflorists.co.uk" />
+            <input id="site" value={website} onChange={(e) => { setWebsite(e.target.value); setSiteBad(false); setSiteFix(null); }} maxLength={200} disabled={phase === "building"} inputMode="url"
+              className={`mt-1 w-full rounded-xl bg-white px-4 py-3 text-[#111318] ${siteBad ? "ring-4 ring-red-500" : ""}`} placeholder="therosegardenflorists.co.uk" aria-invalid={siteBad} />
+            {siteBad ? (
+              <div role="alert" className="mt-2 rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white">
+                We couldn&apos;t find that website. Please check the spelling.
+                {siteFix ? (
+                  <button type="button" onClick={() => { setWebsite(siteFix); setSiteBad(false); setSiteFix(null); setError(null); }} className="mt-2 block rounded-lg bg-white px-3 py-2 text-[#111318]">
+                    Did you mean <strong>{siteFix}</strong>? Use it
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
             <label className="mt-4 block text-sm font-semibold text-cloud" htmlFor="addr">Address or postcode <span className="font-normal">(optional, for a business with several shops)</span></label>
             <input id="addr" value={address} onChange={(e) => setAddress(e.target.value)} maxLength={200} disabled={phase === "building"}
               className="mt-1 w-full rounded-xl bg-white px-4 py-3 text-[#111318]" placeholder="CM6 1AG" />
             <label className="mt-4 block text-sm font-semibold text-cloud" htmlFor="mail">Your email</label>
             <input id="mail" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} maxLength={120} disabled={phase === "building"}
               className="mt-1 w-full rounded-xl bg-white px-4 py-3 text-[#111318]" placeholder="you@yourbusiness.co.uk" />
+            {emailFix(email) ? (
+              <button type="button" onClick={() => setEmail(emailFix(email) ?? email)} className="mt-2 block rounded-lg bg-white/15 px-3 py-2 text-left text-sm text-cloud">
+                Did you mean <strong>{emailFix(email)}</strong>? Use it
+              </button>
+            ) : null}
             {/* Honeypot: hidden from people. */}
             <input tabIndex={-1} autoComplete="off" aria-hidden="true" value={trap} onChange={(e) => setTrap(e.target.value)} style={{ position: "absolute", left: "-9999px" }} name="company" />
             <label className="mt-4 flex items-start gap-3 text-sm text-cloud">
@@ -200,7 +237,7 @@ export default function DemoBuilder() {
                 </div>
               </div>
             ) : null}
-            {error ? <p role="alert" className="mt-4 rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white">{error}</p> : null}
+            {error && !siteBad ? <p role="alert" className="mt-4 rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white">{error}</p> : null}
             <button type="submit" disabled={phase === "building" || !consent || name.trim().length < 2 || !email || !kind}
               className="btn-gold mt-5 w-full rounded-xl px-6 py-3 font-semibold disabled:opacity-50">
               {phase === "building" ? "Building your card…" : "Build my TapCard"}

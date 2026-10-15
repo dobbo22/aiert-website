@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { applyChoices, buildPrebuiltCard, hashIp, recentCounts, recordDemoContact, storePrebuilt } from "@/lib/tapcardPrebuilt";
+import { applyChoices, buildPrebuiltCard, checkWebsite, hashIp, recentCounts, recordDemoContact, storePrebuilt } from "@/lib/tapcardPrebuilt";
 import { sendPrebuiltEmail } from "@/lib/tapcardPrebuiltEmail";
 import { DEMO_KINDS } from "@/app/tapcard/demo/demoOffers";
 
@@ -19,6 +19,12 @@ export async function POST(req: NextRequest) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return NextResponse.json({ error: "email" }, { status: 400 });
   if (body.consent !== true) return NextResponse.json({ error: "consent" }, { status: 400 });
   if (website && !/^(https?:\/\/)?[^\s/]+\.[a-z]{2,}(\/\S*)?$/i.test(website)) return NextResponse.json({ error: "website" }, { status: 400 });
+
+  // A website name that does not exist (a typo like aiert.cco.uk): ask the visitor to correct it, with a suggestion when obvious.
+  if (website) {
+    const check = await checkWebsite(website);
+    if (!check.ok) return NextResponse.json({ error: "website_unreachable", suggestion: check.suggestion ?? null }, { status: 422 });
+  }
 
   // preview: build and show the card, nothing saved and nothing sent. The send call carries the visitor's choices.
   const preview = body.preview === true;

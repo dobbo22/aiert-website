@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { lookup } from "dns/promises";
 import sql from "@/lib/db";
 import { findSiteLinks } from "@/lib/siteLinks";
 import { sanitizeLinks, type CardLink } from "@/lib/tapcardLinks";
@@ -192,4 +193,45 @@ export async function recordDemoContact(email: string, business: string, website
     VALUES (${key}, ${business}, ${email}, ${business}, ${website}, ${address}, 'demo')
     ON CONFLICT (dedupe_key) DO NOTHING
   `;
+}
+
+
+// ---- Is the website real? -------------------------------------------------------------------------------------------
+
+const TYPO_FIXES: [RegExp, string][] = [
+  [/\.cco\.uk$/, ".co.uk"], [/\.coo\.uk$/, ".co.uk"], [/\.co\.ukk$/, ".co.uk"], [/\.co\.u$/, ".co.uk"], [/\.couk$/, ".co.uk"],
+  [/\.c\.uk$/, ".co.uk"], [/\.cok\.uk$/, ".co.uk"], [/\.co\.uk\.$/, ".co.uk"], [/\.org\.ukk$/, ".org.uk"],
+  [/\.con$/, ".com"], [/\.comm$/, ".com"], [/\.cmo$/, ".com"], [/\.ocm$/, ".com"], [/\.vom$/, ".com"], [/\.xom$/, ".com"],
+  [/\.nett$/, ".net"], [/\.ent$/, ".net"],
+];
+
+async function resolves(host: string): Promise<boolean> {
+  try {
+    await Promise.race([lookup(host), new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 4000))]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function hostOfWebsite(raw: string): string {
+  try {
+    return new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`).hostname.toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+/// Does this website name exist at all (DNS)? If not, and it looks like a common typo, the corrected name when that one
+/// exists. A site that refuses bots still counts as existing: only a name that does not resolve is rejected.
+export async function checkWebsite(raw: string): Promise<{ ok: boolean; suggestion?: string }> {
+  const host = hostOfWebsite(raw);
+  if (!host || !host.includes(".")) return { ok: false };
+  if (await resolves(host)) return { ok: true };
+  for (const [re, fix] of TYPO_FIXES) {
+    if (!re.test(host)) continue;
+    const alt = host.replace(re, fix);
+    if (alt !== host && (await resolves(alt))) return { ok: false, suggestion: alt.replace(/^www\./, "") };
+  }
+  return { ok: false };
 }
