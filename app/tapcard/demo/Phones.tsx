@@ -57,6 +57,7 @@ function CardFace({ name, kind, typed, stage, rows, socials, interactive, domain
   };
   const [logoFailed, setLogoFailed] = useState(false);
   const [iconFailed, setIconFailed] = useState(false);
+  const [iconTiny, setIconTiny] = useState(false);
   const d = encodeURIComponent(domain);
   return (
     <div className="pb-6 text-center">
@@ -69,8 +70,14 @@ function CardFace({ name, kind, typed, stage, rows, socials, interactive, domain
       <div className="px-4">
       <div className="-mt-7 mx-auto flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-[#1c1f27] ring-4 ring-[#111318] transition-all duration-500" style={{ opacity: stage >= 2 ? 1 : 0, transform: stage >= 2 ? "scale(1)" : "scale(0.6)" }}>
         {domain && !iconFailed ? (
+          // A favicon of 16 or 32 pixels (often a website builder's default) looks poor and may not be theirs: use the logo instead when there is one.
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={`/api/favicon?domain=${d}`} alt="" onError={() => setIconFailed(true)} className="h-12 w-12 object-contain" />
+          <img
+            src={iconTiny && !logoFailed ? `/api/logo?domain=${d}` : `/api/favicon?domain=${d}`} alt=""
+            onLoad={(e) => { if (!iconTiny && e.currentTarget.naturalWidth > 0 && e.currentTarget.naturalWidth <= 32) setIconTiny(true); }}
+            onError={() => setIconFailed(true)}
+            className={iconTiny ? "h-full w-full object-cover" : "h-12 w-12 object-contain"}
+          />
         ) : (
           <svg viewBox="0 0 24 24" className="h-10 w-10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9M3 9h18M3 9v11h18V9M9 20v-6h6v6" /></svg>
         )}
