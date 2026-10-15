@@ -3,7 +3,7 @@ import StoreBadges from "../../StoreBadges";
 import { appStoreUrl, playStoreUrl } from "@/lib/tapcardInvites";
 
 const DESCRIPTION =
-  "One-touch marketing for your restaurant, café or shop: post a special offer or a news flash from your phone and the people who saved your card are told straight away.";
+  "One-touch marketing for your restaurant, café or shop: post a special offer or a news flash from your phone and the people who follow your card are notified on their phone.";
 
 export const metadata: Metadata = {
   title: "TapCard Promote: one-touch marketing for your business – AIERT Ltd",
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 const WHAT_YOU_CAN_DO = [
   {
     title: "Special offers",
-    body: "“Free dessert with any main.” Set how long it lasts and how many people can have it. Everyone who follows you is told as soon as it is posted.",
+    body: "“Free dessert with any main.” Set how long it lasts and how many people can have it. Everyone who follows you gets a notification on their phone.",
   },
   {
     title: "News flashes",
@@ -71,7 +71,7 @@ export default function PromotePage() {
             <p className="text-sm font-semibold uppercase tracking-wider text-teal">TapCard Promote · for restaurants, cafés, salons and shops</p>
             <h1 className="mt-3 text-4xl font-black tracking-tight text-cloud sm:text-5xl">One-touch marketing for your business.</h1>
             <p className="mt-5 text-lg leading-relaxed text-cloud">
-              Post a special offer or a news flash from your phone in under a minute. The people who saved your card are told straight away, with no
+              Post a special offer or a news flash from your phone in under a minute. The people who follow your card get a notification on their phone, with no
               mailing list to build and no agency to pay.
             </p>
             <div className="no-print mt-6 flex flex-wrap items-center gap-3">

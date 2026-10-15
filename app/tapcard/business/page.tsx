@@ -68,7 +68,7 @@ export default function TapCardBusinessPage() {
           <h2 className="mt-2 text-2xl font-black text-cloud">One-touch marketing for every location</h2>
           <p className="mt-3 text-lg leading-relaxed text-cloud">
             Each branch gets its own card with its own address, phone, opening hours and booking link. From the admin page or the app you can post
-            a <strong>special offer</strong> or a <strong>news flash</strong> to the people who follow that branch. They are told straight away, claim
+            a <strong>special offer</strong> or a <strong>news flash</strong> to the people who follow that branch. They get a notification on their phone, claim
             their own one-off QR code, and your staff scan it and enter a PIN. Head office sees every location&apos;s followers, offers claimed and
             used in one place.
           </p>
