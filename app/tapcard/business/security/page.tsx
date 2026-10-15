@@ -94,8 +94,8 @@ export default function TapCardBusinessSecurityPage() {
             card.
           </li>
           <li>
-            <strong>Seat limits:</strong> a card can only be set up while your plan has a free seat and billing is
-            active.
+            <strong>Card limits:</strong> a card can only be set up while your plan has room for it (each location
+            includes its own card and up to 10 staff cards) and billing is active.
           </li>
         </ul>
         <p className="mt-3">

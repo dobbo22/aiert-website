@@ -15,7 +15,7 @@ interface Body {
 // what the Stripe webhook does on a real purchase (activate the org, make
 // the signer-upper the first admin, email them a sign-in link) but skips
 // checkout entirely. One trial doesn't block a real purchase afterwards —
-// upgrading just means picking a paid band from the billing page, which
+// upgrading just means choosing a number of locations on the billing page, which
 // goes through the normal Stripe Checkout flow and overwrites seat_band.
 //
 // One trial per email domain (lib/tapcardBiz.ts's domainOf/trial_used) —
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
   const domain = domainOf(email);
   if (await domainHasUsedTrial(domain)) {
     return NextResponse.json(
-      { error: "A free trial has already been used for this company — sign in instead, or pick a paid band." },
+      { error: "A free trial has already been used for this company — sign in instead, or choose a paid plan." },
       { status: 409 }
     );
   }

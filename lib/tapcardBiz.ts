@@ -38,6 +38,8 @@ export interface BizOrg {
   trial_used: boolean;
   seat_band: string;
   seat_limit: number;
+  /// Paid locations (the Stripe subscription quantity) for a per-location plan; 0 for a trial or an older seat-band plan.
+  locations: number;
   billing_status: "incomplete" | "active" | "past_due" | "canceled";
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
@@ -85,6 +87,7 @@ export function ensureSchema(): Promise<unknown> {
     `
       .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS trial_used BOOLEAN NOT NULL DEFAULT false`)
       .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS trial_reminded_at TIMESTAMPTZ`)
+      .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS locations INTEGER NOT NULL DEFAULT 0`)
       .then(() => sql`
         CREATE TABLE IF NOT EXISTS tapcard_biz_admins (
           id TEXT PRIMARY KEY,
@@ -251,7 +254,7 @@ export async function updateOrgTemplate(id: string, input: OrgTemplateInput): Pr
 
 export async function setOrgBilling(
   id: string,
-  fields: Partial<Pick<BizOrg, "billing_status" | "seat_band" | "seat_limit" | "stripe_customer_id" | "stripe_subscription_id" | "current_period_end">>
+  fields: Partial<Pick<BizOrg, "billing_status" | "seat_band" | "seat_limit" | "locations" | "stripe_customer_id" | "stripe_subscription_id" | "current_period_end">>
 ): Promise<void> {
   await ensureSchema();
   const current = await getOrg(id);
@@ -261,6 +264,7 @@ export async function setOrgBilling(
     SET billing_status = ${fields.billing_status ?? current.billing_status},
         seat_band = ${fields.seat_band ?? current.seat_band},
         seat_limit = ${fields.seat_limit ?? current.seat_limit},
+        locations = ${fields.locations ?? current.locations ?? 0},
         stripe_customer_id = ${fields.stripe_customer_id ?? current.stripe_customer_id},
         stripe_subscription_id = ${fields.stripe_subscription_id ?? current.stripe_subscription_id},
         current_period_end = ${fields.current_period_end ?? current.current_period_end},

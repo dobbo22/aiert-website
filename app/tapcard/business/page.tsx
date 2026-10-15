@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import SignupForm from "./SignupForm";
+import { LOCATION_TIERS, MAX_LOCATIONS, STAFF_PER_LOCATION, tierLabel } from "@/lib/tapcardBizPricing";
 
 const TITLE = "TapCard for Business";
 const DESCRIPTION =
@@ -23,6 +24,10 @@ const FEATURES = [
   {
     title: "One subscription, no App Store paywall",
     body: "Employees share their card from day one — the personal lifetime-unlock paywall doesn't apply to company-provisioned cards.",
+  },
+  {
+    title: "Priced per location",
+    body: "£42 a year per location for 2 to 4 locations, £34 each for 5 to 19, £27 each from 20. Every location includes up to 10 staff cards, and Promote is included. Start with a 30-day free trial.",
   },
   {
     title: "Offers and numbers for every location",
@@ -61,6 +66,28 @@ export default function TapCardBusinessPage() {
               <p className="mt-2 leading-relaxed text-cloud">{f.body}</p>
             </div>
           ))}
+        </section>
+
+        <section className="mt-12 rounded-2xl bg-charcoal p-8 ring-1 ring-white/10">
+          <p className="text-sm font-semibold uppercase tracking-wider text-teal">Pricing</p>
+          <h2 className="mt-2 text-2xl font-black text-cloud">Pay per location. The more you have, the less each one costs.</h2>
+          <ul className="mt-4 max-w-md space-y-2 text-cloud">
+            {LOCATION_TIERS.map((t) => (
+              <li key={t.from} className="flex justify-between border-b border-slate/50 py-2">
+                <span>{tierLabel(t)}</span>
+                <span className="font-semibold">£{t.perYear} each a year</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-4 text-lg leading-relaxed text-cloud">
+            Billed yearly. Every location includes its own card and up to {STAFF_PER_LOCATION} staff cards, and TapCard Promote (special offers and
+            news) is included on every location card, so you don&apos;t also need a Promote subscription. Start with a 30-day free trial (one card).
+            More than {MAX_LOCATIONS} locations? <a href="mailto:enquiries@aiert.co.uk?subject=TapCard%20for%20Business" className="text-gold underline">Get in touch</a>.
+          </p>
+          <p className="mt-3 leading-relaxed text-cloud">
+            Just one shop or one card? You don&apos;t need TapCard for Business. <a href="/promote" className="text-gold underline">TapCard Promote</a> in the
+            app is £49.99 a year or £9.99 a month, with the first 3 months free.
+          </p>
         </section>
 
         <section className="mt-12 rounded-2xl bg-charcoal p-8 ring-1 ring-gold/40">

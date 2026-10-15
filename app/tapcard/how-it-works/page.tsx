@@ -201,8 +201,8 @@ export default function HowItWorksPage() {
           TapCard is free to download and always free for the people you share with, who never pay or need the app. The
           first 1,000 people on iPhone, and the first 1,000 on Android, share their own card free for life (counted
           when they first share a card). After that, sharing needs a small one-off unlock (from £0.99). A business with one card can
-          instead subscribe to TapCard Promote, which includes sharing and starts with 3 months free. Several locations, or
-          more than one person? See <a href="/promote">pricing</a>.
+          instead subscribe to TapCard Promote, which includes sharing and starts with 3 months free. Two or more locations? TapCard for Business is
+          priced per location, from £42 a year each, with Promote included: see <a href="/business">TapCard for Business</a>.
         </p>
       </section>
 

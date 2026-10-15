@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { bandById, stripe } from "@/lib/tapcardBizBilling";
+import { locationPriceId, stripe } from "@/lib/tapcardBizBilling";
+import { MAX_LOCATIONS, MIN_LOCATIONS, cardAllowance } from "@/lib/tapcardBizPricing";
 import { createOrg, getOrg, setOrgBilling } from "@/lib/tapcardBiz";
 import { requireBizSession } from "@/lib/tapcardBizSession";
 
 interface Body {
   companyName?: string;
   email?: string;
-  bandId?: string;
+  /// How many locations to pay for (2 to 100). The Stripe price has volume tiers, so the total follows.
+  locations?: number;
 }
 
 // Creates the org row (billing_status stays 'incomplete' until the webhook
-// confirms payment) and a Stripe Checkout session for the chosen seat band.
+// confirms payment) and a Stripe Checkout session for the chosen number of locations.
 // The buyer becomes the org's first admin once checkout.session.completed
 // fires — see app/api/tapcard/biz/webhook/route.ts.
 //
@@ -22,10 +24,12 @@ export async function POST(req: NextRequest) {
   const parsed = (await req.json().catch(() => null)) as Body | null;
   if (!parsed || typeof parsed !== "object") return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   const body: Body = parsed;
-  const band = body.bandId ? bandById(body.bandId) : undefined;
-  if (!band || !band.priceId) {
-    return NextResponse.json({ error: "invalid or unavailable seat band" }, { status: 400 });
+  const locations = Math.floor(Number(body.locations));
+  if (!Number.isFinite(locations) || locations < MIN_LOCATIONS || locations > MAX_LOCATIONS) {
+    return NextResponse.json({ error: `choose between ${MIN_LOCATIONS} and ${MAX_LOCATIONS} locations (more than ${MAX_LOCATIONS}? email us)` }, { status: 400 });
   }
+  const priceId = locationPriceId();
+  if (!priceId) return NextResponse.json({ error: "Paid plans are not open yet. Please start the free trial or email enquiries@aiert.co.uk." }, { status: 503 });
 
   const session = await requireBizSession();
   const existingOrg = session ? await getOrg(session.orgId) : null;
@@ -45,14 +49,15 @@ export async function POST(req: NextRequest) {
     orgId = org.id;
   }
 
-  await setOrgBilling(orgId, { seat_band: band.id, seat_limit: band.maxSeats });
+  await setOrgBilling(orgId, { seat_band: "locations", locations, seat_limit: cardAllowance(locations) });
 
   const origin = req.nextUrl.origin.includes("localhost") ? req.nextUrl.origin : "https://tapcard.aiert.co.uk";
   const checkoutSession = await stripe().checkout.sessions.create({
     mode: "subscription",
     customer_email: email,
     client_reference_id: orgId,
-    line_items: [{ price: band.priceId, quantity: 1 }],
+    // The buyer can still change the number on the Stripe page; the webhook reads the final quantity.
+    line_items: [{ price: priceId, quantity: locations, adjustable_quantity: { enabled: true, minimum: MIN_LOCATIONS, maximum: MAX_LOCATIONS } }],
     success_url: `${origin}/business/welcome?org=${orgId}`,
     cancel_url: existingOrg ? `${origin}/business/admin/billing?canceled=1` : `${origin}/business?canceled=1`,
     metadata: { orgId, adminEmail: email },

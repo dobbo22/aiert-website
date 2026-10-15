@@ -19,7 +19,7 @@ export default async function BizAdminOverview() {
         <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
           <p className="text-sm text-mist">Active cards</p>
           <p className="mt-1 text-xl font-bold text-cloud">
-            {activeCards} / {org.seat_limit || "–"} seats
+            {activeCards} / {org.seat_limit || "–"} cards
           </p>
         </div>
       </div>

@@ -1,10 +1,8 @@
 import Stripe from "stripe";
 
-// Flat seat bands, like mailbroom-web's lib/billing-bands.ts — each band is
-// its own fixed Stripe Price, always purchased at quantity 1, never true
-// per-seat quantity metering. Price IDs are set up once in the Stripe
-// dashboard and wired in via env vars; a band with no price id configured
-// yet is simply not offered.
+// LEGACY: the old flat seat bands (by number of people). They are no longer offered to new buyers: TapCard for Business is now
+// priced per location (lib/tapcardBizPricing.ts, one volume-tiered Stripe price in TAPCARD_BIZ_PRICE_LOCATION). The bands stay here
+// so an organisation that already pays on one still shows its plan on the billing page.
 export interface SeatBand {
   id: string;
   label: string;
@@ -31,6 +29,11 @@ export const TRIAL_SEAT_LIMIT = 1;
 /// The free trial lasts this many days from sign-up; the admin gets a reminder a few days before it ends.
 export const TRIAL_DAYS = 30;
 export const TRIAL_REMINDER_DAYS = 3;
+
+/// The Stripe price (volume tiers, yearly, GBP) for the per-location plan. Not offered until it is set.
+export function locationPriceId(): string | undefined {
+  return process.env.TAPCARD_BIZ_PRICE_LOCATION || undefined;
+}
 
 export function bandById(id: string): SeatBand | undefined {
   return SEAT_BANDS.find((b) => b.id === id);

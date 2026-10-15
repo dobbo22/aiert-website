@@ -17,8 +17,8 @@ export default async function BizBillingPage() {
       <h2 className="text-lg font-bold text-cloud">Billing</h2>
       <dl className="mt-4 space-y-2 text-cloud">
         <Row label="Status" value={orgStatusLabel(org)} />
-        <Row label="Plan" value={org.seat_band === "trial" ? "Free trial" : band?.label ?? (org.seat_band || "–")} />
-        <Row label="Seats" value={String(org.seat_limit || "–")} />
+        <Row label="Plan" value={org.seat_band === "trial" ? "Free trial" : org.seat_band === "locations" ? `${org.locations} locations` : band?.label ?? (org.seat_band || "–")} />
+        <Row label="Cards allowed" value={String(org.seat_limit || "–")} />
         <Row
           label={org.seat_band === "trial" ? "Trial ends" : "Renews"}
           value={(org.seat_band === "trial" ? trialEndsAt(org) : org.current_period_end ? new Date(org.current_period_end) : null)?.toLocaleDateString("en-GB") ?? "–"}
@@ -31,8 +31,8 @@ export default async function BizBillingPage() {
         <div className="mt-6">
           <p className="text-cloud">
             {org.seat_band === "trial"
-              ? "You're on the 30-day free trial (1 seat). Choose a paid band before it ends to keep your cards covered and add your whole team:"
-              : "No payment method on file yet. Pick a band to get started:"}
+              ? "You're on the 30-day free trial (one card). Before it ends, choose how many locations to keep your cards covered and add your team:"
+              : "No payment method on file yet. Choose how many locations to get started:"}
           </p>
           <UpgradePicker />
         </div>

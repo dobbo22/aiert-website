@@ -24,7 +24,7 @@ export default async function BizEmployeesPage() {
         <div className="flex items-baseline justify-between px-4 pt-4">
           <h2 className="text-lg font-bold text-cloud">Active cards</h2>
           <span className="text-sm text-mist">
-            {cards.length} of {org.seat_limit || "–"} seats used
+            {cards.length} of {org.seat_limit || "–"} cards used
           </span>
         </div>
         <table className="mt-2 w-full text-left text-cloud">

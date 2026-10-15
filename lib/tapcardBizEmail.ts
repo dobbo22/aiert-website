@@ -48,8 +48,8 @@ export async function sendBizTrialReminderEmail(email: string, company: string, 
     <p>Your free TapCard for Business trial for <strong>${company.replace(/</g, "&lt;")}</strong> ends on <strong>${endsOn}</strong>.</p>
     <p>After that, invites stop and your company cards are no longer covered for Promote (special offers and news). To keep everything working, choose a plan:</p>
     <p><a href="${link}">${link}</a></p>
-    <p>Plans start at £20 a year for up to 10 people. If you're not going to carry on, there's nothing to do.</p>
+    <p>TapCard for Business is £42 a year per location for 2 to 4 locations (less each from 5 locations), with up to 10 staff cards per location and Promote included. If you're not going to carry on, there's nothing to do.</p>
   `;
   await send(email, `Your TapCard for Business trial ends on ${endsOn}`, html,
-    `Your free TapCard for Business trial for ${company} ends on ${endsOn}.\n\nAfter that, invites stop and your company cards are no longer covered for Promote. To keep everything working, choose a plan: ${link}\n\nPlans start at £20 a year for up to 10 people. If you're not going to carry on, there's nothing to do.`);
+    `Your free TapCard for Business trial for ${company} ends on ${endsOn}.\n\nAfter that, invites stop and your company cards are no longer covered for Promote. To keep everything working, choose a plan: ${link}\n\nTapCard for Business is £42 a year per location for 2 to 4 locations (less each from 5 locations), with up to 10 staff cards per location and Promote included. If you're not going to carry on, there's nothing to do.`);
 }

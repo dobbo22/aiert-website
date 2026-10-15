@@ -4,6 +4,15 @@ import { stripe } from "@/lib/tapcardBizBilling";
 import { addAdmin, getOrg, getOrgByStripeSubscriptionId, setOrgBilling } from "@/lib/tapcardBiz";
 import { createLoginToken } from "@/lib/tapcardBizAuth";
 import { sendBizLoginEmail } from "@/lib/tapcardBizEmail";
+import { cardAllowance } from "@/lib/tapcardBizPricing";
+
+/// The number of locations on a per-location subscription (its quantity), and the card allowance that goes with it.
+async function locationFields(subscriptionId: string | null | undefined): Promise<{ locations: number; seat_limit: number } | null> {
+  if (!subscriptionId) return null;
+  const sub = await stripe().subscriptions.retrieve(subscriptionId);
+  const qty = sub.items.data[0]?.quantity ?? 0;
+  return qty > 0 ? { locations: qty, seat_limit: cardAllowance(qty) } : null;
+}
 
 export async function POST(req: NextRequest) {
   const signature = req.headers.get("stripe-signature");
@@ -31,6 +40,7 @@ export async function POST(req: NextRequest) {
         billing_status: "active",
         stripe_customer_id: typeof session.customer === "string" ? session.customer : session.customer?.id ?? null,
         stripe_subscription_id: typeof session.subscription === "string" ? session.subscription : session.subscription?.id ?? null,
+        ...(org.seat_band === "locations" ? await locationFields(typeof session.subscription === "string" ? session.subscription : session.subscription?.id) : {}),
       });
       await addAdmin(orgId, email, "admin");
 
@@ -63,9 +73,12 @@ export async function POST(req: NextRequest) {
       if (!org) break;
       const status: "active" | "past_due" | "canceled" =
         sub.status === "active" || sub.status === "trialing" ? "active" : sub.status === "past_due" ? "past_due" : "canceled";
+      // Changing the number of locations (Stripe checkout or the billing portal) changes what the company may have.
+      const qty = sub.items.data[0]?.quantity ?? 0;
       await setOrgBilling(org.id, {
         billing_status: status,
         current_period_end: new Date(sub.items.data[0]?.current_period_end * 1000),
+        ...(org.seat_band === "locations" && qty > 0 && status === "active" ? { locations: qty, seat_limit: cardAllowance(qty) } : {}),
       });
       break;
     }

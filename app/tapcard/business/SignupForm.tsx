@@ -1,14 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SEAT_BANDS } from "@/lib/tapcardBizBilling";
+import LocationPricing from "./LocationPricing";
+import { MAX_LOCATIONS, MIN_LOCATIONS } from "@/lib/tapcardBizPricing";
 
-const TRIAL_ID = "trial";
+const TRIAL_ID = "trial" as const;
 
 export default function SignupForm() {
   const [companyName, setCompanyName] = useState("");
   const [email, setEmail] = useState("");
-  const [bandId, setBandId] = useState(TRIAL_ID);
+  const [plan, setPlan] = useState<"trial" | "locations">(TRIAL_ID);
+  const [locations, setLocations] = useState(MIN_LOCATIONS);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [trialSent, setTrialSent] = useState(false);
@@ -40,7 +42,7 @@ export default function SignupForm() {
   }
 
   async function submit(signal: AbortSignal) {
-    if (bandId === TRIAL_ID) {
+    if (plan === TRIAL_ID) {
       const res = await fetch("/api/tapcard/biz/trial", {
         signal,
         method: "POST",
@@ -61,7 +63,7 @@ export default function SignupForm() {
       signal,
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ companyName, email, bandId }),
+      body: JSON.stringify({ companyName, email, locations }),
     });
     const data = await res.json();
     if (!res.ok || !data.url) {
@@ -77,8 +79,8 @@ export default function SignupForm() {
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">Check your email</h2>
         <p className="mt-2 text-cloud">
-          We&apos;ve sent a sign-in link to {email} — no card needed, your free trial seat is ready. Upgrade to a paid
-          band whenever you&apos;re ready to add your team.
+          We&apos;ve sent a sign-in link to {email}. No card is needed and your 30-day free trial (one card) is ready. When
+          you&apos;re ready for more locations and your team, choose how many locations on the Billing page.
         </p>
       </div>
     );
@@ -106,30 +108,29 @@ export default function SignupForm() {
         />
       </label>
       <fieldset className="mt-4">
-        <legend className="text-sm text-mist">How many people?</legend>
+        <legend className="text-sm text-mist">Which plan?</legend>
         <div className="mt-2 space-y-2">
           <label className="flex items-center justify-between gap-2 text-cloud">
             <span className="flex items-center gap-2">
-              <input type="radio" name="band" checked={bandId === TRIAL_ID} onChange={() => setBandId(TRIAL_ID)} />
-              Just me — free trial
+              <input type="radio" name="plan" checked={plan === TRIAL_ID} onChange={() => setPlan(TRIAL_ID)} />
+              Try it free for 30 days (one card)
             </span>
             <span className="text-teal">Free</span>
           </label>
-          {SEAT_BANDS.map((band) => (
-            <label key={band.id} className="flex items-center justify-between gap-2 text-cloud">
-              <span className="flex items-center gap-2">
-                <input type="radio" name="band" checked={bandId === band.id} onChange={() => setBandId(band.id)} />
-                {band.label}
-              </span>
-              <span className="text-mist">£{band.annualGBP}/year</span>
-            </label>
-          ))}
+          <label className="flex items-center justify-between gap-2 text-cloud">
+            <span className="flex items-center gap-2">
+              <input type="radio" name="plan" checked={plan === "locations"} onChange={() => setPlan("locations")} />
+              Two or more locations
+            </span>
+            <span className="text-mist">from £42 a year each</span>
+          </label>
         </div>
+        {plan === "locations" ? <LocationPricing value={locations} onChange={setLocations} /> : null}
       </fieldset>
       <p className="mt-4 text-sm text-cloud">
-        More than 100 people?{" "}
+        More than {MAX_LOCATIONS} locations?{" "}
         <a
-          href={`mailto:enquiries@aiert.co.uk?subject=${encodeURIComponent("TapCard for Business — 100+ seats")}&body=${encodeURIComponent("Company name:\nApprox. number of people:\n")}`}
+          href={`mailto:enquiries@aiert.co.uk?subject=${encodeURIComponent("TapCard for Business — more than 100 locations")}&body=${encodeURIComponent("Company name:\nApprox. number of locations:\n")}`}
           className="text-gold underline"
         >
           Enquire
@@ -137,7 +138,7 @@ export default function SignupForm() {
         about a larger plan.
       </p>
       <button type="submit" disabled={submitting} className="btn-gold mt-6 w-full rounded-xl px-4 py-3 font-semibold">
-        {submitting ? "Please wait…" : bandId === TRIAL_ID ? "Start free trial" : "Continue to payment"}
+        {submitting ? "Please wait…" : plan === TRIAL_ID ? "Start free trial" : "Continue to payment"}
       </button>
       {error && <p className="mt-3 text-gold">{error}</p>}
     </form>

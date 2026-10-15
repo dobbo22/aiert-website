@@ -38,7 +38,7 @@ export default function TapCardBusinessGuidePage() {
         <ul>
           <li>
             Start at <a href="/business">tapcard.aiert.co.uk/business</a>. Enter your company name and work email,
-            then choose the free trial (one seat, so you can try it on yourself) or a plan for your team.
+            then choose the free 30-day trial (one card, so you can try it on yourself) or two or more locations, from £42 a year each.
           </li>
           <li>
             There are no passwords. To sign in, enter your email on the admin page and we&apos;ll email you a sign-in
@@ -127,7 +127,7 @@ Sam Patel,sam@yourcompany.com,Account Manager`}</pre>
           <strong>The links aren&apos;t saved anywhere,</strong> so send or download them before leaving the page. Each
           link works once and expires after 30 days. If someone loses theirs, create a new link for just that person,
           but check the <strong>Active cards</strong> list first: if they&apos;ve already set up their card, they
-          don&apos;t need another one, and a second card would use another seat.
+          don&apos;t need another one, and a second card would use up another of your cards.
         </p>
       </section>
 
@@ -151,12 +151,12 @@ Sam Patel,sam@yourcompany.com,Account Manager`}</pre>
         <h2>5. Manage your team</h2>
         <ul>
           <li>
-            The <strong>Employees</strong> tab lists everyone who has set up their card, and how many of your seats are
+            The <strong>Employees</strong> tab lists everyone who has set up their card, and how many of your cards are
             used. The <strong>Overview</strong> tab shows the same count.
           </li>
           <li>
             <strong>When someone leaves,</strong> press <strong>Remove</strong> next to their card. It&apos;s deleted
-            straight away, its link and QR code stop working (including copies they forwarded on), and the seat frees up.
+            straight away, its link and QR code stop working (including copies they forwarded on), and that place in your plan frees up.
           </li>
           <li>
             <strong>To rebrand,</strong> change the template. Cards pick up the change automatically.
@@ -206,21 +206,22 @@ Sam Patel,sam@yourcompany.com,Account Manager`}</pre>
       </section>
 
       <section>
-        <h2>6. Billing and seats</h2>
+        <h2>6. Billing and cards</h2>
         <ul>
           <li>
-            The <strong>Billing</strong> tab shows your plan, number of seats and renewal date.
+            The <strong>Billing</strong> tab shows your plan (the number of locations), how many cards you are allowed, and the renewal date.
           </li>
           <li>
-            On the free trial, pick a plan there to add your team. Payment is handled securely by Stripe.
+            On the free trial, choose how many locations there to add your shops and your team. Payment is handled securely by Stripe.
           </li>
           <li>
-            Once you&apos;re on a paid plan, <strong>Manage billing</strong> lets you change plan, update your payment
+            Once you&apos;re on a paid plan, <strong>Manage billing</strong> lets you change the number of locations, update your payment
             details, see invoices or cancel.
           </li>
           <li>
-            A new card can only be set up while you have a free seat. If you&apos;re full, remove a card or move to a
-            bigger plan.
+            Pricing is per location, billed yearly: £42 a year each for 2 to 4 locations, £34 each for 5 to 19, £27 each from 20. Each
+            location includes its own card and up to 10 staff cards, and Promote (offers and news) on every location. A new card can only be
+            set up while there is room: if you&apos;re full, remove a card or add a location.
           </li>
           <li>
             If a payment lapses, existing cards keep working, but new invites can&apos;t be created or used until billing
@@ -257,7 +258,7 @@ Sam Patel,sam@yourcompany.com,Account Manager`}</pre>
           </li>
           <li>
             <strong>&quot;Your company has used all its TapCard seats&quot;:</strong> remove a card you no longer need,
-            or upgrade on the Billing tab.
+            or add a location on the Billing tab.
           </li>
           <li>
             <strong>The file shows 0 people:</strong> make sure it&apos;s a CSV with the columns name, email, title, or a

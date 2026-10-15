@@ -147,15 +147,16 @@ export default function PromotePage() {
               <p className="text-sm font-semibold uppercase tracking-wider text-teal">Several locations, or more than one person</p>
               <h3 className="mt-1 text-xl font-bold text-cloud">TapCard for Business</h3>
               <p className="mt-2 leading-relaxed text-cloud">
-                A company plan instead of a Promote subscription: every branch gets its own card, Promote is included on all of them, and
-                head office sees one set of numbers. It is priced by the <strong>number of people</strong> (not per phone), billed yearly,
-                with a <strong>30-day free trial</strong>. <a href="/business" className="text-gold underline">See the plans</a>.
+                A company plan instead of a Promote subscription, priced <strong>per location</strong> and billed yearly:{" "}
+                <strong>£42 a year each</strong> for 2 to 4 locations, <strong>£34 each</strong> for 5 to 19, <strong>£27 each</strong> from 20.
+                Every location gets its own card and up to 10 staff cards, and <strong>Promote is included on all of them</strong>. Head office sees
+                one set of numbers. Try it free for 30 days. <a href="/business" className="text-gold underline">See TapCard for Business</a>.
               </p>
             </div>
           </div>
           <p className="mt-4 text-sm leading-relaxed text-cloud">
-            Not sure which? If you only have one shop or one card, choose Promote. If you have more than one location, or staff who post
-            offers, choose TapCard for Business.
+            Not sure which? One shop or one card? Choose Promote. Two or more locations? TapCard for Business works out cheaper per location
+            than separate Promote subscriptions, and includes your staff cards.
           </p>
         </section>
 

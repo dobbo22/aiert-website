@@ -1,37 +1,37 @@
 "use client";
 
 import { useState } from "react";
-import { SEAT_BANDS } from "@/lib/tapcardBizBilling";
+import LocationPricing from "../../LocationPricing";
+import { MIN_LOCATIONS } from "@/lib/tapcardBizPricing";
 
 export default function UpgradePicker() {
-  const [loadingBand, setLoadingBand] = useState<string | null>(null);
+  const [locations, setLocations] = useState(MIN_LOCATIONS);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  async function upgrade(bandId: string) {
-    setLoadingBand(bandId);
+  async function upgrade() {
+    setBusy(true);
+    setError(null);
     const res = await fetch("/api/tapcard/biz/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bandId }),
+      body: JSON.stringify({ locations }),
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
     if (data.url) window.location.href = data.url;
-    else setLoadingBand(null);
+    else {
+      setError(data.error ?? "Something went wrong. Please try again.");
+      setBusy(false);
+    }
   }
 
   return (
-    <div className="mt-3 space-y-2">
-      {SEAT_BANDS.map((band) => (
-        <button
-          key={band.id}
-          type="button"
-          onClick={() => upgrade(band.id)}
-          disabled={loadingBand !== null}
-          className="flex w-full items-center justify-between rounded-xl bg-slate/40 px-4 py-3 text-cloud ring-1 ring-slate hover:ring-gold"
-        >
-          <span>{band.label}</span>
-          <span className="text-mist">{loadingBand === band.id ? "Opening…" : `£${band.annualGBP}/year`}</span>
-        </button>
-      ))}
+    <div className="mt-3">
+      <LocationPricing value={locations} onChange={setLocations} />
+      <button type="button" onClick={upgrade} disabled={busy} className="btn-gold mt-4 w-full rounded-xl px-4 py-3 font-semibold">
+        {busy ? "Opening…" : "Continue to payment"}
+      </button>
+      {error ? <p className="mt-3 text-gold">{error}</p> : null}
     </div>
   );
 }
