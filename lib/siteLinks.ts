@@ -154,7 +154,7 @@ export function textPlaces(html: string): HoursPlace[] {
     const postcode = postcodeOf(line);
     if (!postcode || seen.has(postcode)) return;
     const block: string[] = [];
-    // The postcode line may also carry the town ("Great Dunmow CM6 1AG"); the lines above it are the street and name.
+    // The postcode line may also carry the town ("Anytown AB1 2CD"); the lines above it are the street and name.
     for (let k = i - 1; k >= Math.max(0, i - 4); k--) {
       const l = lines[k];
       if (l.length > 70 || PHONE_RE.test(l) || /@|^(contact|find us|visit|address|opening)/i.test(l) || (DAY_WORDS.test(l) && TIME.test(l))) break;
