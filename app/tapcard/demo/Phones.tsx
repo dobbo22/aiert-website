@@ -251,42 +251,53 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
     void QRCode.toDataURL(`https://tapcard.aiert.co.uk/o/${code}`, { margin: 1, width: 200, color: { dark: "#111318", light: "#ffffff" } }).then(setCodeQr);
   }, [code]);
 
-  // A story is a list of scenes. A scene with text holds long enough to read it (about 3 seconds plus 55 ms a letter);
-  // Pause holds the current scene, Next moves on at once. A scene without text is a quick animation step (typing).
+  // A story is a list of scenes. By default it is a click-through: each scene with text settles for a moment, then Next lights
+  // up (green) and waits to be pressed. With Auto-play on, the scene instead moves on by itself after enough time to read it
+  // (about 3 seconds plus 55 ms a letter). A scene without text is a quick animation step (typing).
   const runRef = useRef(0);
-  const pausedRef = useRef(false);
+  const autoRef = useRef(false);
   const skipRef = useRef(false);
-  const [paused, setPausedState] = useState(false);
+  const [auto, setAutoState] = useState(false);
+  const [ready, setReady] = useState(false);
   const [scene, setScene] = useState<{ i: number; n: number } | null>(null);
-  type Scene = { run: () => void; step?: number; text?: string; hold?: number };
-  const setPaused = (v: boolean) => { pausedRef.current = v; setPausedState(v); };
+  type Scene = { run: () => void; step?: number; text?: string; hold?: number; settle?: number };
+  const setAuto = (v: boolean) => { autoRef.current = v; setAutoState(v); };
   useEffect(() => () => { runRef.current += 1; }, []);
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
   async function runScenes(scenes: Scene[], then?: () => void) {
     const id = ++runRef.current;
-    setPaused(false);
     setRunning(true);
+    setReady(false);
     const textScenes = scenes.filter((x) => x.text).length;
     let shown = 0;
     for (const sc of scenes) {
       if (runRef.current !== id) return;
       sc.run();
-      if (sc.text) { shown += 1; setCaption({ step: sc.step ?? 0, text: sc.text }); setScene({ i: shown, n: textScenes }); }
-      let left = sc.hold ?? (sc.text ? Math.max(4500, 3000 + sc.text.length * 55) : 80);
+      if (!sc.text) { await sleep(sc.hold ?? 80); continue; }
+      shown += 1;
+      setCaption({ step: sc.step ?? 0, text: sc.text });
+      setScene({ i: shown, n: textScenes });
+      setReady(false);
       skipRef.current = false;
-      while (left > 0) {
-        await new Promise((r) => setTimeout(r, 50));
+      // The screen settles (an animation finishes, a person has a moment to look), then it is ready for Next.
+      const settle = sc.settle ?? 1100;
+      for (let t = 0; t < settle; t += 50) { await sleep(50); if (runRef.current !== id) return; if (skipRef.current) break; }
+      setReady(true);
+      let left = Math.max(1500, (sc.hold ?? Math.max(4500, 3000 + sc.text.length * 55)) - settle);
+      while (!skipRef.current) {
+        await sleep(50);
         if (runRef.current !== id) return;
-        if (skipRef.current) break;
-        if (!pausedRef.current) left -= 50;
+        if (autoRef.current) { left -= 50; if (left <= 0) break; }
       }
+      setReady(false);
     }
-    if (runRef.current === id) { setRunning(false); setScene(null); then?.(); }
+    if (runRef.current === id) { setRunning(false); setScene(null); setReady(false); then?.(); }
   }
 
   const share = () => runScenes([
     { run: () => { setBView("idle"); setAView("qr"); }, step: 1, text: "Your card has its own QR code. Customers scan it from your phone, or from a printed TapCard sign in your shop window or on your reception desk. They need TapCard (free) on their phone, and it arrives instantly." },
-    { run: () => setBView("scanning"), step: 1, text: `Alex Morgan, a ${kind ? kind.toLowerCase() : "business"} customer with TapCard installed, scans your QR code…` },
+    { run: () => setBView("scanning"), settle: 2300, step: 1, text: `Alex Morgan, a ${kind ? kind.toLowerCase() : "business"} customer with TapCard installed, scans your QR code…` },
     { run: () => setBView("received"), step: 1, text: "It's instant. Alex sees your card at once, with your links ready to tap, and chooses Save & send my card." },
     { run: () => setBView("saved"), step: 1, text: "Alex's own card is sent back to you, so you each have the other's details." },
     { run: () => setBView("follow"), step: 1, text: "Alex is asked once: do you want offers and news from this business? You can't send anyone offers unless they say yes." },
@@ -301,7 +312,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
       ...typing,
       { run: () => setPin("4321"), hold: 900 },
       { run: () => setAView("offerLive"), step: 2, text: "One tap posts it. Everyone who follows you is notified. Only people who said yes." },
-      { run: () => setBView("push"), step: 2, text: "Alex's phone buzzes with your offer, even with TapCard closed." },
+      { run: () => setBView("push"), settle: 1500, step: 2, text: "Alex's phone buzzes with your offer, even with TapCard closed." },
       { run: () => setBView("offer"), step: 2, text: "Alex opens it and can claim a one-off code. Next: see it being used." },
     ], () => setReached((r) => Math.max(r, 3)));
   };
@@ -515,50 +526,57 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
     onBlur: () => setHint(null),
   });
   const shownText = hint ?? caption ?? (built
-    ? { step: 0, text: "Your card is built. Press 1 to see how people get it. Tap anything on the phones to try the links." }
+    ? { step: 0, text: "Your card is built. Press 1 to see how people get it, then press Next when it turns green. Tap anything on the phones to try the links." }
     : null);
 
   return (
     <div>
       <div className="mx-auto mb-6 max-w-2xl rounded-2xl bg-charcoal px-5 py-4 text-left shadow-lg ring-2 ring-gold/60" aria-live="polite">
-        <div className="flex min-h-[6.5rem] items-start gap-4">
+        {/* Fixed height so the buttons below never move, whatever the text length. */}
+        <div className="flex h-[8.5rem] items-start gap-4 overflow-hidden">
           {shownText ? (
             <>
               <span className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-gold text-xl font-black text-[#111318]">{shownText.step || "✓"}</span>
               <p className="text-xl font-semibold leading-snug text-white">{shownText.text}</p>
             </>
           ) : (
-            <p className="text-xl font-semibold leading-snug text-white">Fill in the form and we&apos;ll build your card from your website. Then buttons show what happens when a customer scans it and when you send an offer.</p>
+            <p className="text-xl font-semibold leading-snug text-white">Fill in the form and we&apos;ll build your card from your website. Then buttons here show what happens when a customer scans it and when you send an offer.</p>
           )}
         </div>
-        {!running && built ? (
-          <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-white/15 pt-3">
-            {revealed >= 1 ? <button onClick={share} {...bind(1)} className="btn-gold rounded-xl px-4 py-2 text-sm font-semibold">1. Share my card</button> : null}
-            {revealed >= 2 ? <button onClick={sendOffer} {...bind(2)} className="btn-gold rounded-xl px-4 py-2 text-sm font-semibold">2. Send an offer</button> : null}
-            {revealed >= 3 ? <button onClick={useOffer} {...bind(3)} className="btn-gold rounded-xl px-4 py-2 text-sm font-semibold">3. Use the offer</button> : null}
-            <button onClick={() => window.location.reload()} {...bind(0)} className="ml-auto rounded-xl px-3 py-2 text-sm font-semibold text-gold underline">Set up again</button>
+        {/* One row, always the same buttons in the same places. */}
+        <div className={`mt-3 flex flex-wrap items-center gap-2 border-t border-white/15 pt-3 ${built ? "" : "invisible"}`}>
+          <button onClick={share} disabled={running || revealed < 1} {...bind(1)} className="btn-gold rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-40">1. Share my card</button>
+          <button onClick={sendOffer} disabled={running || revealed < 2} {...bind(2)} className="btn-gold rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-40">2. Send an offer</button>
+          <button onClick={useOffer} disabled={running || revealed < 3} {...bind(3)} className="btn-gold rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-40">3. Use the offer</button>
+          <button
+            type="button"
+            onClick={() => { skipRef.current = true; }}
+            disabled={!running || !ready}
+            className={`ml-auto rounded-xl px-5 py-2 text-sm font-bold transition ${running && ready ? "animate-pulse bg-green-500 text-white ring-2 ring-green-300" : "bg-white/10 text-white/50"}`}
+          >
+            Next ›
+          </button>
+        </div>
+        <div className={`mt-2 flex flex-wrap items-center gap-4 text-sm text-white/90 ${built ? "" : "invisible"}`}>
+          <label className="flex cursor-pointer items-center gap-2">
+            <input type="checkbox" className="h-4 w-4" checked={auto} onChange={(e) => setAuto(e.target.checked)} />
+            Auto-play
+          </label>
+          <span className="min-w-[8rem]">{running && scene ? `Scene ${scene.i} of ${scene.n}` : ""}</span>
+          <button onClick={() => window.location.reload()} {...bind(0)} className="ml-auto rounded-xl px-2 py-1 font-semibold text-gold underline">Set up again</button>
+        </div>
+        {/* Reserved space, so nothing shifts when it fills in. */}
+        <div className={`mt-3 min-h-[5.5rem] border-t border-white/15 pt-3 ${built ? "" : "invisible"}`}>
+          <div className="flex items-center gap-2">
+            <label htmlFor="offer-text" className="text-sm font-semibold text-white">Offer:</label>
+            <input id="offer-text" value={offer} maxLength={60} disabled={running || revealed < 2} onChange={(e) => setOffer(e.target.value)} className="min-w-0 flex-1 rounded-xl bg-white px-3 py-2 text-sm text-[#111318] disabled:opacity-50" />
           </div>
-        ) : null}
-        {!running && revealed >= 2 && built ? (
-          <div className="mt-3 border-t border-white/15 pt-3">
-            <div className="flex items-center gap-2">
-              <label htmlFor="offer-text" className="text-sm font-semibold text-white">Offer:</label>
-              <input id="offer-text" value={offer} maxLength={60} onChange={(e) => setOffer(e.target.value)} className="min-w-0 flex-1 rounded-xl bg-white px-3 py-2 text-sm text-[#111318]" />
-            </div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {suggestions.map((o) => (
-                <button key={o} type="button" onClick={() => setOffer(o)} className={`rounded-full px-3 py-1 text-xs font-semibold ${o === offer ? "bg-gold text-[#111318]" : "bg-white/10 text-white"}`}>{o}</button>
-              ))}
-            </div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {suggestions.map((o) => (
+              <button key={o} type="button" disabled={running || revealed < 2} onClick={() => setOffer(o)} className={`rounded-full px-3 py-1 text-xs font-semibold disabled:opacity-50 ${o === offer ? "bg-gold text-[#111318]" : "bg-white/10 text-white"}`}>{o}</button>
+            ))}
           </div>
-        ) : null}
-        {running ? (
-          <div className="mt-3 flex items-center gap-3 border-t border-white/15 pt-3">
-            <button type="button" onClick={() => setPaused(!paused)} className="rounded-xl bg-white px-4 py-2 text-sm font-bold text-[#111318]">{paused ? "▶ Resume" : "⏸ Pause"}</button>
-            <button type="button" onClick={() => { skipRef.current = true; setPaused(false); }} className="rounded-xl bg-white/15 px-4 py-2 text-sm font-bold text-white">Next ›</button>
-            {scene ? <span className="ml-auto text-sm text-white/80">Scene {scene.i} of {scene.n}{paused ? " · paused" : ""}</span> : null}
-          </div>
-        ) : null}
+        </div>
       </div>
       <div className="flex flex-wrap justify-center gap-6">
         <Phone label="Your business" tab={built && ["card", "saved", "offerLive"].includes(aView) ? "cards" : undefined} overlay={browseA ? <InPhoneBrowser row={browseA} name={name} website={website} onClose={() => setBrowseA(null)} /> : null}>{showPhoneA()}</Phone>
