@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCard } from "@/lib/tapcardDb";
 import { canEdit, readEditToken } from "@/lib/tapcardAuth";
+import { cardMayPost } from "@/lib/tapcardBiz";
 import { clearAnnouncement, publicAnnouncement, setAnnouncement } from "@/lib/tapcardOffers";
 import { isBusinessLabel } from "@/lib/tapcardLinks";
 import { promoteAllowed } from "@/lib/tapcardPromote";
@@ -17,6 +18,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const card = await getCard(id);
   if (!card) return NextResponse.json({ error: "not found" }, { status: 404 });
   if (!(await canEdit(card, readEditToken(req)))) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  if (!(await cardMayPost(id))) return NextResponse.json({ error: "Offers and news for this company are posted by its admin.", code: "admin_only" }, { status: 403 });
   if (!isBusinessLabel(card.label)) return NextResponse.json({ error: "announcements are for business cards" }, { status: 400 });
   if (!(await promoteAllowed(id))) return NextResponse.json({ error: "Posting news needs TapCard Promote on this card. One subscription covers one card; email enquiries@aiert.co.uk to add more locations." }, { status: 402 });
   const body = (await req.json().catch(() => null)) as { text?: unknown } | null;
@@ -30,6 +32,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const card = await getCard(id);
   if (!card) return NextResponse.json({ error: "not found" }, { status: 404 });
   if (!(await canEdit(card, readEditToken(req)))) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  if (!(await cardMayPost(id))) return NextResponse.json({ error: "Offers and news for this company are posted by its admin.", code: "admin_only" }, { status: 403 });
   await clearAnnouncement(id);
   return NextResponse.json({ ok: true });
 }

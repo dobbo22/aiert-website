@@ -1,6 +1,7 @@
 import { requireBizSession } from "@/lib/tapcardBizSession";
 import { getOrg, isOrgActive, listOrgCards } from "@/lib/tapcardBiz";
 import InvitePeople from "./InvitePeople";
+import PostToggle from "./PostToggle";
 import RemoveCardButton from "./RemoveCardButton";
 
 // TapCard keeps no staff list (see lib/tapcardBizInvite.ts) — this page
@@ -30,13 +31,14 @@ export default async function BizEmployeesPage() {
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Title</th>
+              <th className="px-4 py-3">Can post offers</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody>
             {cards.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-mist">
+                <td colSpan={5} className="px-4 py-6 text-mist">
                   No one has activated their card yet.
                 </td>
               </tr>
@@ -46,6 +48,7 @@ export default async function BizEmployeesPage() {
                 <td className="px-4 py-3">{c.name}</td>
                 <td className="px-4 py-3">{c.email}</td>
                 <td className="px-4 py-3">{c.title}</td>
+                <td className="px-4 py-3"><PostToggle cardId={c.id} initial={c.can_post} /></td>
                 <td className="px-4 py-3 text-right">
                   <RemoveCardButton cardId={c.id} name={c.name} />
                 </td>

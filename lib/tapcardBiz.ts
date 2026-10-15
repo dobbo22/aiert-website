@@ -123,6 +123,7 @@ export function ensureSchema(): Promise<unknown> {
       // decoupled (consistent with how tapcard_cards already relates
       // loosely to other tables, e.g. tapcard_exchanges).
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS org_id TEXT`)
+      .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS org_can_post BOOLEAN NOT NULL DEFAULT false`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS org_employee_id TEXT`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS org_locked_fields TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`)
       .catch((err) => {
@@ -357,12 +358,14 @@ export interface OrgCard {
   title: string;
   email: string;
   created_at: Date | string;
+  /// The admin has ticked this card to post offers and news from its owner's phone.
+  can_post: boolean;
 }
 
 export async function listOrgCards(orgId: string): Promise<OrgCard[]> {
   await ensureSchema();
   return (await sql`
-    SELECT id, name, title, email, created_at FROM tapcard_cards WHERE org_id = ${orgId} ORDER BY created_at DESC
+    SELECT id, name, title, email, created_at, org_can_post AS can_post FROM tapcard_cards WHERE org_id = ${orgId} ORDER BY created_at DESC
   `) as OrgCard[];
 }
 
@@ -485,5 +488,21 @@ export async function markCardRemovedByCompany(cardId: string, orgId: string): P
 export async function wasRemovedByCompany(cardId: string): Promise<boolean> {
   await ensureRemovedSchema();
   const rows = (await sql`SELECT 1 FROM tapcard_removed_cards WHERE card_id = ${cardId} LIMIT 1`) as unknown[];
+  return rows.length > 0;
+}
+
+/// Company cards can only post offers and news from the owner's phone when the admin has ticked them; everyone can still
+/// confirm a customer's code (that is the web page /o/<code> and needs only the offer's staff PIN). Personal and
+/// single-business cards (no company) always can. The admin can always post from the web admin.
+export async function cardMayPost(cardId: string): Promise<boolean> {
+  await ensureSchema();
+  const rows = (await sql`SELECT org_id, org_can_post FROM tapcard_cards WHERE id = ${cardId}`) as { org_id: string | null; org_can_post: boolean }[];
+  if (!rows[0]) return false;
+  return !rows[0].org_id || rows[0].org_can_post === true;
+}
+
+export async function setCardCanPost(orgId: string, cardId: string, canPost: boolean): Promise<boolean> {
+  await ensureSchema();
+  const rows = await sql`UPDATE tapcard_cards SET org_can_post = ${canPost} WHERE id = ${cardId} AND org_id = ${orgId} RETURNING id`;
   return rows.length > 0;
 }

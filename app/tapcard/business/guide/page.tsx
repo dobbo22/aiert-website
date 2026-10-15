@@ -165,6 +165,34 @@ Sam Patel,sam@yourcompany.com,Account Manager`}</pre>
       </section>
 
       <section>
+        <h2>Offers and news: who posts, and who confirms a code</h2>
+        <ul>
+          <li>
+            <strong>Who can post.</strong> On the <strong>Employees</strong> tab, tick <strong>Can post offers</strong>{" "}
+            next to the people you want to post special offers and news from their own phone, for example each
+            restaurant&apos;s manager. Everyone else can&apos;t post, whatever they try. New cards start unticked. You
+            can also post for any location yourself from the <strong>Offers &amp; numbers</strong> tab, without anyone
+            needing their phone.
+          </li>
+          <li>
+            <strong>Setting an offer.</strong> Write it, choose when it ends and how many people can claim it, and set a{" "}
+            <strong>staff PIN</strong> of 4 to 6 digits. Tell your staff the PIN: it is what lets them confirm a code.
+          </li>
+          <li>
+            <strong>Confirming a customer&apos;s code (any member of staff, no app or login).</strong> The customer
+            shows their one-off QR code. Scan it with any phone camera: a page opens in the browser showing the offer.
+            Type the staff PIN and tap <strong>Mark as used</strong>. On a till or computer with no camera, go to{" "}
+            <strong>tapcard.aiert.co.uk/redeem</strong>, type the code shown under the QR code, then the PIN. Each code
+            works once, and a second try shows when it was used.
+          </li>
+          <li>
+            Customers only get offers if they have the TapCard app and follow the location. You see how many followed,
+            claimed and used each offer on the <strong>Offers &amp; numbers</strong> tab.
+          </li>
+        </ul>
+      </section>
+
+      <section>
         <h2>6. Billing and seats</h2>
         <ul>
           <li>

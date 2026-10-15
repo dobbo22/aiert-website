@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCard } from "@/lib/tapcardDb";
+import { cardMayPost } from "@/lib/tapcardBiz";
 import { canEdit, readEditToken } from "@/lib/tapcardAuth";
 import { PromoteLimitError, promoteStatus, saveVerified, verifyAndroid, verifyIos } from "@/lib/tapcardPromote";
 
@@ -10,7 +11,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const card = await getCard(id);
   if (!card) return NextResponse.json({ error: "not found" }, { status: 404 });
   if (!(await canEdit(card, readEditToken(req)))) return NextResponse.json({ error: "forbidden" }, { status: 403 });
-  return NextResponse.json(await promoteStatus(id));
+  return NextResponse.json({ ...(await promoteStatus(id)), canPost: await cardMayPost(id) });
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
