@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
+import { pushToFollowers } from "@/lib/tapcardPush";
 import { getCard } from "@/lib/tapcardDb";
 import { canEdit, readEditToken } from "@/lib/tapcardAuth";
 import { authorizePoster, posterName } from "@/lib/tapcardPost";
@@ -40,6 +41,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!body || typeof body !== "object") return NextResponse.json({ error: "invalid json" }, { status: 400 });
   const result = await setOffer(id, body as Record<string, unknown> as never, who.posterId);
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 400 });
+  const offerText = String((body as { text?: unknown }).text ?? "").trim().slice(0, 140);
+  after(() => pushToFollowers(id, "offers", { title: card.company || card.name, body: offerText, ref: String(result.id) }));
   return NextResponse.json({ ok: true, offer: await publicOffer(id) });
 }
 

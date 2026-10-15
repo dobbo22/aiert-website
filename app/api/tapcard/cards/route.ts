@@ -1,4 +1,6 @@
+import crypto from "crypto";
 import { NextRequest, NextResponse, after } from "next/server";
+import { pushToFollowers } from "@/lib/tapcardPush";
 import { wasRemovedByCompany } from "@/lib/tapcardBiz";
 import { countRecentCreates, createCard, getCard, listNotifiableRecipients, markRecipientNotified, setAddressIfEmpty, setBrandColor, updateCard } from "@/lib/tapcardDb";
 import { canEdit, clientIpHash, hashSecret, readEditToken } from "@/lib/tapcardAuth";
@@ -134,6 +136,13 @@ export async function POST(req: NextRequest) {
       fields = await applyOrgLocks(existing as unknown as Record<string, unknown>, fields);
       const watchedChanged = NOTIFY_WATCHLIST.some((f) => fields[f] !== existing[f]);
       await updateCard(body.id, fields);
+      // Followers who want "changes" hear when opening hours, menu, booking, ordering or the address change.
+      const shown = (json: string | undefined) => {
+        try {
+          return JSON.stringify((JSON.parse(json ?? "[]") as { kind: string; value: string }[]).filter((l) => ["hours", "menu", "book_table", "order"].includes(l.kind)).map((l) => [l.kind, l.value]).sort());
+        } catch { return ""; }
+      };
+      const detailsChanged = (fields.links !== undefined && shown(fields.links) !== shown(existing.links)) || (!!existing.address && existing.address !== fields.address);
       const websiteChanged = fields.website !== existing.website;
       const addressIsBlank = !fields.address;
       // A pass already saved in Google Wallet picks up the change (Apple
@@ -144,6 +153,12 @@ export async function POST(req: NextRequest) {
         if (websiteChanged || addressIsBlank) await resolveAndSaveSiteBranding(card.id, fields.website, addressIsBlank);
         await refreshGoogleWalletPass(card, `https://tapcard.aiert.co.uk/s/${card.id}`).catch(() => {});
         if (watchedChanged && !body.suppressNotify) await notifyRecipientsOfChange(card.id, card.name, fields);
+        if (detailsChanged && !body.suppressNotify) {
+          await pushToFollowers(card.id, "changes", {
+            title: card.company || card.name, body: "Opening hours, menu or address updated",
+            ref: crypto.createHash("sha256").update(`${shown(fields.links)}|${fields.address}`).digest("hex").slice(0, 16),
+          });
+        }
       });
       return NextResponse.json({ id: body.id });
     }

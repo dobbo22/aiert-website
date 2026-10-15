@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
+import { pushToFollowers } from "@/lib/tapcardPush";
 import sql from "@/lib/db";
 import { requireBizSession } from "@/lib/tapcardBizSession";
 import { getOrg, isOrgActive } from "@/lib/tapcardBiz";
@@ -22,6 +23,8 @@ export async function POST(req: Request) {
       const expiresAt = days > 0 ? new Date(Date.now() + days * 86_400_000).toISOString() : undefined;
       const r = await setOffer(cardId, { text: body.text, expiresAt, maxClaims: body.maxClaims || undefined, pin: body.pin }, "admin");
       if (!r.ok) return NextResponse.json({ error: r.error }, { status: 400 });
+      const card = ((await sql`SELECT name, company FROM tapcard_cards WHERE id = ${cardId}`) as { name: string; company: string }[])[0];
+      after(() => pushToFollowers(cardId, "offers", { title: card?.company || card?.name || "New offer", body: String(body.text ?? "").trim().slice(0, 140), ref: String(r.id) }));
       return NextResponse.json({ ok: true });
     }
     case "withdrawOffer":
@@ -30,6 +33,8 @@ export async function POST(req: Request) {
     case "news": {
       const r = await setAnnouncement(cardId, body.text);
       if (!r.ok) return NextResponse.json({ error: r.error }, { status: 400 });
+      const card = ((await sql`SELECT name, company FROM tapcard_cards WHERE id = ${cardId}`) as { name: string; company: string }[])[0];
+      after(() => pushToFollowers(cardId, "news", { title: card?.company || card?.name || "News", body: String(body.text ?? "").trim().slice(0, 140), ref: `a${Date.now()}` }));
       return NextResponse.json({ ok: true });
     }
     case "withdrawNews":

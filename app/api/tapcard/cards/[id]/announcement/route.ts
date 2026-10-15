@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
+import { pushToFollowers } from "@/lib/tapcardPush";
 import { getCard } from "@/lib/tapcardDb";
 import { canEdit, readEditToken } from "@/lib/tapcardAuth";
 import { authorizePoster } from "@/lib/tapcardPost";
@@ -24,7 +25,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const body = (await req.json().catch(() => null)) as { text?: unknown } | null;
   const r = await setAnnouncement(id, body?.text);
   if (!r.ok) return NextResponse.json({ error: r.error }, { status: 400 });
-  return NextResponse.json({ ok: true, announcement: await publicAnnouncement(id) });
+  const posted = await publicAnnouncement(id);
+  if (posted) after(() => pushToFollowers(id, "news", { title: card.company || card.name, body: posted.text, ref: String(posted.id) }));
+  return NextResponse.json({ ok: true, announcement: posted });
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
