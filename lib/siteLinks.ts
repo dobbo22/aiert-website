@@ -140,6 +140,46 @@ export function textPlace(html: string): HoursPlace | null {
   return { postcode: postcodeOf(addr), street: "", name: "", phone, addressText: addr.slice(0, 200), label: "", specs: [], hoursText: hoursLines.join("; ") };
 }
 
+const PHONE_RE = /(?:\+44\s?|\b0)\d[\d\s()]{8,13}\d/;
+
+// Every address block on a plain page (header, footer, contact block): the lines leading up to a UK postcode, plus the
+// phone number right after it. A site with two shops lists two; the person is then asked which is theirs.
+export function textPlaces(html: string): HoursPlace[] {
+  const lines = pageLines(html);
+  const withHours = textPlace(html);
+  const out: HoursPlace[] = [];
+  const seen = new Set<string>();
+  lines.forEach((line, i) => {
+    if (!POSTCODE.test(line) || /registered|limited|ltd|plc|\u00a9|copyright/i.test(line) || line.length > 140) return;
+    const postcode = postcodeOf(line);
+    if (!postcode || seen.has(postcode)) return;
+    const block: string[] = [];
+    // The postcode line may also carry the town ("Great Dunmow CM6 1AG"); the lines above it are the street and name.
+    for (let k = i - 1; k >= Math.max(0, i - 4); k--) {
+      const l = lines[k];
+      if (l.length > 70 || PHONE_RE.test(l) || /@|^(contact|find us|visit|address|opening)/i.test(l) || DAY_WORDS.test(l)) break;
+      block.unshift(l);
+    }
+    // Lines that are only the county ("Essex") belong to the address; a lone nav word ("Home") does not.
+    const text = [...block, line].join(", ").replace(/,\s*,/g, ",");
+    if (block.length === 0 && line.replace(POSTCODE, "").trim().length < 3) return;
+    let phone = "";
+    for (let k = i; k <= Math.min(lines.length - 1, i + 3); k++) {
+      const m = PHONE_RE.exec(lines[k]);
+      if (m) { phone = m[0].replace(/\s+/g, " ").trim().slice(0, 40); break; }
+    }
+    seen.add(postcode);
+    const hours = withHours && withHours.postcode === postcode ? withHours : null;
+    out.push({
+      postcode, street: "", name: "", phone, addressText: text.slice(0, 200), label: block[0] ?? "", specs: [],
+      hoursText: hours?.hoursText,
+    });
+  });
+  // The old single-block result still wins when there is only one address on the page.
+  if (out.length <= 1) return withHours ? [withHours] : out;
+  return out;
+}
+
 export function jsonLdUrls(html: string): { menu?: string; sameAs: string[]; places: HoursPlace[] } {
   const sameAs: string[] = [];
   const places: HoursPlace[] = [];
@@ -190,7 +230,37 @@ function pick(found: Map<LinkKind, string>, kind: LinkKind, url: URL | string) {
   found.set(kind, u.replace(/^http:\/\//i, "https://"));
 }
 
-export interface SiteDetails { address?: string; phone?: string }
+export interface SiteDetails { address?: string; phone?: string; facebook?: string; instagram?: string; twitter?: string; linkedin?: string }
+
+type Social = "facebook" | "instagram" | "twitter" | "linkedin";
+
+// The business's own profile from a link on its site (never a share button or a generic page).
+export function socialOf(u: URL): { kind: Social; url: string } | null {
+  const host = u.hostname.toLowerCase().replace(/^(www|m|mobile)\./, "");
+  const segs = u.pathname.split("/").filter(Boolean);
+  const first = segs[0]?.toLowerCase() ?? "";
+  if (!first) return null;
+  const clean = (kind: Social, base: string, path: string) => ({ kind, url: `${base}${path}`.replace(/\/+$/, "") });
+  if (/^facebook\.com$|^fb\.com$/.test(host)) {
+    if (/^(sharer|sharer\.php|share|dialog|plugins|tr|login|policies|help|groups|events|watch|hashtag|l\.php)$/.test(first) || /\.php$/.test(first)) return null;
+    if (first === "profile.php") return u.searchParams.get("id") ? { kind: "facebook", url: `https://www.facebook.com/profile.php?id=${encodeURIComponent(u.searchParams.get("id")!)}` } : null;
+    return clean("facebook", "https://www.facebook.com", `/${segs[0]}${first === "pages" && segs[1] ? `/${segs.slice(1, 3).join("/")}` : ""}`);
+  }
+  if (/^instagram\.com$/.test(host)) {
+    if (/^(p|reel|reels|explore|accounts|stories|tv|direct)$/.test(first)) return null;
+    return clean("instagram", "https://www.instagram.com", `/${segs[0]}`);
+  }
+  // Some sites link to odd twitter domains (twitter.co.uk); the handle is what matters.
+  if (/^(twitter\.[a-z.]+|x\.com)$/.test(host)) {
+    if (/^(intent|share|home|search|hashtag|i|login|settings|tos|privacy)$/.test(first)) return null;
+    return clean("twitter", "https://x.com", `/${segs[0].replace(/^@/, "")}`);
+  }
+  if (/^linkedin\.com$/.test(host)) {
+    if (!/^(company|in|school)$/.test(first) || !segs[1]) return null;
+    return clean("linkedin", "https://www.linkedin.com", `/${segs[0]}/${segs[1]}`);
+  }
+  return null;
+}
 export interface SiteBranch { name: string; address: string; phone: string; hours: string }
 
 // `address` is whatever the card has so far; `name` is the card's name (e.g. "Dishoom Shoreditch"), used to pick the branch.
@@ -216,8 +286,12 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
     } catch { /* ignore */ }
   }
   if (ld.menu) pick(found, "menu", ld.menu);
+  const social: Partial<Record<Social, string>> = {};
+  const addSocial = (u: URL) => { const f = socialOf(u); if (f && !social[f.kind]) social[f.kind] = f.url; };
+  for (const s of ld.sameAs) { try { addSocial(new URL(s)); } catch { /* ignore */ } }
 
   for (const { href, text } of anchors(html, base)) {
+    addSocial(href);
     const h = href.hostname.replace(/^www\./, "");
     const path = href.pathname.toLowerCase();
     const t = text.toLowerCase();
@@ -242,7 +316,7 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
   const where = `${name ?? ""} ${address ?? ""}`;
   const postcode = postcodeOf(address);
   const places = [...ld.places];
-  if (!places.length) { const tp = textPlace(html); if (tp) places.push(tp); }
+  if (!places.length) places.push(...textPlaces(html));
   let place = matchPlace(places, postcode, where);
   let hours = place ? placeHours(place) || undefined : undefined;
   if (!hours) {
@@ -257,7 +331,7 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
         const text = b.toString("utf8");
         const more2 = jsonLdUrls(text).places;
         if (more2.length) places.push(...more2);
-        else if (!places.length) { const tp = textPlace(text); if (tp) places.push(tp); }
+        else if (!places.length) places.push(...textPlaces(text));
       }
       place = matchPlace(places, postcode, where);
       hours = place ? placeHours(place) || undefined : undefined;
@@ -265,8 +339,8 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
     }
   }
   if (hours) found.set("hours", hours);
-  const details: SiteDetails = {};
-  if (place && hours) {
+  const details: SiteDetails = { ...social };
+  if (place && (hours || place.addressText)) {
     if (place.addressText) details.address = place.addressText;
     if (place.phone) details.phone = place.phone;
   }
@@ -277,10 +351,10 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
   if (!place && places.length > 1) {
     const key = addressKey(where);
     const seenNames = new Set<string>();
-    const all = places.filter((p) => p.label && placeHours(p) && !seenNames.has(p.label) && !!seenNames.add(p.label));
+    const all = places.filter((p) => (p.label || p.addressText) && !seenNames.has(p.addressText || p.label) && !!seenNames.add(p.addressText || p.label));
     const near = (p: HoursPlace) => (key && p.addressText && addressKey(p.addressText).split(" ").some((w) => w.length >= 4 && ` ${key} `.includes(` ${w} `)) ? 0 : 1);
     branches = all.sort((a, b) => near(a) - near(b)).slice(0, 40).map((p) => ({
-      name: p.label, address: p.addressText, phone: p.phone, hours: placeHours(p),
+      name: p.label || p.addressText, address: p.label ? p.addressText : "", phone: p.phone, hours: placeHours(p),
     }));
   }
   // Reviews the site itself doesn't link to: ask Google / Tripadvisor by name and address (needs the API keys).
