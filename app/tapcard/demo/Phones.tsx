@@ -265,6 +265,14 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
   useEffect(() => () => { runRef.current += 1; }, []);
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+  /// Back to the start of the story with the card still built: nothing is wiped. (A new business is the page reload.)
+  function resetStory() {
+    runRef.current += 1;
+    setRunning(false); setReady(false); setScene(null); setCaption(null); setHint(null);
+    setAView("card"); setBView("idle"); setBrowseA(null); setBrowseB(null);
+    setCompleted(0); setTypedOffer(""); setPin("");
+  }
+
   async function runScenes(scenes: Scene[], then?: () => void) {
     const id = ++runRef.current;
     setRunning(true);
@@ -296,7 +304,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
   }
 
   const share = () => runScenes([
-    { run: () => { setBView("idle"); setAView("qr"); }, step: 1, text: "Your card has its own QR code. Customers scan it from your phone, or from a printed TapCard sign in your shop window or on your reception desk. They need TapCard (free) on their phone, and it arrives instantly." },
+    { run: () => { setBView("idle"); setAView("qr"); }, step: 1, text: "Customers scan your card's QR code from your phone, or from a printed TapCard sign in your window or at reception. They need the free TapCard app, and it arrives instantly." },
     { run: () => setBView("scanning"), settle: 2300, step: 1, text: `Alex Morgan, a ${kind ? kind.toLowerCase() : "business"} customer with TapCard installed, scans your QR code…` },
     { run: () => setBView("received"), step: 1, text: "It's instant. Alex sees your card at once, with your links ready to tap, and chooses Save & send my card." },
     { run: () => setBView("saved"), step: 1, text: "Alex's own card is sent back to you, so you each have the other's details." },
@@ -517,7 +525,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
     1: "Share my card: your customer scans your QR code, saves your card, and says yes to hearing about your offers.",
     2: `Send an offer: you type an offer (for example "${suggestions[0]}"), press post, and the customer's phone gets a notification.`,
     3: "Use the offer: the customer claims a one-off QR code, your staff scan it and enter the PIN, and it's marked as used.",
-    0: "Set up again: reloads this page so you can build another card.",
+    0: "New business: clears this page so you can build a different card.",
   };
   const bind = (n: number) => ({
     onMouseEnter: () => setHint({ step: n, text: HINTS[n] }),
@@ -531,24 +539,24 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
 
   return (
     <div>
-      <div className="mx-auto mb-6 max-w-2xl rounded-2xl bg-charcoal px-5 py-4 text-left shadow-lg ring-2 ring-gold/60" aria-live="polite">
-        {/* Fixed height so the buttons below never move, whatever the text length. */}
-        <div className="flex h-[8.5rem] items-start gap-4 overflow-hidden">
+      <div className="mx-auto mb-4 max-w-2xl rounded-2xl bg-charcoal px-4 py-3 text-left shadow-lg ring-2 ring-gold/60" aria-live="polite">
+        {/* Fixed height so the controls below never move, whatever the text length. */}
+        <div className="flex h-[5.4rem] items-start gap-3 overflow-hidden">
           {shownText ? (
             <>
-              <span className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-gold text-xl font-black text-[#111318]">{shownText.step || "✓"}</span>
-              <p className="text-xl font-semibold leading-snug text-white">{shownText.text}</p>
+              <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-gold text-lg font-black text-[#111318]">{shownText.step || "✓"}</span>
+              <p className="text-lg font-semibold leading-snug text-white">{shownText.text}</p>
             </>
           ) : (
-            <p className="text-xl font-semibold leading-snug text-white">Fill in the form and we&apos;ll build your card from your website. Then buttons here show what happens when a customer scans it and when you send an offer.</p>
+            <p className="text-lg font-semibold leading-snug text-white">Fill in the form and we&apos;ll build your card from your website. Then one button plays what happens when a customer scans it and when you send an offer.</p>
           )}
         </div>
-        {/* One big button in one fixed place: it starts each story, then becomes Next (grey, then green when the screen is ready). */}
-        <div className={`mt-3 border-t border-white/15 pt-3 ${built ? "" : "invisible"}`}>
+        {/* One button in one fixed place: it starts each story, then becomes Next (grey, then green when the screen is ready). */}
+        <div className={`mt-2 ${built ? "" : "invisible"}`}>
           {(() => {
             const labels = ["1. Share my card", "2. Send an offer", "3. Use the offer"];
             const plays = [share, sendOffer, useOffer];
-            const base = "h-14 w-full rounded-xl text-lg font-bold transition";
+            const base = "h-12 w-full rounded-xl text-lg font-bold transition";
             if (running) {
               return (
                 <button type="button" onClick={() => { skipRef.current = true; }} disabled={!ready}
@@ -558,7 +566,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
               );
             }
             if (completed >= 3) {
-              return <button type="button" onClick={() => window.location.reload()} {...bind(0)} className={`${base} btn-gold`}>↻ Set up again</button>;
+              return <button type="button" onClick={resetStory} {...bind(0)} className={`${base} btn-gold`}>↻ Watch again</button>;
             }
             return <button type="button" onClick={plays[completed]} {...bind(completed + 1)} className={`${base} btn-gold`}>▶ {labels[completed]}</button>;
           })()}
@@ -568,26 +576,21 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
             <input type="checkbox" className="h-4 w-4" checked={auto} onChange={(e) => setAuto(e.target.checked)} />
             Auto-play
           </label>
-          <span className="min-w-[7rem]">{running && scene ? `Scene ${scene.i} of ${scene.n}` : ""}</span>
+          <span className="min-w-[6.5rem]">{running && scene ? `Scene ${scene.i} of ${scene.n}` : ""}</span>
           <span className="ml-auto flex items-center gap-3">
-            {completed > 0 ? <span className="text-white/60">Replay:</span> : null}
+            <button type="button" disabled={running} onClick={resetStory} className="font-semibold text-gold underline disabled:opacity-40">Start again</button>
             {[1, 2, 3].map((n) => (completed >= n ? (
-              <button key={n} type="button" disabled={running} onClick={[share, sendOffer, useOffer][n - 1]} {...bind(n)} className="font-semibold text-gold underline disabled:opacity-40">{n}</button>
+              <button key={n} type="button" disabled={running} onClick={[share, sendOffer, useOffer][n - 1]} {...bind(n)} className="font-semibold text-gold underline disabled:opacity-40">Replay {n}</button>
             ) : null))}
-            <button type="button" onClick={() => window.location.reload()} {...bind(0)} className="font-semibold text-gold underline">Set up again</button>
+            <button type="button" onClick={() => window.location.reload()} {...bind(0)} className="font-semibold text-gold underline">New business</button>
           </span>
         </div>
-        {/* Reserved space, so nothing shifts when it fills in. */}
-        <div className={`mt-3 min-h-[5.5rem] border-t border-white/15 pt-3 ${built ? "" : "invisible"}`}>
-          <div className="flex items-center gap-2">
-            <label htmlFor="offer-text" className="text-sm font-semibold text-white">Offer:</label>
-            <input id="offer-text" value={offer} maxLength={60} disabled={running || revealed < 2} onChange={(e) => setOffer(e.target.value)} className="min-w-0 flex-1 rounded-xl bg-white px-3 py-2 text-sm text-[#111318] disabled:opacity-50" />
-          </div>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {suggestions.map((o) => (
-              <button key={o} type="button" disabled={running || revealed < 2} onClick={() => setOffer(o)} className={`rounded-full px-3 py-1 text-xs font-semibold disabled:opacity-50 ${o === offer ? "bg-gold text-[#111318]" : "bg-white/10 text-white"}`}>{o}</button>
-            ))}
-          </div>
+        {/* One line, reserved so nothing shifts. The input offers this business type's ideas when clicked. */}
+        <div className={`mt-2 flex items-center gap-2 ${built ? "" : "invisible"}`}>
+          <label htmlFor="offer-text" className="text-sm font-semibold text-white">Offer:</label>
+          <input id="offer-text" list="offer-ideas" value={offer} maxLength={60} disabled={running || revealed < 2} onChange={(e) => setOffer(e.target.value)}
+            className="min-w-0 flex-1 rounded-xl bg-white px-3 py-1.5 text-sm text-[#111318] disabled:opacity-50" />
+          <datalist id="offer-ideas">{suggestions.map((o) => <option key={o} value={o} />)}</datalist>
         </div>
       </div>
       <div className="flex flex-wrap justify-center gap-6">
