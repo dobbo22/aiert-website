@@ -22,13 +22,29 @@ function anchors(html: string, base: URL): Anchor[] {
   while ((m = re.exec(html)) && out.length < 600) {
     const raw = (m[1] ?? m[2] ?? "").trim();
     if (!raw || /^(#|mailto:|tel:|javascript:)/i.test(raw)) continue;
+    // "instagram.com/name" with no https:// would otherwise be read as a page on the business's own site.
+    const fixed = /^(www\.)?(facebook|instagram|twitter|x|linkedin|tiktok)\.(com|co\.uk)\//i.test(raw) ? `https://${raw}` : raw;
     let href: URL;
-    try { href = new URL(raw.replace(/&amp;/g, "&"), base); } catch { continue; }
+    try { href = new URL(fixed.replace(/&amp;/g, "&"), base); } catch { continue; }
     if (href.protocol !== "https:" && href.protocol !== "http:") continue;
     const text = m[3].replace(/<[^>]*>/g, " ").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
     out.push({ href, text });
   }
   return out;
+}
+
+/// First tel: and mailto: addresses on the page (a plain contact link the visitor can tap).
+function contactLinks(html: string, domain: string): { phone?: string; email?: string } {
+  const phones: string[] = [], emails: string[] = [];
+  const re = /<a\b[^>]*?href\s*=\s*(?:"([^"]*)"|'([^']*)')/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) && (phones.length < 4 || emails.length < 4)) {
+    const raw = decodeURIComponent((m[1] ?? m[2] ?? "").trim().replace(/&amp;/g, "&"));
+    if (/^tel:/i.test(raw)) phones.push(raw.slice(4).replace(/[^+\d\s()-]/g, "").trim());
+    else if (/^mailto:/i.test(raw)) emails.push(raw.slice(7).split("?")[0].trim().toLowerCase());
+  }
+  const email = emails.find((e) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e) && e.endsWith(`@${domain}`)) ?? emails.find((e) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e));
+  return { phone: phones.find((p) => p.replace(/\D/g, "").length >= 9), email };
 }
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -120,20 +136,27 @@ function tidyHoursLine(line: string): string {
 export function textPlace(html: string): HoursPlace | null {
   const lines = pageLines(html);
   const hIdx = lines.findIndex((l) => /^(opening|opening times|opening hours|hours|our hours|trading hours)\b[^a-z0-9]*$/i.test(l.replace(/[:\s]+$/, "")) || /^opening (hours|times)\b/i.test(l));
-  if (hIdx < 0) return null;
   const hoursLines: string[] = [];
-  for (let k = hIdx + 1; k < Math.min(lines.length, hIdx + 12); k++) {
-    if (DAY_WORDS.test(lines[k]) && TIME.test(lines[k]) && lines[k].length < 90) hoursLines.push(tidyHoursLine(lines[k]));
-    else if (hoursLines.length) break;
+  let anchorIdx = hIdx;
+  if (hIdx >= 0) {
+    for (let k = hIdx + 1; k < Math.min(lines.length, hIdx + 12); k++) {
+      if (DAY_WORDS.test(lines[k]) && TIME.test(lines[k]) && lines[k].length < 90) hoursLines.push(tidyHoursLine(lines[k]));
+      else if (hoursLines.length) break;
+    }
+  } else {
+    // No "Opening hours" heading: a single line like "Monday-Friday: 8am-5pm, Saturday 8am-4.30pm".
+    anchorIdx = lines.findIndex((l) => l.length < 110 && DAY_WORDS.test(l) && TIME.test(l) && !/delivery|collection|turnaround|pick ?up/i.test(l));
+    if (anchorIdx >= 0) hoursLines.push(tidyHoursLine(lines[anchorIdx]));
   }
   if (!hoursLines.length) return null;
+  const hIdxUsed = anchorIdx;
   // The address: the nearest preceding line that has a UK postcode and is not a company/registered-office line.
   let addr = "", addrIdx = -1;
-  for (let k = hIdx - 1; k >= Math.max(0, hIdx - 12); k--) {
+  for (let k = hIdxUsed - 1; k >= Math.max(0, hIdxUsed - 12); k--) {
     if (POSTCODE.test(lines[k]) && !/registered|limited|ltd|plc|\u00a9|copyright/i.test(lines[k]) && lines[k].length < 140) { addr = lines[k]; addrIdx = k; break; }
   }
   let phone = "";
-  for (let k = Math.max(0, hIdx - 12); k < hIdx; k++) {
+  for (let k = Math.max(0, hIdxUsed - 12); k < hIdxUsed; k++) {
     const m = /(?:\+44\s?|\b0)\d[\d\s()]{8,13}\d/.exec(lines[k]);
     if (m) { phone = m[0].replace(/\s+/g, " ").trim().slice(0, 40); break; }
   }
@@ -179,8 +202,9 @@ export function textPlaces(html: string): HoursPlace[] {
       hoursText: hours?.hoursText,
     });
   });
-  // The old single-block result still wins when there is only one address on the page.
-  if (out.length <= 1) return withHours ? [withHours] : out;
+  // One address on the page: it takes the page's hours. None found (no postcode line): the hours place stands alone.
+  if (out.length === 1 && withHours) return [{ ...out[0], hoursText: withHours.hoursText ?? out[0].hoursText, phone: out[0].phone || withHours.phone }];
+  if (out.length === 0) return withHours ? [withHours] : [];
   return out;
 }
 
@@ -234,7 +258,7 @@ function pick(found: Map<LinkKind, string>, kind: LinkKind, url: URL | string) {
   found.set(kind, u.replace(/^http:\/\//i, "https://"));
 }
 
-export interface SiteDetails { address?: string; phone?: string; facebook?: string; instagram?: string; twitter?: string; linkedin?: string; tiktok?: string }
+export interface SiteDetails { address?: string; phone?: string; email?: string; facebook?: string; instagram?: string; twitter?: string; linkedin?: string; tiktok?: string }
 
 type Social = "facebook" | "instagram" | "twitter" | "linkedin" | "tiktok";
 
@@ -284,6 +308,11 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
   const base = page.url;
   const siteHost = base.hostname.replace(/^www\./, "");
   const found = new Map<LinkKind, string>();
+  const extras: CardLink[] = [];
+  const addExtra = (label: string, url: URL) => {
+    const value = url.toString().replace(/^http:\/\//i, "https://");
+    if (value.length <= 300 && !extras.some((e) => e.value === value || e.label === label)) extras.push({ kind: "custom", label, value });
+  };
 
   const ld = jsonLdUrls(html);
   for (const s of ld.sameAs) {
@@ -316,6 +345,8 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
       else if (/^(book (a )?room|rooms? (&|and) rates|check availability)$/.test(t)) pick(found, "book_room", href);
       else if ((t.includes("menu") && t.length <= 30 && !/gift|cookie|privacy|vouchers?/.test(t)) || /^\/(menus?|food-and-drink|our-menu)\/?$/.test(path) || /menu[^/]*\.pdf$/.test(path)) pick(found, "menu", href);
       else if (/^(order( online| now)?|takeaway|click (&|and) collect)$/.test(t) || /\/(order|order-online)\/?$/.test(path)) pick(found, "order", href);
+      else if (/^(prices?|pricing|price list|full price list|see (our )?prices|our prices)$/.test(t) || /^\/(pricing|prices|price-list)\/?$/.test(path)) addExtra("View prices", href);
+      else if (/^(book( now| online)?|schedule( a)?( pick ?up| collection| delivery| visit)?|make a booking|book (an )?appointment|book a visit)$/.test(t) || /^\/(book|booking|bookings|book-now|appointments?|schedule)\/?$/.test(path)) addExtra(t ? t.replace(/\b\w/g, (c) => c.toUpperCase()).slice(0, 40) : "Book now", href);
       else if (/^(shop|online shop|store|shop online|web ?shop|our (online )?shop|shop now|buy online|buy now|order flowers|send flowers|buy flowers|order a bouquet|order your flowers)$/.test(t) || /\/(shop|store|order-flowers|send-flowers|buy-flowers)(\.html?)?\/?$/.test(path)) pick(found, "shop", href);
     }
   }
@@ -359,6 +390,11 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
     if (place.phone) details.phone = place.phone;
   }
 
+  // A plain tel: / mailto: link: used when the page lists one place (several branches would make it a guess).
+  const contact = contactLinks(html, domain);
+  if (!details.phone && contact.phone && places.length <= 1) details.phone = contact.phone;
+  if (!details.email && contact.email) details.email = contact.email;
+
   // No confident match on a multi-branch site: let the person pick (a few branches whose name or town matches
   // what they typed first, then the rest), so a wrong guess is never filled in.
   let branches: SiteBranch[] = [];
@@ -377,5 +413,5 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
     if (reviews.google && !found.has("google_review")) found.set("google_review", reviews.google);
     if (reviews.tripadvisor && !found.has("tripadvisor")) found.set("tripadvisor", reviews.tripadvisor);
   }
-  return { links: sanitizeLinks([...found].map(([kind, value]) => ({ kind, label: "", value }))), details, branches };
+  return { links: sanitizeLinks([...[...found].map(([kind, value]) => ({ kind, label: "", value })), ...extras]), details, branches };
 }
