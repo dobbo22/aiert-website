@@ -58,7 +58,7 @@ function rowsFor(card: Card): Row[] {
     ["Facebook", "facebook", card.facebookUrl, "facebook", "#0866FF"],
     ["TikTok", "tiktok", card.tiktokUrl, "tiktok", "#000000"],
   ];
-  for (const [n, id, u, icon, bg] of socials) if (u) rows.push({ key: `s-${n}`, id: `social:${id}`, title: n, detail: u.replace(/^https?:\/\/(www\.)?/, ""), color: bg, icon, href: webUrl(u), social: true });
+  for (const [n, id, u, icon, bg] of socials) if (u) rows.push({ key: `s-${n}`, id: `social:${id}`, title: n, detail: u.replace(/^https?:\/\/(www\.)?/, ""), color: bg, icon, href: webUrl(u), social: true, linkOnly: true });
   return rows.slice(0, 12);
 }
 
