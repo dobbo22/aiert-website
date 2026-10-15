@@ -259,7 +259,7 @@ export default async function CardPage({
 
             {visibleSocials.length > 0 && (
               <div className="mt-6">
-                <p className="text-xs font-semibold uppercase tracking-wider text-white">Follow me</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-white">Tap an icon to follow</p>
                 <div className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-3">
                   {visibleSocials.map((link) => (
                     <a
@@ -267,7 +267,9 @@ export default async function CardPage({
                       href={normalizeUrl(link.value)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex w-16 flex-col items-center gap-1.5"
+                      aria-label={link.name}
+                      title={link.name}
+                      className="flex flex-col items-center"
                     >
                       {/* ring keeps the black X/TikTok tiles visible on the dark card */}
                       <span
@@ -276,7 +278,6 @@ export default async function CardPage({
                       >
                         <ContactIcon name={link.icon} large />
                       </span>
-                      <span className="text-xs leading-tight text-white">{link.name}</span>
                     </a>
                   ))}
                 </div>
