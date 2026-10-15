@@ -130,13 +130,32 @@ export default function PromotePage() {
         <section className="card mt-14 rounded-2xl bg-charcoal p-8 ring-1 ring-gold/40">
           <h2 className="text-2xl font-black text-cloud">Simple pricing</h2>
           <p className="mt-3 text-lg leading-relaxed text-cloud">
-            The TapCard app is free to download and always free for your customers. <strong>Promote is free for the first 3 months</strong>, then{" "}
-            <strong>£49.99 a year</strong> or <strong>£9.99 a month</strong>. One subscription covers one business card, and it includes sharing
-            your own card. Cancel any time in the App Store or Google Play.
+            The TapCard app is free to download and always free for your customers. Which plan you need depends on how many cards and
+            people you have.
           </p>
-          <p className="mt-3 leading-relaxed text-cloud">
-            Several locations? <a href="/business" className="text-gold underline">TapCard for Business</a> gives every branch its own card under
-            one company, with one set of numbers for head office, and a 30-day free trial.
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <div className="rounded-xl bg-white/5 p-5 ring-1 ring-white/10">
+              <p className="text-sm font-semibold uppercase tracking-wider text-teal">One business, one card</p>
+              <h3 className="mt-1 text-xl font-bold text-cloud">TapCard Promote</h3>
+              <p className="mt-2 leading-relaxed text-cloud">
+                <strong>Free for the first 3 months</strong>, then <strong>£49.99 a year</strong> or <strong>£9.99 a month</strong>. One
+                subscription covers <strong>one business card</strong>, and it includes sharing your own card. Cancel any time in the App
+                Store or Google Play.
+              </p>
+            </div>
+            <div className="rounded-xl bg-white/5 p-5 ring-1 ring-white/10">
+              <p className="text-sm font-semibold uppercase tracking-wider text-teal">Several locations, or more than one person</p>
+              <h3 className="mt-1 text-xl font-bold text-cloud">TapCard for Business</h3>
+              <p className="mt-2 leading-relaxed text-cloud">
+                A company plan instead of a Promote subscription: every branch gets its own card, Promote is included on all of them, and
+                head office sees one set of numbers. It is priced by the <strong>number of people</strong> (not per phone), billed yearly,
+                with a <strong>30-day free trial</strong>. <a href="/business" className="text-gold underline">See the plans</a>.
+              </p>
+            </div>
+          </div>
+          <p className="mt-4 text-sm leading-relaxed text-cloud">
+            Not sure which? If you only have one shop or one card, choose Promote. If you have more than one location, or staff who post
+            offers, choose TapCard for Business.
           </p>
         </section>
 

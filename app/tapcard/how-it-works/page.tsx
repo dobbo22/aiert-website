@@ -187,12 +187,22 @@ export default function HowItWorksPage() {
       </section>
 
       <section>
+        <h2>See it with your own business</h2>
+        <p>
+          Type your business name and website and watch TapCard build your card, then see what a customer sees when they
+          scan it and when you send an offer: <a href="/demo">try the demo</a>. You can ask for a link that opens your
+          card ready-made in the app.
+        </p>
+      </section>
+
+      <section>
         <h2>What does it cost?</h2>
         <p>
           TapCard is free to download and always free for the people you share with, who never pay or need the app. The
           first 1,000 people on iPhone, and the first 1,000 on Android, share their own card free for life (counted
-          when they first share a card). After that, sharing needs a small one-off unlock (from £0.99). Businesses can
-          instead subscribe to TapCard Promote, which includes sharing and starts with 3 months free.
+          when they first share a card). After that, sharing needs a small one-off unlock (from £0.99). A business with one card can
+          instead subscribe to TapCard Promote, which includes sharing and starts with 3 months free. Several locations, or
+          more than one person? See <a href="/promote">pricing</a>.
         </p>
       </section>
 
