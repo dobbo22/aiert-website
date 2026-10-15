@@ -14,7 +14,7 @@ interface Card {
 type Phase = "form" | "building" | "choose" | "done";
 
 // One row of the card, revealed in turn so the card visibly assembles itself.
-export interface Row { key: string; id: string; title: string; detail: string; color: string; icon: ContactIconName; href?: string; social?: boolean }
+export interface Row { key: string; id: string; title: string; detail: string; /** a web link: its name is shown, not its address */ linkOnly?: boolean; color: string; icon: ContactIconName; href?: string; social?: boolean }
 
 // Common slips in the part after the @, offered back as a one-tap fix.
 const EMAIL_FIXES: Record<string, string> = {
@@ -35,20 +35,21 @@ function emailFix(email: string): string | null {
 
 const webUrl = (v: string) => (/^https?:\/\//i.test(v) ? v : `https://${v}`);
 const ICONS: Record<string, ContactIconName> = {
-  shop: "bag", order: "bag", menu: "menu", hours: "clock", google_review: "star", tripadvisor: "star", reviews: "star",
+  shop: "bag", order: "bag", menu: "menu", hours: "clock", google_review: "google", tripadvisor: "star", reviews: "star",
   book_table: "calendar", book_room: "calendar", appointment: "calendar", custom: "link",
 };
 
 function rowsFor(card: Card): Row[] {
   const rows: Row[] = [];
   if (card.phone) rows.push({ key: "phone", id: "phone", title: "Call us", detail: card.phone, color: "#22C55E", icon: "phone", href: `tel:${card.phone.replace(/\s+/g, "")}` });
-  if (card.website) rows.push({ key: "web", id: "website", title: "Visit our site", detail: card.website.replace(/^https?:\/\//, "").replace(/\/$/, ""), color: "#3B82F6", icon: "globe", href: webUrl(card.website) });
+  if (card.website) rows.push({ key: "web", id: "website", title: "Visit our site", detail: card.website.replace(/^https?:\/\//, "").replace(/\/$/, ""), color: "#3B82F6", icon: "globe", href: webUrl(card.website), linkOnly: true });
   if (card.address) rows.push({ key: "addr", id: "address", title: "Find us", detail: card.address, color: "#F97316", icon: "mapPin", href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(card.address)}` });
   for (const l of card.links) rows.push({
     key: `l-${l.kind}-${l.value}`, id: `link:${l.kind}`, title: l.label,
     detail: l.kind === "hours" ? l.value : l.value.replace(/^https?:\/\/(www\.)?/, ""),
-    color: l.kind === "hours" ? "#EAB308" : "#A855F7", icon: ICONS[l.kind] ?? "link",
+    color: l.kind === "hours" ? "#EAB308" : l.kind === "google_review" ? "#4285F4" : "#A855F7", icon: ICONS[l.kind] ?? "link",
     href: l.kind === "hours" ? undefined : webUrl(l.value),
+    linkOnly: l.kind !== "hours",
   });
   const socials: [string, string, string, ContactIconName, string][] = [
     ["LinkedIn", "linkedin", card.linkedInUrl, "linkedin", "#0A66C2"],
@@ -258,7 +259,7 @@ export default function DemoBuilder() {
                     </span>
                     <span className="min-w-0">
                       <span className="block font-semibold">{r.title}</span>
-                      <span className="block truncate text-sm">{r.detail}</span>
+                      {r.linkOnly ? null : <span className="block truncate text-sm">{r.detail}</span>}
                     </span>
                   </label>
                 </li>
