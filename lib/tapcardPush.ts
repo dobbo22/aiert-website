@@ -226,10 +226,12 @@ export async function pushToFollowers(cardId: string, kind: PushKind, msg: PushM
           if (out.result === "dead" && sandbox) out = await apnsSend(sandbox, r.token, aps);
         } else out = { result: "error" };
         if (out.result === "ok") { sent++; done.push(r.follower_hash); }
-        else if (out.result === "dead") dead.push(r.follower_hash);
+        else if (out.result === "dead") { dead.push(r.follower_hash); console.error("push: dead token", r.platform, out.reason ?? ""); }
+        else console.error("push: send failed", r.platform, out.reason ?? "");
       }
     };
     await Promise.all(Array.from({ length: 12 }, worker));
+    console.log(`push: ${kind} for card ${cardId.slice(0, 6)}: ${rows.length} phone(s) tried, ${sent} accepted`);
     client?.close();
     sandbox?.close();
     if (done.length) {
