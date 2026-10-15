@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
+import ContactIcon, { type ContactIconName } from "../ContactIcon";
 
 interface Link { kind: string; label: string; value: string }
 interface Card {
@@ -12,17 +13,34 @@ interface Card {
 type Phase = "form" | "building" | "choose" | "done";
 
 // One row of the card, revealed in turn so the card visibly assembles itself.
-interface Row { key: string; id: string; title: string; detail: string; color: string }
+interface Row { key: string; id: string; title: string; detail: string; color: string; icon: ContactIconName; href?: string; social?: boolean }
+
+const webUrl = (v: string) => (/^https?:\/\//i.test(v) ? v : `https://${v}`);
+const ICONS: Record<string, ContactIconName> = {
+  shop: "bag", order: "bag", menu: "menu", hours: "clock", google_review: "star", tripadvisor: "star", reviews: "star",
+  book_table: "calendar", book_room: "calendar", appointment: "calendar", custom: "link",
+};
 
 function rowsFor(card: Card): Row[] {
   const rows: Row[] = [];
-  if (card.phone) rows.push({ key: "phone", id: "phone", title: "Call us", detail: card.phone, color: "#22C55E" });
-  if (card.website) rows.push({ key: "web", id: "website", title: "Website", detail: card.website.replace(/^https?:\/\//, "").replace(/\/$/, ""), color: "#3B82F6" });
-  if (card.address) rows.push({ key: "addr", id: "address", title: "Find us", detail: card.address, color: "#F97316" });
-  for (const l of card.links) rows.push({ key: `l-${l.kind}-${l.value}`, id: `link:${l.kind}`, title: l.label, detail: l.kind === "hours" ? l.value : l.value.replace(/^https?:\/\/(www\.)?/, ""), color: l.kind === "hours" ? "#EAB308" : "#A855F7" });
-  const socials: [string, string, string][] = [["Facebook", "facebook", card.facebookUrl], ["Instagram", "instagram", card.instagramUrl], ["X", "twitter", card.twitterUrl], ["LinkedIn", "linkedin", card.linkedInUrl], ["TikTok", "tiktok", card.tiktokUrl]];
-  for (const [n, id, u] of socials) if (u) rows.push({ key: `s-${n}`, id: `social:${id}`, title: n, detail: u.replace(/^https?:\/\/(www\.)?/, ""), color: "#EC4899" });
-  return rows.slice(0, 10);
+  if (card.phone) rows.push({ key: "phone", id: "phone", title: "Call us", detail: card.phone, color: "#22C55E", icon: "phone", href: `tel:${card.phone.replace(/\s+/g, "")}` });
+  if (card.website) rows.push({ key: "web", id: "website", title: "Visit our site", detail: card.website.replace(/^https?:\/\//, "").replace(/\/$/, ""), color: "#3B82F6", icon: "globe", href: webUrl(card.website) });
+  if (card.address) rows.push({ key: "addr", id: "address", title: "Find us", detail: card.address, color: "#F97316", icon: "mapPin", href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(card.address)}` });
+  for (const l of card.links) rows.push({
+    key: `l-${l.kind}-${l.value}`, id: `link:${l.kind}`, title: l.label,
+    detail: l.kind === "hours" ? l.value : l.value.replace(/^https?:\/\/(www\.)?/, ""),
+    color: l.kind === "hours" ? "#EAB308" : "#A855F7", icon: ICONS[l.kind] ?? "link",
+    href: l.kind === "hours" ? undefined : webUrl(l.value),
+  });
+  const socials: [string, string, string, ContactIconName, string][] = [
+    ["LinkedIn", "linkedin", card.linkedInUrl, "linkedin", "#0A66C2"],
+    ["X", "twitter", card.twitterUrl, "x", "#000000"],
+    ["Instagram", "instagram", card.instagramUrl, "instagram", "linear-gradient(45deg, #FEDA75, #FA7E1E, #D62976, #962FBF, #4F5BD5)"],
+    ["Facebook", "facebook", card.facebookUrl, "facebook", "#0866FF"],
+    ["TikTok", "tiktok", card.tiktokUrl, "tiktok", "#000000"],
+  ];
+  for (const [n, id, u, icon, bg] of socials) if (u) rows.push({ key: `s-${n}`, id: `social:${id}`, title: n, detail: u.replace(/^https?:\/\/(www\.)?/, ""), color: bg, icon, href: webUrl(u), social: true });
+  return rows.slice(0, 12);
 }
 
 export default function DemoBuilder() {
@@ -130,10 +148,14 @@ export default function DemoBuilder() {
 
   const allRows = card ? rowsFor(card) : [];
   const extraRows: Row[] = extras.filter((e) => e.label.trim() && /^https:\/\//i.test(e.value.trim())).map((e, i) => ({
-    key: `x-${i}`, id: `extra:${i}`, title: e.label.trim(), detail: e.value.trim().replace(/^https?:\/\/(www\.)?/, ""), color: "#A855F7",
+    key: `x-${i}`, id: `extra:${i}`, title: e.label.trim(), detail: e.value.trim().replace(/^https?:\/\/(www\.)?/, ""), color: "#A855F7", icon: "link", href: e.value.trim(),
   }));
   // While choosing, the card on the phone shows only what is ticked, plus the visitor's own links.
   const rows = phase === "choose" || phase === "done" ? [...allRows.filter((r) => keep.has(r.id)), ...extraRows] : allRows;
+  const settled = phase === "choose" || phase === "done";
+  const visibleRows = settled ? rows : rows.slice(0, shown);
+  const phoneRows = visibleRows.filter((r) => !r.social);
+  const phoneSocials = visibleRows.filter((r) => r.social);
 
   return (
     <section className="mt-10 grid items-start gap-10 md:grid-cols-2">
@@ -258,16 +280,42 @@ export default function DemoBuilder() {
                 <h3 className="mt-4 min-h-[2rem] text-2xl font-bold">{typed}</h3>
                 <span className="mt-2 inline-block rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider transition-opacity duration-500" style={{ opacity: stage >= 2 ? 1 : 0 }}>Business</span>
                 <ul className="mt-5 space-y-2 text-left">
-                  {rows.slice(0, phase === "choose" || phase === "done" ? rows.length : shown).map((r) => (
-                    <li key={r.key} className="flex items-center gap-3 rounded-xl bg-white/10 px-3 py-2 [animation:fadein_0.5s_ease]">
-                      <span className="h-8 w-8 flex-none rounded-full" style={{ background: r.color }} />
-                      <span className="min-w-0">
-                        <span className="block text-sm font-semibold">{r.title}</span>
-                        <span className="block truncate text-xs text-white/70">{r.detail}</span>
-                      </span>
-                    </li>
-                  ))}
+                  {phoneRows.map((r) => {
+                    const inner = (
+                      <>
+                        <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full" style={{ background: r.color }}>
+                          <ContactIcon name={r.icon} />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block text-sm font-semibold">{r.title}</span>
+                          <span className="block truncate text-xs text-white/70">{r.detail}</span>
+                        </span>
+                      </>
+                    );
+                    const cls = "flex items-center gap-3 rounded-xl bg-white/10 px-3 py-2 [animation:fadein_0.5s_ease]";
+                    return (
+                      <li key={r.key}>
+                        {r.href ? (
+                          <a href={r.href} target="_blank" rel="noopener noreferrer" className={`${cls} transition hover:bg-white/20`}>{inner}</a>
+                        ) : <div className={cls}>{inner}</div>}
+                      </li>
+                    );
+                  })}
                 </ul>
+                {phoneSocials.length > 0 ? (
+                  <div className="mt-5">
+                    <p className="text-[11px] font-semibold uppercase tracking-wider">Tap an icon to follow</p>
+                    <div className="mt-3 flex flex-wrap justify-center gap-3">
+                      {phoneSocials.map((r) => (
+                        <a key={r.key} href={r.href} target="_blank" rel="noopener noreferrer" aria-label={r.title} title={r.title}
+                          className="flex h-11 w-11 items-center justify-center rounded-xl ring-1 ring-white/15 transition-transform hover:scale-105 [animation:fadein_0.5s_ease]"
+                          style={{ background: r.color }}>
+                          <ContactIcon name={r.icon} large />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
                 {stage >= 4 && qr ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={qr} alt="" className="mx-auto mt-5 h-32 w-32 rounded-xl bg-white p-2" />
