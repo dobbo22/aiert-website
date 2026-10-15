@@ -2,6 +2,7 @@ import crypto from "crypto";
 import sql from "@/lib/db";
 import { findSiteLinks } from "@/lib/siteLinks";
 import { sanitizeLinks, type CardLink } from "@/lib/tapcardLinks";
+import { dedupeKey, ensureInviteSchema } from "@/lib/tapcardInvites";
 
 // "Build my TapCard" demo: a visitor types a business name, website and email; we build the card from the
 // business's own website (the same finder the apps use), keep it under a secret token, and email the link. The apps
@@ -41,7 +42,15 @@ function ensureSchema(): Promise<unknown> {
         created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
         claimed_at TIMESTAMPTZ
       )
-    `.catch((e) => { ready = null; throw e; });
+    `.then(async () => {
+      // What happened after the email: opened the link, tapped a store button, opened the app with the card.
+      await sql`ALTER TABLE tapcard_prebuilt ADD COLUMN IF NOT EXISTS kind TEXT NOT NULL DEFAULT ''`;
+      await sql`ALTER TABLE tapcard_prebuilt ADD COLUMN IF NOT EXISTS link_opened_at TIMESTAMPTZ`;
+      await sql`ALTER TABLE tapcard_prebuilt ADD COLUMN IF NOT EXISTS link_opens INTEGER NOT NULL DEFAULT 0`;
+      await sql`ALTER TABLE tapcard_prebuilt ADD COLUMN IF NOT EXISTS store_clicked_at TIMESTAMPTZ`;
+      await sql`ALTER TABLE tapcard_prebuilt ADD COLUMN IF NOT EXISTS store_platform TEXT`;
+      await sql`ALTER TABLE tapcard_prebuilt ADD COLUMN IF NOT EXISTS app_platform TEXT`;
+    }).catch((e) => { ready = null; throw e; });
   }
   return ready;
 }
@@ -92,12 +101,12 @@ export async function recentCounts(ipHash: string | null, email: string): Promis
   return { byIp: ip, byEmail: em };
 }
 
-export async function storePrebuilt(email: string, name: string, website: string, payload: PrebuiltCard, ipHash: string | null): Promise<string> {
+export async function storePrebuilt(email: string, name: string, website: string, payload: PrebuiltCard, ipHash: string | null, kind = ""): Promise<string> {
   await ensureSchema();
   const token = crypto.randomBytes(16).toString("base64url");
   await sql`
-    INSERT INTO tapcard_prebuilt (token, email, business_name, website, payload, ip_hash)
-    VALUES (${token}, ${email}, ${name}, ${website}, ${JSON.stringify(payload)}::jsonb, ${ipHash})
+    INSERT INTO tapcard_prebuilt (token, email, business_name, website, payload, ip_hash, kind)
+    VALUES (${token}, ${email}, ${name}, ${website}, ${JSON.stringify(payload)}::jsonb, ${ipHash}, ${kind})
   `;
   // Keep nothing for long: a link is good for 30 days, rows go after 60.
   await sql`DELETE FROM tapcard_prebuilt WHERE created_at < now() - interval '60 days'`;
@@ -105,14 +114,16 @@ export async function storePrebuilt(email: string, name: string, website: string
 }
 
 /// The card for a token, if it exists and is not older than 30 days. The email is never returned.
-export async function getPrebuilt(token: string): Promise<PrebuiltCard | null> {
+export async function getPrebuilt(token: string, userAgent = ""): Promise<PrebuiltCard | null> {
   if (!/^[A-Za-z0-9_-]{16,40}$/.test(token)) return null;
   await ensureSchema();
   const rows = (await sql`
     SELECT payload FROM tapcard_prebuilt WHERE token = ${token} AND created_at > now() - ${TTL_DAYS + " days"}::interval
   `) as { payload: PrebuiltCard }[];
   if (!rows[0]) return null;
-  await sql`UPDATE tapcard_prebuilt SET claimed_at = COALESCE(claimed_at, now()) WHERE token = ${token}`;
+  // Only the apps read this, so a read means TapCard is installed and was opened with this card.
+  const platform = /android|okhttp|dalvik/i.test(userAgent) ? "android" : /cfnetwork|darwin|iphone|ios/i.test(userAgent) ? "ios" : "";
+  await sql`UPDATE tapcard_prebuilt SET claimed_at = COALESCE(claimed_at, now()), app_platform = COALESCE(app_platform, NULLIF(${platform}, '')) WHERE token = ${token}`;
   return rows[0].payload;
 }
 
@@ -138,4 +149,47 @@ export function applyChoices(card: PrebuiltCard, keep: string[] | null, extra: {
     .filter((e) => e.label && /^https:\/\/[^\s]+\.[^\s]+$/i.test(e.value));
   out.links = sanitizeLinks([...out.links, ...added]).slice(0, 10);
   return out;
+}
+
+
+export type DemoEvent = "opened" | "store";
+
+/// The emailed link was opened, or a store button on its page was tapped (first times are kept, opens are counted).
+export async function recordDemoEvent(token: string, event: DemoEvent, platform: string): Promise<void> {
+  if (!/^[A-Za-z0-9_-]{16,40}$/.test(token)) return;
+  await ensureSchema();
+  const plat = platform === "ios" || platform === "android" ? platform : "";
+  if (event === "opened") {
+    await sql`UPDATE tapcard_prebuilt SET link_opened_at = COALESCE(link_opened_at, now()), link_opens = link_opens + 1 WHERE token = ${token}`;
+  } else {
+    await sql`UPDATE tapcard_prebuilt SET store_clicked_at = COALESCE(store_clicked_at, now()), store_platform = COALESCE(store_platform, NULLIF(${plat}, '')) WHERE token = ${token}`;
+  }
+}
+
+export interface DemoLeadRow {
+  created_at: string; email: string; business_name: string; website: string; kind: string;
+  link_opened_at: string | null; link_opens: number; store_clicked_at: string | null; store_platform: string | null;
+  claimed_at: string | null; app_platform: string | null;
+}
+
+export async function listDemoLeads(): Promise<DemoLeadRow[]> {
+  await ensureSchema();
+  return (await sql`
+    SELECT created_at, email, business_name, website, kind, link_opened_at, link_opens, store_clicked_at, store_platform, claimed_at, app_platform
+    FROM tapcard_prebuilt ORDER BY created_at DESC LIMIT 200
+  `) as DemoLeadRow[];
+}
+
+
+/// The demo visitor's email goes into Links & Invites (admin/social/links) as a contact, kind "demo", so they can be
+/// followed up from there. An existing contact for that email is left as it is.
+export async function recordDemoContact(email: string, business: string, website: string, address: string): Promise<void> {
+  const key = dedupeKey(email, "");
+  if (!key) return;
+  await ensureInviteSchema();
+  await sql`
+    INSERT INTO tapcard_invite_contacts (dedupe_key, name, email, company, website, address, kind)
+    VALUES (${key}, ${business}, ${email}, ${business}, ${website}, ${address}, 'demo')
+    ON CONFLICT (dedupe_key) DO NOTHING
+  `;
 }

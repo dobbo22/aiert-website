@@ -138,6 +138,17 @@ export default function TapCardPrivacyPage() {
       </section>
 
       <section>
+        <h2>The &ldquo;Build my TapCard&rdquo; demo</h2>
+        <p>
+          On tapcard.aiert.co.uk/demo you can type a business name, website, type of business and your email, and we
+          build a card from your own website. If you ask for the link, we email it to you once. We keep your email,
+          business details and the card for 60 days, and we note whether you open the link, tap a store button on that
+          page, and open TapCard with your card, so we can help if you get stuck. Nothing is added to a mailing list,
+          and there is no tracking pixel in the email. Ask us to delete it any time at <a href="mailto:enquiries@aiert.co.uk">enquiries@aiert.co.uk</a>.
+        </p>
+      </section>
+
+      <section>
         <h2>Service providers</h2>
         <ul>
           <li>Vercel: hosts the TapCard website and API, and stores card photos.</li>

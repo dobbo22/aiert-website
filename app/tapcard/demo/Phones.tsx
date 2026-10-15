@@ -390,11 +390,11 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
         return received(
           <div className="space-y-2 px-4 pt-2">
             <div className="rounded-xl bg-blue-500 py-2 text-center text-sm font-semibold">Save &amp; send my card</div>
-            <p className="text-center text-xs text-white/70">Just save {name.split(" ")[0]}</p>
+            <p className="text-center text-xs text-white/70">Just save {name}</p>
           </div>,
         );
       case "saved":
-        return received(<Toast>Saved, and your card is on its way to {name.split(" ")[0]}.</Toast>);
+        return received(<Toast>Saved, and your card is on its way to {name}.</Toast>);
       case "follow":
         return (
           <div className="relative">

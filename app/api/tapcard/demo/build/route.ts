@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { applyChoices, buildPrebuiltCard, hashIp, recentCounts, storePrebuilt } from "@/lib/tapcardPrebuilt";
+import { applyChoices, buildPrebuiltCard, hashIp, recentCounts, recordDemoContact, storePrebuilt } from "@/lib/tapcardPrebuilt";
 import { sendPrebuiltEmail } from "@/lib/tapcardPrebuiltEmail";
+import { DEMO_KINDS } from "@/app/tapcard/demo/demoOffers";
 
 // POST { name, website?, email, consent: true, company? (honeypot) } -> builds the card from the website, emails the
 // link, returns the card for the on-page demo. Public endpoint: rate limited per connection and per email.
@@ -12,6 +13,7 @@ export async function POST(req: NextRequest) {
   const name = String(body.name ?? "").trim().slice(0, 80);
   const website = String(body.website ?? "").trim().slice(0, 200);
   const address = String(body.address ?? "").trim().slice(0, 200);
+  const kind = DEMO_KINDS.includes(String(body.kind ?? "")) ? String(body.kind) : "";
   const email = String(body.email ?? "").trim().slice(0, 120);
   if (name.length < 2) return NextResponse.json({ error: "name" }, { status: 400 });
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return NextResponse.json({ error: "email" }, { status: 400 });
@@ -37,7 +39,8 @@ export async function POST(req: NextRequest) {
   // Several addresses on the site and none chosen yet: ask which is theirs before anything is saved or sent.
   if (branches.length > 1 && !address) return NextResponse.json({ needsBranch: true, branches: branches.slice(0, 12) });
   if (preview) return NextResponse.json({ ok: true, preview: true, card });
-  const token = await storePrebuilt(email, name, website, card, ipHash);
+  const token = await storePrebuilt(email, name, website, card, ipHash, kind);
+  await recordDemoContact(email, name, card.website, card.address).catch((e) => console.error("demo contact failed", e));
   const link = `https://tapcard.aiert.co.uk/start/${token}`;
   let emailed = true;
   try { await sendPrebuiltEmail(email, name, link); } catch (e) { emailed = false; console.error("prebuilt email failed", e); }

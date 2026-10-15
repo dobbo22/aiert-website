@@ -128,7 +128,7 @@ export default function DemoBuilder() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name, website, email, consent, company: trap, address: card.address || address,
-          keep: [...keep], extra: extras.filter((e) => e.label.trim() && e.value.trim()),
+          keep: [...keep], kind, extra: extras.filter((e) => e.label.trim() && e.value.trim()),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -183,7 +183,7 @@ export default function DemoBuilder() {
             <input tabIndex={-1} autoComplete="off" aria-hidden="true" value={trap} onChange={(e) => setTrap(e.target.value)} style={{ position: "absolute", left: "-9999px" }} name="company" />
             <label className="mt-4 flex items-start gap-3 text-sm text-cloud">
               <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1 h-5 w-5" />
-              <span>Email me my TapCard link. It&apos;s one email, not a mailing list. We keep your email and card details for 60 days. <a href="/privacy" className="text-gold underline">Privacy policy</a></span>
+              <span>Email me my TapCard link. It&apos;s one email, not a mailing list. We&apos;ll note whether you open the link and install TapCard, so we can help if you get stuck. We keep your email and card details for 60 days. <a href="/privacy" className="text-gold underline">Privacy policy</a></span>
             </label>
             {branches ? (
               <div className="mt-4 rounded-xl bg-white/10 p-4 ring-1 ring-gold/40">

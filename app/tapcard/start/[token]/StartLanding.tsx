@@ -1,7 +1,16 @@
 "use client";
 
+import { useEffect } from "react";
+
+const report = (token: string, event: "opened" | "store", platform = "") => {
+  try {
+    void fetch("/api/demo/event", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, event, platform }), keepalive: true });
+  } catch { /* tracking must never get in the way */ }
+};
+
 export default function StartLanding({ token, appStoreHref, playStoreHref, isDesktop }: { token: string; appStoreHref: string; playStoreHref: string; isDesktop: boolean }) {
   const valid = /^[A-Za-z0-9_-]{16,40}$/.test(token);
+  useEffect(() => { if (valid) report(token, "opened"); }, [token, valid]);
   // Android: the token rides in the Play install referrer, so the app finds it on first launch. iPhone has no install
   // referrer: the link is copied when the button is tapped and the app offers to paste it on first launch.
   const playHref = valid ? `${playStoreHref}%26prebuilt%3D${encodeURIComponent(token)}` : playStoreHref;
@@ -18,11 +27,11 @@ export default function StartLanding({ token, appStoreHref, playStoreHref, isDes
           <li className="text-white/60">If it doesn&apos;t appear, come back to the email and tap the link again.</li>
         </ol>
         <div className="mt-6 flex flex-col items-center gap-3">
-          <a href={appStoreHref} onClick={copyLink}>
+          <a href={appStoreHref} onClick={() => { copyLink(); if (valid) report(token, "store", "ios"); }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="https://www.aiert.co.uk/tapcard-badges/app-store-badge-white.png" alt="Download on the App Store" width={180} height={60} />
           </a>
-          <a href={playHref}>
+          <a href={playHref} onClick={() => { if (valid) report(token, "store", "android"); }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="https://www.aiert.co.uk/tapcard-badges/google-play-badge.png" alt="Get it on Google Play" width={155} height={60} />
           </a>
