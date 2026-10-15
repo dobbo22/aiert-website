@@ -49,7 +49,7 @@ async function googleLink(name: string, address: string, website = ""): Promise<
     return undefined;
   }
   const p = ((await res.json().catch(() => ({}))) as { places?: { id?: string; displayName?: { text?: string }; formattedAddress?: string; websiteUri?: string }[] }).places?.[0];
-  // With a website entered, the place's own website must match it: a different "Rose Garden" is not this business.
+  // With a website entered, the place's own website must match it: a different business with the same name is not this one.
   const wanted = hostOf(website), theirs = hostOf(p?.websiteUri ?? "");
   const siteMismatch = !!wanted && !!theirs && wanted !== theirs;
   if (!p?.id || !similar(p.displayName?.text ?? "", name) || !samePostcode(address, p.formattedAddress ?? "") || siteMismatch) {

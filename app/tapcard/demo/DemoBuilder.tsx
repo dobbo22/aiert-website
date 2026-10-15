@@ -185,7 +185,7 @@ export default function DemoBuilder() {
           <form onSubmit={submit} className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
             <label className="block text-sm font-semibold text-cloud" htmlFor="biz">Business name</label>
             <input id="biz" required value={name} onChange={(e) => setName(e.target.value)} maxLength={80} disabled={phase === "building"}
-              className="mt-1 w-full rounded-xl bg-white px-4 py-3 text-[#111318]" placeholder="The Rose Garden" />
+              className="mt-1 w-full rounded-xl bg-white px-4 py-3 text-[#111318]" placeholder="The Coffee Shop" />
             <label className="mt-4 block text-sm font-semibold text-cloud" htmlFor="kind">Type of business <span className="font-normal">(so the examples suit you)</span></label>
             <select id="kind" required value={kind} onChange={(e) => setKind(e.target.value)} disabled={phase === "building"}
               className="mt-1 w-full rounded-xl bg-white px-4 py-3 text-[#111318]">
@@ -194,7 +194,7 @@ export default function DemoBuilder() {
             </select>
             <label className="mt-4 block text-sm font-semibold text-cloud" htmlFor="site">Website <span className="font-normal">(so we can build it from your own pages)</span></label>
             <input id="site" value={website} onChange={(e) => { setWebsite(e.target.value); setSiteBad(false); setSiteFix(null); }} maxLength={200} disabled={phase === "building"} inputMode="url"
-              className={`mt-1 w-full rounded-xl bg-white px-4 py-3 text-[#111318] ${siteBad ? "ring-4 ring-red-500" : ""}`} placeholder="therosegardenflorists.co.uk" aria-invalid={siteBad} />
+              className={`mt-1 w-full rounded-xl bg-white px-4 py-3 text-[#111318] ${siteBad ? "ring-4 ring-red-500" : ""}`} placeholder="coffeeshop.website" aria-invalid={siteBad} />
             {siteBad ? (
               <div role="alert" className="mt-2 rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white">
                 We couldn&apos;t find that website. Please check the spelling.
@@ -207,7 +207,7 @@ export default function DemoBuilder() {
             ) : null}
             <label className="mt-4 block text-sm font-semibold text-cloud" htmlFor="addr">Address or postcode <span className="font-normal">(optional, for a business with several shops)</span></label>
             <input id="addr" value={address} onChange={(e) => setAddress(e.target.value)} maxLength={200} disabled={phase === "building"}
-              className="mt-1 w-full rounded-xl bg-white px-4 py-3 text-[#111318]" placeholder="CM6 1AG" />
+              className="mt-1 w-full rounded-xl bg-white px-4 py-3 text-[#111318]" placeholder="AB1 2CD" />
             <label className="mt-4 block text-sm font-semibold text-cloud" htmlFor="mail">Your email</label>
             <input id="mail" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} maxLength={120} disabled={phase === "building"}
               className="mt-1 w-full rounded-xl bg-white px-4 py-3 text-[#111318]" placeholder="you@yourbusiness.co.uk" />
