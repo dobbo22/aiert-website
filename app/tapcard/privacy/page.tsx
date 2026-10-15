@@ -117,14 +117,23 @@ export default function TapCardPrivacyPage() {
           end date, whether it is a free trial, and which plan. Redeeming a restaurant offer code is done by the store.
         </p>
         <p>
-          Following a business is private. The notifications you choose to get (new offers, an offer ending soon, menu
-          and detail changes, announcements) are worked out on your phone by checking the businesses&apos; public
-          cards. When you opt in, your app tells our server only that one more phone follows that business, using a
-          random id the app keeps on your phone (not your name, email, phone number or card), which we store in
-          scrambled (hashed) form so it cannot be turned back into anything about you. The business sees a single
-          number, how many people follow it, and never who. Turning notifications off, or a notification&apos;s Mute
-          button, takes you out of that number. When you claim an offer, the business sees only how many people
-          claimed and used it, never who.
+          Following a business is private. When you follow a business, your phone tells our server only that one more
+          phone follows it, using a random id the app keeps on your phone (not your name, email, phone number or
+          card), which we store in scrambled (hashed) form so it cannot be turned back into anything about you. The
+          business sees a single number, how many people follow it, and never who.
+        </p>
+        <p>
+          <strong>Notifications.</strong> To send you offers and news the moment they are posted, our server uses
+          Apple&apos;s and Google&apos;s notification services. For that we store your phone&apos;s notification
+          address (a token Apple or Google gives the app), kept with the same random id, together with which
+          businesses you follow and which kinds of message you chose (offers, an offer ending soon, menu and detail
+          changes, news). The notification contains only what the business posted, which is public. We keep a short
+          record of what we sent, for 14 days, to keep to the limit of two notifications a week from each business.
+          Your notification address is deleted within 30 days of you no longer following any business, when Apple
+          or Google tells us the phone is no longer reachable, or after 90 days without use. You can turn notifications off per business, in
+          the app (the &ldquo;...&rdquo; menu on a card), with each notification&apos;s Mute button, or in your phone&apos;s
+          settings. Turning them off takes you out of the follower number. When you claim an offer, the business sees
+          only how many people claimed and used it, never who.
         </p>
       </section>
 
@@ -133,6 +142,10 @@ export default function TapCardPrivacyPage() {
         <ul>
           <li>Vercel: hosts the TapCard website and API, and stores card photos.</li>
           <li>Neon: hosts the database that holds shared cards.</li>
+          <li>
+            Apple (APNs) and Google (Firebase Cloud Messaging): deliver notifications to your phone. They receive the
+            notification and your phone&apos;s notification address, as with any app that sends notifications.
+          </li>
           <li>
             Google: the app and the card page show your company&apos;s logo using Google&apos;s public favicon
             service, which receives your website&apos;s domain and the viewer&apos;s IP address, as with any image
