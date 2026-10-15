@@ -13,14 +13,27 @@ const OFFER_DEFAULT = "10% off your first order";
 type AView = "card" | "qr" | "saved" | "offerForm" | "offerLive" | "staff" | "used";
 type BView = "idle" | "scanning" | "received" | "saved" | "follow" | "contacts" | "push" | "offer" | "claimed" | "used";
 
-function Phone({ label, children, overlay }: { label: string; children: React.ReactNode; overlay?: React.ReactNode }) {
+function TabBar({ active }: { active: "cards" | "contacts" }) {
+  const tab = (id: "cards" | "contacts", text: string, icon: React.ReactNode) => (
+    <span className={`flex flex-1 flex-col items-center gap-0.5 rounded-xl py-1 text-[10px] font-semibold ${active === id ? "bg-white/15 text-blue-300" : "text-white/70"}`}>{icon}{text}</span>
+  );
+  return (
+    <div className="absolute inset-x-3 bottom-3 z-10 flex gap-1 rounded-2xl bg-[#1c1f27]/95 p-1 shadow-lg ring-1 ring-white/10 backdrop-blur">
+      {tab("cards", "My Cards", <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-3.3 0-8 1.7-8 5v1h16v-1c0-3.3-4.7-5-8-5Z" /></svg>)}
+      {tab("contacts", "Contacts", <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true"><path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm7 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM9 13c-3 0-7 1.5-7 4.2V19h14v-1.8C16 14.500 12 13 9 13Zm7 .2c-.4 0-.8 0-1.200.1 1.500 1 2.200 2.300 2.200 3.900V19h5v-1.700c0-2.400-3.200-4.100-6-4.100Z" /></svg>)}
+    </div>
+  );
+}
+
+function Phone({ label, children, overlay, tab }: { label: string; children: React.ReactNode; overlay?: React.ReactNode; tab?: "cards" | "contacts" }) {
   return (
     <div className="w-full max-w-[17rem]">
       <p className="mb-2 text-center text-sm font-semibold text-cloud">{label}</p>
       <div className="rounded-[2.2rem] bg-black p-2.5 shadow-2xl ring-1 ring-white/20">
         {/* Fixed height: the screen scrolls, it never grows. A tapped link opens over the screen, like an in-app browser. */}
         <div className="relative h-[34rem] overflow-hidden rounded-[1.8rem] bg-[#111318] text-white">
-          <div className="h-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{children}</div>
+          <div className={`h-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${tab ? "pb-20" : ""}`}>{children}</div>
+          {tab ? <TabBar active={tab} /> : null}
           {overlay}
         </div>
       </div>
@@ -153,8 +166,37 @@ function InPhoneBrowser({ row, name, website, onClose }: { row: Row; name: strin
   );
 }
 
-function AppBar({ title }: { title: string }) {
-  return <div className="sticky top-0 z-10 bg-[#111318]/95 px-4 pb-2 pt-4 text-center text-sm font-semibold backdrop-blur">{title}</div>;
+function AppBar({ title, buttons = false }: { title: string; buttons?: boolean }) {
+  const circle = (d: string) => (
+    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10" aria-hidden="true">
+      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={d} /></svg>
+    </span>
+  );
+  return (
+    <div className="sticky top-0 z-10 flex items-center justify-between bg-[#111318]/95 px-3 pb-2 pt-4 text-center backdrop-blur">
+      {buttons ? circle("M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 12h10") : <span className="w-8" />}
+      <span className="min-w-0 flex-1 truncate px-2 text-sm font-semibold">{title}</span>
+      {buttons ? circle("M5 12h.01M12 12h.01M19 12h.01") : <span className="w-8" />}
+    </div>
+  );
+}
+
+// The buttons under the card in the app: share, then (once Promote is set up) the offer panel.
+function CardActions({ onShare, onOffer, offerReady, offerLive, disabled }: { onShare: () => void; onOffer: () => void; offerReady: boolean; offerLive: boolean; disabled: boolean }) {
+  return (
+    <div className="space-y-3 px-4 pb-4">
+      <button type="button" disabled={disabled} onClick={onShare} className="w-full rounded-2xl bg-blue-500 py-3 text-sm font-semibold disabled:opacity-60">▦ Share my card</button>
+      <p className="text-center text-xs font-semibold text-blue-300">No signal? Offline QR</p>
+      <div className="rounded-2xl bg-white/10 p-3 text-left">
+        <p className="text-sm font-semibold">Promote your business</p>
+        <p className="mt-1 text-xs text-white/70">{offerLive ? "Your offer is live. Everyone who follows you was notified." : "Offer your customers a discount. They claim it from your card and get a one-off QR code to show your staff."}</p>
+        <div className="mt-2 flex gap-2">
+          <button type="button" disabled={disabled || !offerReady} onClick={onOffer} className="flex-1 rounded-xl bg-white/15 py-2 text-xs font-semibold disabled:opacity-50">Create an offer</button>
+          <span className="flex-1 rounded-xl bg-white/15 py-2 text-center text-xs font-semibold opacity-60">Post news</span>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function Toast({ children }: { children: React.ReactNode }) {
@@ -175,6 +217,8 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
   name: string; website: string; built: boolean; stage: number; typed: string; rows: Row[]; socials: Row[]; buildSpinner: boolean; idleText: string;
 }) {
   const domain = domainOf(website);
+  const [caption, setCaption] = useState<{ step: number; text: string } | null>(null);
+  const [hint, setHint] = useState<{ step: number; text: string } | null>(null);
   const [browseA, setBrowseA] = useState<Row | null>(null);
   const [browseB, setBrowseB] = useState<Row | null>(null);
   const openA = (r: Row) => setBrowseA(r);
@@ -210,33 +254,33 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
     text.split("").map((_, i) => [i === 0 ? 300 : 45, () => set(text.slice(0, i + 1))] as [number, () => void]);
 
   const share = () => play([
-    [200, () => { setBView("idle"); setAView("qr"); }],
-    [1200, () => setBView("scanning")],
-    [2200, () => setBView("received")],
-    [1800, () => setBView("saved")],
-    [1400, () => setBView("follow")],
-    [1800, () => { setBView("contacts"); setAView("saved"); }],
+    [200, () => { setBView("idle"); setAView("qr"); setCaption({ step: 1, text: "Your card has its own QR code. Anyone can scan it with their phone's camera. They don't even need the app." }); }],
+    [1200, () => { setBView("scanning"); setCaption({ step: 1, text: "Alex Morgan, a customer, points TapCard's camera at your QR code…" }); }],
+    [2200, () => { setBView("received"); setCaption({ step: 1, text: "Alex sees your card at once, with your links ready to tap, and chooses Save & send my card." }); }],
+    [1800, () => { setBView("saved"); setCaption({ step: 1, text: "Alex's own card is sent back to you, so you each have the other's details." }); }],
+    [1400, () => { setBView("follow"); setCaption({ step: 1, text: "Alex is asked once: do you want offers and news from this business? You can't send anyone offers unless they say yes." }); }],
+    [1800, () => { setBView("contacts"); setAView("saved"); setCaption({ step: 1, text: "Alex now follows you. Your phone shows the new follower. Next: send them an offer." }); }],
   ], () => setReached((r) => Math.max(r, 2)));
 
   const sendOffer = () => { setTypedOffer(""); setPin("");
     play([
-      [200, () => { setAView("offerForm"); }],
+      [200, () => { setAView("offerForm"); setCaption({ step: 2, text: "You write the offer, choose how long it lasts and set a PIN for your staff. It takes seconds." }); }],
       ...typeInto(offer, setTypedOffer),
       [700, () => setPin("4321")],
-      [1100, () => setAView("offerLive")],
-      [900, () => setBView("push")],
-      [2600, () => setBView("offer")],
+      [1100, () => { setAView("offerLive"); setCaption({ step: 2, text: "One tap posts it. Everyone who follows you is notified. Only people who said yes." }); }],
+      [900, () => { setBView("push"); setCaption({ step: 2, text: "Alex's phone buzzes with your offer, even with TapCard closed." }); }],
+      [2600, () => { setBView("offer"); setCaption({ step: 2, text: "Alex opens it and can claim a one-off code. Next: see it being used." }); }],
     ], () => setReached((r) => Math.max(r, 3)));
   };
 
   const useOffer = () => play([
-    [200, () => setBView("offer")],
-    [1200, () => setBView("claimed")],
-    [2200, () => setAView("staff")],
+    [200, () => { setBView("offer"); setCaption({ step: 3, text: "Alex taps Claim this offer…" }); }],
+    [1200, () => { setBView("claimed"); setCaption({ step: 3, text: "…and gets their own one-off QR code to show in your shop." }); }],
+    [2200, () => { setAView("staff"); setCaption({ step: 3, text: "Your staff scan it. The screen checks the offer is valid and asks for your PIN." }); }],
     [1000, () => setPin("")],
     [900, () => setPin("4")], [250, () => setPin("43")], [250, () => setPin("432")], [250, () => setPin("4321")],
-    [900, () => { setAView("used"); setBView("used"); }],
-    [2500, () => setAView("offerLive")],
+    [900, () => { setAView("used"); setBView("used"); setCaption({ step: 3, text: "A big tick for your staff, and Alex's phone shows the offer as used. It can't be used twice." }); }],
+    [2500, () => { setAView("offerLive"); setCaption({ step: 3, text: "That's the whole journey. Press Set up again to try your own business." }); }],
   ]);
 
   const showPhoneA = () => {
@@ -267,10 +311,11 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
       case "saved":
         return (
           <div>
-            <AppBar title="My Cards" />
+            <AppBar title={name} buttons />
             <Toast><strong>Alex Morgan</strong> saved your card and sent you theirs.</Toast>
             <Toast>1 follower now gets your offers and news.</Toast>
             <CardFace name={name} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openA} />
+            <CardActions onShare={share} onOffer={sendOffer} offerReady={revealed >= 2} offerLive={false} disabled={running} />
           </div>
         );
       case "offerForm":
@@ -288,9 +333,10 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
       case "offerLive":
         return (
           <div>
-            <AppBar title="My Cards" />
+            <AppBar title={name} buttons />
             <Toast><strong>Offer live:</strong> {offer}. 1 follower notified.</Toast>
             <CardFace name={name} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openA} />
+            <CardActions onShare={share} onOffer={sendOffer} offerReady={revealed >= 2} offerLive={true} disabled={running} />
           </div>
         );
       case "staff":
@@ -311,8 +357,9 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
       default:
         return (
           <div>
-            <AppBar title="My Cards" />
+            <AppBar title={name} buttons />
             <CardFace name={name} typed={typed} stage={stage} rows={rows} socials={socials} interactive={stage >= 4} domain={domain} onOpen={openA} />
+            <CardActions onShare={share} onOffer={sendOffer} offerReady={revealed >= 2} offerLive={false} disabled={running} />
           </div>
         );
     }
@@ -362,7 +409,7 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
       case "contacts":
         return (
           <div>
-            <AppBar title="Contacts" />
+            <AppBar title="Contacts" buttons />
             <div className="mx-3 mt-2 flex items-center gap-3 rounded-xl bg-white/10 px-3 py-3 text-left">
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-sm font-bold">{name.slice(0, 1)}</span>
               <span className="min-w-0 flex-1"><span className="block text-sm font-semibold">{name}</span><span className="block text-xs text-white/70">Business · offers on</span></span>
@@ -422,17 +469,43 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
     }
   };
 
+  const HINTS: Record<number, string> = {
+    1: "Share my card: your customer scans your QR code, saves your card, and says yes to hearing about your offers.",
+    2: "Send an offer: you type an offer, press post, and the customer's phone gets a notification.",
+    3: "Use the offer: the customer claims a one-off QR code, your staff scan it and enter the PIN, and it's marked as used.",
+    0: "Set up again: reloads this page so you can build another card.",
+  };
+  const bind = (n: number) => ({
+    onMouseEnter: () => setHint({ step: n, text: HINTS[n] }),
+    onMouseLeave: () => setHint(null),
+    onFocus: () => setHint({ step: n, text: HINTS[n] }),
+    onBlur: () => setHint(null),
+  });
+  const shownText = hint ?? caption ?? (built
+    ? { step: 0, text: "Your card is built. Press 1 below to see how people get it. Tap anything on the phones to try the links." }
+    : null);
+
   return (
     <div>
+      <div className="mx-auto mb-5 flex min-h-[4.5rem] max-w-2xl items-start gap-3 rounded-2xl bg-charcoal px-4 py-3 text-left ring-1 ring-gold/40" aria-live="polite">
+        {shownText ? (
+          <>
+            <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-gold text-sm font-black text-[#111318]">{shownText.step || "✓"}</span>
+            <p className="text-base leading-snug text-cloud">{shownText.text}</p>
+          </>
+        ) : (
+          <p className="text-base leading-snug text-cloud">Fill in the form and we&apos;ll build your card from your website. Then two buttons show what happens when a customer scans it and when you send an offer.</p>
+        )}
+      </div>
       <div className="flex flex-wrap justify-center gap-6">
-        <Phone label="Your business" overlay={browseA ? <InPhoneBrowser row={browseA} name={name} website={website} onClose={() => setBrowseA(null)} /> : null}>{showPhoneA()}</Phone>
-        <Phone label="Alex Morgan, a customer" overlay={browseB ? <InPhoneBrowser row={browseB} name={name} website={website} onClose={() => setBrowseB(null)} /> : null}>{showPhoneB()}</Phone>
+        <Phone label="Your business" tab={built && ["card", "saved", "offerLive"].includes(aView) ? "cards" : undefined} overlay={browseA ? <InPhoneBrowser row={browseA} name={name} website={website} onClose={() => setBrowseA(null)} /> : null}>{showPhoneA()}</Phone>
+        <Phone label="Alex Morgan, a customer" tab={bView === "contacts" ? "contacts" : undefined} overlay={browseB ? <InPhoneBrowser row={browseB} name={name} website={website} onClose={() => setBrowseB(null)} /> : null}>{showPhoneB()}</Phone>
       </div>
       <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-        {revealed >= 1 && built ? <button disabled={running} onClick={share} className="btn-gold rounded-xl px-5 py-3 text-sm font-semibold disabled:opacity-50">1. Share my card</button> : null}
-        {revealed >= 2 ? <button disabled={running} onClick={sendOffer} className="btn-gold rounded-xl px-5 py-3 text-sm font-semibold disabled:opacity-50">2. Send an offer</button> : null}
-        {revealed >= 3 ? <button disabled={running} onClick={useOffer} className="btn-gold rounded-xl px-5 py-3 text-sm font-semibold disabled:opacity-50">3. Use the offer</button> : null}
-        {built ? <button onClick={() => window.location.reload()} className="rounded-xl px-5 py-3 text-sm font-semibold text-gold underline">Set up again</button> : null}
+        {revealed >= 1 && built ? <button disabled={running} onClick={share} {...bind(1)} className="btn-gold rounded-xl px-5 py-3 text-sm font-semibold disabled:opacity-50">1. Share my card</button> : null}
+        {revealed >= 2 ? <button disabled={running} onClick={sendOffer} {...bind(2)} className="btn-gold rounded-xl px-5 py-3 text-sm font-semibold disabled:opacity-50">2. Send an offer</button> : null}
+        {revealed >= 3 ? <button disabled={running} onClick={useOffer} {...bind(3)} className="btn-gold rounded-xl px-5 py-3 text-sm font-semibold disabled:opacity-50">3. Use the offer</button> : null}
+        {built ? <button onClick={() => window.location.reload()} {...bind(0)} className="rounded-xl px-5 py-3 text-sm font-semibold text-gold underline">Set up again</button> : null}
       </div>
       {revealed >= 2 && built ? (
         <div className="mx-auto mt-4 flex max-w-sm items-center gap-2">
