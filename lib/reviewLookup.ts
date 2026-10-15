@@ -34,20 +34,25 @@ const words = (t: string) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g
 const similar = (a: string, b: string) => { const bw = new Set(words(b)); return words(a).some((w) => bw.has(w)); };
 const samePostcode = (card: string, found: string) => { const c = postcodeOf(card); return !c || !postcodeOf(found) || c === postcodeOf(found); };
 
-async function googleLink(name: string, address: string): Promise<string | undefined> {
+const hostOf = (u: string) => { try { return new URL(/^[a-z]+:\/\//i.test(u) ? u : `https://${u}`).hostname.toLowerCase().replace(/^www\./, ""); } catch { return ""; } };
+
+async function googleLink(name: string, address: string, website = ""): Promise<string | undefined> {
   const key = process.env.GOOGLE_PLACES_API_KEY;
   if (!key) return undefined;
   const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
     method: "POST",
-    headers: { "Content-Type": "application/json", "X-Goog-Api-Key": key, "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress" },
+    headers: { "Content-Type": "application/json", "X-Goog-Api-Key": key, "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.websiteUri" },
     body: JSON.stringify({ textQuery: `${name} ${address}`.trim(), maxResultCount: 1, regionCode: "GB" }),
   }).catch(() => null);
   if (!res?.ok) {
     console.error("review lookup: google places failed", res?.status, res ? (await res.text().catch(() => "")).slice(0, 300) : "no response");
     return undefined;
   }
-  const p = ((await res.json().catch(() => ({}))) as { places?: { id?: string; displayName?: { text?: string }; formattedAddress?: string }[] }).places?.[0];
-  if (!p?.id || !similar(p.displayName?.text ?? "", name) || !samePostcode(address, p.formattedAddress ?? "")) {
+  const p = ((await res.json().catch(() => ({}))) as { places?: { id?: string; displayName?: { text?: string }; formattedAddress?: string; websiteUri?: string }[] }).places?.[0];
+  // With a website entered, the place's own website must match it: a different "Rose Garden" is not this business.
+  const wanted = hostOf(website), theirs = hostOf(p?.websiteUri ?? "");
+  const siteMismatch = !!wanted && !!theirs && wanted !== theirs;
+  if (!p?.id || !similar(p.displayName?.text ?? "", name) || !samePostcode(address, p.formattedAddress ?? "") || siteMismatch) {
     console.error("review lookup: google match rejected", p?.displayName?.text, p?.formattedAddress);
     return undefined;
   }
@@ -69,13 +74,13 @@ async function tripadvisorLink(name: string, address: string): Promise<string | 
   return url && /^https:\/\/([a-z]+\.)?tripadvisor\./i.test(url) ? url : undefined;
 }
 
-export async function findReviewLinks(name: string, address: string): Promise<ReviewLinks> {
+export async function findReviewLinks(name: string, address: string, website = ""): Promise<ReviewLinks> {
   if (!process.env.GOOGLE_PLACES_API_KEY && !process.env.TRIPADVISOR_API_KEY) return {};
   const n = name.trim().slice(0, 120);
   const a = address.trim().slice(0, 200);
   if (n.length < 3 || (a.length < 6 && n.length < 6)) return {};
   await ensureSchema();
-  const keyHash = crypto.createHash("sha256").update(`${n.toLowerCase()}|${a.toLowerCase()}`).digest("hex");
+  const keyHash = crypto.createHash("sha256").update(`${n.toLowerCase()}|${a.toLowerCase()}|${hostOf(website)}`).digest("hex");
   // Found links are kept for 30 days; "found nothing" only for an hour, so a failed lookup or a key added later is retried.
   const cached = (await sql`
     SELECT google, tripadvisor FROM tapcard_review_cache
@@ -85,7 +90,7 @@ export async function findReviewLinks(name: string, address: string): Promise<Re
   if (cached[0]) return { google: cached[0].google || undefined, tripadvisor: cached[0].tripadvisor || undefined };
   const today = (await sql`SELECT COUNT(*)::int AS n FROM tapcard_review_cache WHERE fetched_at > now() - interval '1 day'`) as { n: number }[];
   if ((today[0]?.n ?? 0) >= DAILY_CAP) return {};
-  const [google, tripadvisor] = await Promise.all([googleLink(n, a), tripadvisorLink(n, a)]);
+  const [google, tripadvisor] = await Promise.all([googleLink(n, a, website), tripadvisorLink(n, a)]);
   await sql`
     INSERT INTO tapcard_review_cache (key_hash, google, tripadvisor) VALUES (${keyHash}, ${google ?? ""}, ${tripadvisor ?? ""})
     ON CONFLICT (key_hash) DO UPDATE SET google = EXCLUDED.google, tripadvisor = EXCLUDED.tripadvisor, fetched_at = now()

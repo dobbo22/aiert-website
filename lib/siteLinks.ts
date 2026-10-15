@@ -369,7 +369,7 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
   }
   // Reviews the site itself doesn't link to: ask Google / Tripadvisor by name and address (needs the API keys).
   if ((name || address) && (!found.has("google_review") || !found.has("tripadvisor"))) {
-    const reviews = await findReviewLinks(name ?? "", address ?? details.address ?? "").catch(() => ({}) as { google?: string; tripadvisor?: string });
+    const reviews = await findReviewLinks(name ?? "", address ?? details.address ?? "", domain).catch(() => ({}) as { google?: string; tripadvisor?: string });
     if (reviews.google && !found.has("google_review")) found.set("google_review", reviews.google);
     if (reviews.tripadvisor && !found.has("tripadvisor")) found.set("tripadvisor", reviews.tripadvisor);
   }
