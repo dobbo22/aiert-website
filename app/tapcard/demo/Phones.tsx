@@ -515,7 +515,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
     onBlur: () => setHint(null),
   });
   const shownText = hint ?? caption ?? (built
-    ? { step: 0, text: "Your card is built. Press 1 below to see how people get it. Tap anything on the phones to try the links." }
+    ? { step: 0, text: "Your card is built. Press 1 to see how people get it. Tap anything on the phones to try the links." }
     : null);
 
   return (
@@ -531,6 +531,27 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
             <p className="text-xl font-semibold leading-snug text-white">Fill in the form and we&apos;ll build your card from your website. Then buttons show what happens when a customer scans it and when you send an offer.</p>
           )}
         </div>
+        {!running && built ? (
+          <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-white/15 pt-3">
+            {revealed >= 1 ? <button onClick={share} {...bind(1)} className="btn-gold rounded-xl px-4 py-2 text-sm font-semibold">1. Share my card</button> : null}
+            {revealed >= 2 ? <button onClick={sendOffer} {...bind(2)} className="btn-gold rounded-xl px-4 py-2 text-sm font-semibold">2. Send an offer</button> : null}
+            {revealed >= 3 ? <button onClick={useOffer} {...bind(3)} className="btn-gold rounded-xl px-4 py-2 text-sm font-semibold">3. Use the offer</button> : null}
+            <button onClick={() => window.location.reload()} {...bind(0)} className="ml-auto rounded-xl px-3 py-2 text-sm font-semibold text-gold underline">Set up again</button>
+          </div>
+        ) : null}
+        {!running && revealed >= 2 && built ? (
+          <div className="mt-3 border-t border-white/15 pt-3">
+            <div className="flex items-center gap-2">
+              <label htmlFor="offer-text" className="text-sm font-semibold text-white">Offer:</label>
+              <input id="offer-text" value={offer} maxLength={60} onChange={(e) => setOffer(e.target.value)} className="min-w-0 flex-1 rounded-xl bg-white px-3 py-2 text-sm text-[#111318]" />
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {suggestions.map((o) => (
+                <button key={o} type="button" onClick={() => setOffer(o)} className={`rounded-full px-3 py-1 text-xs font-semibold ${o === offer ? "bg-gold text-[#111318]" : "bg-white/10 text-white"}`}>{o}</button>
+              ))}
+            </div>
+          </div>
+        ) : null}
         {running ? (
           <div className="mt-3 flex items-center gap-3 border-t border-white/15 pt-3">
             <button type="button" onClick={() => setPaused(!paused)} className="rounded-xl bg-white px-4 py-2 text-sm font-bold text-[#111318]">{paused ? "▶ Resume" : "⏸ Pause"}</button>
@@ -543,25 +564,6 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
         <Phone label="Your business" tab={built && ["card", "saved", "offerLive"].includes(aView) ? "cards" : undefined} overlay={browseA ? <InPhoneBrowser row={browseA} name={name} website={website} onClose={() => setBrowseA(null)} /> : null}>{showPhoneA()}</Phone>
         <Phone label="Alex Morgan, a customer" tab={bView === "contacts" ? "contacts" : undefined} overlay={browseB ? <InPhoneBrowser row={browseB} name={name} website={website} onClose={() => setBrowseB(null)} /> : null}>{showPhoneB()}</Phone>
       </div>
-      <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-        {revealed >= 1 && built ? <button disabled={running} onClick={share} {...bind(1)} className="btn-gold rounded-xl px-5 py-3 text-sm font-semibold disabled:opacity-50">1. Share my card</button> : null}
-        {revealed >= 2 ? <button disabled={running} onClick={sendOffer} {...bind(2)} className="btn-gold rounded-xl px-5 py-3 text-sm font-semibold disabled:opacity-50">2. Send an offer</button> : null}
-        {revealed >= 3 ? <button disabled={running} onClick={useOffer} {...bind(3)} className="btn-gold rounded-xl px-5 py-3 text-sm font-semibold disabled:opacity-50">3. Use the offer</button> : null}
-        {built ? <button onClick={() => window.location.reload()} {...bind(0)} className="rounded-xl px-5 py-3 text-sm font-semibold text-gold underline">Set up again</button> : null}
-      </div>
-      {revealed >= 2 && built ? (
-        <div className="mx-auto mt-4 max-w-md">
-          <div className="flex items-center gap-2">
-            <label htmlFor="offer-text" className="text-sm text-cloud">Offer:</label>
-            <input id="offer-text" value={offer} maxLength={60} onChange={(e) => setOffer(e.target.value)} className="min-w-0 flex-1 rounded-xl bg-white px-3 py-2 text-sm text-[#111318]" />
-          </div>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {suggestions.map((o) => (
-              <button key={o} type="button" onClick={() => setOffer(o)} className={`rounded-full px-3 py-1 text-xs font-semibold ${o === offer ? "bg-gold text-[#111318]" : "bg-white/10 text-cloud"}`}>{o}</button>
-            ))}
-          </div>
-        </div>
-      ) : null}
       <style>{`
         @keyframes scan { 0% { top: 8px; } 50% { top: calc(100% - 10px); } 100% { top: 8px; } }
         @keyframes slidedown { from { opacity: 0; transform: translateY(-24px); } to { opacity: 1; transform: none; } }
