@@ -234,8 +234,8 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
   const openB = (r: Row) => setBrowseB(r);
   const [aView, setAView] = useState<AView>("card");
   const [bView, setBView] = useState<BView>("idle");
-  const [reached, setReached] = useState(1); // the furthest step whose button is showing: 1 share, 2 offer, 3 use
-  const revealed = built ? reached : 0;
+  const [completed, setCompleted] = useState(0); // stories finished: 1 share, 2 offer, 3 use
+  const revealed = built ? Math.min(3, completed + 1) : 0; // the furthest story that can be played now
   const [running, setRunning] = useState(false);
   const suggestions = offersFor(kind);
   const [offerOverride, setOffer] = useState<string | null>(null);
@@ -302,7 +302,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
     { run: () => setBView("saved"), step: 1, text: "Alex's own card is sent back to you, so you each have the other's details." },
     { run: () => setBView("follow"), step: 1, text: "Alex is asked once: do you want offers and news from this business? You can't send anyone offers unless they say yes." },
     { run: () => { setBView("contacts"); setAView("saved"); }, step: 1, text: "Alex now follows you. Your phone shows the new follower. Next: send them an offer." },
-  ], () => setReached((r) => Math.max(r, 2)));
+  ], () => setCompleted((c) => Math.max(c, 1)));
 
   const sendOffer = () => {
     setTypedOffer(""); setPin("");
@@ -314,7 +314,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
       { run: () => setAView("offerLive"), step: 2, text: "One tap posts it. Everyone who follows you is notified. Only people who said yes." },
       { run: () => setBView("push"), settle: 1500, step: 2, text: "Alex's phone buzzes with your offer, even with TapCard closed." },
       { run: () => setBView("offer"), step: 2, text: "Alex opens it and can claim a one-off code. Next: see it being used." },
-    ], () => setReached((r) => Math.max(r, 3)));
+    ], () => setCompleted((c) => Math.max(c, 2)));
   };
 
   const useOffer = () => runScenes([
@@ -324,7 +324,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
     { run: () => setPin("4"), hold: 450 }, { run: () => setPin("43"), hold: 450 }, { run: () => setPin("432"), hold: 450 }, { run: () => setPin("4321"), hold: 900 },
     { run: () => { setAView("used"); setBView("used"); }, step: 3, text: "A big tick for your staff, and Alex's phone shows the offer as used. It can't be used twice." },
     { run: () => setAView("offerLive"), step: 3, text: "That's the whole journey. Press Set up again to try your own business." },
-  ]);
+  ], () => setCompleted((c) => Math.max(c, 3)));
 
   const showPhoneA = () => {
     if (!built && stage < 1) {
@@ -526,7 +526,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
     onBlur: () => setHint(null),
   });
   const shownText = hint ?? caption ?? (built
-    ? { step: 0, text: "Your card is built. Press 1 to see how people get it, then press Next when it turns green. Tap anything on the phones to try the links." }
+    ? { step: 0, text: "Your card is built. Press the gold button to see how people get it. Then press the same button each time it turns green. Tap anything on the phones to try the links." }
     : null);
 
   return (
@@ -543,27 +543,39 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
             <p className="text-xl font-semibold leading-snug text-white">Fill in the form and we&apos;ll build your card from your website. Then buttons here show what happens when a customer scans it and when you send an offer.</p>
           )}
         </div>
-        {/* One row, always the same buttons in the same places. */}
-        <div className={`mt-3 flex flex-wrap items-center gap-2 border-t border-white/15 pt-3 ${built ? "" : "invisible"}`}>
-          <button onClick={share} disabled={running || revealed < 1} {...bind(1)} className="btn-gold rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-40">1. Share my card</button>
-          <button onClick={sendOffer} disabled={running || revealed < 2} {...bind(2)} className="btn-gold rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-40">2. Send an offer</button>
-          <button onClick={useOffer} disabled={running || revealed < 3} {...bind(3)} className="btn-gold rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-40">3. Use the offer</button>
-          <button
-            type="button"
-            onClick={() => { skipRef.current = true; }}
-            disabled={!running || !ready}
-            className={`ml-auto rounded-xl px-5 py-2 text-sm font-bold transition ${running && ready ? "animate-pulse bg-green-500 text-white ring-2 ring-green-300" : "bg-white/10 text-white/50"}`}
-          >
-            Next ›
-          </button>
+        {/* One big button in one fixed place: it starts each story, then becomes Next (grey, then green when the screen is ready). */}
+        <div className={`mt-3 border-t border-white/15 pt-3 ${built ? "" : "invisible"}`}>
+          {(() => {
+            const labels = ["1. Share my card", "2. Send an offer", "3. Use the offer"];
+            const plays = [share, sendOffer, useOffer];
+            const base = "h-14 w-full rounded-xl text-lg font-bold transition";
+            if (running) {
+              return (
+                <button type="button" onClick={() => { skipRef.current = true; }} disabled={!ready}
+                  className={`${base} ${ready ? "animate-pulse bg-green-500 text-white ring-4 ring-green-300" : "bg-white/10 text-white/40"}`}>
+                  Next ›
+                </button>
+              );
+            }
+            if (completed >= 3) {
+              return <button type="button" onClick={() => window.location.reload()} {...bind(0)} className={`${base} btn-gold`}>↻ Set up again</button>;
+            }
+            return <button type="button" onClick={plays[completed]} {...bind(completed + 1)} className={`${base} btn-gold`}>▶ {labels[completed]}</button>;
+          })()}
         </div>
-        <div className={`mt-2 flex flex-wrap items-center gap-4 text-sm text-white/90 ${built ? "" : "invisible"}`}>
+        <div className={`mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-white/90 ${built ? "" : "invisible"}`}>
           <label className="flex cursor-pointer items-center gap-2">
             <input type="checkbox" className="h-4 w-4" checked={auto} onChange={(e) => setAuto(e.target.checked)} />
             Auto-play
           </label>
-          <span className="min-w-[8rem]">{running && scene ? `Scene ${scene.i} of ${scene.n}` : ""}</span>
-          <button onClick={() => window.location.reload()} {...bind(0)} className="ml-auto rounded-xl px-2 py-1 font-semibold text-gold underline">Set up again</button>
+          <span className="min-w-[7rem]">{running && scene ? `Scene ${scene.i} of ${scene.n}` : ""}</span>
+          <span className="ml-auto flex items-center gap-3">
+            {completed > 0 ? <span className="text-white/60">Replay:</span> : null}
+            {[1, 2, 3].map((n) => (completed >= n ? (
+              <button key={n} type="button" disabled={running} onClick={[share, sendOffer, useOffer][n - 1]} {...bind(n)} className="font-semibold text-gold underline disabled:opacity-40">{n}</button>
+            ) : null))}
+            <button type="button" onClick={() => window.location.reload()} {...bind(0)} className="font-semibold text-gold underline">Set up again</button>
+          </span>
         </div>
         {/* Reserved space, so nothing shifts when it fills in. */}
         <div className={`mt-3 min-h-[5.5rem] border-t border-white/15 pt-3 ${built ? "" : "invisible"}`}>
