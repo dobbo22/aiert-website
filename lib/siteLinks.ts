@@ -230,9 +230,9 @@ function pick(found: Map<LinkKind, string>, kind: LinkKind, url: URL | string) {
   found.set(kind, u.replace(/^http:\/\//i, "https://"));
 }
 
-export interface SiteDetails { address?: string; phone?: string; facebook?: string; instagram?: string; twitter?: string; linkedin?: string }
+export interface SiteDetails { address?: string; phone?: string; facebook?: string; instagram?: string; twitter?: string; linkedin?: string; tiktok?: string }
 
-type Social = "facebook" | "instagram" | "twitter" | "linkedin";
+type Social = "facebook" | "instagram" | "twitter" | "linkedin" | "tiktok";
 
 // The business's own profile from a link on its site (never a share button or a generic page).
 export function socialOf(u: URL): { kind: Social; url: string } | null {
@@ -254,6 +254,9 @@ export function socialOf(u: URL): { kind: Social; url: string } | null {
   if (/^(twitter\.[a-z.]+|x\.com)$/.test(host)) {
     if (/^(intent|share|home|search|hashtag|i|login|settings|tos|privacy)$/.test(first)) return null;
     return clean("twitter", "https://x.com", `/${segs[0].replace(/^@/, "")}`);
+  }
+  if (/^tiktok\.com$/.test(host)) {
+    return first.startsWith("@") && first.length > 1 ? clean("tiktok", "https://www.tiktok.com", `/${segs[0]}`) : null;
   }
   if (/^linkedin\.com$/.test(host)) {
     if (!/^(company|in|school)$/.test(first) || !segs[1]) return null;
