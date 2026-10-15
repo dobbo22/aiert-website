@@ -17,6 +17,7 @@
   "crons": [
     { "path": "/api/cron/search-console-snapshot", "schedule": "0 6 * * *" },
     { "path": "/api/cron/biz-trial-reminders", "schedule": "0 8 * * *" },
-    { "path": "/api/cron/push-daily", "schedule": "0 16 * * *" }
+    { "path": "/api/cron/push-daily", "schedule": "0 16 * * *" },
+    { "path": "/api/cron/demo-retention", "schedule": "30 3 * * *" }
   ]
 }

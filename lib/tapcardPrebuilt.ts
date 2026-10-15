@@ -51,6 +51,22 @@ function ensureSchema(): Promise<unknown> {
       await sql`ALTER TABLE tapcard_prebuilt ADD COLUMN IF NOT EXISTS store_clicked_at TIMESTAMPTZ`;
       await sql`ALTER TABLE tapcard_prebuilt ADD COLUMN IF NOT EXISTS store_platform TEXT`;
       await sql`ALTER TABLE tapcard_prebuilt ADD COLUMN IF NOT EXISTS app_platform TEXT`;
+      // Everyone who pressed "Build my TapCard": captured then, whether or not they ask for the emailed link.
+      await sql`
+        CREATE TABLE IF NOT EXISTS tapcard_demo_leads (
+          id SERIAL PRIMARY KEY,
+          email TEXT NOT NULL,
+          business_name TEXT NOT NULL,
+          website TEXT NOT NULL DEFAULT '',
+          kind TEXT NOT NULL DEFAULT '',
+          ip_hash TEXT,
+          consent_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          link_sent_at TIMESTAMPTZ
+        )
+      `;
+      // They ticked the separate, optional box to hear about TapCard in future. Without it, only the link they asked for.
+      await sql`ALTER TABLE tapcard_demo_leads ADD COLUMN IF NOT EXISTS marketing_ok BOOLEAN NOT NULL DEFAULT false`;
     }).catch((e) => { ready = null; throw e; });
   }
   return ready;
@@ -110,7 +126,7 @@ export async function storePrebuilt(email: string, name: string, website: string
     VALUES (${token}, ${email}, ${name}, ${website}, ${JSON.stringify(payload)}::jsonb, ${ipHash}, ${kind})
   `;
   // Keep nothing for long: a link is good for 30 days, rows go after 60.
-  await sql`DELETE FROM tapcard_prebuilt WHERE created_at < now() - interval '60 days'`;
+  await sql`DELETE FROM tapcard_prebuilt WHERE created_at < now() - ${`${DEMO_RETENTION_DAYS} days`}::interval`;
   return token;
 }
 
@@ -168,31 +184,39 @@ export async function recordDemoEvent(token: string, event: DemoEvent, platform:
 }
 
 export interface DemoLeadRow {
-  created_at: string; email: string; business_name: string; website: string; kind: string;
-  link_opened_at: string | null; link_opens: number; store_clicked_at: string | null; store_platform: string | null;
+  created_at: string; email: string; business_name: string; website: string; kind: string; link_sent_at: string | null; marketing_ok: boolean;
+  link_opened_at: string | null; link_opens: number | null; store_clicked_at: string | null; store_platform: string | null;
   claimed_at: string | null; app_platform: string | null;
 }
 
 export async function listDemoLeads(): Promise<DemoLeadRow[]> {
   await ensureSchema();
   return (await sql`
-    SELECT created_at, email, business_name, website, kind, link_opened_at, link_opens, store_clicked_at, store_platform, claimed_at, app_platform
-    FROM tapcard_prebuilt ORDER BY created_at DESC LIMIT 200
+    SELECT l.created_at, l.email, l.business_name, l.website, l.kind, l.link_sent_at, l.marketing_ok,
+           p.link_opened_at, p.link_opens, p.store_clicked_at, p.store_platform, p.claimed_at, p.app_platform
+    FROM tapcard_demo_leads l
+    LEFT JOIN LATERAL (
+      SELECT link_opened_at, link_opens, store_clicked_at, store_platform, claimed_at, app_platform
+      FROM tapcard_prebuilt p WHERE lower(p.email) = lower(l.email) AND p.business_name = l.business_name
+      ORDER BY p.created_at DESC LIMIT 1
+    ) p ON true
+    ORDER BY l.created_at DESC LIMIT 200
   `) as DemoLeadRow[];
 }
 
-
 /// The demo visitor's email goes into Links & Invites (admin/social/links) as a contact, kind "demo", so they can be
 /// followed up from there. An existing contact for that email is left as it is.
-export async function recordDemoContact(email: string, business: string, website: string, address: string): Promise<void> {
+export async function recordDemoContact(email: string, business: string, website: string, address: string, marketingOk = false): Promise<void> {
   const key = dedupeKey(email, "");
   if (!key) return;
   await ensureInviteSchema();
   await sql`
-    INSERT INTO tapcard_invite_contacts (dedupe_key, name, email, company, website, address, kind)
-    VALUES (${key}, ${business}, ${email}, ${business}, ${website}, ${address}, 'demo')
+    INSERT INTO tapcard_invite_contacts (dedupe_key, name, email, company, website, address, kind, do_not_contact)
+    VALUES (${key}, ${business}, ${email}, ${business}, ${website}, ${address}, 'demo', ${!marketingOk})
     ON CONFLICT (dedupe_key) DO NOTHING
   `;
+  // A later build with the box ticked opens the contact up to marketing; unticking never closes it (they have to unsubscribe).
+  if (marketingOk) await sql`UPDATE tapcard_invite_contacts SET do_not_contact = false WHERE dedupe_key = ${key} AND kind = 'demo'`;
 }
 
 
@@ -234,4 +258,57 @@ export async function checkWebsite(raw: string): Promise<{ ok: boolean; suggesti
     if (alt !== host && (await resolves(alt))) return { ok: false, suggestion: alt.replace(/^www\./, "") };
   }
   return { ok: false };
+}
+
+
+// ---- Capture and retention -----------------------------------------------------------------------------------------
+
+/// How long demo details are kept. The privacy page says the same number: change both together.
+export const DEMO_RETENTION_DAYS = 60;
+
+/// Builds per connection per day, so the form can't be used to fill the list with junk.
+const MAX_BUILDS_PER_IP_PER_DAY = 20;
+
+/// The visitor pressed Build my TapCard: keep their email, business and website (once per email + website + day).
+/// Returns false when this connection has built too many today.
+export async function recordDemoLead(email: string, business: string, website: string, kind: string, ipHash: string | null, marketingOk = false): Promise<boolean> {
+  await ensureSchema();
+  if (ipHash) {
+    const n = ((await sql`SELECT COUNT(*)::int AS n FROM tapcard_demo_leads WHERE ip_hash = ${ipHash} AND created_at > now() - interval '1 day'`) as { n: number }[])[0]?.n ?? 0;
+    if (n >= MAX_BUILDS_PER_IP_PER_DAY) return false;
+  }
+  const dup = (await sql`
+    SELECT 1 FROM tapcard_demo_leads
+    WHERE lower(email) = ${email.toLowerCase()} AND business_name = ${business} AND website = ${website} AND created_at > now() - interval '1 day'
+  `) as unknown[];
+  if (!dup.length) {
+    await sql`INSERT INTO tapcard_demo_leads (email, business_name, website, kind, ip_hash, marketing_ok) VALUES (${email}, ${business}, ${website}, ${kind}, ${ipHash}, ${marketingOk})`;
+  } else if (marketingOk) {
+    await sql`UPDATE tapcard_demo_leads SET marketing_ok = true WHERE lower(email) = ${email.toLowerCase()} AND business_name = ${business} AND website = ${website}`;
+  }
+  return true;
+}
+
+export async function markDemoLinkSent(email: string, business: string): Promise<void> {
+  await ensureSchema();
+  await sql`
+    UPDATE tapcard_demo_leads SET link_sent_at = now()
+    WHERE id = (SELECT id FROM tapcard_demo_leads WHERE lower(email) = ${email.toLowerCase()} AND business_name = ${business} ORDER BY id DESC LIMIT 1)
+  `;
+}
+
+/// Deletes everything older than the retention period: leads, built cards, and demo contacts nobody has since emailed.
+export async function purgeDemoData(): Promise<{ leads: number; cards: number; contacts: number }> {
+  await ensureSchema();
+  await ensureInviteSchema();
+  const days = `${DEMO_RETENTION_DAYS} days`;
+  const leads = (await sql`DELETE FROM tapcard_demo_leads WHERE created_at < now() - ${days}::interval RETURNING id`) as unknown[];
+  const cards = (await sql`DELETE FROM tapcard_prebuilt WHERE created_at < now() - ${days}::interval RETURNING token`) as unknown[];
+  const contacts = (await sql`
+    DELETE FROM tapcard_invite_contacts c
+    WHERE c.kind = 'demo' AND c.created_at < now() - ${days}::interval
+      AND NOT EXISTS (SELECT 1 FROM tapcard_invite_sends s WHERE s.contact_id = c.id)
+    RETURNING c.id
+  `) as unknown[];
+  return { leads: leads.length, cards: cards.length, contacts: contacts.length };
 }

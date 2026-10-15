@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { applyChoices, buildPrebuiltCard, checkWebsite, hashIp, recentCounts, recordDemoContact, storePrebuilt } from "@/lib/tapcardPrebuilt";
+import { applyChoices, buildPrebuiltCard, checkWebsite, hashIp, recentCounts, markDemoLinkSent, recordDemoContact, recordDemoLead, storePrebuilt } from "@/lib/tapcardPrebuilt";
 import { sendPrebuiltEmail } from "@/lib/tapcardPrebuiltEmail";
 import { DEMO_KINDS } from "@/app/tapcard/demo/demoOffers";
 
@@ -20,22 +20,32 @@ export async function POST(req: NextRequest) {
   if (body.consent !== true) return NextResponse.json({ error: "consent" }, { status: 400 });
   if (website && !/^(https?:\/\/)?[^\s/]+\.[a-z]{2,}(\/\S*)?$/i.test(website)) return NextResponse.json({ error: "website" }, { status: 400 });
 
+  const ipHash = hashIp((req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim());
+
   // A website name that does not exist (a typo like aiert.cco.uk): ask the visitor to correct it, with a suggestion when obvious.
   if (website) {
     const check = await checkWebsite(website);
     if (!check.ok) return NextResponse.json({ error: "website_unreachable", suggestion: check.suggestion ?? null }, { status: 422 });
   }
 
-  // preview: build and show the card, nothing saved and nothing sent. The send call carries the visitor's choices.
   const preview = body.preview === true;
+
+  // Pressing Build is when the email, business and website are captured (the form and the privacy page say so). The first build
+  // call of a session is the preview; asking for the link later does not capture them again.
+  if (preview) {
+    const marketingOk = body.marketing === true;
+    const ok = await recordDemoLead(email, name, website, kind, ipHash, marketingOk).catch(() => true);
+    if (!ok) return NextResponse.json({ error: "rate_limited" }, { status: 429 });
+    await recordDemoContact(email, name, website, address, marketingOk).catch((e) => console.error("demo contact failed", e));
+  }
+
+  // The send call carries the visitor's choices.
   const keep = Array.isArray(body.keep) ? body.keep.filter((x): x is string => typeof x === "string").slice(0, 30) : null;
   const extra = (Array.isArray(body.extra) ? body.extra : []).slice(0, 2).map((e) => {
     const r = (e ?? {}) as Record<string, unknown>;
     return { label: String(r.label ?? ""), value: String(r.value ?? "") };
   });
 
-  const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim();
-  const ipHash = hashIp(ip);
   const { byIp, byEmail } = await recentCounts(ipHash, email);
   if (byIp >= 5 || byEmail >= 3) return NextResponse.json({ error: "rate_limited" }, { status: 429 });
 
@@ -46,9 +56,8 @@ export async function POST(req: NextRequest) {
   if (branches.length > 1 && !address) return NextResponse.json({ needsBranch: true, branches: branches.slice(0, 12) });
   if (preview) return NextResponse.json({ ok: true, preview: true, card });
   const token = await storePrebuilt(email, name, website, card, ipHash, kind);
-  await recordDemoContact(email, name, card.website, card.address).catch((e) => console.error("demo contact failed", e));
   const link = `https://tapcard.aiert.co.uk/start/${token}`;
   let emailed = true;
-  try { await sendPrebuiltEmail(email, name, link); } catch (e) { emailed = false; console.error("prebuilt email failed", e); }
+  try { await sendPrebuiltEmail(email, name, link); await markDemoLinkSent(email, name); } catch (e) { emailed = false; console.error("prebuilt email failed", e); }
   return NextResponse.json({ ok: true, emailed, card, link });
 }

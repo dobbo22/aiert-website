@@ -140,11 +140,24 @@ export default function TapCardPrivacyPage() {
       <section>
         <h2>The &ldquo;Build my TapCard&rdquo; demo</h2>
         <p>
-          On tapcard.aiert.co.uk/demo you can type a business name, website, type of business and your email, and we
-          build a card from your own website. If you ask for the link, we email it to you once. We keep your email,
-          business details and the card for 60 days, and we note whether you open the link, tap a store button on that
-          page, and open TapCard with your card, so we can help if you get stuck. Nothing is added to a mailing list,
-          and there is no tracking pixel in the email. Ask us to delete it any time at <a href="mailto:enquiries@aiert.co.uk">enquiries@aiert.co.uk</a>.
+          On tapcard.aiert.co.uk/demo you type a business name, your website, a type of business and your email, and we build a
+          card from your own website. When you press <strong>Build my TapCard</strong> we keep your email address, business name,
+          website and type of business, together with a short-lived scrambled form of your connection address that stops the form
+          being abused. You agree to this by ticking the box on the form. We do not need you to ask for the emailed link first.
+        </p>
+        <p>
+          If you ask for the link, we email it to you once and keep the card we built for you. We note whether you open the
+          link, tap an App Store or Google Play button on that page, and open TapCard with your card, so we can help if you get
+          stuck. There is no tracking pixel in the email.
+        </p>
+        <p>
+          We only send you marketing about TapCard if you tick the separate, optional box saying so, and you can unsubscribe at
+          any time. If you don&apos;t tick it, you are not added to any marketing list.
+        </p>
+        <p>
+          <strong>How long we keep it:</strong> everything from the demo (the email, business details, the card we built and what
+          happened after the link) is deleted automatically after 60 days. You can ask us to delete it sooner by emailing{" "}
+          <a href="mailto:enquiries@aiert.co.uk">enquiries@aiert.co.uk</a>. The demo is provided by AIERT Ltd.
         </p>
       </section>
 
