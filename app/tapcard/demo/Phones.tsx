@@ -275,6 +275,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
 
   async function runScenes(scenes: Scene[], then?: () => void) {
     const id = ++runRef.current;
+    setHint(null);
     setRunning(true);
     setReady(false);
     const textScenes = scenes.filter((x) => x.text).length;
@@ -533,7 +534,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
     onFocus: () => setHint({ step: n, text: HINTS[n] }),
     onBlur: () => setHint(null),
   });
-  const shownText = hint ?? caption ?? (built
+  const shownText = (running ? caption : hint ?? caption) ?? (built
     ? { step: 0, text: "Your card is built. Press the gold button to see how people get it. Then press the same button each time it turns green. Tap anything on the phones to try the links." }
     : null);
 
