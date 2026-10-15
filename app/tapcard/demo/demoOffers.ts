@@ -9,6 +9,7 @@ export const DEMO_OFFERS: Record<string, string[]> = {
   "Florist": ["6 roses for the price of 3", "Free delivery on orders over £30", "Free vase with any bouquet"],
   "Clothing or gift shop": ["10% off your next purchase", "Free gift wrapping this month", "Buy one, get one half price on accessories"],
   "Butcher, greengrocer or farm shop": ["Free sausages with orders over £25", "10% off your first box", "Free veg with any meat order"],
+  "Dry cleaner or laundry": ["Free collection and delivery on your first order", "10% off your first dry clean", "Free shirt wash with any order over £25"],
   "Other shop": ["10% off your next purchase", "Free delivery this week", "Free gift with orders over £30"],
   "Hairdresser or barber": ["Free blow-dry with any colour", "10% off your next cut", "Bring a friend, they get 20% off"],
   "Beauty, nails or spa": ["Free hand massage with any facial", "10% off your next treatment", "Free nail art with any manicure"],
