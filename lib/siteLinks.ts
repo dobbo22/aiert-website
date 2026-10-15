@@ -157,7 +157,7 @@ export function textPlaces(html: string): HoursPlace[] {
     // The postcode line may also carry the town ("Great Dunmow CM6 1AG"); the lines above it are the street and name.
     for (let k = i - 1; k >= Math.max(0, i - 4); k--) {
       const l = lines[k];
-      if (l.length > 70 || PHONE_RE.test(l) || /@|^(contact|find us|visit|address|opening)/i.test(l) || DAY_WORDS.test(l)) break;
+      if (l.length > 70 || PHONE_RE.test(l) || /@|^(contact|find us|visit|address|opening)/i.test(l) || (DAY_WORDS.test(l) && TIME.test(l))) break;
       block.unshift(l);
     }
     // Lines that are only the county ("Essex") belong to the address; a lone nav word ("Home") does not.
@@ -331,7 +331,14 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
         const text = b.toString("utf8");
         const more2 = jsonLdUrls(text).places;
         if (more2.length) places.push(...more2);
-        else if (!places.length) places.push(...textPlaces(text));
+        else {
+          // A plain contact page: its hours belong to the address beside them (same postcode), else it is a new place.
+          for (const tp of textPlaces(text)) {
+            const same = places.find((x) => x.postcode && x.postcode === tp.postcode);
+            if (same) { if (tp.hoursText && !same.hoursText && !same.specs.length) same.hoursText = tp.hoursText; }
+            else if (!places.length || tp.hoursText) places.push(tp);
+          }
+        }
       }
       place = matchPlace(places, postcode, where);
       hours = place ? placeHours(place) || undefined : undefined;
