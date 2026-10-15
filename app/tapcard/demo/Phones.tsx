@@ -13,14 +13,15 @@ const OFFER_DEFAULT = "10% off your first order";
 type AView = "card" | "qr" | "saved" | "offerForm" | "offerLive" | "staff" | "used";
 type BView = "idle" | "scanning" | "received" | "saved" | "follow" | "contacts" | "push" | "offer" | "claimed" | "used";
 
-function Phone({ label, children }: { label: string; children: React.ReactNode }) {
+function Phone({ label, children, overlay }: { label: string; children: React.ReactNode; overlay?: React.ReactNode }) {
   return (
     <div className="w-full max-w-[17rem]">
       <p className="mb-2 text-center text-sm font-semibold text-cloud">{label}</p>
       <div className="rounded-[2.2rem] bg-black p-2.5 shadow-2xl ring-1 ring-white/20">
-        {/* Fixed height: the screen scrolls, it never grows. */}
-        <div className="h-[34rem] overflow-y-auto overflow-x-hidden rounded-[1.8rem] bg-[#111318] text-white [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {children}
+        {/* Fixed height: the screen scrolls, it never grows. A tapped link opens over the screen, like an in-app browser. */}
+        <div className="relative h-[34rem] overflow-hidden rounded-[1.8rem] bg-[#111318] text-white">
+          <div className="h-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{children}</div>
+          {overlay}
         </div>
       </div>
     </div>
@@ -32,9 +33,15 @@ function domainOf(website: string): string {
   try { return new URL(/^https?:\/\//i.test(website) ? website : `https://${website}`).hostname.replace(/^www\./, ""); } catch { return ""; }
 }
 
-function CardFace({ name, typed, stage, rows, socials, interactive, domain }: {
-  name: string; typed: string; stage: number; rows: Row[]; socials: Row[]; interactive: boolean; domain: string;
+function CardFace({ name, typed, stage, rows, socials, interactive, domain, onOpen }: {
+  name: string; typed: string; stage: number; rows: Row[]; socials: Row[]; interactive: boolean; domain: string; onOpen: (r: Row) => void;
 }) {
+  // A tap opens inside the phone; a modified click (new tab) still goes to the real page.
+  const tap = (r: Row) => (e: React.MouseEvent) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+    e.preventDefault();
+    onOpen(r);
+  };
   const [logoFailed, setLogoFailed] = useState(false);
   const [iconFailed, setIconFailed] = useState(false);
   const d = encodeURIComponent(domain);
@@ -71,7 +78,7 @@ function CardFace({ name, typed, stage, rows, socials, interactive, domain }: {
           const cls = "flex items-center gap-3 rounded-xl bg-white/10 px-3 py-2 [animation:fadein_0.5s_ease]";
           return (
             <li key={r.key}>
-              {r.href && interactive ? <a href={r.href} target="_blank" rel="noopener noreferrer" className={`${cls} transition hover:bg-white/20`}>{inner}</a> : <div className={cls}>{inner}</div>}
+              {r.href && interactive ? <a href={r.href} onClick={tap(r)} target="_blank" rel="noopener noreferrer" className={`${cls} transition hover:bg-white/20`}>{inner}</a> : <div className={cls}>{inner}</div>}
             </li>
           );
         })}
@@ -81,7 +88,7 @@ function CardFace({ name, typed, stage, rows, socials, interactive, domain }: {
           <p className="text-[10px] font-semibold uppercase tracking-wider">Tap an icon to follow</p>
           <div className="mt-2 flex flex-wrap justify-center gap-2.5">
             {socials.map((r) => (
-              <a key={r.key} href={interactive ? r.href : undefined} target="_blank" rel="noopener noreferrer" aria-label={r.title} title={r.title}
+              <a key={r.key} href={interactive ? r.href : undefined} onClick={interactive ? tap(r) : undefined} target="_blank" rel="noopener noreferrer" aria-label={r.title} title={r.title}
                 className="flex h-10 w-10 items-center justify-center rounded-xl ring-1 ring-white/15 [animation:fadein_0.5s_ease]" style={{ background: r.color }}>
                 <ContactIcon name={r.icon} large />
               </a>
@@ -89,6 +96,56 @@ function CardFace({ name, typed, stage, rows, socials, interactive, domain }: {
           </div>
         </div>
       ) : null}
+      </div>
+    </div>
+  );
+}
+
+// A tapped link, opened over the phone's screen. Pages that allow it are shown for real; the rest (Facebook, Instagram,
+// X, Maps refuse to be framed) get a preview page, so it never shows a blank box.
+function InPhoneBrowser({ row, name, onClose }: { row: Row; name: string; onClose: () => void }) {
+  const isCall = !!row.href?.startsWith("tel:");
+  const url = row.href && !isCall ? row.href : "";
+  const [frameable, setFrameable] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!url || !/^https:\/\//i.test(url)) return;
+    let cancelled = false;
+    fetch(`/api/demo/frameable?url=${encodeURIComponent(url)}`).then((r) => r.json()).then((d) => { if (!cancelled) setFrameable(d.frameable === true); }).catch(() => { if (!cancelled) setFrameable(false); });
+    return () => { cancelled = true; };
+  }, [url]);
+  const host = (() => { try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return ""; } })();
+  const checking = !isCall && !!url && /^https:\/\//i.test(url) && frameable === null;
+  const social = !!row.social;
+  return (
+    <div className="absolute inset-0 z-20 flex flex-col bg-[#f2f3f5] text-[#111318] [animation:fadein_0.25s_ease]">
+      <div className="flex items-center gap-2 bg-white px-3 py-2 text-xs shadow">
+        <button onClick={onClose} aria-label="Close" className="flex h-7 w-7 items-center justify-center rounded-full bg-[#e5e7eb] text-sm font-bold">✕</button>
+        <span className="min-w-0 flex-1 truncate rounded-full bg-[#eef0f3] px-3 py-1.5 text-center font-medium">{isCall ? "Phone" : `🔒 ${host || row.title}`}</span>
+        {url ? <a href={url} target="_blank" rel="noopener noreferrer" aria-label="Open in a new tab" className="px-1 text-sm">↗</a> : <span className="w-4" />}
+      </div>
+      <div className="relative min-h-0 flex-1">
+        {isCall ? (
+          <div className="flex h-full flex-col items-center justify-center bg-[#111318] px-6 text-center text-white">
+            <span className="flex h-20 w-20 items-center justify-center rounded-full bg-green-500"><ContactIcon name="phone" large /></span>
+            <p className="mt-4 text-xl font-bold">{name}</p>
+            <p className="text-sm text-white/70">{row.detail}</p>
+            <p className="mt-6 text-sm text-white/70">Calling…</p>
+          </div>
+        ) : checking ? (
+          <div className="flex h-full items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-black/10 border-t-black/60" /></div>
+        ) : frameable ? (
+          <iframe src={url} title={row.title} sandbox="allow-scripts allow-same-origin allow-forms allow-popups" referrerPolicy="no-referrer" className="h-full w-full border-0 bg-white" />
+        ) : (
+          <div className="flex h-full flex-col items-center overflow-y-auto px-5 pt-8 text-center">
+            <span className="flex h-20 w-20 items-center justify-center rounded-2xl text-white shadow-lg" style={{ background: row.color }}><ContactIcon name={row.icon} large /></span>
+            <p className="mt-4 text-lg font-bold">{social ? row.title : row.title}</p>
+            <p className="text-sm font-semibold">{name}</p>
+            <p className="mt-1 max-w-full truncate text-xs text-[#555]">{row.detail}</p>
+            {social ? <div className="mt-4 rounded-full bg-[#0866FF] px-8 py-2 text-sm font-semibold text-white">Follow</div> : null}
+            {url ? <a href={url} target="_blank" rel="noopener noreferrer" className="mt-5 rounded-xl bg-[#111318] px-5 py-2 text-sm font-semibold text-white">Open it for real ↗</a> : null}
+            <p className="mt-4 text-[11px] leading-snug text-[#666]">{social ? "In the app this opens the profile, ready to follow." : "In the app this opens the page."}</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -116,6 +173,10 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
   name: string; website: string; built: boolean; stage: number; typed: string; rows: Row[]; socials: Row[]; buildSpinner: boolean; idleText: string;
 }) {
   const domain = domainOf(website);
+  const [browseA, setBrowseA] = useState<Row | null>(null);
+  const [browseB, setBrowseB] = useState<Row | null>(null);
+  const openA = (r: Row) => setBrowseA(r);
+  const openB = (r: Row) => setBrowseB(r);
   const [aView, setAView] = useState<AView>("card");
   const [bView, setBView] = useState<BView>("idle");
   const [reached, setReached] = useState(1); // the furthest step whose button is showing: 1 share, 2 offer, 3 use
@@ -207,7 +268,7 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
             <AppBar title="My Cards" />
             <Toast><strong>Alex Morgan</strong> saved your card and sent you theirs.</Toast>
             <Toast>1 follower now gets your offers and news.</Toast>
-            <CardFace name={name} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} />
+            <CardFace name={name} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openA} />
           </div>
         );
       case "offerForm":
@@ -227,7 +288,7 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
           <div>
             <AppBar title="My Cards" />
             <Toast><strong>Offer live:</strong> {offer}. 1 follower notified.</Toast>
-            <CardFace name={name} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} />
+            <CardFace name={name} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openA} />
           </div>
         );
       case "staff":
@@ -249,7 +310,7 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
         return (
           <div>
             <AppBar title="My Cards" />
-            <CardFace name={name} typed={typed} stage={stage} rows={rows} socials={socials} interactive={stage >= 4} domain={domain} />
+            <CardFace name={name} typed={typed} stage={stage} rows={rows} socials={socials} interactive={stage >= 4} domain={domain} onOpen={openA} />
           </div>
         );
     }
@@ -260,7 +321,7 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
       <div>
         <AppBar title="Card received" />
         {extra}
-        <CardFace name={name} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} />
+        <CardFace name={name} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openB} />
       </div>
     );
     switch (bView) {
@@ -328,7 +389,7 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
               <p className="text-xs text-white/70">Ends in 7 days</p>
               <div className="mt-3 rounded-xl bg-blue-500 py-2 text-sm font-semibold">Claim this offer</div>
             </div>
-            <CardFace name={name} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} />
+            <CardFace name={name} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openB} />
           </div>
         );
       case "claimed":
@@ -362,8 +423,8 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
   return (
     <div>
       <div className="flex flex-wrap justify-center gap-6">
-        <Phone label="Your business">{showPhoneA()}</Phone>
-        <Phone label="Alex Morgan, a customer">{showPhoneB()}</Phone>
+        <Phone label="Your business" overlay={browseA ? <InPhoneBrowser row={browseA} name={name} onClose={() => setBrowseA(null)} /> : null}>{showPhoneA()}</Phone>
+        <Phone label="Alex Morgan, a customer" overlay={browseB ? <InPhoneBrowser row={browseB} name={name} onClose={() => setBrowseB(null)} /> : null}>{showPhoneB()}</Phone>
       </div>
       <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
         {revealed >= 1 && built ? <button disabled={running} onClick={share} className="btn-gold rounded-xl px-5 py-3 text-sm font-semibold disabled:opacity-50">1. Share my card</button> : null}
