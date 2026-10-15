@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default function DemoPage() {
   return (
     <main className="min-h-screen px-4 py-12">
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-6xl">
         <header className="flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="https://www.aiert.co.uk/tapcard-icon.png" alt="" className="h-10 w-10 rounded-xl" />

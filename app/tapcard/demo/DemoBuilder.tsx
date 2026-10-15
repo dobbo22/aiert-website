@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import QRCode from "qrcode";
 import ContactIcon, { type ContactIconName } from "../ContactIcon";
+import Phones from "./Phones";
 
 interface Link { kind: string; label: string; value: string }
 interface Card {
@@ -13,7 +13,7 @@ interface Card {
 type Phase = "form" | "building" | "choose" | "done";
 
 // One row of the card, revealed in turn so the card visibly assembles itself.
-interface Row { key: string; id: string; title: string; detail: string; color: string; icon: ContactIconName; href?: string; social?: boolean }
+export interface Row { key: string; id: string; title: string; detail: string; color: string; icon: ContactIconName; href?: string; social?: boolean }
 
 const webUrl = (v: string) => (/^https?:\/\//i.test(v) ? v : `https://${v}`);
 const ICONS: Record<string, ContactIconName> = {
@@ -57,7 +57,6 @@ export default function DemoBuilder() {
   const [emailed, setEmailed] = useState(true);
   const [shown, setShown] = useState(0);
   const [stage, setStage] = useState(0); // 0 blank, 1 name, 2 icon/pill, 3 rows, 4 qr
-  const [qr, setQr] = useState("");
   const [typed, setTyped] = useState("");
   const [keep, setKeep] = useState<Set<string>>(new Set());
   const [extras, setExtras] = useState<{ label: string; value: string }[]>([{ label: "", value: "" }, { label: "", value: "" }]);
@@ -83,7 +82,7 @@ export default function DemoBuilder() {
       if (!res.ok) {
         setPhase("form");
         setError(
-          data.error === "rate_limited" ? "That's a lot of cards from one place today. Please try again tomorrow."
+          data.error === "rate_limited" ? "That&apos;s a lot of cards from one place today. Please try again tomorrow."
           : data.error === "email" ? "That email address doesn't look right."
           : data.error === "website" ? "That website address doesn't look right. Try something like yourbusiness.co.uk."
           : data.error === "consent" ? "Please tick the box so we can email your link."
@@ -100,7 +99,6 @@ export default function DemoBuilder() {
       const c = data.card as Card;
       setCard(c);
       setKeep(new Set(rowsFor(c).map((r) => r.id)));
-      void QRCode.toDataURL("https://tapcard.aiert.co.uk/", { margin: 1, width: 200, color: { dark: "#111318", light: "#ffffff" } }).then(setQr);
       const rows = rowsFor(c);
       setStage(1);
       // Type the name in, then reveal the rest a step at a time.
@@ -133,11 +131,10 @@ export default function DemoBuilder() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error === "rate_limited" ? "That's a lot of cards from one place today. Please try again tomorrow." : data.error === "extra" ? "Extra links need to start with https://" : "Something went wrong. Please try again.");
+        setError(data.error === "rate_limited" ? "That&apos;s a lot of cards from one place today. Please try again tomorrow." : data.error === "extra" ? "Extra links need to start with https://" : "Something went wrong. Please try again.");
         return;
       }
       setEmailed(data.emailed !== false);
-      if (data.link) void QRCode.toDataURL(String(data.link), { margin: 1, width: 200, color: { dark: "#111318", light: "#ffffff" } }).then(setQr);
       setPhase("done");
     } catch {
       setError("Couldn't reach the server. Check your connection and try again.");
@@ -158,7 +155,7 @@ export default function DemoBuilder() {
   const phoneSocials = visibleRows.filter((r) => r.social);
 
   return (
-    <section className="mt-10 grid items-start gap-10 md:grid-cols-2">
+    <section className="mt-10 grid items-start gap-10 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
       <div>
         {phase === "form" || phase === "building" ? (
           <form onSubmit={submit} className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
@@ -178,7 +175,7 @@ export default function DemoBuilder() {
             <input tabIndex={-1} autoComplete="off" aria-hidden="true" value={trap} onChange={(e) => setTrap(e.target.value)} style={{ position: "absolute", left: "-9999px" }} name="company" />
             <label className="mt-4 flex items-start gap-3 text-sm text-cloud">
               <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1 h-5 w-5" />
-              <span>Email me my TapCard link. It's one email, not a mailing list. We keep your email and card details for 60 days. <a href="/privacy" className="text-gold underline">Privacy policy</a></span>
+              <span>Email me my TapCard link. It&apos;s one email, not a mailing list. We keep your email and card details for 60 days. <a href="/privacy" className="text-gold underline">Privacy policy</a></span>
             </label>
             {branches ? (
               <div className="mt-4 rounded-xl bg-white/10 p-4 ring-1 ring-gold/40">
@@ -204,13 +201,16 @@ export default function DemoBuilder() {
         ) : phase === "choose" ? (
           <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-gold/40">
             <h2 className="text-2xl font-black text-cloud">Your card is built. Make it yours.</h2>
-            <p className="mt-2 text-cloud">Untick anything you don't want. The phone updates as you go.</p>
+            <p className="mt-2 text-cloud">Untick anything you don&apos;t want. The phone updates as you go.</p>
             <ul className="mt-4 space-y-2">
               {allRows.map((r) => (
                 <li key={r.key}>
                   <label className="flex cursor-pointer items-center gap-3 rounded-xl bg-white/10 px-3 py-3 text-cloud">
-                    <input type="checkbox" className="h-5 w-5" checked={keep.has(r.id)}
+                    <input type="checkbox" className="h-5 w-5 flex-none" checked={keep.has(r.id)}
                       onChange={(e) => setKeep((prev) => { const n = new Set(prev); if (e.target.checked) n.add(r.id); else n.delete(r.id); return n; })} />
+                    <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full" style={{ background: r.color }}>
+                      <ContactIcon name={r.icon} />
+                    </span>
                     <span className="min-w-0">
                       <span className="block font-semibold">{r.title}</span>
                       <span className="block truncate text-sm">{r.detail}</span>
@@ -234,15 +234,15 @@ export default function DemoBuilder() {
             <button onClick={() => void send()} disabled={sending} className="btn-gold mt-5 w-full rounded-xl px-6 py-3 font-semibold disabled:opacity-50">
               {sending ? "Sending…" : "Email me my card"}
             </button>
-            <p className="mt-2 text-xs text-cloud">We'll email {email}. Nothing is sent until you press the button.</p>
+            <p className="mt-2 text-xs text-cloud">We&apos;ll email {email}. Nothing is sent until you press the button.</p>
           </div>
         ) : (
           <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-gold/40">
             <h2 className="text-2xl font-black text-cloud">{emailed ? "Your link is on its way" : "Your card is built"}</h2>
             <p className="mt-3 text-lg leading-relaxed text-cloud">
               {emailed
-                ? <>We've emailed <strong>{email}</strong> a link. Open it on your phone, install TapCard, and your card is already built when you open the app.</>
-                : <>We built your card but couldn't send the email just now. Please try again in a minute.</>}
+                ? <>We&apos;ve emailed <strong>{email}</strong> a link. Open it on your phone, install TapCard, and your card is already built when you open the app.</>
+                : <>We built your card but couldn&apos;t send the email just now. Please try again in a minute.</>}
             </p>
             {card && card.branchCount > 1 ? (
               <p className="mt-3 text-cloud">We found {card.branchCount} addresses on your website, so the app will ask which one this card is for.</p>
@@ -257,74 +257,19 @@ export default function DemoBuilder() {
         )}
       </div>
 
-      {/* The phone: the card assembles itself as it is built. */}
-      <div className="mx-auto w-full max-w-xs">
-        <div className="rounded-[2.5rem] bg-black p-3 shadow-2xl ring-1 ring-white/20">
-          <div className="min-h-[34rem] overflow-hidden rounded-[2rem] bg-[#111318] px-4 pb-6 pt-8 text-center text-white">
-            {phase === "form" ? (
-              <div className="flex h-[30rem] flex-col items-center justify-center text-white/70">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="https://www.aiert.co.uk/tapcard-icon.png" alt="" className="h-16 w-16 rounded-2xl opacity-80" />
-                <p className="mt-4 px-4 text-sm">Your card will build here.</p>
-              </div>
-            ) : phase === "building" && !card ? (
-              <div className="flex h-[30rem] flex-col items-center justify-center">
-                <div className="h-10 w-10 animate-spin rounded-full border-4 border-white/20 border-t-white" />
-                <p className="mt-4 text-sm text-white/80">Reading your website…</p>
-              </div>
-            ) : (
-              <div>
-                <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-white/10 text-4xl transition-all duration-500" style={{ opacity: stage >= 2 ? 1 : 0, transform: stage >= 2 ? "scale(1)" : "scale(0.6)" }}>
-                  <svg viewBox="0 0 24 24" className="h-12 w-12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9M3 9h18M3 9v11h18V9M9 20v-6h6v6" /></svg>
-                </div>
-                <h3 className="mt-4 min-h-[2rem] text-2xl font-bold">{typed}</h3>
-                <span className="mt-2 inline-block rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider transition-opacity duration-500" style={{ opacity: stage >= 2 ? 1 : 0 }}>Business</span>
-                <ul className="mt-5 space-y-2 text-left">
-                  {phoneRows.map((r) => {
-                    const inner = (
-                      <>
-                        <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full" style={{ background: r.color }}>
-                          <ContactIcon name={r.icon} />
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block text-sm font-semibold">{r.title}</span>
-                          <span className="block truncate text-xs text-white/70">{r.detail}</span>
-                        </span>
-                      </>
-                    );
-                    const cls = "flex items-center gap-3 rounded-xl bg-white/10 px-3 py-2 [animation:fadein_0.5s_ease]";
-                    return (
-                      <li key={r.key}>
-                        {r.href ? (
-                          <a href={r.href} target="_blank" rel="noopener noreferrer" className={`${cls} transition hover:bg-white/20`}>{inner}</a>
-                        ) : <div className={cls}>{inner}</div>}
-                      </li>
-                    );
-                  })}
-                </ul>
-                {phoneSocials.length > 0 ? (
-                  <div className="mt-5">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider">Tap an icon to follow</p>
-                    <div className="mt-3 flex flex-wrap justify-center gap-3">
-                      {phoneSocials.map((r) => (
-                        <a key={r.key} href={r.href} target="_blank" rel="noopener noreferrer" aria-label={r.title} title={r.title}
-                          className="flex h-11 w-11 items-center justify-center rounded-xl ring-1 ring-white/15 transition-transform hover:scale-105 [animation:fadein_0.5s_ease]"
-                          style={{ background: r.color }}>
-                          <ContactIcon name={r.icon} large />
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-                {stage >= 4 && qr ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={qr} alt="" className="mx-auto mt-5 h-32 w-32 rounded-xl bg-white p-2" />
-                ) : null}
-                {stage >= 4 ? <p className="mt-2 text-xs text-white/70">Anyone scans it and saves your card.</p> : null}
-              </div>
-            )}
-          </div>
-        </div>
+      {/* Two phones: the business and a customer. The card assembles itself, then the buttons play the story. */}
+      <div className="min-w-0">
+        <Phones
+          name={card?.name ?? name}
+          website={card?.website ?? website}
+          built={settled}
+          stage={stage}
+          typed={typed}
+          rows={phoneRows}
+          socials={phoneSocials}
+          buildSpinner={phase === "building" && !card}
+          idleText={phase === "building" ? "Reading your website…" : "Your card will build here."}
+        />
       </div>
       <style>{`@keyframes fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }`}</style>
     </section>
