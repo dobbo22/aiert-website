@@ -15,6 +15,8 @@ export interface OfferRow {
   pin_hash: string;
   pin_fails: number;
   created_at: string;
+  /// The card that posted it, or "admin" for the company's web admin.
+  posted_by: string | null;
 }
 
 let ready: Promise<unknown> | null = null;
@@ -33,6 +35,7 @@ function ensureOfferSchema(): Promise<unknown> {
       )
     `
       .then(() => sql`CREATE INDEX IF NOT EXISTS tapcard_offers_card ON tapcard_offers (card_id)`)
+      .then(() => sql`ALTER TABLE tapcard_offers ADD COLUMN IF NOT EXISTS posted_by TEXT`)
       .then(() => sql`
         CREATE TABLE IF NOT EXISTS tapcard_offer_claims (
           id BIGSERIAL PRIMARY KEY,
@@ -128,7 +131,7 @@ export interface OfferInput {
 
 /// Replaces the card's offer. Old claims stay on the old offer row, so they stop
 /// working the moment a new offer is posted.
-export async function setOffer(cardId: string, input: OfferInput): Promise<{ ok: true; id: number } | { ok: false; error: string }> {
+export async function setOffer(cardId: string, input: OfferInput, postedBy: string | null = null): Promise<{ ok: true; id: number } | { ok: false; error: string }> {
   await ensureOfferSchema();
   const text = typeof input.text === "string" ? input.text.trim().slice(0, MAX_OFFER_TEXT) : "";
   if (!text) return { ok: false, error: "offer text is required" };
@@ -149,8 +152,8 @@ export async function setOffer(cardId: string, input: OfferInput): Promise<{ ok:
   const salt = crypto.randomBytes(8).toString("hex");
   const hash = `${salt}:${pinHash(salt, input.pin)}`;
   const row = ((await sql`
-    INSERT INTO tapcard_offers (card_id, text, expires_at, max_claims, pin_hash)
-    VALUES (${cardId}, ${text}, ${expires}, ${max}, ${hash})
+    INSERT INTO tapcard_offers (card_id, text, expires_at, max_claims, pin_hash, posted_by)
+    VALUES (${cardId}, ${text}, ${expires}, ${max}, ${hash}, ${postedBy})
     RETURNING id
   `) as { id: number }[])[0];
   return { ok: true, id: row.id };
@@ -347,4 +350,15 @@ export async function orgPromoteRows(orgId: string): Promise<OrgPromoteRow[]> {
     claimedTotal: Number(r.claimed_total ?? 0), redeemedTotal: Number(r.redeemed_total ?? 0),
     news: r.news ? String(r.news) : null, newsAt: r.news_at ? new Date(String(r.news_at)).toISOString() : null,
   }));
+}
+
+// ---- One live offer per card: whoever posted it can change or withdraw it that day (UK time); anyone else allowed to
+// post for the card has to wait until the next day, or until it ends or is withdrawn. The company admin (web) can always.
+const londonDay = (d: Date) => d.toLocaleDateString("en-CA", { timeZone: "Europe/London" });
+
+export async function offerLock(cardId: string, posterId: string): Promise<{ locked: false } | { locked: true; postedBy: string }> {
+  const live = await currentOffer(cardId);
+  if (!live || !live.posted_by || live.posted_by === posterId) return { locked: false };
+  if (londonDay(new Date(live.created_at)) !== londonDay(new Date())) return { locked: false };
+  return { locked: true, postedBy: live.posted_by };
 }

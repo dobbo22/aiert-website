@@ -1,7 +1,7 @@
 import { requireBizSession } from "@/lib/tapcardBizSession";
 import { getOrg, isOrgActive, listOrgCards } from "@/lib/tapcardBiz";
 import InvitePeople from "./InvitePeople";
-import PostToggle from "./PostToggle";
+import PostControls from "./PostControls";
 import RemoveCardButton from "./RemoveCardButton";
 
 // TapCard keeps no staff list (see lib/tapcardBizInvite.ts) — this page
@@ -13,6 +13,8 @@ export default async function BizEmployeesPage() {
   if (!org) return null;
 
   const cards = await listOrgCards(org.id);
+  // Shops / locations: the cards the admin has marked, which offers and news belong to.
+  const locations = cards.filter((c) => c.card_kind === "business").map((c) => ({ id: c.id, name: c.name }));
 
   return (
     <div className="space-y-8">
@@ -31,7 +33,7 @@ export default async function BizEmployeesPage() {
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Title</th>
-              <th className="px-4 py-3">Can post offers</th>
+              <th className="px-4 py-3">Offers and news</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -48,7 +50,7 @@ export default async function BizEmployeesPage() {
                 <td className="px-4 py-3">{c.name}</td>
                 <td className="px-4 py-3">{c.email}</td>
                 <td className="px-4 py-3">{c.title}</td>
-                <td className="px-4 py-3"><PostToggle cardId={c.id} initial={c.can_post} /></td>
+                <td className="px-4 py-3"><PostControls cardId={c.id} isLocationInitial={c.card_kind === "business"} postsForInitial={c.can_post && c.card_kind === "business" ? [...c.posts_for, c.id] : c.posts_for} locations={locations} /></td>
                 <td className="px-4 py-3 text-right">
                   <RemoveCardButton cardId={c.id} name={c.name} />
                 </td>

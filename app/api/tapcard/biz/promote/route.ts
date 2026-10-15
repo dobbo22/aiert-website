@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     case "offer": {
       const days = Number(body.days ?? 0);
       const expiresAt = days > 0 ? new Date(Date.now() + days * 86_400_000).toISOString() : undefined;
-      const r = await setOffer(cardId, { text: body.text, expiresAt, maxClaims: body.maxClaims || undefined, pin: body.pin });
+      const r = await setOffer(cardId, { text: body.text, expiresAt, maxClaims: body.maxClaims || undefined, pin: body.pin }, "admin");
       if (!r.ok) return NextResponse.json({ error: r.error }, { status: 400 });
       return NextResponse.json({ ok: true });
     }

@@ -168,11 +168,23 @@ Sam Patel,sam@yourcompany.com,Account Manager`}</pre>
         <h2>Offers and news: who posts, and who confirms a code</h2>
         <ul>
           <li>
-            <strong>Who can post.</strong> On the <strong>Employees</strong> tab, tick <strong>Can post offers</strong>{" "}
-            next to the people you want to post special offers and news from their own phone, for example each
-            restaurant&apos;s manager. Everyone else can&apos;t post, whatever they try. New cards start unticked. You
-            can also post for any location yourself from the <strong>Offers &amp; numbers</strong> tab, without anyone
-            needing their phone.
+            <strong>Offers belong to a shop.</strong> On the <strong>Employees</strong> tab, tick{" "}
+            <strong>This card is a shop / location</strong> on each shop&apos;s card. Customers follow the shop, so its
+            offers and news go to everyone who follows that shop, however many staff post for it.
+          </li>
+          <li>
+            <strong>Who can post.</strong> Under <strong>Can post offers and news for</strong>, tick the shop or shops
+            each person may post for, for example two managers per shop. They post from their own TapCard app on the
+            shop&apos;s behalf. Someone with no ticks can&apos;t post at all, whatever they try, and new cards start with
+            none. You can also post for any shop yourself from the <strong>Offers &amp; numbers</strong> tab, whatever
+            the ticks say.
+          </li>
+          <li>
+            <strong>One live offer per shop.</strong> A shop has only one valid offer at a time. The person who posted
+            it can change or withdraw it that day (UK time). Anyone else allowed to post for that shop has to wait until
+            the next day, or until the offer ends or has been withdrawn, so two people never overwrite each other. You,
+            as admin, can always change it from the web. News works the same way, with one new line allowed every 6
+            hours.
           </li>
           <li>
             <strong>Setting an offer.</strong> Write it, choose when it ends and how many people can claim it, and set a{" "}
@@ -183,10 +195,11 @@ Sam Patel,sam@yourcompany.com,Account Manager`}</pre>
             shows their one-off QR code. Scan it with any phone camera: a page opens in the browser showing the offer.
             Type the staff PIN and tap <strong>Mark as used</strong>. On a till or computer with no camera, go to{" "}
             <strong>tapcard.aiert.co.uk/redeem</strong>, type the code shown under the QR code, then the PIN. Each code
-            works once, and a second try shows when it was used.
+            works once, and a second try shows when it was used. Confirming doesn&apos;t need any ticks: anyone who knows
+            the PIN can do it.
           </li>
           <li>
-            Customers only get offers if they have the TapCard app and follow the location. You see how many followed,
+            Customers only get offers if they have the TapCard app and follow the shop. You see how many followed,
             claimed and used each offer on the <strong>Offers &amp; numbers</strong> tab.
           </li>
         </ul>

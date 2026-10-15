@@ -124,6 +124,7 @@ export function ensureSchema(): Promise<unknown> {
       // loosely to other tables, e.g. tapcard_exchanges).
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS org_id TEXT`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS org_can_post BOOLEAN NOT NULL DEFAULT false`)
+      .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS org_posts_for TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS org_employee_id TEXT`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS org_locked_fields TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`)
       .catch((err) => {
@@ -360,12 +361,16 @@ export interface OrgCard {
   created_at: Date | string;
   /// The admin has ticked this card to post offers and news from its owner's phone.
   can_post: boolean;
+  /// "business" when the admin marked this card as a shop / location, else "person" or "".
+  card_kind: string;
+  /// Ids of the locations this card's owner may post offers and news for.
+  posts_for: string[];
 }
 
 export async function listOrgCards(orgId: string): Promise<OrgCard[]> {
   await ensureSchema();
   return (await sql`
-    SELECT id, name, title, email, created_at, org_can_post AS can_post FROM tapcard_cards WHERE org_id = ${orgId} ORDER BY created_at DESC
+    SELECT id, name, title, email, created_at, org_can_post AS can_post, card_kind, org_posts_for AS posts_for FROM tapcard_cards WHERE org_id = ${orgId} ORDER BY created_at DESC
   `) as OrgCard[];
 }
 
@@ -491,18 +496,45 @@ export async function wasRemovedByCompany(cardId: string): Promise<boolean> {
   return rows.length > 0;
 }
 
-/// Company cards can only post offers and news from the owner's phone when the admin has ticked them; everyone can still
-/// confirm a customer's code (that is the web page /o/<code> and needs only the offer's staff PIN). Personal and
-/// single-business cards (no company) always can. The admin can always post from the web admin.
-export async function cardMayPost(cardId: string): Promise<boolean> {
+/// Who may post offers and news for a company location. The location's own phone needs the admin's tick (legacy
+/// `org_can_post`) or itself in its "post for" list; a staff card needs the location in its "post for" list. Cards with
+/// no company (a single business) can always post for themselves. The company admin (web) is checked elsewhere.
+export async function posterMayPostFor(posterId: string, targetId: string): Promise<boolean> {
   await ensureSchema();
-  const rows = (await sql`SELECT org_id, org_can_post FROM tapcard_cards WHERE id = ${cardId}`) as { org_id: string | null; org_can_post: boolean }[];
-  if (!rows[0]) return false;
-  return !rows[0].org_id || rows[0].org_can_post === true;
+  const rows = (await sql`
+    SELECT id, org_id, org_can_post, org_posts_for FROM tapcard_cards WHERE id = ANY(${[posterId, targetId]})
+  `) as { id: string; org_id: string | null; org_can_post: boolean; org_posts_for: string[] }[];
+  const poster = rows.find((r) => r.id === posterId);
+  const target = rows.find((r) => r.id === targetId);
+  if (!poster || !target) return false;
+  if (posterId === targetId) return !target.org_id || target.org_can_post === true || (poster.org_posts_for ?? []).includes(targetId);
+  return !!poster.org_id && poster.org_id === target.org_id && (poster.org_posts_for ?? []).includes(targetId);
 }
 
-export async function setCardCanPost(orgId: string, cardId: string, canPost: boolean): Promise<boolean> {
+/// The locations a card may post for, with names (for the app's "post for" choice).
+export async function postTargetsFor(cardId: string): Promise<{ id: string; name: string }[]> {
   await ensureSchema();
-  const rows = await sql`UPDATE tapcard_cards SET org_can_post = ${canPost} WHERE id = ${cardId} AND org_id = ${orgId} RETURNING id`;
+  const me = (await sql`SELECT org_id, org_can_post, org_posts_for FROM tapcard_cards WHERE id = ${cardId}`) as { org_id: string | null; org_can_post: boolean; org_posts_for: string[] }[];
+  if (!me[0]) return [];
+  if (!me[0].org_id) return [{ id: cardId, name: "" }];
+  const ids = [...new Set([...(me[0].org_posts_for ?? []), ...(me[0].org_can_post ? [cardId] : [])])];
+  if (!ids.length) return [];
+  return (await sql`SELECT id, COALESCE(NULLIF(company, ''), name) AS name FROM tapcard_cards WHERE id = ANY(${ids}) AND org_id = ${me[0].org_id}`) as { id: string; name: string }[];
+}
+
+/// The admin marks a company card as a shop / location (offers belong to it), or as a person's card.
+export async function setIsLocation(orgId: string, cardId: string, isLocation: boolean): Promise<boolean> {
+  await ensureSchema();
+  const rows = await sql`UPDATE tapcard_cards SET card_kind = ${isLocation ? "business" : "person"} WHERE id = ${cardId} AND org_id = ${orgId} RETURNING id`;
+  return rows.length > 0;
+}
+
+/// The admin sets which locations a card's owner may post for. Only locations of the same company.
+export async function setPostsFor(orgId: string, cardId: string, targetIds: string[]): Promise<boolean> {
+  await ensureSchema();
+  const valid = (await sql`SELECT id FROM tapcard_cards WHERE org_id = ${orgId} AND card_kind = 'business' AND id = ANY(${targetIds})`) as { id: string }[];
+  const rows = await sql`
+    UPDATE tapcard_cards SET org_posts_for = ${valid.map((v) => v.id)}, org_can_post = false WHERE id = ${cardId} AND org_id = ${orgId} RETURNING id
+  `;
   return rows.length > 0;
 }
