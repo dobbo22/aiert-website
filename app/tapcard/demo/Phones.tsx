@@ -342,7 +342,7 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
       case "staff":
         return (
           <div>
-            <AppBar title="Staff: scan a customer's code" />
+            <AppBar title="Staff check" />
             <div className="px-4 pt-4 text-center">
               <p className="rounded-xl bg-green-600 px-4 py-3 font-semibold">Valid offer</p>
               <p className="mt-2 text-xs text-white/80">{offer}</p>
@@ -411,7 +411,7 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
           <div>
             <AppBar title="Contacts" buttons />
             <div className="mx-3 mt-2 flex items-center gap-3 rounded-xl bg-white/10 px-3 py-3 text-left">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-sm font-bold">{name.slice(0, 1)}</span>
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-sm font-bold">{name.replace(/^the\s+/i, "").slice(0, 1).toUpperCase()}</span>
               <span className="min-w-0 flex-1"><span className="block text-sm font-semibold">{name}</span><span className="block text-xs text-white/70">Business · offers on</span></span>
               <span aria-hidden="true">🔔</span>
             </div>
