@@ -223,14 +223,13 @@ export default function DemoBuilder() {
             <label className="mt-4 flex items-start gap-3 text-sm text-cloud">
               <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1 h-5 w-5 flex-none" />
               <span>
-                I agree that TapCard keeps my email, business name and website when I press Build, and emails me my TapCard link if I ask for it. We&apos;ll note whether
-                I open the link and install TapCard, so we can help if I get stuck. Everything is deleted after 60 days.{" "}
+                I agree TapCard keeps my email and website for 60 days, emails me my link, and notes if I open it and install the app.{" "}
                 <a href="/privacy" className="text-gold underline">Privacy policy</a>
               </span>
             </label>
             <label className="mt-3 flex items-start gap-3 text-sm text-cloud">
               <input type="checkbox" checked={marketing} onChange={(e) => setMarketing(e.target.checked)} className="mt-1 h-5 w-5 flex-none" />
-              <span>Optional: also send me occasional emails about TapCard for business. I can unsubscribe at any time.</span>
+              <span>Optional: send me occasional TapCard news. I can unsubscribe any time.</span>
             </label>
             {branches ? (
               <div className="mt-4 rounded-xl bg-white/10 p-4 ring-1 ring-gold/40">
