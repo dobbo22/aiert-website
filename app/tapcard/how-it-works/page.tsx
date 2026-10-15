@@ -170,6 +170,13 @@ export default function HowItWorksPage() {
           replace the offer, or withdraw it. You give the discount yourself; TapCard does not take payments.
         </p>
         <p>
+          <strong>Posting news from Facebook or Instagram:</strong> TapCard can&apos;t read your other accounts, but you
+          can bring a post across in a few seconds. Copy the post and tap <strong>Paste a post I copied</strong> on the
+          news screen, or on Android use <strong>Share</strong> in Facebook or Instagram and choose TapCard. It is
+          trimmed to a news line for you to check before you post. After posting, <strong>Share it on Facebook,
+          Instagram…</strong> sends the same news to your other pages.
+        </p>
+        <p>
           Running a restaurant, café, salon or shop? See <a href="/promote">what you can do with TapCard Promote</a>.
         </p>
         <p>
