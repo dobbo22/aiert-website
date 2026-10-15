@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   if (body?.platform === "android") {
     const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0]!.trim();
     try {
-      return NextResponse.json(await claimAndroidPlace(String(body.installId ?? ""), body.debug === true, ip));
+      return NextResponse.json(await claimAndroidPlace(String(body.installId ?? ""), body.debug === true, ip, body.test === true));
     } catch (err) {
       return NextResponse.json({ error: err instanceof Error ? err.message : "Failed" }, { status: 400 });
     }

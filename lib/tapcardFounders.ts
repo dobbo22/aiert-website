@@ -41,6 +41,7 @@ function paywallLaunch(): Date | null {
 /// lets testers see the paywall straight away.
 function freePlaces(environment: string): number {
   if (environment === "Production") return FREE_PLACES;
+  if (environment === "Test") return Number.MAX_SAFE_INTEGER; // sideloaded developer installs: never paywalled, never counted as real
   const n = Number(process.env.TAPCARD_SANDBOX_FREE_PLACES);
   return Number.isFinite(n) && n >= 0 ? n : FREE_PLACES;
 }
@@ -161,10 +162,10 @@ const ANDROID_NEW_CLAIMS_PER_IP_PER_DAY = 5;
 
 /// Android: counts this install id. Unverified, so new places are limited
 /// per connection (a household or office still gets a few).
-export async function claimAndroidPlace(installId: string, debug: boolean, ip: string): Promise<FounderStatus> {
+export async function claimAndroidPlace(installId: string, debug: boolean, ip: string, test = false): Promise<FounderStatus> {
   if (!/^[A-Za-z0-9-]{16,64}$/.test(installId)) throw new Error("Bad install id");
   const ipHash = ip ? crypto.createHash("sha256").update(`tapcard-claim|${ip}`).digest("hex").slice(0, 32) : null;
-  return claim("android", debug ? "Sandbox" : "Production", installId, null, ipHash);
+  return claim("android", test ? "Test" : debug ? "Sandbox" : "Production", installId, null, ipHash);
 }
 
 async function claim(
