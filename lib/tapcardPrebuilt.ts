@@ -50,26 +50,36 @@ export function hashIp(ip: string): string | null {
   return ip ? crypto.createHash("sha256").update(`tapcard-prebuilt|${ip}`).digest("hex").slice(0, 32) : null;
 }
 
-export async function buildPrebuiltCard(name: string, website: string): Promise<PrebuiltCard> {
-  const found = website ? await findSiteLinks(website, "", name).catch(() => null) : null;
+export interface SiteBranchChoice { name: string; address: string; phone: string; hours: string }
+
+/// `address` is what the visitor chose or typed (a branch's address, a town or a postcode): it picks the branch on a
+/// multi-address site, so the card gets that address, phone and opening hours. With several addresses and none chosen,
+/// `branches` lists them for the visitor to pick from.
+export async function buildPrebuiltCard(name: string, website: string, address = ""): Promise<{ card: PrebuiltCard; branches: SiteBranchChoice[] }> {
+  const found = website ? await findSiteLinks(website, address, name).catch(() => null) : null;
   const d = found?.details ?? {};
-  const single = !!found && found.branches.length === 0;
+  const branches = found?.branches ?? [];
   const url = website && !/^https?:\/\//i.test(website) ? `https://${website}` : website;
+  const links = sanitizeLinks(found?.links ?? []);
   return {
-    name,
-    company: name,
-    website: url,
-    address: single ? d.address ?? "" : "",
-    phone: single ? d.phone ?? "" : "",
-    label: "Business",
-    cardKind: "business",
-    links: sanitizeLinks(found?.links ?? []).slice(0, 10),
-    facebookUrl: d.facebook ?? "",
-    instagramUrl: d.instagram ?? "",
-    twitterUrl: d.twitter ?? "",
-    linkedInUrl: d.linkedin ?? "",
-    tiktokUrl: d.tiktok ?? "",
-    branchCount: found?.branches.length ?? 0,
+    branches,
+    card: {
+      name,
+      company: name,
+      website: url,
+      // One address (or the chosen one): use it; otherwise what the visitor typed, else nothing.
+      address: branches.length ? address : d.address ?? address,
+      phone: branches.length ? "" : d.phone ?? "",
+      label: "Business",
+      cardKind: "business",
+      links: links.slice(0, 10),
+      facebookUrl: d.facebook ?? "",
+      instagramUrl: d.instagram ?? "",
+      twitterUrl: d.twitter ?? "",
+      linkedInUrl: d.linkedin ?? "",
+      tiktokUrl: d.tiktok ?? "",
+      branchCount: branches.length,
+    },
   };
 }
 

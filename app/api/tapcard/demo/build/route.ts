@@ -11,6 +11,7 @@ export async function POST(req: NextRequest) {
   if (typeof body.company === "string" && body.company.trim()) return NextResponse.json({ ok: true });
   const name = String(body.name ?? "").trim().slice(0, 80);
   const website = String(body.website ?? "").trim().slice(0, 200);
+  const address = String(body.address ?? "").trim().slice(0, 200);
   const email = String(body.email ?? "").trim().slice(0, 120);
   if (name.length < 2) return NextResponse.json({ error: "name" }, { status: 400 });
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return NextResponse.json({ error: "email" }, { status: 400 });
@@ -22,7 +23,9 @@ export async function POST(req: NextRequest) {
   const { byIp, byEmail } = await recentCounts(ipHash, email);
   if (byIp >= 5 || byEmail >= 3) return NextResponse.json({ error: "rate_limited" }, { status: 429 });
 
-  const card = await buildPrebuiltCard(name, website);
+  const { card, branches } = await buildPrebuiltCard(name, website, address);
+  // Several addresses on the site and none chosen yet: ask which is theirs before anything is saved or sent.
+  if (branches.length > 1 && !address) return NextResponse.json({ needsBranch: true, branches: branches.slice(0, 12) });
   const token = await storePrebuilt(email, name, website, card, ipHash);
   const link = `https://tapcard.aiert.co.uk/start/${token}`;
   let emailed = true;

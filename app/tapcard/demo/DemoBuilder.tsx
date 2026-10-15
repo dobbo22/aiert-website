@@ -31,6 +31,8 @@ export default function DemoBuilder() {
   const [website, setWebsite] = useState("");
   const [email, setEmail] = useState("");
   const [consent, setConsent] = useState(false);
+  const [address, setAddress] = useState("");
+  const [branches, setBranches] = useState<{ name: string; address: string; phone: string; hours: string }[] | null>(null);
   const [trap, setTrap] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [card, setCard] = useState<Card | null>(null);
@@ -44,16 +46,17 @@ export default function DemoBuilder() {
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
   const later = (ms: number, fn: () => void) => { timers.current.push(setTimeout(fn, ms)); };
 
-  async function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent, chosen?: string) {
     e.preventDefault();
     setError(null);
+    setBranches(null);
     setPhase("building");
     setStage(0); setShown(0); setTyped("");
     try {
       const res = await fetch("/api/demo/build", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, website, email, consent, company: trap }),
+        body: JSON.stringify({ name, website, email, consent, company: trap, address: chosen ?? address }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -65,6 +68,12 @@ export default function DemoBuilder() {
           : data.error === "consent" ? "Please tick the box so we can email your link."
           : "Something went wrong. Please try again.",
         );
+        return;
+      }
+      if (data.needsBranch) {
+        // The website lists several addresses: ask which is theirs, then build with that one.
+        setBranches(data.branches);
+        setPhase("form");
         return;
       }
       const c = data.card as Card;
@@ -102,6 +111,9 @@ export default function DemoBuilder() {
             <label className="mt-4 block text-sm font-semibold text-cloud" htmlFor="site">Website <span className="font-normal">(so we can build it from your own pages)</span></label>
             <input id="site" value={website} onChange={(e) => setWebsite(e.target.value)} maxLength={200} disabled={phase === "building"} inputMode="url"
               className="mt-1 w-full rounded-xl bg-white px-4 py-3 text-[#111318]" placeholder="therosegardenflorists.co.uk" />
+            <label className="mt-4 block text-sm font-semibold text-cloud" htmlFor="addr">Address or postcode <span className="font-normal">(optional, for a business with several shops)</span></label>
+            <input id="addr" value={address} onChange={(e) => setAddress(e.target.value)} maxLength={200} disabled={phase === "building"}
+              className="mt-1 w-full rounded-xl bg-white px-4 py-3 text-[#111318]" placeholder="CM6 1AG" />
             <label className="mt-4 block text-sm font-semibold text-cloud" htmlFor="mail">Your email</label>
             <input id="mail" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} maxLength={120} disabled={phase === "building"}
               className="mt-1 w-full rounded-xl bg-white px-4 py-3 text-[#111318]" placeholder="you@yourbusiness.co.uk" />
@@ -111,6 +123,21 @@ export default function DemoBuilder() {
               <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1 h-5 w-5" />
               <span>Email me my TapCard link. It's one email, not a mailing list. We keep your email and card details for 60 days. <a href="/privacy" className="text-gold underline">Privacy policy</a></span>
             </label>
+            {branches ? (
+              <div className="mt-4 rounded-xl bg-white/10 p-4 ring-1 ring-gold/40">
+                <p className="font-semibold text-cloud">We found {branches.length} addresses on your website. Which one is this card for?</p>
+                <div className="mt-3 flex flex-col gap-2">
+                  {branches.map((b) => (
+                    <button key={b.address || b.name} type="button"
+                      onClick={(e) => { setAddress(b.address || b.name); void submit(e as unknown as React.FormEvent, b.address || b.name); }}
+                      className="rounded-xl bg-white px-4 py-3 text-left text-[#111318]">
+                      <span className="block font-semibold">{b.name}</span>
+                      {b.address ? <span className="block text-sm">{b.address}</span> : null}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
             {error ? <p role="alert" className="mt-4 rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white">{error}</p> : null}
             <button type="submit" disabled={phase === "building" || !consent || name.trim().length < 2 || !email}
               className="btn-gold mt-5 w-full rounded-xl px-6 py-3 font-semibold disabled:opacity-50">
