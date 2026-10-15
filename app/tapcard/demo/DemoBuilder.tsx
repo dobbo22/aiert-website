@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import ContactIcon, { type ContactIconName } from "../ContactIcon";
 import Phones from "./Phones";
+import { DEMO_KINDS } from "./demoOffers";
 
 interface Link { kind: string; label: string; value: string }
 interface Card {
@@ -47,6 +48,7 @@ export default function DemoBuilder() {
   const [phase, setPhase] = useState<Phase>("form");
   const [name, setName] = useState("");
   const [website, setWebsite] = useState("");
+  const [kind, setKind] = useState("");
   const [email, setEmail] = useState("");
   const [consent, setConsent] = useState(false);
   const [address, setAddress] = useState("");
@@ -162,6 +164,12 @@ export default function DemoBuilder() {
             <label className="block text-sm font-semibold text-cloud" htmlFor="biz">Business name</label>
             <input id="biz" required value={name} onChange={(e) => setName(e.target.value)} maxLength={80} disabled={phase === "building"}
               className="mt-1 w-full rounded-xl bg-white px-4 py-3 text-[#111318]" placeholder="The Rose Garden" />
+            <label className="mt-4 block text-sm font-semibold text-cloud" htmlFor="kind">Type of business <span className="font-normal">(so the examples suit you)</span></label>
+            <select id="kind" required value={kind} onChange={(e) => setKind(e.target.value)} disabled={phase === "building"}
+              className="mt-1 w-full rounded-xl bg-white px-4 py-3 text-[#111318]">
+              <option value="" disabled>Choose…</option>
+              {DEMO_KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
+            </select>
             <label className="mt-4 block text-sm font-semibold text-cloud" htmlFor="site">Website <span className="font-normal">(so we can build it from your own pages)</span></label>
             <input id="site" value={website} onChange={(e) => setWebsite(e.target.value)} maxLength={200} disabled={phase === "building"} inputMode="url"
               className="mt-1 w-full rounded-xl bg-white px-4 py-3 text-[#111318]" placeholder="therosegardenflorists.co.uk" />
@@ -193,7 +201,7 @@ export default function DemoBuilder() {
               </div>
             ) : null}
             {error ? <p role="alert" className="mt-4 rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white">{error}</p> : null}
-            <button type="submit" disabled={phase === "building" || !consent || name.trim().length < 2 || !email}
+            <button type="submit" disabled={phase === "building" || !consent || name.trim().length < 2 || !email || !kind}
               className="btn-gold mt-5 w-full rounded-xl px-6 py-3 font-semibold disabled:opacity-50">
               {phase === "building" ? "Building your card…" : "Build my TapCard"}
             </button>
@@ -262,6 +270,7 @@ export default function DemoBuilder() {
         <Phones
           name={card?.name ?? name}
           website={card?.website ?? website}
+          kind={kind}
           built={settled}
           stage={stage}
           typed={typed}

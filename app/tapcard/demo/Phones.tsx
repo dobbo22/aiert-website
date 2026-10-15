@@ -4,11 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
 import ContactIcon from "../ContactIcon";
 import type { Row } from "./DemoBuilder";
+import { offersFor } from "./demoOffers";
 
 // Two phones: the business (left) and Alex Morgan, an anonymous customer (right). The screens scroll inside a fixed-size
 // phone. After the card is built, buttons play the story: share the card, send an offer, use the offer.
 
-const OFFER_DEFAULT = "10% off your first order";
 
 type AView = "card" | "qr" | "saved" | "offerForm" | "offerLive" | "staff" | "used";
 type BView = "idle" | "scanning" | "received" | "saved" | "follow" | "contacts" | "push" | "offer" | "claimed" | "used";
@@ -46,8 +46,8 @@ function domainOf(website: string): string {
   try { return new URL(/^https?:\/\//i.test(website) ? website : `https://${website}`).hostname.replace(/^www\./, ""); } catch { return ""; }
 }
 
-function CardFace({ name, typed, stage, rows, socials, interactive, domain, onOpen }: {
-  name: string; typed: string; stage: number; rows: Row[]; socials: Row[]; interactive: boolean; domain: string; onOpen: (r: Row) => void;
+function CardFace({ name, kind, typed, stage, rows, socials, interactive, domain, onOpen }: {
+  name: string; kind: string; typed: string; stage: number; rows: Row[]; socials: Row[]; interactive: boolean; domain: string; onOpen: (r: Row) => void;
 }) {
   // A tap opens inside the phone; a modified click (new tab) still goes to the real page.
   const tap = (r: Row) => (e: React.MouseEvent) => {
@@ -76,7 +76,7 @@ function CardFace({ name, typed, stage, rows, socials, interactive, domain, onOp
         )}
       </div>
       <h3 className="mt-3 min-h-[1.75rem] text-xl font-bold">{typed || name}</h3>
-      <span className="mt-1 inline-block rounded-full bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider transition-opacity duration-500" style={{ opacity: stage >= 2 ? 1 : 0 }}>Business</span>
+      <span className="mt-1 inline-block rounded-full bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider transition-opacity duration-500" style={{ opacity: stage >= 2 ? 1 : 0 }}>{kind || "Business"}</span>
       <ul className="mt-4 space-y-2 text-left">
         {rows.map((r) => {
           const inner = (
@@ -213,8 +213,8 @@ function Tick({ label, sub }: { label: string; sub?: string }) {
   );
 }
 
-export default function Phones({ name, website, built, stage, typed, rows, socials, buildSpinner, idleText }: {
-  name: string; website: string; built: boolean; stage: number; typed: string; rows: Row[]; socials: Row[]; buildSpinner: boolean; idleText: string;
+export default function Phones({ name, website, kind, built, stage, typed, rows, socials, buildSpinner, idleText }: {
+  name: string; website: string; kind: string; built: boolean; stage: number; typed: string; rows: Row[]; socials: Row[]; buildSpinner: boolean; idleText: string;
 }) {
   const domain = domainOf(website);
   const [caption, setCaption] = useState<{ step: number; text: string } | null>(null);
@@ -228,7 +228,9 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
   const [reached, setReached] = useState(1); // the furthest step whose button is showing: 1 share, 2 offer, 3 use
   const revealed = built ? reached : 0;
   const [running, setRunning] = useState(false);
-  const [offer, setOffer] = useState(OFFER_DEFAULT);
+  const suggestions = offersFor(kind);
+  const [offerOverride, setOffer] = useState<string | null>(null);
+  const offer = offerOverride ?? suggestions[0];
   const [typedOffer, setTypedOffer] = useState("");
   const [pin, setPin] = useState("");
   const [code] = useState(() => Array.from({ length: 10 }, () => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 32)]).join(""));
@@ -254,9 +256,9 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
     text.split("").map((_, i) => [i === 0 ? 300 : 45, () => set(text.slice(0, i + 1))] as [number, () => void]);
 
   const share = () => play([
-    [200, () => { setBView("idle"); setAView("qr"); setCaption({ step: 1, text: "Your card has its own QR code. Anyone can scan it with their phone's camera. They don't even need the app." }); }],
-    [1200, () => { setBView("scanning"); setCaption({ step: 1, text: "Alex Morgan, a customer, points TapCard's camera at your QR code…" }); }],
-    [2200, () => { setBView("received"); setCaption({ step: 1, text: "Alex sees your card at once, with your links ready to tap, and chooses Save & send my card." }); }],
+    [200, () => { setBView("idle"); setAView("qr"); setCaption({ step: 1, text: "Your card has its own QR code. Customers scan it from your phone, or from a printed TapCard sign in your shop window or on your reception desk. They need TapCard (free) on their phone, and it arrives instantly." }); }],
+    [1200, () => { setBView("scanning"); setCaption({ step: 1, text: `Alex Morgan, a ${kind ? kind.toLowerCase() : "business"} customer with TapCard installed, scans your QR code…` }); }],
+    [2200, () => { setBView("received"); setCaption({ step: 1, text: "It's instant. Alex sees your card at once, with your links ready to tap, and chooses Save & send my card." }); }],
     [1800, () => { setBView("saved"); setCaption({ step: 1, text: "Alex's own card is sent back to you, so you each have the other's details." }); }],
     [1400, () => { setBView("follow"); setCaption({ step: 1, text: "Alex is asked once: do you want offers and news from this business? You can't send anyone offers unless they say yes." }); }],
     [1800, () => { setBView("contacts"); setAView("saved"); setCaption({ step: 1, text: "Alex now follows you. Your phone shows the new follower. Next: send them an offer." }); }],
@@ -264,7 +266,7 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
 
   const sendOffer = () => { setTypedOffer(""); setPin("");
     play([
-      [200, () => { setAView("offerForm"); setCaption({ step: 2, text: "You write the offer, choose how long it lasts and set a PIN for your staff. It takes seconds." }); }],
+      [200, () => { setAView("offerForm"); setCaption({ step: 2, text: `You write the offer (for a ${kind ? kind.toLowerCase() : "business"}, something like this), choose how long it lasts and set a PIN for your staff. It takes seconds.` }); }],
       ...typeInto(offer, setTypedOffer),
       [700, () => setPin("4321")],
       [1100, () => { setAView("offerLive"); setCaption({ step: 2, text: "One tap posts it. Everyone who follows you is notified. Only people who said yes." }); }],
@@ -303,8 +305,9 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
             <div className="px-4 pt-4 text-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               {cardQr ? <img src={cardQr} alt="" className="mx-auto h-44 w-44 rounded-2xl bg-white p-3" /> : null}
-              <p className="mt-3 text-sm font-semibold">Scan to get my card</p>
-              <p className="mt-1 text-xs text-white/70">Anyone with a camera can scan it. They don&apos;t need the app.</p>
+              <p className="mt-3 text-sm font-semibold">Scan to get my card and offers</p>
+              <p className="mt-2 text-xs leading-snug text-white/80">Customers scan this from your phone, or from a printed TapCard sign in your shop window or on your reception desk.</p>
+              <p className="mt-2 text-xs leading-snug text-white/80">They need TapCard on their phone (it&apos;s free). Scanning is instant: your card and offers land straight in their app.</p>
             </div>
           </div>
         );
@@ -314,7 +317,7 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
             <AppBar title={name} buttons />
             <Toast><strong>Alex Morgan</strong> saved your card and sent you theirs.</Toast>
             <Toast>1 follower now gets your offers and news.</Toast>
-            <CardFace name={name} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openA} />
+            <CardFace name={name} kind={kind} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openA} />
             <CardActions onShare={share} onOffer={sendOffer} offerReady={revealed >= 2} offerLive={false} disabled={running} />
           </div>
         );
@@ -335,7 +338,7 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
           <div>
             <AppBar title={name} buttons />
             <Toast><strong>Offer live:</strong> {offer}. 1 follower notified.</Toast>
-            <CardFace name={name} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openA} />
+            <CardFace name={name} kind={kind} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openA} />
             <CardActions onShare={share} onOffer={sendOffer} offerReady={revealed >= 2} offerLive={true} disabled={running} />
           </div>
         );
@@ -358,7 +361,7 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
         return (
           <div>
             <AppBar title={name} buttons />
-            <CardFace name={name} typed={typed} stage={stage} rows={rows} socials={socials} interactive={stage >= 4} domain={domain} onOpen={openA} />
+            <CardFace name={name} kind={kind} typed={typed} stage={stage} rows={rows} socials={socials} interactive={stage >= 4} domain={domain} onOpen={openA} />
             {built ? <CardActions onShare={share} onOffer={sendOffer} offerReady={revealed >= 2} offerLive={false} disabled={running} /> : null}
           </div>
         );
@@ -370,7 +373,7 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
       <div>
         <AppBar title="Card received" />
         {extra}
-        <CardFace name={name} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openB} />
+        <CardFace name={name} kind={kind} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openB} />
       </div>
     );
     switch (bView) {
@@ -438,7 +441,7 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
               <p className="text-xs text-white/70">Ends in 7 days</p>
               <div className="mt-3 rounded-xl bg-blue-500 py-2 text-sm font-semibold">Claim this offer</div>
             </div>
-            <CardFace name={name} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openB} />
+            <CardFace name={name} kind={kind} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openB} />
           </div>
         );
       case "claimed":
@@ -471,7 +474,7 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
 
   const HINTS: Record<number, string> = {
     1: "Share my card: your customer scans your QR code, saves your card, and says yes to hearing about your offers.",
-    2: "Send an offer: you type an offer, press post, and the customer's phone gets a notification.",
+    2: `Send an offer: you type an offer (for example "${suggestions[0]}"), press post, and the customer's phone gets a notification.`,
     3: "Use the offer: the customer claims a one-off QR code, your staff scan it and enter the PIN, and it's marked as used.",
     0: "Set up again: reloads this page so you can build another card.",
   };
@@ -508,9 +511,16 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
         {built ? <button onClick={() => window.location.reload()} {...bind(0)} className="rounded-xl px-5 py-3 text-sm font-semibold text-gold underline">Set up again</button> : null}
       </div>
       {revealed >= 2 && built ? (
-        <div className="mx-auto mt-4 flex max-w-sm items-center gap-2">
-          <label htmlFor="offer-text" className="text-sm text-cloud">Offer:</label>
-          <input id="offer-text" value={offer} maxLength={60} onChange={(e) => setOffer(e.target.value)} className="min-w-0 flex-1 rounded-xl bg-white px-3 py-2 text-sm text-[#111318]" />
+        <div className="mx-auto mt-4 max-w-md">
+          <div className="flex items-center gap-2">
+            <label htmlFor="offer-text" className="text-sm text-cloud">Offer:</label>
+            <input id="offer-text" value={offer} maxLength={60} onChange={(e) => setOffer(e.target.value)} className="min-w-0 flex-1 rounded-xl bg-white px-3 py-2 text-sm text-[#111318]" />
+          </div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {suggestions.map((o) => (
+              <button key={o} type="button" onClick={() => setOffer(o)} className={`rounded-full px-3 py-1 text-xs font-semibold ${o === offer ? "bg-gold text-[#111318]" : "bg-white/10 text-cloud"}`}>{o}</button>
+            ))}
+          </div>
         </div>
       ) : null}
       <style>{`
