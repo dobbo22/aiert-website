@@ -15,7 +15,7 @@ import net from "node:net";
 // carry script.
 
 const TIMEOUT_MS = 4000;
-const MAX_HTML_BYTES = 256 * 1024;
+const MAX_HTML_BYTES = 1536 * 1024; // bigger sites (page builders) easily pass 256 KB before the logo or icon link appears
 const MAX_IMAGE_BYTES = 512 * 1024;
 const MAX_REDIRECTS = 3;
 const MAX_CANDIDATES = 6;
@@ -122,13 +122,22 @@ function jsonLdLogos(html: string): string[] {
 /// <img> tags that call themselves a logo, in page order (the header's
 /// comes first on almost every site). Lazy-loaded images often keep the
 /// real URL in data-src.
+/// Image proxies (Nuxt /_ipx/<options>/<original>, Next /_next/image?url=<original>) serve a resized copy; the original is better.
+function unwrapImageProxy(src: string): string {
+  const ipx = /\/_ipx\/[^/]*\/(https?:\/\/.+)$/i.exec(src);
+  if (ipx) return ipx[1];
+  const next = /\/_next\/image\?(?:[^"']*&(?:amp;)?)?url=([^&"']+)/i.exec(src);
+  if (next) { try { return decodeURIComponent(next[1]); } catch { /* keep the proxied one */ } }
+  return src;
+}
+
 function logoImages(html: string): string[] {
   const found: string[] = [];
   for (const [tag] of html.matchAll(/<img\b[^>]*>/gi)) {
     const attr = (name: string) => new RegExp(`\\s${name}\\s*=\\s*["']([^"']*)["']`, "i").exec(tag)?.[1] ?? "";
     const src = attr("data-src") || attr("src");
     if (!src || src.startsWith("data:")) continue;
-    if (/logo/i.test([attr("class"), attr("id"), attr("alt"), src].join(" "))) found.push(src);
+    if (/logo/i.test([attr("class"), attr("id"), attr("alt"), src].join(" "))) found.push(unwrapImageProxy(src));
   }
   return found;
 }
