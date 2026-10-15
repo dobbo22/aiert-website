@@ -7,7 +7,12 @@ export async function GET(req: NextRequest) {
   try {
     const s = stripe();
     const bal = await s.balance.retrieve();
-    const acct = await s.accounts.retrieve().catch(() => null);
+    type Acct = { id?: string; business_profile?: { name?: string }; settings?: { dashboard?: { display_name?: string } } };
+    let acct: Acct | null = null;
+    try {
+      const raw = (await s.rawRequest("GET", "/v1/account")) as unknown as { json?: () => Promise<Acct> } & Acct;
+      acct = typeof raw.json === "function" ? await raw.json() : raw;
+    } catch { /* the key may not be allowed to read its account; the balance still says live or test */ }
     const prices = await s.prices.list({ limit: 20, active: true });
     return NextResponse.json({
       livemode: bal.livemode,
