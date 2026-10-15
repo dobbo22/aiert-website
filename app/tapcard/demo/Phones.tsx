@@ -57,32 +57,34 @@ function CardFace({ name, kind, typed, stage, rows, socials, interactive, domain
   };
   const [logoFailed, setLogoFailed] = useState(false);
   const [iconFailed, setIconFailed] = useState(false);
-  const [iconTiny, setIconTiny] = useState(false);
+  const [logoLoaded, setLogoLoaded] = useState(false);
   const d = encodeURIComponent(domain);
   return (
     <div className="pb-6 text-center">
       <div className="flex h-28 items-start justify-center bg-gradient-to-br from-[#2b2f77] to-[#111318] px-6 pt-3">
         {domain && !logoFailed ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={`/api/logo?domain=${d}`} alt="" onError={() => setLogoFailed(true)} className="max-h-[3.6rem] max-w-full rounded-md object-contain [animation:fadein_0.6s_ease]" />
+          <img src={`/api/logo?domain=${d}`} alt="" onLoad={() => setLogoLoaded(true)} onError={() => setLogoFailed(true)} className={`max-w-full rounded-md object-contain [animation:fadein_0.6s_ease] ${logoLoaded ? "max-h-20" : "max-h-14"}`} />
         ) : null}
       </div>
       <div className="px-4">
-      <div className="-mt-7 mx-auto flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-[#1c1f27] ring-4 ring-[#111318] transition-all duration-500" style={{ opacity: stage >= 2 ? 1 : 0, transform: stage >= 2 ? "scale(1)" : "scale(0.6)" }}>
-        {domain && !iconFailed ? (
-          // A favicon of 16 or 32 pixels (often a website builder's default) looks poor and may not be theirs: use the logo instead when there is one.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={iconTiny && !logoFailed ? `/api/logo?domain=${d}` : `/api/favicon?domain=${d}`} alt=""
-            onLoad={(e) => { if (!iconTiny && e.currentTarget.naturalWidth > 0 && e.currentTarget.naturalWidth <= 32) setIconTiny(true); }}
-            onError={() => setIconFailed(true)}
-            className={iconTiny ? "h-full w-full object-cover" : "h-12 w-12 object-contain"}
-          />
-        ) : (
-          <svg viewBox="0 0 24 24" className="h-10 w-10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9M3 9h18M3 9v11h18V9M9 20v-6h6v6" /></svg>
-        )}
-      </div>
-      <h3 className="mt-3 min-h-[1.75rem] text-xl font-bold">{typed || name}</h3>
+      {/* One brand mark only: the banner logo when the site has one; otherwise the round favicon avatar (or a shop icon). */}
+      {!logoLoaded ? (
+        <div className="-mt-7 mx-auto flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-[#1c1f27] ring-4 ring-[#111318] transition-all duration-500" style={{ opacity: stage >= 2 ? 1 : 0, transform: stage >= 2 ? "scale(1)" : "scale(0.6)" }}>
+          {domain && !iconFailed ? (
+            // A favicon of 16 or 32 pixels (often a website builder's default) looks poor and may not be theirs: use the shop icon instead.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={`/api/favicon?domain=${d}`} alt=""
+              onLoad={(e) => { if (e.currentTarget.naturalWidth > 0 && e.currentTarget.naturalWidth <= 32) setIconFailed(true); }}
+              onError={() => setIconFailed(true)} className="h-12 w-12 object-contain"
+            />
+          ) : (
+            <svg viewBox="0 0 24 24" className="h-10 w-10" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9M3 9h18M3 9v11h18V9M9 20v-6h6v6" /></svg>
+          )}
+        </div>
+      ) : null}
+      <h3 className={`${logoLoaded ? "mt-4" : "mt-3"} min-h-[1.75rem] text-xl font-bold`}>{typed || name}</h3>
       <span className="mt-1 inline-block rounded-full bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider transition-opacity duration-500" style={{ opacity: stage >= 2 ? 1 : 0 }}>{kind || "Business"}</span>
       <ul className="mt-4 space-y-2 text-left">
         {rows.map((r) => {
