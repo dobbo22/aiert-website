@@ -20,7 +20,7 @@ function TabBar({ active }: { active: "cards" | "contacts" }) {
   return (
     <div className="absolute inset-x-3 bottom-3 z-10 flex gap-1 rounded-2xl bg-[#1c1f27]/95 p-1 shadow-lg ring-1 ring-white/10 backdrop-blur">
       {tab("cards", "My Cards", <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-3.3 0-8 1.7-8 5v1h16v-1c0-3.3-4.7-5-8-5Z" /></svg>)}
-      {tab("contacts", "Contacts", <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true"><path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm7 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM9 13c-3 0-7 1.5-7 4.2V19h14v-1.8C16 14.500 12 13 9 13Zm7 .2c-.4 0-.8 0-1.200.1 1.500 1 2.200 2.300 2.200 3.900V19h5v-1.700c0-2.400-3.200-4.100-6-4.100Z" /></svg>)}
+      {tab("contacts", "Contacts", <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg>)}
     </div>
   );
 }
@@ -359,7 +359,7 @@ export default function Phones({ name, website, built, stage, typed, rows, socia
           <div>
             <AppBar title={name} buttons />
             <CardFace name={name} typed={typed} stage={stage} rows={rows} socials={socials} interactive={stage >= 4} domain={domain} onOpen={openA} />
-            <CardActions onShare={share} onOffer={sendOffer} offerReady={revealed >= 2} offerLive={false} disabled={running} />
+            {built ? <CardActions onShare={share} onOffer={sendOffer} offerReady={revealed >= 2} offerLive={false} disabled={running} /> : null}
           </div>
         );
     }
