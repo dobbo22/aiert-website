@@ -142,7 +142,7 @@ export default function TapCardPrivacyPage() {
         <p>
           On tapcard.aiert.co.uk/demo you type a business name, your website, a type of business and your email, and we build a
           card from your own website. When you press <strong>Build my TapCard</strong> we keep your email address, business name,
-          website and type of business, together with a short-lived scrambled form of your connection address that stops the form
+          website and type of business, together with a one-way scrambled (hashed) form of your connection address that stops the form
           being abused. You agree to this by ticking the box on the form. We do not need you to ask for the emailed link first.
         </p>
         <p>
