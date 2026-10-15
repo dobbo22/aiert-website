@@ -39,6 +39,14 @@ export default function HowItWorksPage() {
           Download TapCard and fill in your name, job title, company, phone, email, website and social links
           (LinkedIn, X, Instagram and more). Add a photo if you like. It takes a couple of minutes.
         </p>
+        <p>
+          The first screen asks who the card is for. Choose <strong>Me</strong> for your own business card. Choose{" "}
+          <strong>My business</strong> for a restaurant, shop, salon or any business: you give the business name and
+          website, answer a few quick questions (what kind of business, how many locations, whether you want to send
+          offers and news), and TapCard sets up your card with the right links and suggests the best way to start. A
+          personal card never shows offers or discounts. For several locations or a team, it points you to{" "}
+          <a href="/business">TapCard for Business</a>.
+        </p>
       </section>
 
       <section>
