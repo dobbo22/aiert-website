@@ -31,6 +31,12 @@ export default function HowItWorksPage() {
           Someone asks for your business card and you haven&apos;t got one on you, or you&apos;ve run out. TapCard
           fixes that: your card lives on your phone, ready to share in seconds. Always be prepared.
         </p>
+        <p>
+          <strong>
+            Want to see it with your own business? <a href="/demo">Try the demo</a>
+          </strong>
+          : type your business name and website and watch TapCard build your card, then see what a customer sees when they scan it and when you send an offer.
+        </p>
       </section>
 
       <section>
@@ -52,7 +58,10 @@ export default function HowItWorksPage() {
       <section>
         <h2>2. Share it</h2>
         <ul>
-          <li><strong>QR code:</strong> open TapCard and let them scan the code with their phone camera.</li>
+          <li>
+            <strong>QR code:</strong> open TapCard and let them scan the code with their phone camera. Anyone can scan it and see your card on
+            the web, but <strong>only people who have the TapCard app can receive your offers and news</strong>.
+          </li>
           <li><strong>Link:</strong> send your card&apos;s link by text, WhatsApp or email, or add it to your email signature.</li>
           <li>
             <strong>Send it straight to a contact:</strong> pick one or several people from your phone&apos;s contacts
@@ -168,6 +177,12 @@ export default function HowItWorksPage() {
           type the code at tapcard.aiert.co.uk/redeem on a till with no camera), enter your PIN and tap
           <strong> Mark as used</strong>. It works once. You can see how many claimed and how many used it, post news,
           replace the offer, or withdraw it. You give the discount yourself; TapCard does not take payments.
+        </p>
+        <p>
+          <strong>Offers and news only reach people who have TapCard.</strong> Someone who scans your QR code without the app can look at your
+          card in their browser and save your contact, but they can&apos;t receive your offers, your news or any notifications. To get them,
+          they need TapCard (it&apos;s free) on their phone and they choose to follow you. So on a printed sign in your window or on your
+          desk, say <em>&ldquo;Get the free TapCard app to receive our offers.&rdquo;</em>
         </p>
         <p>
           <strong>Posting news from Facebook or Instagram:</strong> TapCard can&apos;t read your other accounts, but you
