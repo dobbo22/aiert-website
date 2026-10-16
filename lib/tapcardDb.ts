@@ -215,7 +215,7 @@ export async function claimEditToken(id: string, editTokenHash: string): Promise
   await ensureSchema();
   const rows = await sql`
     UPDATE tapcard_cards SET edit_token_hash = ${editTokenHash}
-    WHERE id = ${id} AND edit_token_hash IS NULL
+    WHERE id = ${id} AND edit_token_hash IS NULL AND created_at < '2026-09-26'
     RETURNING id
   `;
   return rows.length > 0;

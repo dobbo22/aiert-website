@@ -7,7 +7,22 @@ const AIERT_HOST = "(www\\.)?aiert\\.co\\.uk";
 // swallow those hosts too.
 const MAILBROOM_APEX_HOST = "^mailbroom\\.app$";
 
+const SECURITY_HEADERS = [
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+];
+
 const nextConfig: NextConfig = {
+  async headers() {
+    return [
+      { source: "/:path*", headers: SECURITY_HEADERS },
+      // TapCard's pages are never meant to be framed by other sites (the demo frames only its own host).
+      { source: "/:path*", has: [{ type: "host", value: "tapcard.aiert.co.uk" }], headers: [{ key: "X-Frame-Options", value: "SAMEORIGIN" }] },
+      { source: "/tapcard/:path*", headers: [{ key: "X-Frame-Options", value: "SAMEORIGIN" }] },
+      { source: "/api/tapcard/:path*", headers: [{ key: "X-Frame-Options", value: "SAMEORIGIN" }] },
+    ];
+  },
   // sharp (TapCard Wallet pass thumbnail compositing) ships a native
   // libvips binary. serverExternalPackages alone wasn't enough — Next's
   // own file tracing still failed to pick up the actual .so file, 500ing

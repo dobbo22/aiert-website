@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import sql from "@/lib/db";
+import { rateLimited } from "@/lib/rateLimit";
 import { findAdminOrgsByEmail } from "@/lib/tapcardBiz";
 import { createLoginToken } from "@/lib/tapcardBizAuth";
 import { sendBizLoginEmail } from "@/lib/tapcardBizEmail";
@@ -14,6 +16,7 @@ interface Body {
 // sign up rather than waiting for an email that never comes — a deliberate
 // trade: it does reveal whether an address administers an account.
 export async function POST(req: NextRequest) {
+  if (rateLimited(req, "biz-login", 8, 10 * 60_000)) return NextResponse.json({ error: "Too many attempts. Please wait a few minutes." }, { status: 429 });
   const parsed = (await req.json().catch(() => null)) as Body | null;
   if (!parsed || typeof parsed !== "object") return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   const body: Body = parsed;
@@ -26,6 +29,10 @@ export async function POST(req: NextRequest) {
   if (admins.length === 0) {
     return NextResponse.json({ error: "no_account" }, { status: 404 });
   }
+
+  // At most 5 sign-in emails per address an hour (a token lives 15 minutes, so expiry in the last 45 = issued in the last hour).
+  const [{ n }] = (await sql`SELECT count(*)::int AS n FROM tapcard_biz_login_tokens WHERE admin_email = ${email} AND expires_at > now() - interval '45 minutes'`) as { n: number }[];
+  if (n >= 5) return NextResponse.json({ ok: true });
 
   const token = await createLoginToken(email, admins[0].org_id);
   const origin = "https://tapcard.aiert.co.uk";
