@@ -22,8 +22,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!who.ok) return who.response;
   if (!isBusinessLabel(card.label)) return NextResponse.json({ error: "announcements are for business cards" }, { status: 400 });
   if (!(await promoteAllowed(id))) return NextResponse.json({ error: "Posting news needs TapCard Promote on this card. One subscription covers one card; email enquiries@aiert.co.uk to add more locations." }, { status: 402 });
-  const body = (await req.json().catch(() => null)) as { text?: unknown } | null;
-  const r = await setAnnouncement(id, body?.text);
+  const body = (await req.json().catch(() => null)) as { text?: unknown; link?: unknown } | null;
+  const r = await setAnnouncement(id, body?.text, body?.link);
   if (!r.ok) return NextResponse.json({ error: r.error }, { status: 400 });
   const posted = await publicAnnouncement(id);
   if (posted) after(() => pushToFollowers(id, "news", { title: card.company || card.name, body: posted.text, ref: String(posted.id) }));

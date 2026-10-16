@@ -31,7 +31,7 @@ export async function POST(req: Request) {
       await clearOffers(cardId);
       return NextResponse.json({ ok: true });
     case "news": {
-      const r = await setAnnouncement(cardId, body.text);
+      const r = await setAnnouncement(cardId, body.text, body.link);
       if (!r.ok) return NextResponse.json({ error: r.error }, { status: 400 });
       const card = ((await sql`SELECT name, company FROM tapcard_cards WHERE id = ${cardId}`) as { name: string; company: string }[])[0];
       after(() => pushToFollowers(cardId, "news", { title: card?.company || card?.name || "News", body: String(body.text ?? "").trim().slice(0, 140), ref: `a${Date.now()}` }));

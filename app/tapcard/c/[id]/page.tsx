@@ -11,6 +11,7 @@ import AcceptRecipientForm from "../../AcceptRecipientForm";
 import { callActionLabel, isTapLink, linkIcon, parseStoredLinks } from "@/lib/tapcardLinks";
 import SaveContactButton from "../../SaveContactButton";
 import CarryCardToInstall from "../../CarryCardToInstall";
+import { publicAnnouncement } from "@/lib/tapcardOffers";
 
 // App Store Connect record "TapCard: Digital Business Card" (id 6816003159).
 const TAPCARD_ORIGIN = "https://tapcard.aiert.co.uk";
@@ -150,6 +151,7 @@ export default async function CardPage({
   const bannerLogo =
     orgLogo ?? (companyDomain ? `https://tapcard.aiert.co.uk/api/logo?domain=${encodeURIComponent(companyDomain)}` : null);
   const palette = paletteFor(card.brand_color);
+  const news = await publicAnnouncement(id).catch(() => null);
 
   return (
     <main className="min-h-screen flex flex-col items-center px-4 py-12">
@@ -237,6 +239,18 @@ export default async function CardPage({
                 >
                   Get TapCard
                 </a>
+              </div>
+            )}
+
+            {news && (
+              <div className="mt-5 rounded-2xl bg-white/[0.07] px-4 py-3 text-left">
+                <p className="text-xs font-semibold uppercase tracking-wide text-white">Latest news</p>
+                <p className="mt-1 text-sm text-white">{news.text}</p>
+                {news.link && (
+                  <a href={news.link} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm font-semibold text-white underline">
+                    Read more · {new URL(news.link).hostname.replace(/^www\./, "")}
+                  </a>
+                )}
               </div>
             )}
 

@@ -56,6 +56,7 @@ function ensureOfferSchema(): Promise<unknown> {
           withdrawn BOOLEAN NOT NULL DEFAULT false
         )
       `)
+      .then(() => sql`ALTER TABLE tapcard_announcements ADD COLUMN IF NOT EXISTS link TEXT`)
       .then(() => sql`CREATE INDEX IF NOT EXISTS tapcard_announcements_card ON tapcard_announcements (card_id)`)
       .then(() => sql`
         CREATE TABLE IF NOT EXISTS tapcard_followers (
@@ -304,13 +305,24 @@ const MIN_ANNOUNCEMENT_GAP_MS = 6 * 60 * 60 * 1000;
 export async function publicAnnouncement(cardId: string) {
   await ensureOfferSchema();
   const row = ((await sql`
-    SELECT id, text, created_at, withdrawn FROM tapcard_announcements WHERE card_id = ${cardId} ORDER BY id DESC LIMIT 1
-  `) as { id: number; text: string; created_at: string; withdrawn: boolean }[])[0];
+    SELECT id, text, link, created_at, withdrawn FROM tapcard_announcements WHERE card_id = ${cardId} ORDER BY id DESC LIMIT 1
+  `) as { id: number; text: string; link: string | null; created_at: string; withdrawn: boolean }[])[0];
   if (!row || row.withdrawn) return null;
-  return { id: Number(row.id), text: row.text, postedAt: new Date(row.created_at).toISOString() };
+  return { id: Number(row.id), text: row.text, link: row.link || null, postedAt: new Date(row.created_at).toISOString() };
 }
 
-export async function setAnnouncement(cardId: string, textRaw: unknown): Promise<{ ok: true } | { ok: false; error: string }> {
+// An optional "read more" page for a news item: https only, no credentials, sensible length.
+export function cleanNewsLink(raw: unknown): string | null {
+  if (typeof raw !== "string" || !raw.trim()) return null;
+  try {
+    const u = new URL(/^[a-z]+:\/\//i.test(raw.trim()) ? raw.trim() : `https://${raw.trim()}`);
+    if (u.protocol !== "https:" || u.username || u.password || !u.hostname.includes(".")) return null;
+    const out = u.toString();
+    return out.length <= 500 ? out : null;
+  } catch { return null; }
+}
+
+export async function setAnnouncement(cardId: string, textRaw: unknown, linkRaw?: unknown): Promise<{ ok: true } | { ok: false; error: string }> {
   await ensureOfferSchema();
   const text = typeof textRaw === "string" ? textRaw.trim().slice(0, MAX_ANNOUNCEMENT_TEXT) : "";
   if (!text) return { ok: false, error: "announcement text is required" };
@@ -318,7 +330,9 @@ export async function setAnnouncement(cardId: string, textRaw: unknown): Promise
   if (last && Date.now() - new Date(last.created_at).getTime() < MIN_ANNOUNCEMENT_GAP_MS) {
     return { ok: false, error: "You can post one announcement every 6 hours" };
   }
-  await sql`INSERT INTO tapcard_announcements (card_id, text) VALUES (${cardId}, ${text})`;
+  const link = cleanNewsLink(linkRaw);
+  if (typeof linkRaw === "string" && linkRaw.trim() && !link) return { ok: false, error: "The story link must be a secure https:// web address" };
+  await sql`INSERT INTO tapcard_announcements (card_id, text, link) VALUES (${cardId}, ${text}, ${link})`;
   return { ok: true };
 }
 

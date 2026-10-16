@@ -8,6 +8,7 @@ interface Props { cardId: string; hasOffer: boolean; hasNews: boolean }
 export default function LocationPromote({ cardId, hasOffer, hasNews }: Props) {
   const [open, setOpen] = useState<"offer" | "news" | null>(null);
   const [text, setText] = useState("");
+  const [link, setLink] = useState("");
   const [days, setDays] = useState("14");
   const [limit, setLimit] = useState("");
   const [pin, setPin] = useState("");
@@ -46,7 +47,8 @@ export default function LocationPromote({ cardId, hasOffer, hasNews }: Props) {
       {open === "news" && (
         <div className="mt-3 rounded-xl bg-black/20 p-3 text-sm">
           <label className="block">The news (one short line)<input className={field} value={text} onChange={(e) => setText(e.target.value.slice(0, 140))} placeholder="New autumn menu from Friday" /></label>
-          <button type="button" disabled={busy || !text.trim()} className="mt-3 rounded-lg bg-white px-4 py-2 font-semibold text-[#111318] disabled:opacity-50" onClick={() => send({ action: "news", text })}>Post news</button>
+          <label className="mt-2 block">Link to the full story (optional)<input className={field} value={link} onChange={(e) => setLink(e.target.value.trim())} placeholder="https://yoursite.com/news/autumn-menu" inputMode="url" /></label>
+          <button type="button" disabled={busy || !text.trim()} className="mt-3 rounded-lg bg-white px-4 py-2 font-semibold text-[#111318] disabled:opacity-50" onClick={() => send({ action: "news", text, link })}>Post news</button>
         </div>
       )}
       {msg ? <p className="mt-2 text-sm font-semibold">{msg}</p> : null}
