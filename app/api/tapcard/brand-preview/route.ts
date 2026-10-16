@@ -1,3 +1,4 @@
+import { rateLimited } from "@/lib/rateLimit";
 import { NextRequest, NextResponse } from "next/server";
 import { resolveSiteBranding } from "@/lib/siteBrandColor";
 
@@ -10,6 +11,7 @@ import { resolveSiteBranding } from "@/lib/siteBrandColor";
 // from the site's own schema.org structured data, never scraped free text.
 
 export async function GET(req: NextRequest) {
+  if (rateLimited(req, "brand-preview", 20)) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   const website = (req.nextUrl.searchParams.get("website") ?? "").trim();
   if (!website) return NextResponse.json({ error: "website is required" }, { status: 400 });
 

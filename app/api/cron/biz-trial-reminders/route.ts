@@ -8,7 +8,7 @@ import { TRIAL_REMINDER_DAYS } from "@/lib/tapcardBizBilling";
 // free trial ends. Paid companies and trials already reminded are skipped.
 export async function GET(req: Request) {
   const auth = req.headers.get("authorization");
-  if (process.env.CRON_SECRET && auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!process.env.CRON_SECRET || auth !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
   await ensureSchema();

@@ -1,3 +1,4 @@
+import { rateLimited } from "@/lib/rateLimit";
 import { NextRequest, NextResponse } from "next/server";
 import { findSiteLogo, normalizeDomain } from "@/lib/siteIcon";
 
@@ -9,6 +10,7 @@ import { findSiteLogo, normalizeDomain } from "@/lib/siteIcon";
 // the CDN caches the response.
 
 export async function GET(req: NextRequest) {
+  if (rateLimited(req, "logo", 60)) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   const domain = normalizeDomain(req.nextUrl.searchParams.get("domain") ?? "");
   if (!domain) return NextResponse.json({ error: "invalid domain" }, { status: 400 });
 

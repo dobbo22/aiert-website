@@ -1,9 +1,11 @@
+import { rateLimited } from "@/lib/rateLimit";
 import { NextRequest, NextResponse } from "next/server";
 import { findSiteLinks } from "@/lib/siteLinks";
 
 // The booking / menu / review links a business's own website already has, for the
 // card editor's "Found on your website" suggestions. Reads one page, stores nothing.
 export async function GET(req: NextRequest) {
+  if (rateLimited(req, "site-links", 20)) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   const website = req.nextUrl.searchParams.get("website") ?? "";
   if (!website || website.length > 200) return NextResponse.json({ links: [], details: {}, branches: [] });
   const address = (req.nextUrl.searchParams.get("address") ?? "").slice(0, 300);

@@ -1,3 +1,4 @@
+import { rateLimited } from "@/lib/rateLimit";
 import { NextRequest, NextResponse } from "next/server";
 import { findSiteIcon, normalizeDomain } from "@/lib/siteIcon";
 
@@ -7,6 +8,7 @@ import { findSiteIcon, normalizeDomain } from "@/lib/siteIcon";
 // that can't decode them (Google Wallet).
 
 export async function GET(req: NextRequest) {
+  if (rateLimited(req, "favicon", 60)) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   const domain = normalizeDomain(req.nextUrl.searchParams.get("domain") ?? "");
   if (!domain) return NextResponse.json({ error: "invalid domain" }, { status: 400 });
 

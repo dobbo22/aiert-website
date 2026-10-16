@@ -1,3 +1,4 @@
+import { rateLimited } from "@/lib/rateLimit";
 import { NextRequest, NextResponse } from "next/server";
 import { readLimited, safeFetch } from "@/lib/siteIcon";
 
@@ -12,6 +13,7 @@ function deny(status = 404) {
 }
 
 export async function GET(req: NextRequest) {
+  if (rateLimited(req, "demo-page", 30)) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   const raw = req.nextUrl.searchParams.get("url") ?? "";
   const site = req.nextUrl.searchParams.get("site") ?? "";
   let u: URL;
