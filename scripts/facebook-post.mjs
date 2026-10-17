@@ -7,13 +7,20 @@
 //   npm run facebook:post -- "Post text here"
 //   npm run facebook:post -- "Post text here" ./path/to/photo.jpg
 //   npm run facebook:post -- --file scripts/posts/draft.txt [./path/to/photo.jpg]
+//   npm run facebook:post -- --file scripts/posts/draft.txt ./path/to/video.mp4   (.mp4 / .mov = video)
+//
+// Flags (anywhere in the command):
+//   --dry-run      Show exactly what would be posted and open the media locally. Posts nothing, needs no token.
+//   --unpublished  Upload to the Page as an unpublished draft (visible only to Page admins in Meta Business Suite),
+//                  so it can be previewed on Facebook and published by hand. Photos and videos only.
 //
 // Required env vars (see .env.local):
 //   FACEBOOK_PAGE_ID             Numeric Page ID
 //   FACEBOOK_PAGE_ACCESS_TOKEN   Page access token (long-lived, from
 //                                 GET /me/accounts in Graph API Explorer)
 import { config } from "dotenv";
-import { readFile } from "fs/promises";
+import { readFile, stat } from "fs/promises";
+import { execFile } from "child_process";
 
 config({ path: ".env.local" });
 
@@ -24,12 +31,10 @@ const MAX_MESSAGE_LENGTH = 63206; // Facebook's Page post message limit
 const PAGE_ID = process.env.FACEBOOK_PAGE_ID;
 const PAGE_ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
 
-if (!PAGE_ID || !PAGE_ACCESS_TOKEN) {
-  console.error("Missing FACEBOOK_PAGE_ID or FACEBOOK_PAGE_ACCESS_TOKEN in .env.local");
-  process.exit(1);
-}
-
-const rawArgs = process.argv.slice(2);
+const argv = process.argv.slice(2);
+const DRY_RUN = argv.includes("--dry-run");
+const UNPUBLISHED = argv.includes("--unpublished");
+const rawArgs = argv.filter((a) => a !== "--dry-run" && a !== "--unpublished");
 
 let message;
 let photoPath;
@@ -52,11 +57,30 @@ if (message.length > MAX_MESSAGE_LENGTH) {
   process.exit(1);
 }
 
+const isVideo = (path) => /\.(mp4|mov)$/i.test(path ?? "");
+
+async function postVideo(path, description) {
+  const fileBytes = await readFile(path);
+  const form = new FormData();
+  form.append("description", description);
+  form.append("access_token", PAGE_ACCESS_TOKEN);
+  if (UNPUBLISHED) form.append("published", "false");
+  form.append("source", new Blob([fileBytes], { type: "video/mp4" }), path.split("/").pop());
+
+  const res = await fetch(`${API_BASE}/${PAGE_ID}/videos`, { method: "POST", body: form });
+  const json = await res.json();
+  if (!res.ok) {
+    throw new Error(`Video post failed: ${res.status} ${JSON.stringify(json)}`);
+  }
+  return json.id;
+}
+
 async function postPhoto(path, caption) {
   const fileBytes = await readFile(path);
   const form = new FormData();
   form.append("caption", caption);
   form.append("access_token", PAGE_ACCESS_TOKEN);
+  if (UNPUBLISHED) form.append("published", "false");
   form.append("source", new Blob([fileBytes]), path.split("/").pop());
 
   const res = await fetch(`${API_BASE}/${PAGE_ID}/photos`, {
@@ -87,12 +111,39 @@ async function postText(text) {
   return json.id;
 }
 
+if (DRY_RUN) {
+  console.log("---- DRY RUN: nothing is sent to Facebook ----");
+  console.log(`Page: ${PAGE_ID ?? "(FACEBOOK_PAGE_ID not set locally)"}`);
+  console.log(`Type: ${photoPath ? (isVideo(photoPath) ? "video" : "photo") : "text only"}`);
+  if (photoPath) {
+    const { size } = await stat(photoPath);
+    console.log(`Media: ${photoPath} (${(size / 1024 / 1024).toFixed(2)} MB)`);
+    if (isVideo(photoPath) && size > 1024 * 1024 * 1024) console.log("WARNING: over 1 GB, use the resumable upload API instead");
+    execFile("open", [photoPath], () => {});
+  }
+  const links = message.match(/https?:\/\/\S+/g) ?? [];
+  console.log(`Characters: ${message.length}`);
+  console.log(`Links in the text: ${links.length ? links.join("  ") : "NONE"}`);
+  console.log("\n=========== POST TEXT ===========\n" + message + "\n=================================");
+  process.exit(0);
+}
+
+if (!PAGE_ID || !PAGE_ACCESS_TOKEN) {
+  console.error("Missing FACEBOOK_PAGE_ID or FACEBOOK_PAGE_ACCESS_TOKEN in .env.local");
+  process.exit(1);
+}
+
 const postId = photoPath
   ? await (async () => {
-      console.log(`Uploading photo: ${photoPath}`);
+      if (isVideo(photoPath)) {
+        console.log(`Uploading video: ${photoPath}${UNPUBLISHED ? " (unpublished draft)" : ""}`);
+        return postVideo(photoPath, message);
+      }
+      console.log(`Uploading photo: ${photoPath}${UNPUBLISHED ? " (unpublished draft)" : ""}`);
       return postPhoto(photoPath, message);
     })()
   : await postText(message);
 
-console.log(`Post created: ${postId}`);
-console.log(`View at: https://www.facebook.com/${postId}`);
+console.log(UNPUBLISHED ? `Unpublished draft created: ${postId}` : `Post created: ${postId}`);
+if (UNPUBLISHED) console.log("Preview it in Meta Business Suite (Content > Posts and stories > Unpublished), then publish there.");
+else console.log(`View at: https://www.facebook.com/${postId}`);
