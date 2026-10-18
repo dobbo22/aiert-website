@@ -30,6 +30,9 @@ async function underCap(): Promise<boolean> {
   return (r[0]?.n ?? 0) <= DAILY_CAP;
 }
 
+// Google's website field often carries campaign parameters (utm_source=...): keep just the address people would type.
+const cleanSite = (u: string) => { try { const x = new URL(u); return `${x.protocol}//${x.hostname}${x.pathname === "/" ? "" : x.pathname.replace(/\/$/, "")}`; } catch { return ""; } };
+
 export async function searchBusinesses(queryRaw: string): Promise<BusinessHit[]> {
   const key = process.env.GOOGLE_PLACES_API_KEY;
   const q = queryRaw.trim().slice(0, 100);
@@ -50,7 +53,7 @@ export async function searchBusinesses(queryRaw: string): Promise<BusinessHit[]>
   const j = (await res.json().catch(() => ({}))) as { places?: { id?: string; displayName?: { text?: string }; formattedAddress?: string; websiteUri?: string; nationalPhoneNumber?: string; primaryTypeDisplayName?: { text?: string } }[] };
   const hits: BusinessHit[] = (j.places ?? []).flatMap((p) => p.id && p.displayName?.text ? [{
     id: p.id, name: p.displayName.text.slice(0, 120), address: (p.formattedAddress ?? "").slice(0, 200),
-    website: (p.websiteUri ?? "").slice(0, 200), phone: (p.nationalPhoneNumber ?? "").slice(0, 40), type: (p.primaryTypeDisplayName?.text ?? "").slice(0, 60),
+    website: cleanSite(p.websiteUri ?? "").slice(0, 200), phone: (p.nationalPhoneNumber ?? "").slice(0, 40), type: (p.primaryTypeDisplayName?.text ?? "").slice(0, 60),
   }] : []);
   if (cache.size > 500) cache.clear();
   cache.set(q.toLowerCase(), { at: Date.now(), hits });
