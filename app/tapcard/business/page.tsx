@@ -55,6 +55,9 @@ export default function TapCardBusinessPage() {
             <p className="mt-6">
               Already set up? <a href="/business/admin" className="text-gold underline">Sign in to your admin</a>
             </p>
+            <p className="mt-3 text-cloud">
+              Want to see one location first? <a href="/demo?utm_source=business-page" className="text-gold underline">Build a card in 30 seconds</a>, with nothing to install.
+            </p>
           </div>
           <SignupForm />
         </section>

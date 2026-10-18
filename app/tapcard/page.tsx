@@ -88,6 +88,7 @@ export default function TapCardHomePage() {
             <p className="mt-4 text-lg font-semibold text-cloud">Always be prepared. Always current.</p>
 
             <StoreBadges appStoreUrl={APP_STORE_URL} playStoreUrl={PLAY_STORE_URL} className="mt-8" />
+            <p className="mt-4 text-cloud">Run a business? <a href="/demo?utm_source=home" className="font-semibold underline">Build your card in 30 seconds</a>, with nothing to install.</p>
             <p className="mt-3 text-sm text-mist">Free to download. The first 1,000 users on each phone get TapCard free for life.</p>
           </div>
 

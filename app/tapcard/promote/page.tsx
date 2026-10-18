@@ -37,7 +37,7 @@ const WHAT_YOU_CAN_DO = [
 ];
 
 const STEPS = [
-  ["Make your card", "In the free TapCard app, add your business name, phone, website and address. TapCard can find your booking, menu and review links and opening hours from your website."],
+  ["Make your card", "Try the demo on this website: type your business name and TapCard builds your card from your website, then emails you a link that opens it ready-made in the app. Or start in the free app: choose A business and it builds the card from your name and website."],
   ["Put the QR code where people look", "On the door, the till or a table. Customers scan it and save you, and with the TapCard app they can follow you for offers and news."],
   ["Post an offer or news", "Open TapCard, tap Promote, write a line and set a staff PIN. That is the whole job."],
   ["They claim it, you scan it", "Each person claims their own one-off QR code. Your staff scan it with a phone camera (or type the code on any till), enter the PIN, and it is marked as used. It can never be used twice."],
@@ -75,6 +75,10 @@ export default function PromotePage() {
               mailing list to build and no agency to pay.
             </p>
             <div className="no-print mt-6 flex flex-wrap items-center gap-3">
+              <a href="/demo?utm_source=promote-page" className="btn-gold rounded-xl px-5 py-3 font-semibold">Build your card in 30 seconds</a>
+              <span className="text-cloud">Type your business name and watch it happen. Nothing to install.</span>
+            </div>
+            <div className="no-print mt-5 flex flex-wrap items-center gap-3">
               <StoreBadges appStoreUrl={appStore} playStoreUrl={playStore} />
             </div>
           </div>

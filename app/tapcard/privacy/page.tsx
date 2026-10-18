@@ -15,10 +15,24 @@ export default function TapCardPrivacyPage() {
       <section>
         <h2>Summary</h2>
         <p>
-          TapCard has no accounts, no advertising and no tracking, and its only analytics is an anonymous count of
-          taps on our own app promotions (see below). Your card stays on your iPhone
+          TapCard has no accounts, no advertising and no tracking, and its only analytics is anonymous counts of
+          taps on our own app promotions and of how far people get through setting up their card (see below). Your card stays on your iPhone
           until you tap <strong>Share my card</strong>. Sharing publishes a copy at a private link so other people can
           view and save it, and <strong>Stop sharing</strong> deletes that copy from our servers.
+        </p>
+      </section>
+
+      <section>
+        <h2>Setup counts</h2>
+        <p>
+          While you set up your card, the app tells us when it reaches a step (for example &ldquo;card built&rdquo;), so we can
+          see where people get stuck and make setup easier. Only the step name, whether it was iPhone or Android, and whether
+          you chose a business or yourself are sent. We store a count per day. No device id, IP address, name or card is sent
+          or stored with it, so a count can never be tied to you.
+        </p>
+        <p>
+          If you use <strong>Find your business</strong>, the name you type is sent to our server, which asks Google Places
+          for matching businesses and returns the list. We do not keep what you typed.
         </p>
       </section>
 
