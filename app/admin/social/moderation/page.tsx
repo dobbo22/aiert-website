@@ -1,4 +1,5 @@
 import sql from "@/lib/db";
+import { isAdminRequest } from "@/lib/adminRequest";
 
 export const metadata = { title: "TapCard moderation — Admin", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -10,6 +11,8 @@ const fmt = (d: string) => new Date(d).toLocaleString("en-GB", { day: "numeric",
 // Offers and news that the automatic checks refused (block) or let through but flagged for a person to look at (review).
 // Kept 30 days. A "block" that looks wrong is a word-list fix (lib/tapcardModeration.ts); a "review" that is wrong needs the card taking down.
 export default async function ModerationPage() {
+  // The login screen comes from the layout, but the page's data must not be fetched, or sent in the page source, for anyone else.
+  if (!(await isAdminRequest())) return null;
   const rows = await (sql`
     SELECT id, card_id, kind, decision, category, term, excerpt, created_at FROM tapcard_moderation_log ORDER BY id DESC LIMIT 200
   ` as unknown as Promise<Row[]>).catch(() => null);

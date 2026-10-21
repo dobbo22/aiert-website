@@ -1,5 +1,6 @@
 import sql from "@/lib/db";
 import { TRACKED_LINKS } from "@/lib/trackedLinks";
+import { isAdminRequest } from "@/lib/adminRequest";
 
 type ClickCount = { slug: string; count: string };
 type RecentClick = {
@@ -23,6 +24,8 @@ function browserFromUserAgent(ua: string | null): string {
 }
 
 export default async function LinkClicksPage() {
+  // The login screen comes from the layout, but the page's data must not be fetched, or sent in the page source, for anyone else.
+  if (!(await isAdminRequest())) return null;
   let counts: ClickCount[] = [];
   let recent: RecentClick[] = [];
 

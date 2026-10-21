@@ -1,4 +1,5 @@
 import { listDemoLeads } from "@/lib/tapcardPrebuilt";
+import { isAdminRequest } from "@/lib/adminRequest";
 
 export const metadata = { title: "TapCard demo leads — Admin", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -7,6 +8,8 @@ const fmt = (d: string | null) => (d ? new Date(d).toLocaleString("en-GB", { day
 
 // Inside the Social admin (layout.tsx handles the sign-in). Emails here are also added to Links & Invites as contacts.
 export default async function DemoLeadsPage() {
+  // The login screen comes from the layout, but the page's data must not be fetched, or sent in the page source, for anyone else.
+  if (!(await isAdminRequest())) return null;
   const leads = await listDemoLeads().catch(() => null);
   return (
     <div>

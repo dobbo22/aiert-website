@@ -1,5 +1,6 @@
 import { listGrants, listRequests } from "@/lib/tapcardGrants";
 import { GrantForm, RevokeButton } from "./GrantsAdmin";
+import { isAdminRequest } from "@/lib/adminRequest";
 
 export const metadata = { title: "TapCard free Promote — Admin", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -10,6 +11,8 @@ const cell: React.CSSProperties = { padding: "6px 10px", verticalAlign: "top", t
 // Complimentary TapCard Promote for charities, societies and early businesses (no store subscription). Charities that ask on the
 // societies page are approved automatically when the Charity Commission register confirms them and the website matches; the rest wait here.
 export default async function GrantsPage() {
+  // The login screen comes from the layout, but the page's data must not be fetched, or sent in the page source, for anyone else.
+  if (!(await isAdminRequest())) return null;
   const [grants, requests] = await Promise.all([listGrants().catch(() => []), listRequests().catch(() => [])]);
   const pending = requests.filter((r) => r.status === "pending");
   return (

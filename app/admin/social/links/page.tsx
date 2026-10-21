@@ -3,8 +3,11 @@ import { ensureInviteSchema } from "@/lib/tapcardInvites";
 import { inviteEmailRoute } from "@/lib/inviteEmailRoute";
 import { founderOffer } from "@/lib/tapcardFounders";
 import InviteSender, { type SenderContact } from "./InviteSender";
+import { isAdminRequest } from "@/lib/adminRequest";
 
 export default async function SendInvitesPage() {
+  // The login screen comes from the layout, but the page's data must not be fetched, or sent in the page source, for anyone else.
+  if (!(await isAdminRequest())) return null;
   const route = inviteEmailRoute();
   const offer = await founderOffer();
   let contacts: SenderContact[] = [];

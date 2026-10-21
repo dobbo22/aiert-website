@@ -4,6 +4,7 @@ import { FREE_PLACES, ladderStatus } from "@/lib/tapcardFounders";
 import { cardPageTotals } from "@/lib/tapcardDb";
 import ResetSendButton from "./ResetSendButton";
 import StoreStatsInput from "./StoreStatsInput";
+import { isAdminRequest } from "@/lib/adminRequest";
 
 type ChannelRow = {
   channel: string;
@@ -40,6 +41,8 @@ const when = (d: string | null) =>
 const DEVICE: Record<string, string> = { ios: "iPhone", android: "Android", desktop: "Computer" };
 
 export default async function TrackInvitesPage() {
+  // The login screen comes from the layout, but the page's data must not be fetched, or sent in the page source, for anyone else.
+  if (!(await isAdminRequest())) return null;
   let channels: ChannelRow[] = [];
   let campaigns: CampaignRow[] = [];
   let stores: StoreRow[] = [];

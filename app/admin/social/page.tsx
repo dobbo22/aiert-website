@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { listPagePosts } from "@/lib/facebookGraph";
+import { isAdminRequest } from "@/lib/adminRequest";
 
 export default async function SocialOverviewPage() {
+  // The login screen comes from the layout, but the page's data must not be fetched, or sent in the page source, for anyone else.
+  if (!(await isAdminRequest())) return null;
   let posts: Awaited<ReturnType<typeof listPagePosts>> = [];
   let error: string | null = null;
 

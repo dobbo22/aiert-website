@@ -1,9 +1,12 @@
 import { MAILSHOT_SUBJECTS, RESTAURANT_SUBJECTS, restaurantHtml, ensureMailshotSchema, mailshotBounces, mailshotHtml, mailshotLinks, mailshotStats, type BouncedRow } from "@/lib/mailshot";
 import MailshotPanel from "./MailshotPanel";
+import { isAdminRequest } from "@/lib/adminRequest";
 
 const DEFAULT_CAMPAIGN = "mailshot-oct26";
 
 export default async function MailshotPage() {
+  // The login screen comes from the layout, but the page's data must not be fetched, or sent in the page source, for anyone else.
+  if (!(await isAdminRequest())) return null;
   let error: string | null = null;
   let stats = null;
   let bounces: BouncedRow[] = [];

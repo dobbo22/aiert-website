@@ -1,9 +1,12 @@
 import { redditConfigured, listSubscribedSubreddits, listMyRecentPosts } from "@/lib/redditApi";
 import RedditFeed from "./RedditFeed";
+import { isAdminRequest } from "@/lib/adminRequest";
 
 export const dynamic = "force-dynamic";
 
 export default async function RedditTabPage() {
+  // The login screen comes from the layout, but the page's data must not be fetched, or sent in the page source, for anyone else.
+  if (!(await isAdminRequest())) return null;
   if (!redditConfigured()) {
     return (
       <p className="social-coming-soon">

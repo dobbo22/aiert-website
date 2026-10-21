@@ -1,4 +1,5 @@
 import { FUNNEL_STEPS, funnelTotals } from "@/lib/tapcardFunnel";
+import { isAdminRequest } from "@/lib/adminRequest";
 
 export const metadata = { title: "TapCard setup funnel — Admin", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -13,6 +14,8 @@ const LABEL: Record<string, string> = {
 };
 
 export default async function FunnelPage({ searchParams }: { searchParams: Promise<{ days?: string }> }) {
+  // The login screen comes from the layout, but the page's data must not be fetched, or sent in the page source, for anyone else.
+  if (!(await isAdminRequest())) return null;
   const days = Math.min(365, Math.max(1, Number((await searchParams).days) || 30));
   const rows = await funnelTotals(days).catch(() => null);
   const total = (step: string, plat?: string) => (rows ?? []).filter((r) => r.step === step && (!plat || r.platform === plat)).reduce((a, r) => a + r.n, 0);

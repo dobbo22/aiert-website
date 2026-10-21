@@ -17,7 +17,8 @@ async function locationFields(subscriptionId: string | null | undefined): Promis
 export async function POST(req: NextRequest) {
   const signature = req.headers.get("stripe-signature");
   const secret = process.env.TAPCARD_BIZ_STRIPE_WEBHOOK_SECRET;
-  if (!signature || !secret) return NextResponse.json({ error: "not configured" }, { status: 500 });
+  if (!secret) return NextResponse.json({ error: "not configured" }, { status: 500 });
+  if (!signature) return NextResponse.json({ error: "missing signature" }, { status: 400 });
 
   const body = await req.text();
   let event: Stripe.Event;
