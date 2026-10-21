@@ -118,6 +118,13 @@ thread), and a sync cut off by iOS suspension is now abandoned and restarted on 
 weakness exists in live 1.3 for very large accounts. Device log tip: `idevicesyslog -u <udid>` works over USB; crash reports are in
 `idevicecrashreport -e -k <dir>` under Retired/.
 
+## 21 Oct 2026 (night): in review now — iPhone 3.2 (36) and Android 1.7.3 (64)
+- Both submitted 21 Oct. New since 3.1/1.6.0: card-first setup (business or just me), Find your business (Google Places: nearest branch first via Vercel IP headers, opening hours, business type, Google review link), links added automatically and each link has a Show on my card switch, logo hero banner (server rejects tiny/blank logos; brand colour from logo), stamp cards, App Clip, WhatsApp switch, paper card scan (own card and Contacts tab scan-a-contact; parser joins two-line company names via the website, reads Ltd/Ld/d., Canadian/UK addresses), Apple/Google sign-in then Contacts match with merge and number/email choice, adding another card starts fresh (or Me with my usual details), delete the only card, paywall explains a used free trial.
+- Apple sign-in only returns name/email the first time; reset in Settings > Apple Account > Sign in with Apple > TapCard > Stop Using. Name is now remembered on the phone.
+- Server changes live: lib/tapcardBusinessSearch.ts (hours, nearest-first), lib/siteLinks.ts (tidyAddress, formatHours export), lib/siteBrandColor.ts, lib/siteIcon.ts (looksLikeLogo), restaurant email (stamp cards, claim without app).
+- After approval: set `APP_GATE_READY = true`; App Clip advanced experience + Safari banner meta; test a real stamp card; send the restaurant email (reviewed copy is in Mailshot preview); update Play Data safety/App Privacy only if new data types appear (Search History / In-app search history already added).
+- Pricing decided: personal ladder as built (first 1,000 per platform free, then from £0.99); Promote £49.99 for the first 1,000 subscribers across both stores, then £99.99 for new subscribers (review the £42/location Business tier before then).
+
 ## To do list and back burner (updated 21 Oct 2026, newest decisions first)
 
 **Back burner (decided 21 Oct: leave live, do not build more yet; the money is in cafes, restaurants, shops and multi-location businesses)**
