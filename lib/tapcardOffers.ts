@@ -10,6 +10,7 @@
 import crypto from "crypto";
 import sql from "@/lib/db";
 import { hashSecret } from "@/lib/tapcardAuth";
+import { moderate } from "@/lib/tapcardModeration";
 
 export interface OfferRow {
   id: number;
@@ -195,6 +196,10 @@ export async function setOffer(cardId: string, input: OfferInput, postedBy: stri
     max = n;
   }
   const kind = input.kind === "stamps" ? "stamps" : "once";
+  // Nothing abusive or gambling-related reaches customers (this is the single place every offer is saved, whatever app or page posted it).
+  const rewardForCheck = typeof input.rewardText === "string" ? input.rewardText : "";
+  const moderated = await moderate(cardId, [{ kind: "offer", text }, { kind: "reward", text: rewardForCheck }]);
+  if (!moderated.ok) return { ok: false, error: moderated.error };
   let stampsRequired: number | null = null;
   let rewardText = "";
   let gapHours = 0;
@@ -504,6 +509,8 @@ export async function setAnnouncement(cardId: string, textRaw: unknown, linkRaw?
   }
   const link = cleanNewsLink(linkRaw);
   if (typeof linkRaw === "string" && linkRaw.trim() && !link) return { ok: false, error: "The story link must be a secure https:// web address" };
+  const moderated = await moderate(cardId, [{ kind: "news", text }, ...(link ? [{ kind: "link" as const, text: link }] : [])]);
+  if (!moderated.ok) return { ok: false, error: moderated.error };
   await sql`INSERT INTO tapcard_announcements (card_id, text, link) VALUES (${cardId}, ${text}, ${link})`;
   return { ok: true };
 }

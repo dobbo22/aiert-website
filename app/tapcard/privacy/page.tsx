@@ -23,6 +23,16 @@ export default function TapCardPrivacyPage() {
       </section>
 
       <section>
+        <h2>Checking what businesses post</h2>
+        <p>
+          Offers and news that a business posts are checked automatically before anyone sees them. We do not allow abusive content,
+          gambling offers (betting, casinos, poker, slots and similar), or money-making and lending scams, and posts that break
+          these rules are refused. Refused and flagged posts are kept for 30 days so we can review mistakes, then deleted. If you see
+          something that should not be there, use &ldquo;Report this card, offer or news&rdquo; on the card page.
+        </p>
+      </section>
+
+      <section>
         <h2>Setup counts</h2>
         <p>
           While you set up your card, the app tells us when it reaches a step (for example &ldquo;card built&rdquo;), so we can
