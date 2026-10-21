@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCard } from "@/lib/tapcardDb";
 import { claimOffer } from "@/lib/tapcardOffers";
+import { rateLimited } from "@/lib/rateLimit";
 
 // A person with the card claims the offer. `claimant` is a random id the app
 // keeps on the device, so claiming twice returns the same code (never a second one).
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  // Generous: a busy café's customers share one wifi address. This only stops a script claiming every place on an offer.
+  if (rateLimited(req, "offer-claim", 200, 60 * 60_000)) return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
   const { id } = await params;
   const body = (await req.json().catch(() => null)) as { claimant?: unknown; via?: unknown } | null;
   // Newer apps say where the claim is from. Older app versions say nothing: anything that isn't a web browser is the app, so

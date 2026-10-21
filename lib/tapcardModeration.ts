@@ -18,9 +18,19 @@ export type Verdict =
 // ---- Text normalising: lower case, accents off, common look-alike characters mapped back, long repeats shortened.
 const LOOKALIKES: Record<string, string> = { "0": "o", "1": "i", "3": "e", "4": "a", "5": "s", "7": "t", "@": "a", "$": "s", "!": "i", "£": "e" };
 
+// Letters from other alphabets that look like Latin ones (Cyrillic and Greek), mapped back so they cannot be used to dodge the lists.
+const CONFUSABLES: Record<string, string> = {
+  "\u0430": "a", "\u0435": "e", "\u043e": "o", "\u0440": "p", "\u0441": "c", "\u0445": "x", "\u0443": "y", "\u0456": "i", "\u0458": "j", "\u0455": "s",
+  "\u0501": "d", "\u043a": "k", "\u043c": "m", "\u0442": "t", "\u043d": "h", "\u0432": "b", "\u0433": "r", "\u0438": "u", "\u0461": "w",
+  "\u03b1": "a", "\u03b5": "e", "\u03bf": "o", "\u03c1": "p", "\u03bd": "v", "\u03b9": "i", "\u03ba": "k", "\u03c4": "t", "\u03c5": "u", "\u03c7": "x",
+};
+// Zero-width and other invisible characters that can be slipped inside a word.
+const INVISIBLE = /[\u00ad\u034f\u061c\u115f\u1160\u17b4\u17b5\u180e\u200b-\u200f\u202a-\u202e\u2060-\u206f\u3164\ufe00-\ufe0f\ufeff\uffa0]/g;
+const COMBINING = /[\u0300-\u036f]/g;
+
 export function normalise(text: string): string {
-  const base = text.normalize("NFKD").replace(/[̀-ͯ]/g, "").toLowerCase();
-  const mapped = Array.from(base, (c) => LOOKALIKES[c] ?? c).join("");
+  const base = text.replace(INVISIBLE, "").normalize("NFKD").replace(COMBINING, "").toLowerCase();
+  const mapped = Array.from(base, (c) => CONFUSABLES[c] ?? LOOKALIKES[c] ?? c).join("");
   return mapped.replace(/(.)\1{2,}/g, "$1$1");
 }
 

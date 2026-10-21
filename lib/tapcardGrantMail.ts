@@ -1,5 +1,6 @@
 import { send } from "@/lib/tapcardBizEmail";
 
+const oneLine = (s: string) => s.replace(/[\r\n\t\u2028\u2029]+/g, " ").slice(0, 100);
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const date = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/London" });
 export const ADMIN_INBOX = process.env.ADMIN_NOTIFY_EMAIL ?? "enquiries@aiert.co.uk";
@@ -27,7 +28,7 @@ export async function sendDeclinedEmail(to: string, groupName: string, note: str
 export async function notifyAdminOfRequest(info: { groupName: string; email: string; cardId: string; charityNumber: string; reason: string }): Promise<void> {
   const link = `https://tapcard.aiert.co.uk/c/${info.cardId}`;
   await send(
-    ADMIN_INBOX, `TapCard free Promote request: ${info.groupName || info.email}`,
+    ADMIN_INBOX, `TapCard free Promote request: ${oneLine(info.groupName || info.email)}`,
     `<p>A group asked for free TapCard Promote and was <strong>not</strong> approved automatically.</p>
      <p>Group: ${esc(info.groupName)}<br>Email: ${esc(info.email)}<br>Charity number: ${esc(info.charityNumber || "none given")}<br>Card: <a href="${link}">${link}</a><br>Why not automatic: ${esc(info.reason)}</p>
      <p>Review it at <a href="https://www.aiert.co.uk/admin/social/grants">the grants page</a>.</p>`,

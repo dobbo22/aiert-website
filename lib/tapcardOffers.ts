@@ -54,6 +54,7 @@ function ensureOfferSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_offers ADD COLUMN IF NOT EXISTS reward_text TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_offers ADD COLUMN IF NOT EXISTS stamp_gap_hours INTEGER NOT NULL DEFAULT 0`)
       .then(() => sql`ALTER TABLE tapcard_offers ADD COLUMN IF NOT EXISTS app_after INTEGER`)
+      .then(() => sql`ALTER TABLE tapcard_offers ADD COLUMN IF NOT EXISTS pin_locked_until TIMESTAMPTZ`)
       .then(() => sql`
         CREATE TABLE IF NOT EXISTS tapcard_offer_claims (
           id BIGSERIAL PRIMARY KEY,
@@ -355,6 +356,21 @@ export async function codeStatus(code: string): Promise<CodeStatus> {
 
 const MAX_PIN_FAILS = 10;
 
+/// Ten wrong PINs lock staff checks on this offer for 15 minutes (then it resets), not for ever: a customer with a claim code must not be
+/// able to lock a business's own staff out for good, and a guesser is held to 10 tries per 15 minutes.
+async function pinIsLocked(offerId: number): Promise<boolean> {
+  const r = (await sql`SELECT (pin_locked_until IS NOT NULL AND pin_locked_until > now()) AS locked FROM tapcard_offers WHERE id = ${offerId}`) as { locked: boolean }[];
+  return !!r[0]?.locked;
+}
+
+async function registerPinFail(offerId: number): Promise<void> {
+  await sql`
+    UPDATE tapcard_offers SET
+      pin_locked_until = CASE WHEN pin_fails + 1 >= ${MAX_PIN_FAILS} THEN now() + interval '15 minutes' ELSE pin_locked_until END,
+      pin_fails = CASE WHEN pin_fails + 1 >= ${MAX_PIN_FAILS} THEN 0 ELSE pin_fails + 1 END
+    WHERE id = ${offerId}`;
+}
+
 export type RedeemResult =
   | { ok: true; offerText: string }
   | { ok: false; error: "bad_pin" | "locked" | "not_valid" | "stamp_card"; state?: CodeStatus["state"] };
@@ -368,12 +384,12 @@ export async function redeemCode(code: string, pin: unknown): Promise<RedeemResu
     JOIN tapcard_offer_claims c ON c.offer_id = o.id WHERE c.code = ${code}
   `) as { id: number; pin_hash: string; pin_fails: number }[])[0];
   if (!o) return { ok: false, error: "not_valid", state: "unknown" };
-  if (o.pin_fails >= MAX_PIN_FAILS) return { ok: false, error: "locked" };
+  if (await pinIsLocked(o.id)) return { ok: false, error: "locked" };
   const [salt, stored] = o.pin_hash.split(":");
   const given = isValidPin(pin) ? pinHash(salt, pin) : "";
   const match = given.length === stored.length && crypto.timingSafeEqual(Buffer.from(given), Buffer.from(stored));
   if (!match) {
-    await sql`UPDATE tapcard_offers SET pin_fails = pin_fails + 1 WHERE id = ${o.id}`;
+    await registerPinFail(Number(o.id));
     return { ok: false, error: "bad_pin" };
   }
   // Atomic: only the first redeem of a code succeeds.
@@ -395,12 +411,12 @@ async function checkStaffPin(code: string, pin: unknown): Promise<{ ok: true; st
     JOIN tapcard_offer_claims c ON c.offer_id = o.id WHERE c.code = ${code}
   `) as { id: number; pin_hash: string; pin_fails: number }[])[0];
   if (!o) return { ok: false, error: "not_valid", state: "unknown" };
-  if (o.pin_fails >= MAX_PIN_FAILS) return { ok: false, error: "locked" };
+  if (await pinIsLocked(o.id)) return { ok: false, error: "locked" };
   const [salt, stored] = o.pin_hash.split(":");
   const given = isValidPin(pin) ? pinHash(salt, pin) : "";
   const match = given.length === stored.length && crypto.timingSafeEqual(Buffer.from(given), Buffer.from(stored));
   if (!match) {
-    await sql`UPDATE tapcard_offers SET pin_fails = pin_fails + 1 WHERE id = ${o.id}`;
+    await registerPinFail(Number(o.id));
     return { ok: false, error: "bad_pin" };
   }
   await sql`UPDATE tapcard_offers SET pin_fails = 0 WHERE id = ${o.id}`;

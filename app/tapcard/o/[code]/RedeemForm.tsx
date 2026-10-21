@@ -56,7 +56,7 @@ export default function RedeemForm({ code }: { code: string }) {
         className="mt-2 w-full rounded-xl bg-white px-4 py-3 text-center text-2xl tracking-widest text-[#111318]"
       />
       {state === "bad" ? <p className="mt-3 text-sm">Wrong PIN</p> : null}
-      {state === "locked" ? <p className="mt-3 text-sm">Too many wrong tries. Set a new PIN in the app.</p> : null}
+      {state === "locked" ? <p className="mt-3 text-sm">Too many wrong tries. Please wait 15 minutes and try again.</p> : null}
       <button type="submit" disabled={pin.length < 4 || state === "busy"} className="mt-4 w-full rounded-xl bg-white px-4 py-3 font-semibold text-[#111318] disabled:opacity-50">
         Mark as used
       </button>

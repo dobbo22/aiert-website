@@ -26,7 +26,7 @@ export default function StampStaffForm({ code, initial }: { code: string; initia
     if (res.ok) { setFlash(action === "stamp" ? "Stamp added" : "Reward given"); return; }
     setMsg(
       data.error === "bad_pin" ? "Wrong PIN" :
-      data.error === "locked" ? "Too many wrong tries. Set a new PIN in the app." :
+      data.error === "locked" ? "Too many wrong tries. Please wait 15 minutes and try again." :
       data.error === "too_soon" ? `Already stamped recently. Next stamp ${data.status?.nextStampAt ? "after " + new Date(data.status.nextStampAt).toLocaleString("en-GB", { timeZone: "Europe/London", hour: "2-digit", minute: "2-digit", day: "numeric", month: "short" }) : "later"}.` :
       data.error === "needs_app" ? "This customer needs the TapCard app to collect more stamps. Ask them to tap Get the app on their screen. Their stamp is kept." :
       data.error === "full" ? "The card is full. Give the reward." :
