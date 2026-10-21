@@ -47,6 +47,17 @@ function contactLinks(html: string, domain: string): { phone?: string; email?: s
   return { phone: phones.find((p) => p.replace(/\D/g, "").length >= 9), email };
 }
 
+/// A street address as it should print on a card: web-page furniture ("Read more,", "Find us:", "Address:") and a leading
+/// company-name part ("Hobart Capital Markets LLP,") are dropped when a street or postcode follows, and a trailing full stop.
+export function tidyAddress(raw: string): string {
+  const parts = raw.replace(/\s+/g, " ").trim().split(",").map((p) => p.trim()).filter(Boolean);
+  const isPlace = (p: string) => /\d/.test(p) || /\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/i.test(p);
+  const junk = /^(read more|learn more|find us|find us here|visit us|contact us|contact|our address|address|head office|registered office|where to find us|get directions|directions)\b[:\s-]*$/i;
+  const company = /\b(llp|ltd|limited|plc|inc|llc|lp)\b\.?$/i;
+  while (parts.length > 1 && parts.slice(1).some(isPlace) && !isPlace(parts[0]) && (junk.test(parts[0]) || company.test(parts[0]))) parts.shift();
+  return parts.join(", ").replace(/^(address|find us|visit us)\s*:\s*/i, "").replace(/[.\s]+$/, "").slice(0, 200);
+}
+
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const DAY_INDEX: Record<string, number> = { monday: 0, tuesday: 1, wednesday: 2, thursday: 3, friday: 4, saturday: 5, sunday: 6 };
 
@@ -160,7 +171,7 @@ export function textPlace(html: string): HoursPlace | null {
     const m = /(?:\+44\s?|\b0)\d[\d\s()]{8,13}\d/.exec(lines[k]);
     if (m) { phone = m[0].replace(/\s+/g, " ").trim().slice(0, 40); break; }
   }
-  return { postcode: postcodeOf(addr), street: "", name: "", phone, addressText: addr.slice(0, 200), label: "", specs: [], hoursText: hoursLines.join("; ") };
+  return { postcode: postcodeOf(addr), street: "", name: "", phone, addressText: tidyAddress(addr), label: "", specs: [], hoursText: hoursLines.join("; ") };
 }
 
 const PHONE_RE = /(?:\+44\s?|\b0)\d[\d\s()]{8,13}\d/;
@@ -198,7 +209,7 @@ export function textPlaces(html: string): HoursPlace[] {
     seen.add(postcode);
     const hours = withHours && withHours.postcode === postcode ? withHours : null;
     out.push({
-      postcode, street: "", name: "", phone, addressText: text.slice(0, 200), label: cleaned[0] ?? "", specs: [],
+      postcode, street: "", name: "", phone, addressText: tidyAddress(text), label: cleaned[0] ?? "", specs: [],
       hoursText: hours?.hoursText,
     });
   });
@@ -237,7 +248,7 @@ export function jsonLdUrls(html: string): { menu?: string; sameAs: string[]; pla
             : typeof addr === "string" ? addr : "";
           places.push({
             postcode: postcodeOf(pc), street, name: addressKey(typeof o.name === "string" ? o.name : ""),
-            phone: typeof o.telephone === "string" ? o.telephone.slice(0, 40) : "", addressText: text.slice(0, 200),
+            phone: typeof o.telephone === "string" ? o.telephone.slice(0, 40) : "", addressText: tidyAddress(text),
             label: typeof o.name === "string" ? o.name.slice(0, 60) : "", specs,
           });
         }
