@@ -472,10 +472,12 @@ I made a sample TapCard for ${name || "your restaurant"}: one card with your pho
 - Put it on your website, in emails and on social media as a link
 - Book a table, View our menu and Get directions are each one tap
 - Change your details once and every saved copy updates itself (new menu, new hours)
-- Customers don't need an app to save you. With the free TapCard app they can also claim your offers and follow your news
+- Customers don't need an app to save you, or to claim your offers: a phone camera and browser are enough. With the free TapCard app they also get your news
 
 Special offers and news with TapCard Promote
 Everyone who saves your card becomes someone you can reach, with no mailing list to build. Post an offer from your card, for example "Free dessert with any main", with an end date and a limit if you like. People who have your card see it in TapCard, tap Claim, and get their own one-off QR code. When they show it, scan it with your phone camera, type your staff PIN, and it is marked as used, so it can never be used twice. You see how many people claimed and how many came in.
+
+Or run a stamp card: "buy 3 coffees, get the 4th free", or "buy a meal, get a child's meal free". You choose the number of visits and the reward. Customers get their stamp card from your QR code; your staff scan it and enter the PIN to add each stamp. Offers and news are checked automatically, so nothing abusive or gambling-related goes out under your name.
 
 Promote is free for your first 3 months, then £49.99 a year (or £9.99 a month), and it includes sharing your own card. TapCard is free for your customers, always.
 ${codeLinesText(codes)}
@@ -512,7 +514,7 @@ export function restaurantHtml(name: string, links: MailshotLinks, cardImageUrl:
 <li style="${li}">Put it <strong>on your website</strong>, in emails and on social media as a link</li>
 <li style="${li}"><strong>Book a table, View our menu and Get directions</strong> are each one tap</li>
 <li style="${li}">Change your details once and <strong>every saved copy updates itself</strong> (new menu, new hours)</li>
-<li style="${li}">Customers <strong>don't need an app to save you</strong>. With the <strong>free TapCard app</strong> they can also claim your offers and follow your news</li>
+<li style="${li}">Customers <strong>don't need an app to save you, or to claim your offers</strong>: a phone camera and browser are enough. With the <strong>free TapCard app</strong> they also get your news</li>
 </ul>
 <div style="margin:0 0 20px;padding:16px 18px;background:#f5f3ff;border-radius:12px;">
 <p style="margin:0 0 8px;font-size:17px;"><strong>Special offers and news with TapCard Promote</strong></p>
@@ -523,6 +525,7 @@ export function restaurantHtml(name: string, links: MailshotLinks, cardImageUrl:
 <li style="${li}">When they show it, <strong>scan it with your phone camera</strong>, type your staff PIN, and it is marked as used. It can never be used twice.</li>
 <li style="margin:0;">You see <strong>how many claimed</strong> and how many came in.</li>
 </ol>
+<p style="margin:12px 0 0;"><strong>Or run a stamp card:</strong> &ldquo;buy 3 coffees, get the 4th free&rdquo;, or &ldquo;buy a meal, get a child&rsquo;s meal free&rdquo;. You choose the number of visits and the reward. Your staff scan the customer&rsquo;s code and enter the PIN to add each stamp. Offers and news are checked automatically, so nothing abusive or gambling-related goes out under your name.</p>
 </div>
 <p style="margin:0 0 20px;">Promote is <strong>free for your first 3 months</strong>, then £49.99 a year (or £9.99 a month), and it includes sharing your own card. TapCard is free for your customers, always.</p>
 ${codes && (codes.ios || codes.android) ? `<div style="margin:0 0 20px;padding:14px 16px;background:#ecfdf5;border-radius:12px;"><p style="margin:0 0 8px;"><strong>As one of the first restaurants on TapCard, your first 6 months of Promote are free</strong> (instead of 3). Tap the link for your phone:</p><p style="margin:0;">${codes.ios ? `<a href="${esc(redeemUrl("ios", codes.ios))}" style="${link}">On iPhone</a>` : ""}${codes.ios && codes.android ? " &nbsp;·&nbsp; " : ""}${codes.android ? `<a href="${esc(redeemUrl("android", codes.android))}" style="${link}">On Android</a>` : ""}</p></div>` : ""}
