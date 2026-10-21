@@ -37,7 +37,7 @@ Google earlier rejected 1.3.6 for the Data safety form (Approximate location); f
 
 ## Founder places + lifetime unlock (new in 1.2)
 
-- First **1,000** people (iPhone + Android combined) are founders: sharing free for life.
+- First **1,000 people on each platform** (1,000 on iPhone and 1,000 on Android, counted separately) are founders: sharing free for life.
 - After that, sharing a card for the first time needs a one-off non-consumable unlock.
   Products (same IDs on App Store and Play):
 
