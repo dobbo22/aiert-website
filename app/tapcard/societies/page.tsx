@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import StoreBadges from "../../StoreBadges";
 import { appStoreUrl, playStoreUrl } from "@/lib/tapcardInvites";
-import GrantRequestForm from "./GrantRequestForm";
 
 const DESCRIPTION =
   "Keep members and supporters in the loop without chasing them: people follow your club, society or charity once, and every news item you post reaches their phone.";
@@ -107,21 +106,11 @@ export default function SocietiesPage() {
           <h2 className="mt-2 text-2xl font-black text-cloud">Free for 3 months, then £49.99 a year or £9.99 a month.</h2>
           <p className="mt-3 max-w-2xl leading-relaxed text-cloud">
             That covers one card with TapCard Promote (news, events and stamp cards). Making and sharing the card is free, and people who follow you
-            never pay. Run a registered charity or a small society? It can be free: see below.
+            never pay. 
           </p>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-cloud">
             Followers must have the free TapCard app to receive news and offers. People without it can still see your card and its latest news on its page.
           </p>
-        </section>
-
-        <section className="mt-10 rounded-2xl bg-charcoal p-8 ring-1 ring-white/10">
-          <p className="text-sm font-semibold uppercase tracking-wider text-teal">Charities and small societies</p>
-          <h2 className="mt-2 text-2xl font-black text-cloud">Ask for TapCard Promote free.</h2>
-          <p className="mt-3 max-w-2xl leading-relaxed text-cloud">
-            We give TapCard Promote free to registered charities and to small clubs and societies, for 12 months at a time. Make your card first, then
-            tell us about your group.
-          </p>
-          <GrantRequestForm />
         </section>
 
         <p className="mt-10 text-center text-sm text-cloud">

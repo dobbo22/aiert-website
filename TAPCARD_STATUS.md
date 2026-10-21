@@ -118,6 +118,24 @@ thread), and a sync cut off by iOS suspension is now abandoned and restarted on 
 weakness exists in live 1.3 for very large accounts. Device log tip: `idevicesyslog -u <udid>` works over USB; crash reports are in
 `idevicecrashreport -e -k <dir>` under Retired/.
 
+## To do list and back burner (updated 21 Oct 2026, newest decisions first)
+
+**Back burner (decided 21 Oct: leave live, do not build more yet; the money is in cafes, restaurants, shops and multi-location businesses)**
+- Societies and charities: the "ask for free Promote" form is HIDDEN (component `app/tapcard/societies/GrantRequestForm.tsx`, API `POST /api/tapcard/grant-request` still live and rate limited, admin page `/admin/social/grants` works). Bring it back when the stamp-card apps are out. Then register free at api-portal.charitycommission.gov.uk, subscribe to "Register of Charities", add `CHARITY_COMMISSION_API_KEY` in Vercel, and check the base URL in the portal's Try-it console (code assumes `https://api.charitycommission.gov.uk/register/api/charitydetails/<n>/0`). Without the key every request is manual.
+- App changes for groups: list of earlier news in the apps (server already has `GET /api/tapcard/cards/<id>/news`), "Post your first news" checklist wording for groups, wording for a granted Promote (apps say "included with your company's TapCard for Business").
+- Political parties: held until the moderation process (admin tab Moderation) has run for a while.
+- Payments and donations with a platform cut: NOT built. Needs legal advice (UK fundraising rules, Gift Aid), Stripe Connect (each organisation its own account), Apple only allows in-app charity fundraising for Apple-approved nonprofits. 10% on donations is not recommended. Cheap first step: a "Donate" link row on the card.
+- Per-post news removal and auto-hide after several reports. Android Instant App: impossible (Google ended Play Instant Dec 2025; the website card page claims offers instead).
+
+**Next actions (carried forward)**
+1. Restaurant email: send Wednesday 22 Oct when back in the UK (held until the apps are live).
+2. Google Play promo codes: only creatable in Play Console (Monetise, Promo codes). Apple's 500 codes are in `~/Documents/TapCard-codes/apple-promote-yearly-6-months-free.csv` (expire 10 Apr 2027).
+3. Turn on the stamp card "customers need the app after the first stamp" switch in the web admin: set `APP_GATE_READY = true` in `app/tapcard/business/admin/promote/LocationPromote.tsx` once iPhone 3.2 and Android 1.7 are live.
+4. Test a real stamp card end to end with a business that has Promote (post one from the app or web admin on a card of yours).
+5. Decisions waiting: personal unlock fee after the first 1,000 (flat 0.99 or the ladder), Promote launch price, Rose Garden free Business trial (needs their contact details).
+6. Play Data safety: check it still fits now that the typed business name goes to our server for "Find your business".
+7. Watch `/admin/social/funnel` (setup steps, App Clip, website claims) and `/admin/social/moderation` once the new apps are out.
+
 ## To do next
 
 1. Set `TAPCARD_PAYWALL_LAUNCH` / `TAPCARD_PLAY_LIVE` if not set yet (see table above) and confirm the Resend-to-Outlook switch.
