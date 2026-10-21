@@ -16,6 +16,8 @@ export const DEMO_OFFERS: Record<string, string[]> = {
   "Gym or fitness studio": ["Free first class for a friend", "Free personal training taster", "Join this month, first week free"],
   "Clinic or studio": ["Free consultation", "10% off your next visit", "Bring a friend, you both save 10%"],
   "Trades or services": ["Free quote and 10% off your first job", "Free safety check with any service", "£20 off your next booking"],
+  "Society or club": ["First meeting free for new members", "Bring a friend to our next event", "Early-bird tickets for the summer fair"],
+  "Charity or community group": ["Free entry to our open day", "Bring a friend to our fundraising quiz", "Volunteer taster day, no commitment"],
   "Something else": ["10% off your first order", "Free delivery this week", "Bring a friend, you both save 10%"],
 };
 

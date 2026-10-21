@@ -188,7 +188,7 @@ export default function DemoBuilder() {
             <label className="block text-sm font-semibold text-cloud" htmlFor="biz">Business name</label>
             <input id="biz" required value={name} onChange={(e) => setName(e.target.value)} maxLength={80} disabled={phase === "building"}
               className="mt-1 w-full rounded-xl bg-white px-4 py-3 text-[#111318]" placeholder="The Coffee Shop" />
-            <label className="mt-4 block text-sm font-semibold text-cloud" htmlFor="kind">Type of business <span className="font-normal">(so the examples suit you)</span></label>
+            <label className="mt-4 block text-sm font-semibold text-cloud" htmlFor="kind">Type of business or group <span className="font-normal">(so the examples suit you)</span></label>
             <select id="kind" required value={kind} onChange={(e) => setKind(e.target.value)} disabled={phase === "building"}
               className="mt-1 w-full rounded-xl bg-white px-4 py-3 text-[#111318]">
               <option value="" disabled>Choose…</option>

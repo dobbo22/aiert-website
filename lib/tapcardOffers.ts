@@ -499,6 +499,16 @@ export function cleanNewsLink(raw: unknown): string | null {
   } catch { return null; }
 }
 
+/// The card's recent news, newest first, for the "earlier news" list (a society posts more than one line over time).
+export async function recentAnnouncements(cardId: string, limit = 20) {
+  await ensureOfferSchema();
+  const rows = (await sql`
+    SELECT id, text, link, created_at FROM tapcard_announcements
+    WHERE card_id = ${cardId} AND withdrawn = false ORDER BY id DESC LIMIT ${Math.min(Math.max(limit, 1), 50)}
+  `) as { id: number; text: string; link: string | null; created_at: string }[];
+  return rows.map((r) => ({ id: Number(r.id), text: r.text, link: r.link || null, postedAt: new Date(r.created_at).toISOString() }));
+}
+
 export async function setAnnouncement(cardId: string, textRaw: unknown, linkRaw?: unknown): Promise<{ ok: true } | { ok: false; error: string }> {
   await ensureOfferSchema();
   const text = typeof textRaw === "string" ? textRaw.trim().slice(0, MAX_ANNOUNCEMENT_TEXT) : "";

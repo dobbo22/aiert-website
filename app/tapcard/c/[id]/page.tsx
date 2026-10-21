@@ -11,7 +11,7 @@ import AcceptRecipientForm from "../../AcceptRecipientForm";
 import { callActionLabel, isTapLink, linkIcon, parseStoredLinks } from "@/lib/tapcardLinks";
 import SaveContactButton from "../../SaveContactButton";
 import CarryCardToInstall from "../../CarryCardToInstall";
-import { publicAnnouncement, publicOffer } from "@/lib/tapcardOffers";
+import { publicAnnouncement, publicOffer, recentAnnouncements } from "@/lib/tapcardOffers";
 import ClaimOfferWeb from "../../ClaimOfferWeb";
 
 // App Store Connect record "TapCard: Digital Business Card" (id 6816003159).
@@ -154,6 +154,8 @@ export default async function CardPage({
   const palette = paletteFor(card.brand_color);
   const news = await publicAnnouncement(id).catch(() => null);
   const offer = await publicOffer(id).catch(() => null);
+  // Earlier news (everything after the latest line), for groups that post regularly.
+  const earlier = news ? (await recentAnnouncements(id, 8).catch(() => [])).filter((n) => n.id !== news.id) : [];
 
   return (
     <main className="min-h-screen flex flex-col items-center px-4 py-12">
@@ -266,6 +268,22 @@ export default async function CardPage({
                     Read more · {new URL(news.link).hostname.replace(/^www\./, "")}
                   </a>
                 )}
+            {earlier.length > 0 && (
+              <details className="mt-2 rounded-2xl bg-white/[0.07] px-4 py-3 text-left">
+                <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-white">Earlier news</summary>
+                <ul className="mt-2 space-y-3">
+                  {earlier.map((n) => (
+                    <li key={n.id} className="text-sm text-white">
+                      <span className="block text-xs text-white/80">{new Date(n.postedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
+                      {n.text}
+                      {n.link && (
+                        <a href={n.link} target="_blank" rel="noopener noreferrer" className="ml-1 font-semibold underline">Read more</a>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
               </div>
             )}
 

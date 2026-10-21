@@ -76,7 +76,7 @@ export default function PromotePage() {
             </p>
             <div className="no-print mt-6 flex flex-wrap items-center gap-3">
               <a href="/demo?utm_source=promote-page" className="btn-gold rounded-xl px-5 py-3 font-semibold">Build your card in 30 seconds</a>
-              <span className="text-cloud">Type your business name and watch it happen. Nothing to install.</span>
+              <span className="text-cloud">Type your business name and watch it happen. Nothing to install. Run a club or charity? <a href="/societies" className="underline">See TapCard for groups</a>.</span>
             </div>
             <div className="no-print mt-5 flex flex-wrap items-center gap-3">
               <StoreBadges appStoreUrl={appStore} playStoreUrl={playStore} />

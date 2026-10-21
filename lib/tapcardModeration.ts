@@ -59,8 +59,8 @@ const GAMBLING_BRANDS = [
   /\bdraft ?kings\b/, /\bfan ?duel\b/, /\bbet ?way\b/, /\bpoker ?stars\b/, /\bbet ?victor\b/, /\b888 ?casino\b/, /\bstake ?casino\b/, /\bgrosvenor casino/,
 ];
 // Legitimate but regulated or worth a look: allowed, logged for review.
-const REVIEW_WORDS = ["raffle", "tombola", "lottery", "lotto"];
-const REVIEW_PHRASES = ["prize draw", "free draw", "win a ", "win your "];
+const REVIEW_WORDS = ["raffle", "tombola", "lottery", "lotto", "election", "candidate", "referendum", "donate", "donation", "donations", "fundraiser", "crowdfunding"];
+const REVIEW_PHRASES = ["prize draw", "free draw", "win a ", "win your ", "vote for", "vote now", "sort code", "account number", "bank details", "paypal.me", "send money"];
 
 const SCAM_PHRASES = [
   "guaranteed returns", "double your money", "get rich quick", "crypto investment", "forex signals", "send me your bank", "send us your bank",
