@@ -33,11 +33,14 @@ async function underCap(): Promise<boolean> {
 // Google's website field often carries campaign parameters (utm_source=...): keep just the address people would type.
 const cleanSite = (u: string) => { try { const x = new URL(u); return `${x.protocol}//${x.hostname}${x.pathname === "/" ? "" : x.pathname.replace(/\/$/, "")}`; } catch { return ""; } };
 
-export async function searchBusinesses(queryRaw: string): Promise<BusinessHit[]> {
+export async function searchBusinesses(queryRaw: string, near?: { lat: number; lng: number } | null): Promise<BusinessHit[]> {
   const key = process.env.GOOGLE_PLACES_API_KEY;
   const q = queryRaw.trim().slice(0, 100);
   if (!key || q.length < 3) return [];
-  const cached = cache.get(q.toLowerCase());
+  // The searcher's rough area (from their connection, never stored) puts the nearest branch first: "Maguro" in W9, not Manchester.
+  const area = near && Number.isFinite(near.lat) && Number.isFinite(near.lng) && Math.abs(near.lat) <= 90 && Math.abs(near.lng) <= 180 ? near : null;
+  const cacheKey = `${q.toLowerCase()}|${area ? `${area.lat.toFixed(1)},${area.lng.toFixed(1)}` : ""}`;
+  const cached = cache.get(cacheKey);
   if (cached && Date.now() - cached.at < 10 * 60_000) return cached.hits;
   if (!(await underCap().catch(() => false))) return [];
   const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
@@ -46,7 +49,10 @@ export async function searchBusinesses(queryRaw: string): Promise<BusinessHit[]>
       "Content-Type": "application/json", "X-Goog-Api-Key": key,
       "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.websiteUri,places.nationalPhoneNumber,places.primaryTypeDisplayName",
     },
-    body: JSON.stringify({ textQuery: q, maxResultCount: 5, regionCode: "GB" }),
+    body: JSON.stringify({
+      textQuery: q, maxResultCount: 5, regionCode: "GB",
+      ...(area ? { locationBias: { circle: { center: { latitude: area.lat, longitude: area.lng }, radius: 30000 } } } : {}),
+    }),
     signal: AbortSignal.timeout(6000),
   }).catch(() => null);
   if (!res?.ok) return [];
@@ -56,6 +62,6 @@ export async function searchBusinesses(queryRaw: string): Promise<BusinessHit[]>
     website: cleanSite(p.websiteUri ?? "").slice(0, 200), phone: (p.nationalPhoneNumber ?? "").slice(0, 40), type: (p.primaryTypeDisplayName?.text ?? "").slice(0, 60),
   }] : []);
   if (cache.size > 500) cache.clear();
-  cache.set(q.toLowerCase(), { at: Date.now(), hits });
+  cache.set(cacheKey, { at: Date.now(), hits });
   return hits;
 }
