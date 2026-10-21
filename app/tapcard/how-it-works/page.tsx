@@ -42,16 +42,26 @@ export default function HowItWorksPage() {
       <section>
         <h2>1. Make your card</h2>
         <p>
-          Download TapCard and fill in your name, job title, company, phone, email, website and social links
-          (LinkedIn, X, Instagram and more). Add a photo if you like. It takes a couple of minutes.
+          Download TapCard and answer one question: <strong>What is the card for?</strong> There is nothing to sign up for.
         </p>
         <p>
-          The first screen asks who the card is for. Choose <strong>Me</strong> for your own business card. Choose{" "}
-          <strong>My business</strong> for a restaurant, shop, salon or any business: you give the business name and
-          website, answer a few quick questions (what kind of business, how many locations, whether you want to send
-          offers and news), and TapCard sets up your card with the right links and suggests the best way to start. A
-          personal card never shows offers or discounts. For several locations or a team, it points you to{" "}
-          <a href="/business">TapCard for Business</a>.
+          <strong>A business</strong> (a restaurant, shop, salon, club or any business): start typing its name and TapCard offers to
+          find it, then fills in its address, phone number and website for you. Tap <strong>Build my card</strong> and TapCard reads
+          your website to add your logo, booking and menu links, opening hours and social profiles. If you do not have a website, or
+          it is not listed, type the name and website yourself. Your card is made straight away, with a short{" "}
+          <strong>Finish setting up</strong> list underneath: share your card, send your first offer, add booking or review links,
+          or set up several locations and staff cards with <a href="/business">TapCard for Business</a>.
+        </p>
+        <p>
+          <strong>Just me</strong> (your own business card): two screens. First your name. To save typing, scan a paper business
+          card with the camera, use Sign in with Apple, or let TapCard find you in your Contacts. On Android there is also a
+          one-tap phone number from your phone. Then choose Personal or Work and add your job title, company, phone and email,
+          all optional. Your keyboard can suggest your own number and email as you type. You can add a photo, website and social
+          links afterwards.
+        </p>
+        <p>
+          <strong>Scanning a paper business card</strong> reads the text on your phone and suggests your name, job, company, phone,
+          email and website for you to check. The photo is never uploaded. A personal card never shows offers or discounts.
         </p>
       </section>
 
@@ -185,6 +195,23 @@ export default function HowItWorksPage() {
           desk, say <em>&ldquo;Get the free TapCard app to receive our offers.&rdquo;</em>
         </p>
         <p>
+          <strong>Stamp cards:</strong> instead of a one-off offer, choose <strong>Stamp card</strong> when you post. You choose how
+          many stamps (for example 3 or 6) and what the reward is in your own words (&ldquo;Free child&apos;s meal&rdquo;, &ldquo;Free
+          coffee&rdquo;). Customers get a stamp card on their phone with a QR code. Each visit, your staff scan it, enter your PIN
+          and a stamp is added; the customer sees it appear. You can set a minimum time between stamps so one visit counts once. When the card is full
+          they show it, you give the reward, and the card starts again. You can also ask customers to get the TapCard app after their first
+          stamp: the first stamp needs nothing to install, and their stamps come with them into the app.
+        </p>
+        <p>
+          <strong>Customers do not need the app to claim.</strong> Anyone who scans your QR code sees your card, news and current offer
+          on the web page and can claim a one-off offer or start a stamp card there, with nothing to install. To follow you and be told
+          about new offers and news they need the free TapCard app, and the page invites them to get it.
+        </p>
+        <p>
+          <strong>News</strong> is a short line (up to 140 characters) with an optional <strong>Read more</strong> link to the full story
+          on your website. Followers are told, and the card page keeps an <strong>Earlier news</strong> list.
+        </p>
+        <p>
           <strong>Posting news from Facebook or Instagram:</strong> TapCard can&apos;t read your other accounts, but you
           can bring a post across in a few seconds. Copy the post and tap <strong>Paste a post I copied</strong> on the
           news screen, or on Android use <strong>Share</strong> in Facebook or Instagram and choose TapCard. It is
@@ -208,6 +235,21 @@ export default function HowItWorksPage() {
           scan it and when you send an offer: <a href="/demo">try the demo</a>. You can ask for a link that opens your
           card ready-made in the app.
         </p>
+      </section>
+
+      <section>
+        <h2>Kept safe and tidy</h2>
+        <ul>
+          <li><strong>Followers are anonymous.</strong> A business sees how many people follow it, never who.</li>
+          <li><strong>You choose what you hear.</strong> Following is always your choice, you pick which kinds of update you get, and no business can send you more than two notifications a week.</li>
+          <li>
+            <strong>Posts are checked.</strong> Every offer and news item is checked automatically before anyone sees it. Abusive wording,
+            gambling offers (betting, casinos, poker, slots and similar) and money-making or lending scams are refused. Raffles and fundraisers are allowed and may be looked at by a person.
+          </li>
+          <li><strong>Report anything.</strong> Use <em>Report this card, offer or news</em> at the bottom of any card page and we will look at it.</li>
+          <li><strong>Staff PINs are protected.</strong> Ten wrong PIN guesses pause staff checks on that offer for 15 minutes.</li>
+          <li><strong>Clubs, societies and charities</strong> can use TapCard to keep members informed: see <a href="/societies">TapCard for groups</a>.</li>
+        </ul>
       </section>
 
       <section>

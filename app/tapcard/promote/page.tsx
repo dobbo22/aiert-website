@@ -23,6 +23,10 @@ const WHAT_YOU_CAN_DO = [
     body: "“Free dessert with any main.” Set how long it lasts and how many people can have it. Everyone who follows you gets a notification on their phone.",
   },
   {
+    title: "Stamp cards",
+    body: "Buy 3, get one free. You choose the number of stamps and the reward in your own words (a child's meal, a coffee, a haircut). Customers keep their stamp card on their phone, your staff add a stamp with a scan and your PIN, and the card starts again when the reward is given.",
+  },
+  {
     title: "News flashes",
     body: "“Fresh oysters in tonight.” “Closed Monday for a private party.” A short line, posted in seconds, that people see in the app and as a notification.",
   },
