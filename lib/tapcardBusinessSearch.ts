@@ -3,10 +3,11 @@
 // for ten minutes, and a daily cap keeps the Places bill bounded. With no key, or past the cap, it returns an empty list
 // and the apps fall back to typing the name and website.
 import sql from "@/lib/db";
+import { formatHours } from "@/lib/siteLinks";
 
 const DAILY_CAP = 400;
 
-export interface BusinessHit { id: string; name: string; address: string; website: string; phone: string; type: string }
+export interface BusinessHit { id: string; name: string; address: string; website: string; phone: string; type: string; hours: string }
 
 const cache = new Map<string, { at: number; hits: BusinessHit[] }>();
 
@@ -33,6 +34,19 @@ async function underCap(): Promise<boolean> {
 // Google's website field often carries campaign parameters (utm_source=...): keep just the address people would type.
 const cleanSite = (u: string) => { try { const x = new URL(u); return `${x.protocol}//${x.hostname}${x.pathname === "/" ? "" : x.pathname.replace(/\/$/, "")}`; } catch { return ""; } };
 
+// Google's weekly periods (day 0 = Sunday) as the "Mon–Fri 09:00–17:00; Sat 10:00–16:00" text the cards use. A day with two
+// sittings (lunch and dinner), a 24-hour place, or anything odd gives "" rather than a guess.
+function hoursOf(periods?: { open?: { day?: number; hour?: number; minute?: number }; close?: { day?: number; hour?: number; minute?: number } }[]): string {
+  if (!periods?.length) return "";
+  const hh = (h = 0, m = 0) => `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  const specs: { days: number[]; opens: string; closes: string }[] = [];
+  for (const p of periods) {
+    if (!p.open || !p.close || p.open.day === undefined) return "";
+    specs.push({ days: [(p.open.day + 6) % 7], opens: hh(p.open.hour, p.open.minute), closes: hh(p.close.hour, p.close.minute) });
+  }
+  return formatHours(specs).slice(0, 200);
+}
+
 export async function searchBusinesses(queryRaw: string, near?: { lat: number; lng: number } | null): Promise<BusinessHit[]> {
   const key = process.env.GOOGLE_PLACES_API_KEY;
   const q = queryRaw.trim().slice(0, 100);
@@ -47,7 +61,7 @@ export async function searchBusinesses(queryRaw: string, near?: { lat: number; l
     method: "POST",
     headers: {
       "Content-Type": "application/json", "X-Goog-Api-Key": key,
-      "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.websiteUri,places.nationalPhoneNumber,places.primaryTypeDisplayName",
+      "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.websiteUri,places.nationalPhoneNumber,places.primaryTypeDisplayName,places.regularOpeningHours",
     },
     body: JSON.stringify({
       textQuery: q, maxResultCount: 5, regionCode: "GB",
@@ -56,10 +70,10 @@ export async function searchBusinesses(queryRaw: string, near?: { lat: number; l
     signal: AbortSignal.timeout(6000),
   }).catch(() => null);
   if (!res?.ok) return [];
-  const j = (await res.json().catch(() => ({}))) as { places?: { id?: string; displayName?: { text?: string }; formattedAddress?: string; websiteUri?: string; nationalPhoneNumber?: string; primaryTypeDisplayName?: { text?: string } }[] };
+  const j = (await res.json().catch(() => ({}))) as { places?: { id?: string; displayName?: { text?: string }; formattedAddress?: string; websiteUri?: string; nationalPhoneNumber?: string; primaryTypeDisplayName?: { text?: string }; regularOpeningHours?: { periods?: { open?: { day?: number; hour?: number; minute?: number }; close?: { day?: number; hour?: number; minute?: number } }[] } }[] };
   const hits: BusinessHit[] = (j.places ?? []).flatMap((p) => p.id && p.displayName?.text ? [{
     id: p.id, name: p.displayName.text.slice(0, 120), address: (p.formattedAddress ?? "").slice(0, 200),
-    website: cleanSite(p.websiteUri ?? "").slice(0, 200), phone: (p.nationalPhoneNumber ?? "").slice(0, 40), type: (p.primaryTypeDisplayName?.text ?? "").slice(0, 60),
+    website: cleanSite(p.websiteUri ?? "").slice(0, 200), phone: (p.nationalPhoneNumber ?? "").slice(0, 40), type: (p.primaryTypeDisplayName?.text ?? "").slice(0, 60), hours: hoursOf(p.regularOpeningHours?.periods),
   }] : []);
   if (cache.size > 500) cache.clear();
   cache.set(cacheKey, { at: Date.now(), hits });

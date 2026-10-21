@@ -1,5 +1,5 @@
 import sharp from "sharp";
-import { findSiteIcon, normalizeDomain } from "@/lib/siteIcon";
+import { findSiteIcon, findSiteLogo, normalizeDomain } from "@/lib/siteIcon";
 
 // What a card's website field resolves to automatically, as it's created:
 // the company's own brand colour (for the "brand" pass style) and, where a
@@ -35,7 +35,11 @@ export async function resolveSiteBranding(websiteOrDomain: string): Promise<Site
   // (apple-touch-icon, or Google's favicon service) that actually decodes.
   const icon = await findSiteIcon(domain, { allowIco: false }).catch(() => null);
   if (!icon) return { color: null, address: null };
-  const color = icon.themeColor ?? (await dominantColorOf(icon.bytes).catch(() => null));
+  // The site's declared theme colour first, then the colour in its logo (what the card banner shows), then its small icon.
+  const logo = icon.themeColor ? null : await findSiteLogo(domain, { iconFallback: false }).catch(() => null);
+  const color = icon.themeColor
+    ?? (logo ? await dominantColorOf(logo.bytes).catch(() => null) : null)
+    ?? (await dominantColorOf(icon.bytes).catch(() => null));
   return { color, address: icon.address };
 }
 

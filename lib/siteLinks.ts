@@ -51,7 +51,7 @@ const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const DAY_INDEX: Record<string, number> = { monday: 0, tuesday: 1, wednesday: 2, thursday: 3, friday: 4, saturday: 5, sunday: 6 };
 
 // "Mon-Fri 12:00-22:00; Sat 11:00-23:00" from schema.org openingHoursSpecification / openingHours.
-function formatHours(specs: { days: number[]; opens: string; closes: string }[]): string {
+export function formatHours(specs: { days: number[]; opens: string; closes: string }[]): string {
   const groups = new Map<string, number[]>();
   for (const s of specs) {
     const key = `${s.opens.slice(0, 5)}\u2013${s.closes.slice(0, 5)}`;
