@@ -70,7 +70,7 @@ export default function ClaimOfferWeb({ cardId, business, offerText, expiresAt, 
     setBusy(true); setError(null);
     try {
       const res = await fetch(`/api/tapcard/cards/${cardId}/offer/claim`, {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ claimant: claimant() }),
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ claimant: claimant(), via: "web" }),
       });
       const data = (await res.json().catch(() => ({}))) as { code?: string; url?: string; error?: string };
       if (res.ok && data.code && data.url) {
