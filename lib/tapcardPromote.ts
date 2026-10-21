@@ -7,6 +7,7 @@ import crypto from "crypto";
 import sql from "@/lib/db";
 import { verifyAppleJwsRaw } from "@/lib/tapcardFounders";
 import { getOrg, isOrgActive } from "@/lib/tapcardBiz";
+import { activeGrant } from "@/lib/tapcardGrants";
 
 const BUNDLE_ID = "com.mailbroom.tapcard";
 export const PROMOTE_IOS_IDS = [
@@ -49,6 +50,8 @@ export interface PromoteStatus {
   trial: boolean;
   /// true when a paid TapCard for Business company covers this card (no in-app subscription needed).
   company?: boolean;
+  /// true when the card has a complimentary Promote (a charity, society or early business), not a subscription.
+  granted?: boolean;
 }
 
 /// A company card is covered while its company's TapCard for Business billing is active.
@@ -65,6 +68,9 @@ export async function promoteStatus(cardId: string): Promise<PromoteStatus> {
   await ensureSchema();
   const company = await companyCover(cardId).catch(() => null);
   if (company) return company;
+  // A complimentary Promote: counts like a company cover (the apps need no subscription), flagged so it can be worded differently.
+  const grant = await activeGrant(cardId).catch(() => null);
+  if (grant) return { active: true, until: grant.until, trial: false, company: true, granted: true };
   const row = ((await sql`SELECT until, trial FROM tapcard_promote WHERE card_id = ${cardId}`) as { until: string; trial: boolean }[])[0];
   if (!row) return { active: false, until: null, trial: false };
   return { active: new Date(row.until).getTime() > Date.now(), until: new Date(row.until).toISOString(), trial: row.trial };
