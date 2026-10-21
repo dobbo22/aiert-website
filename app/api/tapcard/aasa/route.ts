@@ -9,6 +9,8 @@ import { NextResponse } from "next/server";
 // never opens the app for a link to the page you're already on, so the web
 // page's "Send your card back" button points across to the other host.
 const APP_ID = "ATMHQQQQ5S.com.mailbroom.tapcard";
+// The App Clip (TapCardClip target): opens instantly from a business's QR code, with nothing to install.
+const CLIP_ID = "ATMHQQQQ5S.com.mailbroom.tapcard.Clip";
 
 export function GET(req: Request) {
   // The Host header, not req.url — proxy.ts's rewrite leaves req.url on the
@@ -16,6 +18,7 @@ export function GET(req: Request) {
   const host = req.headers.get("host") ?? "";
   const prefix = host.startsWith("tapcard.") ? "" : "/tapcard";
   return NextResponse.json({
+    appclips: { apps: [CLIP_ID] },
     applinks: {
       // The older appID/paths format (same as MailBroom's app.mailbroom.app
       // file) — the newer appIDs/components form wasn't opening the app.

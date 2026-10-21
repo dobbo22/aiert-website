@@ -6,6 +6,8 @@ export const FUNNEL_STEPS = [
   "setup_started", "route_business", "route_person", "card_built", "card_shared", "offer_tapped", "paywall_seen", "promote_started",
   // Shortcuts that make setup faster: how often each is used.
   "lookup_used", "lookup_picked", "scan_used", "phone_hint_used", "apple_signin_used", "contacts_used",
+  // The App Clip (a customer scanning a business QR code without installing).
+  "clip_opened", "clip_offer_claimed", "clip_get_app_tapped",
 ] as const;
 export type FunnelStep = (typeof FUNNEL_STEPS)[number];
 

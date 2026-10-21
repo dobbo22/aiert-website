@@ -7,7 +7,8 @@ const LABEL: Record<string, string> = {
   setup_started: "Opened setup", route_business: "Chose A business", route_person: "Chose Just me", card_built: "Card built",
   card_shared: "Card shared", offer_tapped: "Tapped Send your first offer", paywall_seen: "Saw the Promote screen", promote_started: "Started Promote",
   lookup_used: "Searched Find your business", lookup_picked: "Picked a business from the list", scan_used: "Scanned a paper card",
-  phone_hint_used: "Used this phone's number", apple_signin_used: "Used Sign in with Apple", contacts_used: "Filled from Contacts",
+  phone_hint_used: "Used this phone's number",
+  clip_opened: "App Clip: opened from a QR code", clip_offer_claimed: "App Clip: claimed an offer", clip_get_app_tapped: "App Clip: tapped Get the app", apple_signin_used: "Used Sign in with Apple", contacts_used: "Filled from Contacts",
 };
 
 export default async function FunnelPage({ searchParams }: { searchParams: Promise<{ days?: string }> }) {
