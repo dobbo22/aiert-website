@@ -87,13 +87,28 @@ export async function findSiteLogo(
         .filter((u): u is string => !!u && !/\.svg(\?|$)/i.test(u));
       for (const url of [...new Set(candidates)].slice(0, MAX_CANDIDATES)) {
         const logo = await fetchIcon(url);
-        if (logo && logo.contentType !== "image/x-icon") return logo;
+        if (logo && logo.contentType !== "image/x-icon" && (await looksLikeLogo(logo.bytes))) return logo;
       }
     }
   }
   if (!iconFallback) return null;
   const icon = await findSiteIcon(domain, { allowIco: false });
   return icon && { bytes: icon.bytes, contentType: icon.contentType };
+}
+
+/// Skips lazy-load placeholders and near-empty images: a real logo is at least 80 x 24 pixels and has visible marks
+/// (the pixels are not all one colour once flattened onto white). Fails open if the image can't be read.
+async function looksLikeLogo(bytes: Buffer): Promise<boolean> {
+  try {
+    const sharp = (await import("sharp")).default;
+    const meta = await sharp(bytes).metadata();
+    if ((meta.width ?? 0) < 80 || (meta.height ?? 0) < 24) return false;
+    const stats = await sharp(bytes).flatten({ background: "#ffffff" }).stats();
+    const spread = Math.max(...stats.channels.slice(0, 3).map((c) => c.stdev));
+    return spread >= 6;
+  } catch {
+    return true;
+  }
 }
 
 /// schema.org Organization `logo` — a URL string, or an ImageObject with `url`.
