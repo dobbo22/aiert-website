@@ -2,6 +2,11 @@
 // Anyone with the card can claim it and gets a one-off code (shown as a QR code
 // in the app, opening tapcard.aiert.co.uk/o/<code>). The business marks the
 // code as used by entering the offer's staff PIN on that page — no accounts.
+//
+// An offer is either "once" (one code, used once) or a "stamps" card the owner configures: N stamps, then a reward of
+// their own wording (3 meals then a free child's meal, 6 coffees then a free one...). The same claim code is the card:
+// staff scan it and enter the PIN to add a stamp (never more often than the owner's minimum gap), and again to give the
+// reward, which starts the card again.
 import crypto from "crypto";
 import sql from "@/lib/db";
 import { hashSecret } from "@/lib/tapcardAuth";
@@ -17,6 +22,11 @@ export interface OfferRow {
   created_at: string;
   /// The card that posted it, or "admin" for the company's web admin.
   posted_by: string | null;
+  /// "once" (a single-use code) or "stamps" (a stamp card the owner configures).
+  kind: string;
+  stamps_required: number | null;
+  reward_text: string;
+  stamp_gap_hours: number;
 }
 
 let ready: Promise<unknown> | null = null;
@@ -36,6 +46,10 @@ function ensureOfferSchema(): Promise<unknown> {
     `
       .then(() => sql`CREATE INDEX IF NOT EXISTS tapcard_offers_card ON tapcard_offers (card_id)`)
       .then(() => sql`ALTER TABLE tapcard_offers ADD COLUMN IF NOT EXISTS posted_by TEXT`)
+      .then(() => sql`ALTER TABLE tapcard_offers ADD COLUMN IF NOT EXISTS kind TEXT NOT NULL DEFAULT 'once'`)
+      .then(() => sql`ALTER TABLE tapcard_offers ADD COLUMN IF NOT EXISTS stamps_required INTEGER`)
+      .then(() => sql`ALTER TABLE tapcard_offers ADD COLUMN IF NOT EXISTS reward_text TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_offers ADD COLUMN IF NOT EXISTS stamp_gap_hours INTEGER NOT NULL DEFAULT 0`)
       .then(() => sql`
         CREATE TABLE IF NOT EXISTS tapcard_offer_claims (
           id BIGSERIAL PRIMARY KEY,
@@ -47,6 +61,9 @@ function ensureOfferSchema(): Promise<unknown> {
           UNIQUE (offer_id, claimant_hash)
         )
       `)
+      .then(() => sql`ALTER TABLE tapcard_offer_claims ADD COLUMN IF NOT EXISTS stamps INTEGER NOT NULL DEFAULT 0`)
+      .then(() => sql`ALTER TABLE tapcard_offer_claims ADD COLUMN IF NOT EXISTS last_stamp_at TIMESTAMPTZ`)
+      .then(() => sql`ALTER TABLE tapcard_offer_claims ADD COLUMN IF NOT EXISTS rewards_given INTEGER NOT NULL DEFAULT 0`)
       .then(() => sql`
         CREATE TABLE IF NOT EXISTS tapcard_announcements (
           id BIGSERIAL PRIMARY KEY,
@@ -112,7 +129,7 @@ export async function currentOffer(cardId: string, includeExpired = false): Prom
 
 export async function offerCounts(offerId: number): Promise<{ claimed: number; redeemed: number }> {
   const r = ((await sql`
-    SELECT COUNT(*)::int AS claimed, COUNT(redeemed_at)::int AS redeemed
+    SELECT COUNT(*)::int AS claimed, (COUNT(redeemed_at) + COALESCE(SUM(rewards_given), 0))::int AS redeemed
     FROM tapcard_offer_claims WHERE offer_id = ${offerId}
   `) as { claimed: number; redeemed: number }[])[0];
   return r ?? { claimed: 0, redeemed: 0 };
@@ -129,6 +146,8 @@ export async function publicOffer(cardId: string) {
     expiresAt: o.expires_at,
     claimsLeft: o.max_claims == null ? null : Math.max(0, o.max_claims - claimed),
     postedAt: o.created_at ? new Date(o.created_at).toISOString() : null,
+    kind: o.kind === "stamps" ? "stamps" : "once",
+    ...(o.kind === "stamps" ? { stampsRequired: o.stamps_required ?? 0, rewardText: o.reward_text, stampGapHours: o.stamp_gap_hours } : {}),
   };
 }
 
@@ -137,7 +156,16 @@ export interface OfferInput {
   expiresAt?: unknown;
   maxClaims?: unknown;
   pin: unknown;
+  /// "once" (default) or "stamps": N stamps, then a reward in the owner's own words.
+  kind?: unknown;
+  stampsRequired?: unknown;
+  rewardText?: unknown;
+  /// The least time between two stamps for one customer (0 = no limit).
+  stampGapHours?: unknown;
 }
+
+export const MAX_STAMPS = 20;
+export const MAX_REWARD_TEXT = 60;
 
 /// Replaces the card's offer. Old claims stay on the old offer row, so they stop
 /// working the moment a new offer is posted.
@@ -159,11 +187,25 @@ export async function setOffer(cardId: string, input: OfferInput, postedBy: stri
     if (!Number.isInteger(n) || n < 1 || n > 100000) return { ok: false, error: "maxClaims must be a whole number from 1" };
     max = n;
   }
+  const kind = input.kind === "stamps" ? "stamps" : "once";
+  let stampsRequired: number | null = null;
+  let rewardText = "";
+  let gapHours = 0;
+  if (kind === "stamps") {
+    const n = Number(input.stampsRequired ?? 5);
+    if (!Number.isInteger(n) || n < 1 || n > MAX_STAMPS) return { ok: false, error: `stamps needed must be a whole number from 1 to ${MAX_STAMPS}` };
+    stampsRequired = n;
+    rewardText = typeof input.rewardText === "string" ? input.rewardText.trim().slice(0, MAX_REWARD_TEXT) : "";
+    if (!rewardText) return { ok: false, error: "say what the reward is" };
+    const g = Number(input.stampGapHours ?? 4);
+    if (!Number.isInteger(g) || g < 0 || g > 72) return { ok: false, error: "the gap between stamps must be 0 to 72 hours" };
+    gapHours = g;
+  }
   const salt = crypto.randomBytes(8).toString("hex");
   const hash = `${salt}:${pinHash(salt, input.pin)}`;
   const row = ((await sql`
-    INSERT INTO tapcard_offers (card_id, text, expires_at, max_claims, pin_hash, posted_by)
-    VALUES (${cardId}, ${text}, ${expires}, ${max}, ${hash}, ${postedBy})
+    INSERT INTO tapcard_offers (card_id, text, expires_at, max_claims, pin_hash, posted_by, kind, stamps_required, reward_text, stamp_gap_hours)
+    VALUES (${cardId}, ${text}, ${expires}, ${max}, ${hash}, ${postedBy}, ${kind}, ${stampsRequired}, ${rewardText}, ${gapHours})
     RETURNING id
   `) as { id: number }[])[0];
   return { ok: true, id: row.id };
@@ -243,13 +285,23 @@ export interface CodeStatus {
   cardName?: string;
   expiresAt?: string | null;
   redeemedAt?: string | null;
+  /// A stamp card: how far along it is.
+  kind?: "once" | "stamps";
+  stamps?: number;
+  stampsRequired?: number;
+  rewardText?: string;
+  rewardsGiven?: number;
+  /// When the next stamp may be added (null: now).
+  nextStampAt?: string | null;
+  rewardReady?: boolean;
 }
 
 export async function codeStatus(code: string): Promise<CodeStatus> {
   await ensureOfferSchema();
   if (!/^[A-Z0-9]{10}$/.test(code)) return { state: "unknown" };
   const row = ((await sql`
-    SELECT c.redeemed_at, o.id AS offer_id, o.card_id, o.text, o.expires_at,
+    SELECT c.redeemed_at, c.stamps, c.last_stamp_at, c.rewards_given, o.kind, o.stamps_required, o.reward_text, o.stamp_gap_hours,
+           o.id AS offer_id, o.card_id, o.text, o.expires_at,
            (SELECT MAX(id) FROM tapcard_offers WHERE card_id = o.card_id) AS latest_id,
            (SELECT COALESCE(NULLIF(company, ''), name) FROM tapcard_cards WHERE id = o.card_id) AS card_name
     FROM tapcard_offer_claims c JOIN tapcard_offers o ON o.id = c.offer_id
@@ -257,10 +309,24 @@ export async function codeStatus(code: string): Promise<CodeStatus> {
   `) as {
     redeemed_at: string | null; offer_id: number; card_id: string; text: string;
     expires_at: string | null; latest_id: number; card_name: string | null;
+    stamps: number; last_stamp_at: string | null; rewards_given: number; kind: string; stamps_required: number | null; reward_text: string; stamp_gap_hours: number;
   }[])[0];
   if (!row) return { state: "unknown" };
-  const base = { offerText: row.text, cardId: row.card_id, cardName: row.card_name ?? "", expiresAt: row.expires_at, redeemedAt: row.redeemed_at };
-  if (row.redeemed_at) return { state: "used", ...base };
+  const isStamps = row.kind === "stamps";
+  let nextStampAt: string | null = null;
+  if (isStamps && row.last_stamp_at && row.stamp_gap_hours > 0) {
+    const t = new Date(row.last_stamp_at).getTime() + row.stamp_gap_hours * 3_600_000;
+    if (t > Date.now()) nextStampAt = new Date(t).toISOString();
+  }
+  const base: Omit<CodeStatus, "state"> = {
+    offerText: row.text, cardId: row.card_id, cardName: row.card_name ?? "", expiresAt: row.expires_at, redeemedAt: isStamps ? null : row.redeemed_at,
+    kind: isStamps ? "stamps" : "once",
+    ...(isStamps ? {
+      stamps: Number(row.stamps), stampsRequired: row.stamps_required ?? 0, rewardText: row.reward_text, rewardsGiven: Number(row.rewards_given),
+      nextStampAt, rewardReady: Number(row.stamps) >= (row.stamps_required ?? 0),
+    } : {}),
+  };
+  if (!isStamps && row.redeemed_at) return { state: "used", ...base };
   if (Number(row.latest_id) !== Number(row.offer_id)) return { state: "replaced", ...base };
   if (row.expires_at && new Date(row.expires_at).getTime() < Date.now()) return { state: "expired", ...base };
   return { state: "valid", ...base };
@@ -270,11 +336,12 @@ const MAX_PIN_FAILS = 10;
 
 export type RedeemResult =
   | { ok: true; offerText: string }
-  | { ok: false; error: "bad_pin" | "locked" | "not_valid"; state?: CodeStatus["state"] };
+  | { ok: false; error: "bad_pin" | "locked" | "not_valid" | "stamp_card"; state?: CodeStatus["state"] };
 
 export async function redeemCode(code: string, pin: unknown): Promise<RedeemResult> {
   const status = await codeStatus(code);
   if (status.state !== "valid") return { ok: false, error: "not_valid", state: status.state };
+  if (status.kind === "stamps") return { ok: false, error: "stamp_card", state: status.state };
   const o = ((await sql`
     SELECT o.id, o.pin_hash, o.pin_fails FROM tapcard_offers o
     JOIN tapcard_offer_claims c ON c.offer_id = o.id WHERE c.code = ${code}
@@ -295,6 +362,64 @@ export async function redeemCode(code: string, pin: unknown): Promise<RedeemResu
   if (!done.length) return { ok: false, error: "not_valid", state: "used" };
   await sql`UPDATE tapcard_offers SET pin_fails = 0 WHERE id = ${o.id}`;
   return { ok: true, offerText: status.offerText ?? "" };
+}
+
+/// The staff PIN check shared by the stamp and reward actions (same lockout as redeeming a one-off code).
+async function checkStaffPin(code: string, pin: unknown): Promise<{ ok: true; status: CodeStatus; offerId: number } | { ok: false; error: "bad_pin" | "locked" | "not_valid" | "not_stamp_card"; state?: CodeStatus["state"] }> {
+  const status = await codeStatus(code);
+  if (status.state !== "valid") return { ok: false, error: "not_valid", state: status.state };
+  if (status.kind !== "stamps") return { ok: false, error: "not_stamp_card" };
+  const o = ((await sql`
+    SELECT o.id, o.pin_hash, o.pin_fails FROM tapcard_offers o
+    JOIN tapcard_offer_claims c ON c.offer_id = o.id WHERE c.code = ${code}
+  `) as { id: number; pin_hash: string; pin_fails: number }[])[0];
+  if (!o) return { ok: false, error: "not_valid", state: "unknown" };
+  if (o.pin_fails >= MAX_PIN_FAILS) return { ok: false, error: "locked" };
+  const [salt, stored] = o.pin_hash.split(":");
+  const given = isValidPin(pin) ? pinHash(salt, pin) : "";
+  const match = given.length === stored.length && crypto.timingSafeEqual(Buffer.from(given), Buffer.from(stored));
+  if (!match) {
+    await sql`UPDATE tapcard_offers SET pin_fails = pin_fails + 1 WHERE id = ${o.id}`;
+    return { ok: false, error: "bad_pin" };
+  }
+  await sql`UPDATE tapcard_offers SET pin_fails = 0 WHERE id = ${o.id}`;
+  return { ok: true, status, offerId: Number(o.id) };
+}
+
+export type StampResult =
+  | { ok: true; status: CodeStatus }
+  | { ok: false; error: "bad_pin" | "locked" | "not_valid" | "not_stamp_card" | "full" | "too_soon" | "not_full"; state?: CodeStatus["state"]; status?: CodeStatus };
+
+/// Staff add one stamp: PIN checked, never past the card's size, never sooner than the owner's minimum gap.
+export async function stampCode(code: string, pin: unknown): Promise<StampResult> {
+  const c = await checkStaffPin(code, pin);
+  if (!c.ok) return c;
+  if (c.status.rewardReady) return { ok: false, error: "full", status: c.status };
+  if (c.status.nextStampAt) return { ok: false, error: "too_soon", status: c.status };
+  // Atomic: the size and the gap are re-checked in the UPDATE, so two scans at once add one stamp.
+  const done = (await sql`
+    UPDATE tapcard_offer_claims c SET stamps = c.stamps + 1, last_stamp_at = now()
+    FROM tapcard_offers o
+    WHERE c.code = ${code} AND o.id = c.offer_id AND c.stamps < o.stamps_required
+      AND (o.stamp_gap_hours = 0 OR c.last_stamp_at IS NULL OR c.last_stamp_at <= now() - (o.stamp_gap_hours * interval '1 hour'))
+    RETURNING c.id
+  `) as { id: number }[];
+  if (!done.length) return { ok: false, error: "too_soon", status: await codeStatus(code) };
+  return { ok: true, status: await codeStatus(code) };
+}
+
+/// Staff give the reward on a full card; the card starts again from no stamps.
+export async function rewardCode(code: string, pin: unknown): Promise<StampResult> {
+  const c = await checkStaffPin(code, pin);
+  if (!c.ok) return c;
+  const done = (await sql`
+    UPDATE tapcard_offer_claims c SET stamps = 0, rewards_given = c.rewards_given + 1, last_stamp_at = now()
+    FROM tapcard_offers o
+    WHERE c.code = ${code} AND o.id = c.offer_id AND c.stamps >= o.stamps_required
+    RETURNING c.id
+  `) as { id: number }[];
+  if (!done.length) return { ok: false, error: "not_full", status: c.status };
+  return { ok: true, status: await codeStatus(code) };
 }
 
 // ---- Announcements ("New autumn menu", "Christmas bookings open"): one short line per card, newest wins.
@@ -369,9 +494,9 @@ export async function orgPromoteRows(orgId: string): Promise<OrgPromoteRow[]> {
     SELECT c.id, c.name, c.label, c.company, c.view_count, c.qr_view_count, c.save_count,
       o.text AS offer_text, o.expires_at AS offer_expires,
       (SELECT COUNT(*)::int FROM tapcard_offer_claims cl WHERE cl.offer_id = o.id) AS offer_claimed,
-      (SELECT COUNT(*)::int FROM tapcard_offer_claims cl WHERE cl.offer_id = o.id AND cl.redeemed_at IS NOT NULL) AS offer_redeemed,
+      (SELECT (COUNT(cl.redeemed_at) + COALESCE(SUM(cl.rewards_given), 0))::int FROM tapcard_offer_claims cl WHERE cl.offer_id = o.id) AS offer_redeemed,
       (SELECT COUNT(*)::int FROM tapcard_offer_claims cl JOIN tapcard_offers oo ON oo.id = cl.offer_id WHERE oo.card_id = c.id) AS claimed_total,
-      (SELECT COUNT(*)::int FROM tapcard_offer_claims cl JOIN tapcard_offers oo ON oo.id = cl.offer_id WHERE oo.card_id = c.id AND cl.redeemed_at IS NOT NULL) AS redeemed_total,
+      (SELECT (COUNT(cl.redeemed_at) + COALESCE(SUM(cl.rewards_given), 0))::int FROM tapcard_offer_claims cl JOIN tapcard_offers oo ON oo.id = cl.offer_id WHERE oo.card_id = c.id) AS redeemed_total,
       (SELECT COUNT(*)::int FROM tapcard_followers f WHERE f.card_id = c.id) AS followers,
       (SELECT COUNT(*)::int FROM tapcard_card_installs i WHERE i.card_id = c.id) AS installs,
       a.text AS news, a.created_at AS news_at

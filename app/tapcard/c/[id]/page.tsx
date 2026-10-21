@@ -251,6 +251,9 @@ export default async function CardPage({
                 offerText={offer.text}
                 expiresAt={offer.expiresAt ? new Date(offer.expiresAt).toISOString() : null}
                 getAppHref={TAPCARD_APP_STORE_URL}
+                kind={offer.kind === "stamps" ? "stamps" : "once"}
+                stampsRequired={"stampsRequired" in offer ? offer.stampsRequired : undefined}
+                rewardText={"rewardText" in offer ? offer.rewardText : undefined}
               />
             )}
             {news && (
