@@ -11,7 +11,8 @@ import AcceptRecipientForm from "../../AcceptRecipientForm";
 import { callActionLabel, isTapLink, linkIcon, parseStoredLinks } from "@/lib/tapcardLinks";
 import SaveContactButton from "../../SaveContactButton";
 import CarryCardToInstall from "../../CarryCardToInstall";
-import { publicAnnouncement } from "@/lib/tapcardOffers";
+import { publicAnnouncement, publicOffer } from "@/lib/tapcardOffers";
+import ClaimOfferWeb from "../../ClaimOfferWeb";
 
 // App Store Connect record "TapCard: Digital Business Card" (id 6816003159).
 const TAPCARD_ORIGIN = "https://tapcard.aiert.co.uk";
@@ -152,6 +153,7 @@ export default async function CardPage({
     orgLogo ?? (companyDomain ? `https://tapcard.aiert.co.uk/api/logo?domain=${encodeURIComponent(companyDomain)}` : null);
   const palette = paletteFor(card.brand_color);
   const news = await publicAnnouncement(id).catch(() => null);
+  const offer = await publicOffer(id).catch(() => null);
 
   return (
     <main className="min-h-screen flex flex-col items-center px-4 py-12">
@@ -242,6 +244,15 @@ export default async function CardPage({
               </div>
             )}
 
+            {offer && (
+              <ClaimOfferWeb
+                cardId={id}
+                business={card.company || card.name}
+                offerText={offer.text}
+                expiresAt={offer.expiresAt ? new Date(offer.expiresAt).toISOString() : null}
+                getAppHref={TAPCARD_APP_STORE_URL}
+              />
+            )}
             {news && (
               <div className="mt-5 rounded-2xl bg-white/[0.07] px-4 py-3 text-left">
                 <p className="text-xs font-semibold uppercase tracking-wide text-white">Latest news</p>

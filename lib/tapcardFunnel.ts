@@ -8,6 +8,8 @@ export const FUNNEL_STEPS = [
   "lookup_used", "lookup_picked", "scan_used", "phone_hint_used", "apple_signin_used", "contacts_used",
   // The App Clip (a customer scanning a business QR code without installing).
   "clip_opened", "clip_offer_claimed", "clip_get_app_tapped",
+  // The same on the website card page (Android, and iPhone before the Clip).
+  "web_offer_claimed", "web_get_app_tapped",
 ] as const;
 export type FunnelStep = (typeof FUNNEL_STEPS)[number];
 
