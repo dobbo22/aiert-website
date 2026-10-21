@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     case "offer": {
       const days = Number(body.days ?? 0);
       const expiresAt = days > 0 ? new Date(Date.now() + days * 86_400_000).toISOString() : undefined;
-      const r = await setOffer(cardId, { text: body.text, expiresAt, maxClaims: body.maxClaims || undefined, pin: body.pin, kind: body.kind, stampsRequired: body.stampsRequired, rewardText: body.rewardText, stampGapHours: body.stampGapHours }, "admin");
+      const r = await setOffer(cardId, { text: body.text, expiresAt, maxClaims: body.maxClaims || undefined, pin: body.pin, kind: body.kind, stampsRequired: body.stampsRequired, rewardText: body.rewardText, stampGapHours: body.stampGapHours, requireAppAfterFirst: body.requireAppAfterFirst }, "admin");
       if (!r.ok) return NextResponse.json({ error: r.error }, { status: 400 });
       const card = ((await sql`SELECT name, company FROM tapcard_cards WHERE id = ${cardId}`) as { name: string; company: string }[])[0];
       after(() => pushToFollowers(cardId, "offers", { title: card?.company || card?.name || "New offer", body: String(body.text ?? "").trim().slice(0, 140), ref: String(r.id) }));

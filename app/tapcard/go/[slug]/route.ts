@@ -27,7 +27,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
   if (link.playPackage && /android/i.test(req.headers.get("user-agent") ?? "")) {
     // A card page passes ?card=<id>: it rides in the Play install referrer, so the app opens on that business after installing.
     const card = req.nextUrl.searchParams.get("card") ?? "";
-    const carried = /^[A-Za-z0-9_-]{16,40}$/.test(card) ? `&card=${card}` : "";
+    // A stamp card claimed on the web: its code rides along too, so the app can take over the card with its stamps.
+    const claim = req.nextUrl.searchParams.get("claim") ?? "";
+    const carried = (/^[A-Za-z0-9_-]{16,40}$/.test(card) ? `&card=${card}` : "") + (/^[A-Z0-9]{10}$/.test(claim) ? `&claim=${claim}` : "");
     destination = `https://play.google.com/store/apps/details?id=${link.playPackage}&referrer=${encodeURIComponent(`utm_source=${link.playSource ?? "tapcard-web"}&utm_medium=${link.playMedium ?? "card-page"}${carried}`)}`;
   }
   const res = NextResponse.redirect(destination, 302);

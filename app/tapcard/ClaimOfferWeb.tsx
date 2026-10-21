@@ -26,12 +26,14 @@ function count(step: string) {
 
 interface Status {
   state: string; kind?: "once" | "stamps"; stamps?: number; stampsRequired?: number; rewardText?: string; rewardsGiven?: number;
-  nextStampAt?: string | null; rewardReady?: boolean;
+  nextStampAt?: string | null; rewardReady?: boolean; needsApp?: boolean;
 }
 
-export default function ClaimOfferWeb({ cardId, business, offerText, expiresAt, getAppHref, kind, stampsRequired, rewardText }: {
+export default function ClaimOfferWeb({ cardId, business, offerText, expiresAt, getAppHref, kind, stampsRequired, rewardText, appAfterFirst }: {
   cardId: string; business: string; offerText: string; expiresAt: string | null; getAppHref: string;
   kind: "once" | "stamps"; stampsRequired?: number; rewardText?: string;
+  /// The owner needs the TapCard app from the second stamp on.
+  appAfterFirst?: boolean;
 }) {
   const storeKey = `tapcard.claim.${cardId}`;
   const [busy, setBusy] = useState(false);
@@ -84,6 +86,12 @@ export default function ClaimOfferWeb({ cardId, business, offerText, expiresAt, 
     setBusy(false);
   }
 
+  // The install carries this claim: Android in the Play install referrer, iPhone by copying a link the app reads on first launch.
+  const appHref = claim ? `${getAppHref}${getAppHref.includes("?") ? "&" : "?"}claim=${claim.code}` : getAppHref;
+  function getApp() {
+    count("web_get_app_tapped");
+    try { if (claim && /iPhone|iPad|iPod/i.test(navigator.userAgent)) void navigator.clipboard?.writeText(`https://tapcard.aiert.co.uk/c/${cardId}?claim=${claim.code}`); } catch { /* the store opens either way */ }
+  }
   const isStamps = kind === "stamps";
   const required = status?.stampsRequired ?? stampsRequired ?? 0;
   const stamps = status?.stamps ?? 0;
@@ -95,6 +103,7 @@ export default function ClaimOfferWeb({ cardId, business, offerText, expiresAt, 
       <p className="text-xs font-extrabold uppercase tracking-wider">{isStamps ? "Stamp card" : "Special offer"}</p>
       <p className="mt-1 text-xl font-extrabold leading-snug">{offerText}</p>
       {isStamps && !claim && <p className="mt-1 text-sm font-semibold">Collect {required} stamps, then {reward}</p>}
+      {isStamps && !claim && appAfterFirst && <p className="mt-1 text-xs font-semibold">Your first stamp needs nothing. After that you will need the free TapCard app.</p>}
       {expiresAt && <p className="mt-1 text-sm font-semibold">Ends {new Date(expiresAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</p>}
       {claim && finished ? (
         <p className="mt-3 rounded-xl bg-[#111318] px-3 py-3 text-sm font-semibold text-white">
@@ -112,6 +121,11 @@ export default function ClaimOfferWeb({ cardId, business, offerText, expiresAt, 
               <p className="mt-2 text-sm font-bold">
                 {status?.rewardReady ? `Full! Show this to claim: ${reward}` : `${stamps} of ${required}. ${required - stamps} more for: ${reward}`}
               </p>
+              {status?.needsApp && (
+                <p className="mt-2 rounded-xl bg-[#111318] px-3 py-2 text-sm font-bold text-white">
+                  Stamp collected! To collect your next stamp you need the free TapCard app. Your stamps come with you.
+                </p>
+              )}
               {(status?.rewardsGiven ?? 0) > 0 && <p className="text-xs font-semibold">Rewards earned so far: {status?.rewardsGiven}</p>}
             </>
           )}
@@ -121,9 +135,9 @@ export default function ClaimOfferWeb({ cardId, business, offerText, expiresAt, 
           <p className="font-mono text-xs">{claim.code}</p>
           <div className="mt-4 rounded-xl bg-[#111318] p-3 text-white">
             <p className="text-sm font-semibold">
-              {isStamps ? `Keep your stamp card on your phone and be told about new offers. Get TapCard to follow ${business}.` : `Want more offers like this? Get TapCard to follow ${business} and be notified of new offers and news.`}
+              {status?.needsApp ? `Get TapCard to collect your next stamp at ${business}. Your stamps are kept.` : isStamps ? `Keep your stamp card on your phone and be told about new offers. Get TapCard to follow ${business}.` : `Want more offers like this? Get TapCard to follow ${business} and be notified of new offers and news.`}
             </p>
-            <a href={getAppHref} onClick={() => count("web_get_app_tapped")} className="mt-3 inline-block w-full rounded-xl bg-white px-4 py-3 font-bold text-[#111318]">
+            <a href={appHref} onClick={getApp} className="mt-3 inline-block w-full rounded-xl bg-white px-4 py-3 font-bold text-[#111318]">
               Get the TapCard app
             </a>
           </div>

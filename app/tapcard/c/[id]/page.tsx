@@ -254,6 +254,7 @@ export default async function CardPage({
                 kind={offer.kind === "stamps" ? "stamps" : "once"}
                 stampsRequired={"stampsRequired" in offer ? offer.stampsRequired : undefined}
                 rewardText={"rewardText" in offer ? offer.rewardText : undefined}
+                appAfterFirst={"appRequiredAfter" in offer && offer.appRequiredAfter != null}
               />
             )}
             {news && (

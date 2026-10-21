@@ -4,6 +4,10 @@ import { useState } from "react";
 
 interface Props { cardId: string; hasOffer: boolean; hasNews: boolean }
 
+// Switched on once the TapCard apps show stamp cards and take over a web claim (iPhone 3.2 / Android 1.7). Until then a customer who
+// installed the app would find nothing, so owners are not offered "needs the app".
+const APP_GATE_READY = false;
+
 // Post or withdraw one location's offer and news.
 export default function LocationPromote({ cardId, hasOffer, hasNews }: Props) {
   const [open, setOpen] = useState<"offer" | "news" | null>(null);
@@ -17,6 +21,7 @@ export default function LocationPromote({ cardId, hasOffer, hasNews }: Props) {
   const [stamps, setStamps] = useState("5");
   const [reward, setReward] = useState("");
   const [gap, setGap] = useState("4");
+  const [needApp, setNeedApp] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -55,7 +60,13 @@ export default function LocationPromote({ cardId, hasOffer, hasNews }: Props) {
                   </select>
                 </label>
               </div>
-              <label className="mt-2 block">The reward<input className={field} value={reward} onChange={(e) => setReward(e.target.value.slice(0, 60))} placeholder="Free child's meal" /></label>
+              <label className="mt-2 block">The reward<input className={field} value={reward} onChange={(e) => setReward(e.target.value.slice(0, 60))} placeholder="Free child&apos;s meal" /></label>
+              {APP_GATE_READY && (
+                <label className="mt-3 flex items-start gap-2">
+                  <input type="checkbox" className="mt-1" checked={needApp} onChange={(e) => setNeedApp(e.target.checked)} />
+                  <span>Customers need the TapCard app after their first stamp. <span className="text-white/70">The first stamp needs nothing to install. From the second, they get the free app, and their stamps come with them.</span></span>
+                </label>
+              )}
             </div>
           )}
           <label className="mt-3 block">{kind === "stamps" ? "How you describe it" : "The offer"}
@@ -72,7 +83,7 @@ export default function LocationPromote({ cardId, hasOffer, hasNews }: Props) {
               action: "offer", kind,
               text: text.trim() || (kind === "stamps" ? `Buy ${stamps}, get ${reward.trim()}` : ""),
               days: Number(days), maxClaims: limit ? Number(limit) : undefined, pin,
-              ...(kind === "stamps" ? { stampsRequired: Number(stamps), rewardText: reward.trim(), stampGapHours: Number(gap) } : {}),
+              ...(kind === "stamps" ? { stampsRequired: Number(stamps), rewardText: reward.trim(), stampGapHours: Number(gap), requireAppAfterFirst: APP_GATE_READY && needApp } : {}),
             })}>{kind === "stamps" ? "Start the stamp card" : "Post offer"}</button>
         </div>
       )}

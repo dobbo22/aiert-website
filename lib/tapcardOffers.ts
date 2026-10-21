@@ -27,6 +27,8 @@ export interface OfferRow {
   stamps_required: number | null;
   reward_text: string;
   stamp_gap_hours: number;
+  /// A stamp card where the customer must hold the TapCard app from this many stamps on (null: no requirement).
+  app_after: number | null;
 }
 
 let ready: Promise<unknown> | null = null;
@@ -50,6 +52,7 @@ function ensureOfferSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_offers ADD COLUMN IF NOT EXISTS stamps_required INTEGER`)
       .then(() => sql`ALTER TABLE tapcard_offers ADD COLUMN IF NOT EXISTS reward_text TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_offers ADD COLUMN IF NOT EXISTS stamp_gap_hours INTEGER NOT NULL DEFAULT 0`)
+      .then(() => sql`ALTER TABLE tapcard_offers ADD COLUMN IF NOT EXISTS app_after INTEGER`)
       .then(() => sql`
         CREATE TABLE IF NOT EXISTS tapcard_offer_claims (
           id BIGSERIAL PRIMARY KEY,
@@ -64,6 +67,8 @@ function ensureOfferSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_offer_claims ADD COLUMN IF NOT EXISTS stamps INTEGER NOT NULL DEFAULT 0`)
       .then(() => sql`ALTER TABLE tapcard_offer_claims ADD COLUMN IF NOT EXISTS last_stamp_at TIMESTAMPTZ`)
       .then(() => sql`ALTER TABLE tapcard_offer_claims ADD COLUMN IF NOT EXISTS rewards_given INTEGER NOT NULL DEFAULT 0`)
+      // Where the claim was made: "web" (card page), "clip" (App Clip) or "app" (the TapCard app).
+      .then(() => sql`ALTER TABLE tapcard_offer_claims ADD COLUMN IF NOT EXISTS via TEXT NOT NULL DEFAULT 'web'`)
       .then(() => sql`
         CREATE TABLE IF NOT EXISTS tapcard_announcements (
           id BIGSERIAL PRIMARY KEY,
@@ -147,7 +152,7 @@ export async function publicOffer(cardId: string) {
     claimsLeft: o.max_claims == null ? null : Math.max(0, o.max_claims - claimed),
     postedAt: o.created_at ? new Date(o.created_at).toISOString() : null,
     kind: o.kind === "stamps" ? "stamps" : "once",
-    ...(o.kind === "stamps" ? { stampsRequired: o.stamps_required ?? 0, rewardText: o.reward_text, stampGapHours: o.stamp_gap_hours } : {}),
+    ...(o.kind === "stamps" ? { stampsRequired: o.stamps_required ?? 0, rewardText: o.reward_text, stampGapHours: o.stamp_gap_hours, appRequiredAfter: o.app_after } : {}),
   };
 }
 
@@ -162,6 +167,8 @@ export interface OfferInput {
   rewardText?: unknown;
   /// The least time between two stamps for one customer (0 = no limit).
   stampGapHours?: unknown;
+  /// true: from the second stamp on the customer must hold the TapCard app (the first stamp needs no install).
+  requireAppAfterFirst?: unknown;
 }
 
 export const MAX_STAMPS = 20;
@@ -191,7 +198,9 @@ export async function setOffer(cardId: string, input: OfferInput, postedBy: stri
   let stampsRequired: number | null = null;
   let rewardText = "";
   let gapHours = 0;
+  let appAfter: number | null = null;
   if (kind === "stamps") {
+    if (input.requireAppAfterFirst === true) appAfter = 1;
     const n = Number(input.stampsRequired ?? 5);
     if (!Number.isInteger(n) || n < 1 || n > MAX_STAMPS) return { ok: false, error: `stamps needed must be a whole number from 1 to ${MAX_STAMPS}` };
     stampsRequired = n;
@@ -204,8 +213,8 @@ export async function setOffer(cardId: string, input: OfferInput, postedBy: stri
   const salt = crypto.randomBytes(8).toString("hex");
   const hash = `${salt}:${pinHash(salt, input.pin)}`;
   const row = ((await sql`
-    INSERT INTO tapcard_offers (card_id, text, expires_at, max_claims, pin_hash, posted_by, kind, stamps_required, reward_text, stamp_gap_hours)
-    VALUES (${cardId}, ${text}, ${expires}, ${max}, ${hash}, ${postedBy}, ${kind}, ${stampsRequired}, ${rewardText}, ${gapHours})
+    INSERT INTO tapcard_offers (card_id, text, expires_at, max_claims, pin_hash, posted_by, kind, stamps_required, reward_text, stamp_gap_hours, app_after)
+    VALUES (${cardId}, ${text}, ${expires}, ${max}, ${hash}, ${postedBy}, ${kind}, ${stampsRequired}, ${rewardText}, ${gapHours}, ${appAfter})
     RETURNING id
   `) as { id: number }[])[0];
   return { ok: true, id: row.id };
@@ -222,7 +231,8 @@ export type ClaimResult =
   | { ok: false; error: "no_offer" | "sold_out" };
 
 /// Same claimant (a random id the app keeps) always gets the same code back.
-export async function claimOffer(cardId: string, claimant: string): Promise<ClaimResult> {
+export async function claimOffer(cardId: string, claimant: string, viaRaw: unknown = "web"): Promise<ClaimResult> {
+  const via = viaRaw === "app" || viaRaw === "clip" ? viaRaw : "web";
   await ensureOfferSchema();
   const offer = await currentOffer(cardId);
   if (!offer) return { ok: false, error: "no_offer" };
@@ -237,8 +247,8 @@ export async function claimOffer(cardId: string, claimant: string): Promise<Clai
   }
   const code = newCode();
   const inserted = (await sql`
-    INSERT INTO tapcard_offer_claims (offer_id, claimant_hash, code)
-    VALUES (${offer.id}, ${who}, ${code})
+    INSERT INTO tapcard_offer_claims (offer_id, claimant_hash, code, via)
+    VALUES (${offer.id}, ${who}, ${code}, ${via})
     ON CONFLICT (offer_id, claimant_hash) DO NOTHING
     RETURNING code
   `) as { code: string }[];
@@ -294,13 +304,17 @@ export interface CodeStatus {
   /// When the next stamp may be added (null: now).
   nextStampAt?: string | null;
   rewardReady?: boolean;
+  /// Where this card was claimed ("web", "clip" or "app"), and whether the owner needs the app for the next stamp.
+  via?: string;
+  appRequiredAfter?: number | null;
+  needsApp?: boolean;
 }
 
 export async function codeStatus(code: string): Promise<CodeStatus> {
   await ensureOfferSchema();
   if (!/^[A-Z0-9]{10}$/.test(code)) return { state: "unknown" };
   const row = ((await sql`
-    SELECT c.redeemed_at, c.stamps, c.last_stamp_at, c.rewards_given, o.kind, o.stamps_required, o.reward_text, o.stamp_gap_hours,
+    SELECT c.redeemed_at, c.stamps, c.last_stamp_at, c.rewards_given, c.via, o.app_after, o.kind, o.stamps_required, o.reward_text, o.stamp_gap_hours,
            o.id AS offer_id, o.card_id, o.text, o.expires_at,
            (SELECT MAX(id) FROM tapcard_offers WHERE card_id = o.card_id) AS latest_id,
            (SELECT COALESCE(NULLIF(company, ''), name) FROM tapcard_cards WHERE id = o.card_id) AS card_name
@@ -309,7 +323,7 @@ export async function codeStatus(code: string): Promise<CodeStatus> {
   `) as {
     redeemed_at: string | null; offer_id: number; card_id: string; text: string;
     expires_at: string | null; latest_id: number; card_name: string | null;
-    stamps: number; last_stamp_at: string | null; rewards_given: number; kind: string; stamps_required: number | null; reward_text: string; stamp_gap_hours: number;
+    stamps: number; last_stamp_at: string | null; rewards_given: number; via: string; app_after: number | null; kind: string; stamps_required: number | null; reward_text: string; stamp_gap_hours: number;
   }[])[0];
   if (!row) return { state: "unknown" };
   const isStamps = row.kind === "stamps";
@@ -324,6 +338,8 @@ export async function codeStatus(code: string): Promise<CodeStatus> {
     ...(isStamps ? {
       stamps: Number(row.stamps), stampsRequired: row.stamps_required ?? 0, rewardText: row.reward_text, rewardsGiven: Number(row.rewards_given),
       nextStampAt, rewardReady: Number(row.stamps) >= (row.stamps_required ?? 0),
+      via: row.via, appRequiredAfter: row.app_after,
+      needsApp: row.app_after != null && row.via !== "app" && Number(row.stamps) >= row.app_after && Number(row.stamps) < (row.stamps_required ?? 0),
     } : {}),
   };
   if (!isStamps && row.redeemed_at) return { state: "used", ...base };
@@ -388,24 +404,55 @@ async function checkStaffPin(code: string, pin: unknown): Promise<{ ok: true; st
 
 export type StampResult =
   | { ok: true; status: CodeStatus }
-  | { ok: false; error: "bad_pin" | "locked" | "not_valid" | "not_stamp_card" | "full" | "too_soon" | "not_full"; state?: CodeStatus["state"]; status?: CodeStatus };
+  | { ok: false; error: "bad_pin" | "locked" | "not_valid" | "not_stamp_card" | "full" | "too_soon" | "not_full" | "needs_app"; state?: CodeStatus["state"]; status?: CodeStatus };
 
 /// Staff add one stamp: PIN checked, never past the card's size, never sooner than the owner's minimum gap.
 export async function stampCode(code: string, pin: unknown): Promise<StampResult> {
   const c = await checkStaffPin(code, pin);
   if (!c.ok) return c;
   if (c.status.rewardReady) return { ok: false, error: "full", status: c.status };
+  // The owner needs the customer to hold the app from the next stamp on (the first stamp needs no install).
+  if (c.status.needsApp) return { ok: false, error: "needs_app", status: c.status };
   if (c.status.nextStampAt) return { ok: false, error: "too_soon", status: c.status };
   // Atomic: the size and the gap are re-checked in the UPDATE, so two scans at once add one stamp.
   const done = (await sql`
     UPDATE tapcard_offer_claims c SET stamps = c.stamps + 1, last_stamp_at = now()
     FROM tapcard_offers o
     WHERE c.code = ${code} AND o.id = c.offer_id AND c.stamps < o.stamps_required
+      AND (o.app_after IS NULL OR c.via = 'app' OR c.stamps < o.app_after)
       AND (o.stamp_gap_hours = 0 OR c.last_stamp_at IS NULL OR c.last_stamp_at <= now() - (o.stamp_gap_hours * interval '1 hour'))
     RETURNING c.id
   `) as { id: number }[];
-  if (!done.length) return { ok: false, error: "too_soon", status: await codeStatus(code) };
+  if (!done.length) {
+    const status = await codeStatus(code);
+    return { ok: false, error: status.needsApp ? "needs_app" : "too_soon", status };
+  }
   return { ok: true, status: await codeStatus(code) };
+}
+
+/// A claim made on the web or in the App Clip moves to the app that was installed after it: the app presents the claim code it
+/// was handed, and the card (with its stamps) now belongs to the app's claimant. Nothing is lost by installing.
+export async function adoptClaim(cardId: string, code: string, claimant: string): Promise<{ ok: true; code: string } | { ok: false; error: "not_found" | "not_valid" | "has_own_card" }> {
+  await ensureOfferSchema();
+  if (!/^[A-Z0-9]{10}$/.test(code)) return { ok: false, error: "not_found" };
+  const status = await codeStatus(code);
+  if (status.state === "unknown" || status.cardId !== cardId) return { ok: false, error: "not_found" };
+  if (status.state !== "valid") return { ok: false, error: "not_valid" };
+  const who = hashSecret(`tapcard-claimant:${claimant}`);
+  const row = ((await sql`SELECT id, offer_id, claimant_hash FROM tapcard_offer_claims WHERE code = ${code}`) as { id: number; offer_id: number; claimant_hash: string }[])[0];
+  if (!row) return { ok: false, error: "not_found" };
+  if (row.claimant_hash === who) {
+    await sql`UPDATE tapcard_offer_claims SET via = 'app' WHERE id = ${row.id}`;
+    return { ok: true, code };
+  }
+  // The app may already have started its own empty card on this offer: that one is replaced by the claim being adopted.
+  const own = ((await sql`SELECT id, stamps, rewards_given, redeemed_at FROM tapcard_offer_claims WHERE offer_id = ${row.offer_id} AND claimant_hash = ${who}`) as { id: number; stamps: number; rewards_given: number; redeemed_at: string | null }[])[0];
+  if (own) {
+    if (own.stamps > 0 || own.rewards_given > 0 || own.redeemed_at) return { ok: false, error: "has_own_card" };
+    await sql`DELETE FROM tapcard_offer_claims WHERE id = ${own.id}`;
+  }
+  await sql`UPDATE tapcard_offer_claims SET claimant_hash = ${who}, via = 'app' WHERE id = ${row.id}`;
+  return { ok: true, code };
 }
 
 /// Staff give the reward on a full card; the card starts again from no stamps.
