@@ -46,6 +46,8 @@ const ABUSE_WORDS = [
   "fuck", "fucking", "fucker", "fucked", "motherfucker", "shit", "shite", "bullshit", "cunt", "twat", "wanker", "wank", "prick", "bastard",
   "dickhead", "arsehole", "asshole", "bitch", "slut", "whore", "pussy", "nigger", "nigga", "faggot", "fag", "paki", "retard", "spastic",
   "tranny", "chink", "gook", "kike", "coon", "porn", "porno", "nazi", "hitler", "isis",
+  "arse", "bollocks", "bollock", "bellend", "knobhead", "tosser", "piss", "slag", "skank", "jizz", "paedo", "pedo", "rapist", "blowjob", "handjob",
+  "cocksucker", "dildo", "shag", "shagging", "wankstain", "shithead", "dipshit",
 ];
 // Phrases (normalised): threats and harassment.
 const ABUSE_PHRASES = [
@@ -81,9 +83,13 @@ const SCAM_PHRASES = [
 const SAFE_WORDS = new Set(["cocktail", "cocktails", "scunthorpe", "assess", "class", "classic", "bass", "passion", "shiitake", "penistone", "analysis", "button", "buttons", "essex", "sussex", "middlesex", "dickens", "cockburn", "cockburns", "hancock", "peacock", "babcock", "bethnal", "betty", "bettys", "better", "alphabet", "abet", "betsy", "bethany", "beth", "rebet", "bookshop", "bookmark", "bookings", "booking", "bookable", "coralie", "scoralle"]);
 
 const wordRe = (words: string[]) => new RegExp(`(?:^|[^a-z])(${words.join("|")})(?=$|[^a-z])`);
-const ABUSE_RE = wordRe(ABUSE_WORDS);
+// A blocked word is also blocked with an ending: "fucks", "shitty", "wankers", "pissed", "bitching".
+const ABUSE_ENDINGS = "(?:s|es|ed|ing|er|ers|y|ie|ies)?";
+const abuseRe = (words: string[]) => new RegExp(`(?:^|[^a-z])((?:${words.join("|")})${ABUSE_ENDINGS})(?=$|[^a-z])`);
+const ABUSE_RE = abuseRe(ABUSE_WORDS);
+const ABUSE_WHOLE_RE = new RegExp(`^(?:${ABUSE_WORDS.join("|")})${ABUSE_ENDINGS}$`);
 const ABUSE_COLLAPSED = [...new Set(ABUSE_WORDS.map((w) => w.replace(/(.)\1+/g, "$1")))];
-const ABUSE_COLLAPSED_RE = wordRe(ABUSE_COLLAPSED);
+const ABUSE_COLLAPSED_RE = abuseRe(ABUSE_COLLAPSED);
 const GAMBLING_RE = wordRe(GAMBLING_WORDS);
 const REVIEW_RE = wordRe(REVIEW_WORDS);
 // "spaced out" letters, e.g. "f u c k": four or more single letters separated by spaces or punctuation.
@@ -101,13 +107,16 @@ export function checkText(raw: string): Verdict {
   for (const p of ABUSE_PHRASES) if (text.includes(p)) return { decision: "block", category: "abuse", term: p };
   const abuse = hit(text, ABUSE_RE);
   if (abuse && !SAFE_WORDS.has(abuse)) return { decision: "block", category: "abuse", term: abuse };
+  // A "v" in place of a "u" ("fvck", "cvnt").
+  const vAsU = hit(text.replace(/v/g, "u"), ABUSE_RE);
+  if (vAsU && !SAFE_WORDS.has(vAsU)) return { decision: "block", category: "abuse", term: vAsU };
   // Letters stretched out ("fuuuuck").
   const stretched = hit(collapseAll(raw), ABUSE_COLLAPSED_RE);
   if (stretched && !SAFE_WORDS.has(stretched)) return { decision: "block", category: "abuse", term: stretched };
   // Spaced-out profanity ("f u c k", "c.u.n.t").
   for (const m of text.matchAll(SPACED_RE)) {
     const letters = m[1].replace(/[^a-z]/g, "");
-    if (ABUSE_WORDS.includes(letters)) return { decision: "block", category: "abuse", term: letters };
+    if (ABUSE_WORDS.includes(letters) || ABUSE_WHOLE_RE.test(letters)) return { decision: "block", category: "abuse", term: letters };
     if (GAMBLING_WORDS.includes(letters) || GAMBLING_LONG.includes(letters)) return { decision: "block", category: "gambling", term: letters };
   }
 
