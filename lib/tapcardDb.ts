@@ -44,6 +44,7 @@ export interface TapCardRecord {
   /// "person" (someone's own business card), "business" (a restaurant, shop, salon...) or "" when the owner never said:
   /// then the apps work it out from the links, as before. Chosen by the owner when the card is created.
   card_kind: string;
+  verified_at?: string | null;
   updated_at: Date | string;
 }
 
@@ -286,6 +287,7 @@ export function publicCardJSON(card: TapCardRecord) {
     brandColor: card.brand_color || null,
     links: parseStoredLinks(card.links),
     cardKind: card.card_kind || null,
+    verified: !!card.verified_at,
   };
 }
 

@@ -369,9 +369,7 @@ export default async function CardPage({
         {/* Apple guideline 1.2: public user content needs a way to report it. */}
         <p className="mt-8 text-center text-xs text-cloud">
           <a
-            href={`mailto:enquiries@aiert.co.uk?subject=${encodeURIComponent(`Report TapCard ${id}`)}&body=${encodeURIComponent(
-              `Card: https://tapcard.aiert.co.uk/c/${id}\n\nWhat's wrong with this card, its offer or its news?\n`,
-            )}`}
+            href={`/report?card=${id}`}
             className="underline"
           >
             Report this card, offer or news

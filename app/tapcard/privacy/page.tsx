@@ -23,6 +23,20 @@ export default function TapCardPrivacyPage() {
       </section>
 
       <section>
+        <h2>Verifying a business and reports</h2>
+        <p>
+          A business can verify its card in two ways. It can add a line we give it to its own website, which we check by reading that one
+          public page. Or it can type an email address on its website&apos;s domain: we send a 6-digit code to that address and keep the address and the
+          code&apos;s fingerprint for 30 days, then delete them. We use them only to check the code. A verified card shows a tick and the domain it was verified for.
+        </p>
+        <p>
+          When you report a card, offer or news item we save the card, the reason you chose and anything you wrote (not who you are), and email
+          it to our support address. Closed reports are deleted after a year. When you look up a business by name in the app, the name you type
+          goes to our server and on to Google Places to find it, and we check our own public cards for a match: no information about you is sent.
+        </p>
+      </section>
+
+      <section>
         <h2>Checking what businesses post</h2>
         <p>
           Offers and news that a business posts are checked automatically before anyone sees them. We do not allow abusive content,

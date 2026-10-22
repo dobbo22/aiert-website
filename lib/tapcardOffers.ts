@@ -10,6 +10,7 @@
 import crypto from "crypto";
 import sql from "@/lib/db";
 import { hashSecret } from "@/lib/tapcardAuth";
+import { postingAllowed } from "@/lib/tapcardVerify";
 import { moderate } from "@/lib/tapcardModeration";
 
 export interface OfferRow {
@@ -180,6 +181,9 @@ export const MAX_REWARD_TEXT = 60;
 /// working the moment a new offer is posted.
 export async function setOffer(cardId: string, input: OfferInput, postedBy: string | null = null): Promise<{ ok: true; id: number } | { ok: false; error: string }> {
   await ensureOfferSchema();
+  // Offers and news need a verified business once the rule is on (TAPCARD_VERIFY_ENFORCE=1); company cards count as verified.
+  const allowed = await postingAllowed(cardId);
+  if (!allowed.ok) return { ok: false, error: allowed.error };
   const text = typeof input.text === "string" ? input.text.trim().slice(0, MAX_OFFER_TEXT) : "";
   if (!text) return { ok: false, error: "offer text is required" };
   if (!isValidPin(input.pin)) return { ok: false, error: "pin must be 4 to 6 digits" };
@@ -526,6 +530,8 @@ export async function recentAnnouncements(cardId: string, limit = 20) {
 }
 
 export async function setAnnouncement(cardId: string, textRaw: unknown, linkRaw?: unknown): Promise<{ ok: true } | { ok: false; error: string }> {
+  const allowed = await postingAllowed(cardId);
+  if (!allowed.ok) return { ok: false, error: allowed.error };
   await ensureOfferSchema();
   const text = typeof textRaw === "string" ? textRaw.trim().slice(0, MAX_ANNOUNCEMENT_TEXT) : "";
   if (!text) return { ok: false, error: "announcement text is required" };

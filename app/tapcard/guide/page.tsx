@@ -73,6 +73,14 @@ const steps: { title: string; img?: string; alt?: string; text: string }[] = [
     text: "A business can post a short news line (up to 140 characters) with an optional Read more link to the full story on its website. Followers get a notification, and the card page keeps an Earlier news list. You can post one news item every 6 hours.",
   },
   {
+    title: "Find a business and follow it",
+    text: "In Contacts, tap + then Find a business, type a name and town, and pick it from the list. TapCard saves its phone number, address, website, opening hours and links. If the business is already on TapCard you can open its card and tap Follow to receive its offers and news. Scanning a business's QR code does the same: a Follow or No thanks pop-up appears.",
+  },
+  {
+    title: "Proving a business is yours",
+    text: "If you run a business, open Promote on your card and choose Verify. Either add the one line we give you to your own website and tap Check, or enter a 6-digit code we email to an address on your website's domain. Verified cards show a tick. Only one card can be verified for each business website; if someone else made a card for your business, report it and verify yours.",
+  },
+  {
     title: "Safe by design",
     text: "Followers are anonymous: a business sees how many follow it, never who. You choose what you hear, and no business can send you more than two notifications a week. Every offer and news item is checked automatically before anyone sees it: abusive wording, gambling offers and money-making scams are refused. Use Report this card, offer or news at the bottom of any card page if you see something wrong.",
   },

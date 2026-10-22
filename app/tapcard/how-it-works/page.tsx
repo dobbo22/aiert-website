@@ -246,7 +246,12 @@ export default function HowItWorksPage() {
             <strong>Posts are checked.</strong> Every offer and news item is checked automatically before anyone sees it. Abusive wording,
             gambling offers (betting, casinos, poker, slots and similar) and money-making or lending scams are refused. Raffles and fundraisers are allowed and may be looked at by a person.
           </li>
-          <li><strong>Report anything.</strong> Use <em>Report this card, offer or news</em> at the bottom of any card page and we will look at it.</li>
+          <li>
+            <strong>Businesses can prove they are real.</strong> A business verifies its card by adding one line to its own website, or by entering a
+            code we email to an address on its website&apos;s domain. Verified cards show a tick, and only one card can be verified for each
+            business website. If a business is already on TapCard you can follow it instead of making another card.
+          </li>
+          <li><strong>Report anything.</strong> Use <em>Report this card, offer or news</em> at the bottom of any card page, say what is wrong (for example &ldquo;this isn&apos;t the real business&rdquo;) and we will look at it.</li>
           <li><strong>Staff PINs are protected.</strong> Ten wrong PIN guesses pause staff checks on that offer for 15 minutes.</li>
           <li><strong>Clubs, societies and charities</strong> can use TapCard to keep members informed: see <a href="/societies">TapCard for groups</a>.</li>
         </ul>

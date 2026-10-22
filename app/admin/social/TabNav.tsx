@@ -14,6 +14,7 @@ const TABS = [
   { href: "/admin/social/demo", label: "Demo leads" },
   { href: "/admin/social/funnel", label: "Setup funnel" },
   { href: "/admin/social/moderation", label: "Moderation" },
+  { href: "/admin/social/verifications", label: "Verifications" },
 ];
 
 export default function TabNav() {

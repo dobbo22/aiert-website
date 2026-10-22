@@ -222,6 +222,17 @@ export default function TapCardBusinessSecurityPage() {
       </section>
 
       <section>
+        <h2>Proving a business is yours</h2>
+        <p>
+          Anyone can make a card, but a business card can only post offers and news once it is verified. Verification proves control of the
+          business&apos;s own website: either a line we supply added to the site, or a one-time code sent to an address on the website&apos;s domain
+          (free email addresses, social pages and website-builder addresses do not count). Codes last 15 minutes, allow five tries and are limited per card.
+          Only one card can be verified for a website, so a second card cannot take a business over. Anyone can report a card as not the real business,
+          and TapCard can remove a tick. Cards made through TapCard for Business count as verified because the company&apos;s admin controls them.
+        </p>
+      </section>
+
+      <section>
         <h2>Reporting a security issue</h2>
         <p>
           If you think you&apos;ve found a security problem, email{" "}
