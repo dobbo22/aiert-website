@@ -41,9 +41,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     // installed (the app shows it and offers to send a card back), "Get"
     // when it isn't.
     // It also names the App Clip, so a phone without the app offers the clip card (claim an offer without installing).
-    other: SEND_BACK_ENABLED
-      ? { "apple-itunes-app": `app-id=6816003159, app-argument=${TAPCARD_ORIGIN}/c/${id}, app-clip-bundle-id=com.mailbroom.tapcard.Clip, app-clip-display=card` }
-      : undefined,
+    other: { "apple-itunes-app": `app-id=6816003159, app-argument=${TAPCARD_ORIGIN}/c/${id}, app-clip-bundle-id=com.mailbroom.tapcard.Clip, app-clip-display=card` },
   };
 }
 
