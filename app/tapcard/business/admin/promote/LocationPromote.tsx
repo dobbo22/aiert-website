@@ -6,7 +6,7 @@ interface Props { cardId: string; hasOffer: boolean; hasNews: boolean }
 
 // Switched on once the TapCard apps show stamp cards and take over a web claim (iPhone 3.2 / Android 1.7). Until then a customer who
 // installed the app would find nothing, so owners are not offered "needs the app".
-const APP_GATE_READY = false;
+const APP_GATE_READY = true;
 
 // Post or withdraw one location's offer and news.
 export default function LocationPromote({ cardId, hasOffer, hasNews }: Props) {
