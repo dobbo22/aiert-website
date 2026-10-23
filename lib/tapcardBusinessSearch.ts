@@ -2,12 +2,14 @@
 // Google Places, so setup is a tap instead of typing. Public endpoint, so it is rate limited per IP, results are cached
 // for ten minutes, and a daily cap keeps the Places bill bounded. With no key, or past the cap, it returns an empty list
 // and the apps fall back to typing the name and website.
+import { createHash } from "crypto";
 import sql from "@/lib/db";
 import { formatHours } from "@/lib/siteLinks";
 
 // Customers' lookups and the restaurant list-finder (src=finder) have separate daily allowances, so one can't starve the other.
 const DAILY_CAP = 1500;
 const FINDER_CAP = 1500;
+const DEVICE_CAP = 20; // lookups per phone per day (apps send their install id as `device`; it is hashed and only counted)
 
 export interface BusinessHit { id: string; name: string; address: string; website: string; phone: string; type: string; hours: string }
 
@@ -19,12 +21,23 @@ function ensureSchema(): Promise<unknown> {
     ready = Promise.all([
       sql`CREATE TABLE IF NOT EXISTS tapcard_lookup_cap (day DATE PRIMARY KEY, n INTEGER NOT NULL DEFAULT 0)`,
       sql`CREATE TABLE IF NOT EXISTS tapcard_lookup_cap_finder (day DATE PRIMARY KEY, n INTEGER NOT NULL DEFAULT 0)`,
+      sql`CREATE TABLE IF NOT EXISTS tapcard_lookup_cap_device (day DATE NOT NULL, device_hash TEXT NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (day, device_hash))`,
     ]).catch((e) => {
       ready = null;
       throw e;
     });
   }
   return ready;
+}
+
+async function underDeviceCap(device: string): Promise<boolean> {
+  await ensureSchema();
+  const hash = createHash("sha256").update(`tapcard-lookup|${device}`).digest("hex").slice(0, 32);
+  const r = (await sql`
+    INSERT INTO tapcard_lookup_cap_device (day, device_hash, n) VALUES (CURRENT_DATE, ${hash}, 1)
+    ON CONFLICT (day, device_hash) DO UPDATE SET n = tapcard_lookup_cap_device.n + 1 RETURNING n
+  `) as { n: number }[];
+  return (r[0]?.n ?? 0) <= DEVICE_CAP;
 }
 
 async function underCap(finder: boolean): Promise<boolean> {
@@ -53,7 +66,7 @@ function hoursOf(periods?: { open?: { day?: number; hour?: number; minute?: numb
   return formatHours(specs).slice(0, 200);
 }
 
-export async function searchBusinesses(queryRaw: string, near?: { lat: number; lng: number } | null, finder = false): Promise<BusinessHit[]> {
+export async function searchBusinesses(queryRaw: string, near?: { lat: number; lng: number } | null, finder = false, device = ""): Promise<BusinessHit[]> {
   const key = process.env.GOOGLE_PLACES_API_KEY;
   const q = queryRaw.trim().slice(0, 100);
   if (!key || q.length < 3) return [];
@@ -62,6 +75,8 @@ export async function searchBusinesses(queryRaw: string, near?: { lat: number; l
   const cacheKey = `${q.toLowerCase()}|${area ? `${area.lat.toFixed(1)},${area.lng.toFixed(1)}` : ""}`;
   const cached = cache.get(cacheKey);
   if (cached && Date.now() - cached.at < 10 * 60_000) return cached.hits;
+  // A phone past its own 20 a day gets nothing (the apps then use their on-device fallback or typing); cached answers above are free.
+  if (!finder && device && !(await underDeviceCap(device).catch(() => true))) return [];
   if (!(await underCap(finder).catch(() => false))) return [];
   const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
     method: "POST",
