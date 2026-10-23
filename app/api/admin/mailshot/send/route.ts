@@ -153,7 +153,8 @@ async function handle(req: Request) {
     FROM tapcard_invite_sends s JOIN tapcard_mailshot_list l ON l.contact_id = s.contact_id AND l.campaign = s.campaign
     WHERE s.campaign = ${campaign} AND l.relationship = ${nextKind} AND s.sent_at > now() - interval '12 hours'
   `) as { sent: number; bounced: number }[])[0];
-  if (kind.sent >= 25 && kind.bounced / kind.sent > 0.08) {
+  // "Send anyway" is chosen by hand on the page, after the rest of the list has been checked.
+  if (body?.override !== true && kind.sent >= 25 && kind.bounced / kind.sent > 0.08) {
     return NextResponse.json({
       error: `Paused for now: ${kind.bounced} of the last ${kind.sent} emails bounced (over 8%). Those addresses are already taken off the list and will not be emailed again. Try again later today or tomorrow; the pause lifts by itself once those sends are 12 hours old.`,
     }, { status: 409 });

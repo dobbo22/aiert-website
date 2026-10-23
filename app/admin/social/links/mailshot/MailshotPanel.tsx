@@ -146,13 +146,14 @@ export default function MailshotPanel({
 
   // ---- step 3
   const toSend = Math.max(0, Math.min(stats?.queued ?? 0, dailyCap - (stats?.sentToday ?? 0)));
-  const sendToday = run(3, async () => {
+  const [paused, setPaused] = useState(false);
+  async function sendBatches(override: boolean) {
     if (!toSend) { say(3, stats?.queued ? `You've reached today's limit of ${dailyCap}. Raise "Most per day" or come back tomorrow.` : "There's nobody left to send to.", true); return; }
-    if (!window.confirm(`Send the email to ${toSend} ${type.noun}${toSend === 1 ? "" : "s"} now? Emails can't be unsent.`)) return;
+    if (!override && !window.confirm(`Send the email to ${toSend} ${type.noun}${toSend === 1 ? "" : "s"} now? Emails can't be unsent.`)) return;
     let total = 0;
     const refused: string[] = [];
     for (let i = 0; i < 40; i++) {
-      const data = await call("/api/admin/mailshot/send", { campaign, mode: "batch", subjectIndex, dailyCap, count: 25 });
+      const data = await call("/api/admin/mailshot/send", { campaign, mode: "batch", subjectIndex, dailyCap, count: 25, override });
       total += data.sent;
       refused.push(...(data.refused ?? []));
       if (data.stats) setStats(data.stats);
@@ -163,6 +164,17 @@ export default function MailshotPanel({
     const refusedNote = refused.length ? ` ${refused.length} address${refused.length === 1 ? " was" : "es were"} refused and taken off the list (${refused.slice(0, 5).join(", ")}${refused.length > 5 ? "…" : ""}).` : "";
     say(3, total ? `Sent to ${total} ${type.noun}${total === 1 ? "" : "s"}.${refusedNote} Watch the results below.` : `Nothing was sent.${refusedNote}`, total === 0);
     await refresh();
+  }
+  const guarded = (override: boolean) => run(3, async () => {
+    setPaused(false);
+    try { await sendBatches(override); }
+    catch (err) { if (err instanceof Error && err.message.startsWith("Paused")) setPaused(true); throw err; }
+  });
+  const sendToday = guarded(false);
+  const sendAnyway = run(3, async () => {
+    if (!window.confirm("Some of the last emails bounced. Those addresses are already off the list, and the rest of this list was checked. Send the next batch anyway?")) return;
+    setPaused(false);
+    await sendBatches(true);
   });
 
   const box = { padding: "1.1rem 1.2rem", border: "1px solid rgba(148,163,184,0.2)", borderRadius: 10, marginBottom: "1.1rem", background: "rgba(18,24,40,0.6)" } as const;
@@ -314,6 +326,12 @@ export default function MailshotPanel({
           </button>
         </div>
         {msg(3)}
+        {paused && (
+          <div style={{ marginTop: "0.6rem" }}>
+            <button style={ghost} disabled={busy} onClick={sendAnyway}>Send anyway…</button>
+            <span style={{ color: "#94a3b8", fontSize: "0.85rem", marginLeft: "0.6rem" }}>Only if the rest of the list has been checked.</span>
+          </div>
+        )}
       </section>
 
       {/* ---------- Results ---------- */}
@@ -336,14 +354,14 @@ export default function MailshotPanel({
           </div>
         )}
         {bounces.length > 0 && (
-          <details style={{ marginTop: "0.9rem" }} open={s ? s.sent >= 20 && s.bounced / s.sent > 0.08 : false}>
+          <details style={{ marginTop: "0.9rem" }}>
             <summary style={{ cursor: "pointer", fontWeight: 600, color: s && s.sent >= 20 && s.bounced / s.sent > 0.08 ? "#f87171" : "#e2e8f0" }}>
-              Bounced ({bounces.length}){s && s.sent ? ` · ${Math.round((s.bounced / s.sent) * 100)}% of sent` : ""}
+              Bounced ({bounces.length}){s && s.sent ? ` · ${Math.round((s.bounced / s.sent) * 100)}% of sent` : ""} · already taken off, nothing to do
             </summary>
             <table style={{ marginTop: "0.6rem", width: "100%", fontSize: "0.9rem", color: "#cbd5e1" }}>
               <tbody>
                 {bounces.map((b) => (
-                  <tr key={b.email}><td style={{ padding: "0.2rem 0.5rem 0.2rem 0" }}>{b.email}</td><td style={{ color: "#94a3b8" }}>{b.reason ?? "reason not recorded"}</td></tr>
+                  <tr key={b.email}><td style={{ padding: "0.2rem 0.5rem 0.2rem 0" }}>{b.email}</td><td style={{ color: "#94a3b8" }}>{shortReason(b.reason)}</td></tr>
                 ))}
               </tbody>
             </table>
@@ -352,6 +370,14 @@ export default function MailshotPanel({
       </section>
     </div>
   );
+}
+
+// "Permanent · General · The recipient's email provider sent a hard bounce…" -> a short plain reason.
+function shortReason(r: string | null): string {
+  if (!r) return "reason not recorded";
+  if (/^transient/i.test(r)) return /mailboxfull/i.test(r) ? "mailbox full (temporary)" : "temporary problem";
+  if (/permanent/i.test(r)) return /suppress/i.test(r) ? "on the mail service's block list" : "address doesn\u2019t work";
+  return r.slice(0, 80);
 }
 
 function StepTitle({ n, title, done }: { n: number; title: string; done: boolean }) {
