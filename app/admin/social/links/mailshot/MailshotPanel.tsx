@@ -148,15 +148,18 @@ export default function MailshotPanel({
     if (!toSend) { say(3, stats?.queued ? `You've reached today's limit of ${dailyCap}. Raise "Most per day" or come back tomorrow.` : "There's nobody left to send to.", true); return; }
     if (!window.confirm(`Send the email to ${toSend} ${type.noun}${toSend === 1 ? "" : "s"} now? Emails can't be unsent.`)) return;
     let total = 0;
+    const refused: string[] = [];
     for (let i = 0; i < 40; i++) {
       const data = await call("/api/admin/mailshot/send", { campaign, mode: "batch", subjectIndex, dailyCap, count: 25 });
       total += data.sent;
+      refused.push(...(data.refused ?? []));
       if (data.stats) setStats(data.stats);
       if (!data.sent && data.message) { say(3, data.message, true); await refresh(); return; }
       if (data.failed) throw new Error(`Stopped after ${total} sent. ${(data.errors ?? []).join(" · ")}`);
       if (!data.sent) break;
     }
-    say(3, total ? `Sent to ${total} ${type.noun}${total === 1 ? "" : "s"}. Watch the results below.` : "Nothing was sent.", total === 0);
+    const refusedNote = refused.length ? ` ${refused.length} address${refused.length === 1 ? " was" : "es were"} refused and taken off the list (${refused.slice(0, 5).join(", ")}${refused.length > 5 ? "…" : ""}).` : "";
+    say(3, total ? `Sent to ${total} ${type.noun}${total === 1 ? "" : "s"}.${refusedNote} Watch the results below.` : `Nothing was sent.${refusedNote}`, total === 0);
     await refresh();
   });
 
@@ -311,7 +314,7 @@ export default function MailshotPanel({
       {/* ---------- Results ---------- */}
       <section style={box}>
         <h2 style={{ margin: "0 0 0.2rem", fontSize: "1.15rem" }}>Results</h2>
-        <p style={hint}>For the mailing &ldquo;{campaign}&rdquo;. <button style={{ ...ghost, padding: "0.1rem 0.6rem", fontSize: "0.8rem" }} onClick={() => refresh()}>Refresh</button></p>
+        <p style={hint}>For the mailing &ldquo;{campaign}&rdquo;. An address that bounces or is refused is taken off automatically and never emailed again. <button style={{ ...ghost, padding: "0.1rem 0.6rem", fontSize: "0.8rem" }} onClick={() => refresh()}>Refresh</button></p>
         {s && s.sent === 0 ? <p style={{ color: "#94a3b8" }}>Nothing sent yet. Results appear here once you send.</p> : null}
         {s && (
           <div className="admin-stats">

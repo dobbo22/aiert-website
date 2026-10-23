@@ -38,6 +38,11 @@ export async function POST(req: Request) {
   }
 }
 
+/// An error about one recipient's address (as opposed to the sending domain, the key, or a rate limit).
+function refusedAddress(message: string): boolean {
+  return /invalid (?:\w+ )?(?:email|address|recipient)|invalid `?to`? field|recipient|mailbox|does not exist|not a valid|suppress|undeliverable|no such user|bad address|malformed/i.test(message) && !/api key|rate limit|domain is not verified|not verified|quota|unauthor/i.test(message);
+}
+
 function subjectFor(index: number, firstName: string): string {
   const template = MAILSHOT_SUBJECTS[Math.min(Math.max(index, 0), MAILSHOT_SUBJECTS.length - 1)];
   // No first name: drop the "{FirstName}, " opening rather than send "Hi there, 2 minutes…" style gaps.
@@ -141,14 +146,16 @@ async function handle(req: Request) {
       AND NOT EXISTS (SELECT 1 FROM tapcard_invite_sends s WHERE s.contact_id = c.id AND s.campaign = ${campaign})
     ORDER BY l.added_at, c.id LIMIT 1
   `) as { relationship: string }[])[0]?.relationship ?? "business";
+  // Only the last 12 hours count: bounced addresses are taken off the list for good as soon as they bounce, so an old bad run
+  // should not block the next send for ever.
   const kind = ((await sql`
     SELECT COUNT(*)::int AS sent, COUNT(s.bounced_at)::int AS bounced
     FROM tapcard_invite_sends s JOIN tapcard_mailshot_list l ON l.contact_id = s.contact_id AND l.campaign = s.campaign
-    WHERE s.campaign = ${campaign} AND l.relationship = ${nextKind}
+    WHERE s.campaign = ${campaign} AND l.relationship = ${nextKind} AND s.sent_at > now() - interval '12 hours'
   `) as { sent: number; bounced: number }[])[0];
   if (kind.sent >= 25 && kind.bounced / kind.sent > 0.08) {
     return NextResponse.json({
-      error: `Paused: ${kind.bounced} of ${kind.sent} bounced (over 8%) in this list. Check the bounced list and clean it before sending more.`,
+      error: `Paused for now: ${kind.bounced} of the last ${kind.sent} emails bounced (over 8%). Those addresses are already taken off the list and will not be emailed again. Try again later today or tomorrow; the pause lifts by itself once those sends are 12 hours old.`,
     }, { status: 409 });
   }
   const dailyCap = Math.min(Math.max(Number(body?.dailyCap) || 50, 1), HARD_DAILY_LIMIT);
@@ -171,18 +178,26 @@ async function handle(req: Request) {
   let failed = 0;
   let consecutiveFailures = 0;
   const errors: string[] = [];
+  const refused: string[] = [];
   for (const contact of next) {
     try {
       await sendOne(resend, from, route.replyTo, campaign, contact, subjectIndex);
       sent++;
       consecutiveFailures = 0;
     } catch (err) {
+      const message = err instanceof Error ? err.message : "failed";
+      if (refusedAddress(message)) {
+        // This one address was refused (invalid, no mailbox, suppressed): take it off the list so it never holds up the others.
+        await sql`UPDATE tapcard_mailshot_list SET status = 'skipped', skip_reason = ${"refused: " + message.slice(0, 120)} WHERE campaign = ${campaign} AND contact_id = ${contact.id}`;
+        refused.push(contact.email);
+        continue;
+      }
       failed++;
       consecutiveFailures++;
-      if (errors.length < 3) errors.push(`${contact.email}: ${err instanceof Error ? err.message : "failed"}`);
+      if (errors.length < 3) errors.push(`${contact.email}: ${message}`);
       if (consecutiveFailures >= 3) break; // something is wrong (sending domain, limits): stop rather than burn through the list
     }
     await new Promise((r) => setTimeout(r, 250));
   }
-  return NextResponse.json({ ok: true, sent, failed, errors, stats: await mailshotStats(campaign) });
+  return NextResponse.json({ ok: true, sent, failed, refused, errors, stats: await mailshotStats(campaign) });
 }
