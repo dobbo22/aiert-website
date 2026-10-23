@@ -3,7 +3,7 @@ import DocPage from "../DocPage";
 
 export const metadata: Metadata = {
   title: "Visual guide – TapCard | AIERT Ltd",
-  description: "A guide to TapCard: set up in two screens, share your card, scan to add people, offers, stamp cards, news and more.",
+  description: "A guide to TapCard: set up in two screens, share your card, scan to add people, the Offers tab, offers, stamp cards, Wallet passes, news and more.",
   robots: { index: true, follow: true },
 };
 
@@ -29,6 +29,10 @@ const steps: { title: string; img?: string; alt?: string; text: string }[] = [
     img: "offline.png",
     alt: "Offline QR code screen",
     text: "Tap No signal? Offline QR under your code. This code holds your contact details themselves, so it works with no internet and no app on their phone. You can also send your contact file by AirDrop.",
+  },
+  {
+    title: "Your contacts at a glance",
+    text: "The Contacts list shows just each person's name, so it stays tidy. Tap a name to see everything. To act without opening them, swipe a contact left on iPhone, or press and hold on Android, and tap Call, WhatsApp or Email. Only the actions that fit are shown. When someone has a mobile number, TapCard adds a WhatsApp row for you, even if their first number is a landline. Press and hold a phone number, email, website or address to copy it.",
   },
   {
     title: "Find people fast with categories",
@@ -61,6 +65,28 @@ const steps: { title: string; img?: string; alt?: string; text: string }[] = [
     text: "When a business you have saved posts an offer, you see an Offer badge on their contact. Open their card and tap Claim this offer. You get your own one-off QR code. Show it to the staff when you pay. They scan it with their phone camera (or type the code at tapcard.aiert.co.uk/redeem on a till with no camera), enter their PIN, and it is marked as used. It works once, then shows Used. When you save a business, its card asks Get offers and news from this business? Tap Yes, keep me posted if you want a notification when it posts a new offer, news or a menu change; Not now leaves it off. Nothing is ever switched on for you, and you choose what you get, or turn it off, from the ⋯ menu at the top of their card. Claiming is free and needs no sign-up, and the business only sees how many people claimed, not who. If you follow a business it sees one number, how many people follow it, never who.",
   },
   {
+    title: "The Offers tab: every offer in one place",
+    img: "offers-tab.png",
+    alt: "The Offers tab listing saved businesses with their offers, grouped by type and marked New, Claimed or Used",
+    text: "Next to My Cards and Contacts, the Offers tab lists every business you have saved that has an offer right now, grouped by type of business (your own category if you gave one, otherwise Restaurants, Hotels, Shops, Appointments or Other). Each offer is marked New, Claimed or Used, and a stamp card shows its progress, such as 2 of 5, or Reward ready. A number on the tab counts offers you have not looked at yet. Offers finishing within three days are listed first under Ending soon. Pull down to refresh. The camera button at the top left scans a business's QR code, as it does on Contacts.",
+  },
+  {
+    title: "Show it at the till",
+    img: "offer-till.png",
+    alt: "A claimed offer showing its QR code, an Add to Wallet button and Share with a friend",
+    text: "On any offer you have claimed, tap Show at till in the Offers list and the QR code (or your stamp card) opens straight away, with no need to find the contact first. Under it, Add to Apple Wallet or Add to Google Wallet puts the offer or stamp card in your phone's Wallet. A Wallet pass shows the stamps you had when you added it, so open the app to see the latest count. Share with a friend sends a link to the business's page, with the offer, for them to claim. When a business has a review link, the card asks Enjoyed it? after you have used an offer, with Leave a review. No thanks hides it.",
+  },
+  {
+    title: "Offers near you",
+    img: "nearme.png",
+    alt: "The near-me switch on the Offers tab with its explanation",
+    text: "On iPhone, the location button at the top right of the Offers tab has a switch, Tell me when I'm near an offer. It is off until you turn it on, and it needs location set to Always so it can work in the background. When you are close to a business you have saved that has a live offer, you get one notification. There is at most one a day for each business and three a day in all. Tap it to open the business. Your location stays on your phone and is never sent to us. On Android, the Offers tab can show a Near you list, worked out only while the app is open, with no background tracking. It asks for your location the first time you tap Allow location.",
+  },
+  {
+    title: "Remind me to follow up",
+    text: "Open a contact, tap My details, and use Remind me to follow up. Choose Tomorrow, In 3 days, In a week, In a month or Pick a date. At that time you get a notification, and tapping it opens the contact. Change or clear it any time. It works for people you scanned and for people you added from your phone's contacts. The reminder is stored on your phone only.",
+  },
+  {
     title: "Stamp cards: buy 3, get one free",
     text: "Instead of a one-off offer, a business can run a stamp card. When you post, choose Stamp card, pick how many stamps (3, 6 or any number up to 20) and write the reward in your own words, such as Free child's meal. Customers tap Get my stamp card and see their stamps fill up. Each visit, your staff scan the customer's QR code, type your PIN and add a stamp. You can set a minimum gap between stamps so one visit counts once. When the card is full, the customer shows it, you give the reward, and the card starts again. You can ask customers to get the TapCard app after their first stamp: the first stamp needs no install, and their stamps move with them into the app.",
   },
@@ -78,7 +104,7 @@ const steps: { title: string; img?: string; alt?: string; text: string }[] = [
   },
   {
     title: "Proving a business is yours",
-    text: "If you run a business, open Promote on your card and choose Verify. Either add the one line we give you to your own website and tap Check, or enter a 6-digit code we email to an address on your website's domain. Verified cards show a tick. Only one card can be verified for each business website; if someone else made a card for your business, report it and verify yours.",
+    text: "A business has to be verified before it can post offers or news. Open Promote on your card and choose Verify. Option 1 is an email code: enter an address on your own website's domain (a Gmail or Outlook address will not do), tap Email me a code and type in the 6 digits. Option 2 is your website: add the one line we give you to your site and tap Check. Verified cards show a tick. Cards that belong to a TapCard for Business company count as verified already. Only one card can be verified for each business website; if someone else made a card for your business, report it and verify yours.",
   },
   {
     title: "Safe by design",

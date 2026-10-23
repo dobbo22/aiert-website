@@ -32,6 +32,17 @@ export default function TapCardSupportPage() {
       </section>
 
       <section>
+        <h2>Offers tab</h2>
+        <ul>
+          <li>The <strong>Offers</strong> tab lists every saved business with an offer right now, marked New, Claimed or Used. Offers ending within three days are listed first.</li>
+          <li>On a claimed offer tap <strong>Show at till</strong> for its QR code or stamp card, or add it to Apple Wallet or Google Wallet. Wallet shows the stamps you had when you added it, so open the app for the latest count.</li>
+          <li><strong>Share with a friend</strong> sends a link to the business&apos;s page and its offer.</li>
+          <li>iPhone: the location button on the Offers tab has an optional switch to tell you when you are near an offer. It needs location set to Always, and your location stays on your phone. Android shows a Near you list while the app is open.</li>
+          <li>To post offers or news, a business has to be <strong>verified</strong> (an emailed code to an address on its own website, or a line on its website).</li>
+        </ul>
+      </section>
+
+      <section>
         <h2>Contacts and categories</h2>
         <p>
           Open a contact and add #tags such as <strong>restaurants</strong> or <strong>clubs</strong>. A contact can

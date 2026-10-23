@@ -80,7 +80,7 @@ export default function HowItWorksPage() {
           </li>
           <li>
             <strong>Apple Wallet and Google Wallet:</strong> add your card to your phone&apos;s Wallet so it&apos;s always
-            to hand. Pick a design in the app and your Wallet card updates to match.
+            to hand. Pick a design in the app and your Wallet card updates to match. Offers and stamp cards you claim can go in Wallet too.
           </li>
           <li>
             <strong>Print a QR sign:</strong> make a poster for a reception desk, till or window. Use a separate card
