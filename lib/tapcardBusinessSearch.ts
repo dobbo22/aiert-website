@@ -5,7 +5,9 @@
 import sql from "@/lib/db";
 import { formatHours } from "@/lib/siteLinks";
 
-const DAILY_CAP = 400;
+// Customers' lookups and the restaurant list-finder (src=finder) have separate daily allowances, so one can't starve the other.
+const DAILY_CAP = 1500;
+const FINDER_CAP = 1500;
 
 export interface BusinessHit { id: string; name: string; address: string; website: string; phone: string; type: string; hours: string }
 
@@ -14,7 +16,10 @@ const cache = new Map<string, { at: number; hits: BusinessHit[] }>();
 let ready: Promise<unknown> | null = null;
 function ensureSchema(): Promise<unknown> {
   if (!ready) {
-    ready = sql`CREATE TABLE IF NOT EXISTS tapcard_lookup_cap (day DATE PRIMARY KEY, n INTEGER NOT NULL DEFAULT 0)`.catch((e) => {
+    ready = Promise.all([
+      sql`CREATE TABLE IF NOT EXISTS tapcard_lookup_cap (day DATE PRIMARY KEY, n INTEGER NOT NULL DEFAULT 0)`,
+      sql`CREATE TABLE IF NOT EXISTS tapcard_lookup_cap_finder (day DATE PRIMARY KEY, n INTEGER NOT NULL DEFAULT 0)`,
+    ]).catch((e) => {
       ready = null;
       throw e;
     });
@@ -22,13 +27,14 @@ function ensureSchema(): Promise<unknown> {
   return ready;
 }
 
-async function underCap(): Promise<boolean> {
+async function underCap(finder: boolean): Promise<boolean> {
   await ensureSchema();
-  const r = (await sql`
-    INSERT INTO tapcard_lookup_cap (day, n) VALUES (CURRENT_DATE, 1)
-    ON CONFLICT (day) DO UPDATE SET n = tapcard_lookup_cap.n + 1 RETURNING n
-  `) as { n: number }[];
-  return (r[0]?.n ?? 0) <= DAILY_CAP;
+  const r = (finder
+    ? await sql`INSERT INTO tapcard_lookup_cap_finder (day, n) VALUES (CURRENT_DATE, 1) ON CONFLICT (day) DO UPDATE SET n = tapcard_lookup_cap_finder.n + 1 RETURNING n`
+    : await sql`INSERT INTO tapcard_lookup_cap (day, n) VALUES (CURRENT_DATE, 1) ON CONFLICT (day) DO UPDATE SET n = tapcard_lookup_cap.n + 1 RETURNING n`) as { n: number }[];
+  const ok = (r[0]?.n ?? 0) <= (finder ? FINDER_CAP : DAILY_CAP);
+  if (!ok) console.warn(`business-search: daily cap reached (${finder ? "finder" : "customers"})`);
+  return ok;
 }
 
 // Google's website field often carries campaign parameters (utm_source=...): keep just the address people would type.
@@ -47,7 +53,7 @@ function hoursOf(periods?: { open?: { day?: number; hour?: number; minute?: numb
   return formatHours(specs).slice(0, 200);
 }
 
-export async function searchBusinesses(queryRaw: string, near?: { lat: number; lng: number } | null): Promise<BusinessHit[]> {
+export async function searchBusinesses(queryRaw: string, near?: { lat: number; lng: number } | null, finder = false): Promise<BusinessHit[]> {
   const key = process.env.GOOGLE_PLACES_API_KEY;
   const q = queryRaw.trim().slice(0, 100);
   if (!key || q.length < 3) return [];
@@ -56,7 +62,7 @@ export async function searchBusinesses(queryRaw: string, near?: { lat: number; l
   const cacheKey = `${q.toLowerCase()}|${area ? `${area.lat.toFixed(1)},${area.lng.toFixed(1)}` : ""}`;
   const cached = cache.get(cacheKey);
   if (cached && Date.now() - cached.at < 10 * 60_000) return cached.hits;
-  if (!(await underCap().catch(() => false))) return [];
+  if (!(await underCap(finder).catch(() => false))) return [];
   const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
     method: "POST",
     headers: {
@@ -69,7 +75,7 @@ export async function searchBusinesses(queryRaw: string, near?: { lat: number; l
     }),
     signal: AbortSignal.timeout(6000),
   }).catch(() => null);
-  if (!res?.ok) return [];
+  if (!res?.ok) { console.warn(`business-search: Google Places ${res ? res.status : "no response"}`); return []; }
   const j = (await res.json().catch(() => ({}))) as { places?: { id?: string; displayName?: { text?: string }; formattedAddress?: string; websiteUri?: string; nationalPhoneNumber?: string; primaryTypeDisplayName?: { text?: string }; regularOpeningHours?: { periods?: { open?: { day?: number; hour?: number; minute?: number }; close?: { day?: number; hour?: number; minute?: number } }[] } }[] };
   const hits: BusinessHit[] = (j.places ?? []).flatMap((p) => p.id && p.displayName?.text ? [{
     id: p.id, name: p.displayName.text.slice(0, 120), address: (p.formattedAddress ?? "").slice(0, 200),
