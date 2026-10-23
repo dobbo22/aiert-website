@@ -469,11 +469,17 @@ ${links.preview}
 
 What it does
 - Customers save you in one tap: your phone, menu, booking link and directions. No app needed.
-- You post an offer in about 30 seconds, like "Free dessert with any main". Customers tap Claim and get a one-off QR code. Your staff scan it at the till, type a PIN, and it can never be used twice. You see how many claimed and how many came in.
-- Or run a stamp card: "buy 3 coffees, get the 4th free".
+- You post an offer in about 30 seconds. Everyone who follows you is notified instantly, and anyone who scans your QR code can claim it too.
+- Each customer gets a one-off QR code. Your staff scan it at the till, type a PIN, and it can never be used twice. You see how many claimed and how many came in.
 - Offers sit in your customers' Apple or Google Wallet and in an Offers tab in the app, so they remember to come back.
 
-Free for your first 3 months, then £49.99 a year (or £9.99 a month). It's always free for your customers.
+Quick wins for a quiet night
+- "5 tables free tonight: 15% off any main". Post it at 5pm and watch them fill.
+- "Dessert on us for the first 20 tables"
+- "Bring a friend: second main half price"
+- A stamp card for regulars: "buy 5 coffees, get the 6th free"
+
+One flat price: free for your first 3 months, then £49.99 a year (or £9.99 a month). Post as many offers as you like. There is no charge per message or per customer, and it's always free for your customers.
 
 Setting up takes about a minute. You prove the card is yours once, with a code we email to an address on your own website, and then you can post.
 
@@ -506,11 +512,20 @@ export function restaurantHtml(name: string, links: MailshotLinks, cardImageUrl:
 </tr></table>
 <ul style="margin:0 0 20px;padding-left:20px;">
 <li style="${li}"><strong>Customers save you in one tap:</strong> your phone, menu, booking link and directions. No app needed.</li>
-<li style="${li}"><strong>Post an offer in about 30 seconds</strong>, like &ldquo;Free dessert with any main&rdquo;. Customers tap Claim and get a one-off QR code. Your staff scan it at the till, type a PIN, and it can never be used twice. You see how many claimed and how many came in.</li>
-<li style="${li}"><strong>Or run a stamp card:</strong> &ldquo;buy 3 coffees, get the 4th free&rdquo;.</li>
+<li style="${li}"><strong>Post an offer in about 30 seconds.</strong> Everyone who follows you is <strong>notified instantly</strong>, and anyone who scans your QR code can claim it too.</li>
+<li style="${li}">Each customer gets a <strong>one-off QR code</strong>. Your staff scan it at the till, type a PIN, and it can never be used twice. You see how many claimed and how many came in.</li>
 <li style="margin:0;"><strong>Offers sit in your customers&rsquo; Apple or Google Wallet</strong> and in an Offers tab in the app, so they remember to come back.</li>
 </ul>
-<p style="margin:0 0 16px;"><strong>Free for your first 3 months</strong>, then £49.99 a year (or £9.99 a month). It&rsquo;s always free for your customers.</p>
+<div style="margin:0 0 20px;padding:16px 18px;background:#fffbeb;border-radius:12px;">
+<p style="margin:0 0 8px;font-size:17px;"><strong>Quick wins for a quiet night</strong></p>
+<ul style="margin:0;padding-left:20px;">
+<li style="${li}">&ldquo;<strong>5 tables free tonight:</strong> 15% off any main&rdquo;. Post it at 5pm and watch them fill.</li>
+<li style="${li}">&ldquo;Dessert on us for the first 20 tables&rdquo;</li>
+<li style="${li}">&ldquo;Bring a friend: second main half price&rdquo;</li>
+<li style="margin:0;">A stamp card for regulars: &ldquo;buy 5 coffees, get the 6th free&rdquo;</li>
+</ul>
+</div>
+<p style="margin:0 0 16px;"><strong>One flat price:</strong> free for your first 3 months, then £49.99 a year (or £9.99 a month). Post as many offers as you like. <strong>There is no charge per message or per customer</strong>, and it&rsquo;s always free for your customers.</p>
 <p style="margin:0 0 20px;color:#4b5563;">Setting up takes about a minute. You prove the card is yours once, with a code we email to an address on your own website, and then you can post.</p>
 <p style="margin:0 0 20px;"><a href="${esc(links.app)}" style="${btn}">Get TapCard</a></p>
 <p style="margin:0 0 24px;"><a href="${esc(links.how)}" style="${link}">See how it works</a> &nbsp;·&nbsp; <a href="${esc(links.app + '?to=guide')}" style="${link}">Watch the demo</a></p>
