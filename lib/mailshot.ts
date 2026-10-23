@@ -446,9 +446,9 @@ export function mailshotHtml(firstName: string, links: MailshotLinks, relationsh
 // ---------- Restaurants ----------
 
 export const RESTAURANT_SUBJECTS = [
+  "{Name}: fill quiet tables with a 30-second offer",
+  "I made a TapCard for {Name}",
   "Never order business cards again, {Name}",
-  "A TapCard for {Name}: window, website, and every customer's phone",
-  "{Name}: booking, menu and directions in one tap",
 ];
 
 export function restaurantSubject(index: number, name: string): string {
@@ -466,27 +466,24 @@ function codeLinesText(codes?: RestaurantCodes): string {
 export function restaurantText(name: string, links: MailshotLinks, codes?: RestaurantCodes): string {
   return `Hello ${name || "there"},
 
-I made a sample TapCard for ${name || "your restaurant"}: one card with your phone number, Book a table, your menu and directions. You never have to order business cards again.
+Put a QR code in your window. Fill quiet tables with a 30-second offer.
 
-- Put it in your window or on the door: customers scan the QR code and save you in one tap
-- Put it on your website, in emails and on social media as a link
-- Book a table, View our menu and Get directions are each one tap
-- Change your details once and every saved copy updates itself (new menu, new hours)
-- Customers don't need an app to save you, or to claim your offers: a phone camera and browser are enough. With the free TapCard app they also get your news
+I made a free sample TapCard for ${name || "your restaurant"}. Scan it and see it working on your own phone (it stays live for 24 hours once you open it):
+${links.preview}
 
-Special offers and news with TapCard Promote
-Everyone who saves your card becomes someone you can reach, with no mailing list to build. Post an offer from your card, for example "Free dessert with any main", with an end date and a limit if you like. People who have your card see it in TapCard, tap Claim, and get their own one-off QR code. When they show it, scan it with your phone camera, type your staff PIN, and it is marked as used, so it can never be used twice. You see how many people claimed and how many came in.
+What it does
+- Customers save you in one tap: your phone, menu, booking link and directions. No app needed.
+- You post an offer in about 30 seconds, like "Free dessert with any main". Customers tap Claim and get a one-off QR code. Your staff scan it at the till, type a PIN, and it can never be used twice. You see how many claimed and how many came in.
+- Or run a stamp card: "buy 3 coffees, get the 4th free".
+- Offers sit in your customers' Apple or Google Wallet and in an Offers tab in the app, so they remember to come back.
 
-Or run a stamp card: "buy 3 coffees, get the 4th free", or "buy a meal, get a child's meal free". You choose the number of visits and the reward. Customers get their stamp card from your QR code; your staff scan it and enter the PIN to add each stamp. Offers and news are checked automatically, so nothing abusive or gambling-related goes out under your name.
-
-Promote is free for your first 3 months, then £49.99 a year (or £9.99 a month), and it includes sharing your own card. TapCard is free for your customers, always.
+Free for your first 3 months, then £49.99 a year (or £9.99 a month). It's always free for your customers.
 ${codeLinesText(codes)}
-
-See your TapCard working (a preview that stays live for 24 hours once you open it): ${links.preview}
+Setting up takes about a minute. You prove the card is yours once, with a code we email to an address on your own website, and then you can post.
 
 Get TapCard: ${links.app}
 See how it works: ${links.how}
-Watch the 1-minute restaurant demo: ${links.app}?to=guide
+Watch the demo: ${links.app}?to=guide
 
 Martin Dobson
 Aiert Ltd
@@ -498,39 +495,29 @@ Not interested? Unsubscribe here and I won't email you again: ${links.unsubscrib
 }
 
 export function restaurantHtml(name: string, links: MailshotLinks, cardImageUrl: string, codes?: RestaurantCodes): string {
-  const btn = "display:inline-block;background:#4c2f93;color:#ffffff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:10px;";
+  const btn = "display:inline-block;background:#4c2f93;color:#ffffff;text-decoration:none;font-weight:600;padding:14px 26px;border-radius:10px;font-size:17px;";
   const link = "color:#4c2f93;font-weight:600;";
-  const li = "margin:0 0 8px;";
+  const li = "margin:0 0 10px;";
   return `<!doctype html><html><body style="margin:0;padding:0;background:#ffffff;">
 <div style="max-width:560px;margin:0 auto;padding:24px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#1f2937;">
-<p style="margin:0 0 16px;">Hello ${esc(name || "there")},</p>
-<p style="margin:0 0 16px;font-size:18px;line-height:1.45;"><strong>I made a sample TapCard for ${esc(name || "your restaurant")}:</strong> one card with your phone number, Book a table, your menu and directions. You never have to order business cards again.</p>
+<p style="margin:0 0 14px;">Hello ${esc(name || "there")},</p>
+<p style="margin:0 0 16px;font-size:24px;line-height:1.25;font-weight:800;color:#111318;">Put a QR code in your window.<br>Fill quiet tables with a 30-second offer.</p>
+<p style="margin:0 0 16px;font-size:17px;line-height:1.45;">I made a <strong>free sample TapCard for ${esc(name || "your restaurant")}</strong>. Scan it and see it working on your own phone.</p>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;"><tr>
 <td width="55%" valign="middle" align="center" style="padding-right:10px;"><a href="${esc(links.preview)}"><img src="${esc(cardImageUrl)}" alt="Your TapCard on a phone" width="230" style="width:230px;max-width:100%;"></a></td>
-<td width="45%" valign="middle" align="center" style="font-size:14px;line-height:1.45;"><img src="${esc(links.previewQr)}" alt="QR code for your TapCard preview" width="150" style="width:150px;max-width:100%;border:1px solid #e5e7eb;border-radius:10px;"><br><strong>Scan with your phone</strong> to see your TapCard working: tap to call, book, see the menu or get directions.<br><span style="color:#6b7280;font-size:12px;">Or <a href="${esc(links.preview)}" style="color:#4c2f93;">open it here</a>. The preview stays live for 24 hours once you open it.</span></td>
+<td width="45%" valign="middle" align="center" style="font-size:14px;line-height:1.45;"><img src="${esc(links.previewQr)}" alt="QR code for your TapCard preview" width="150" style="width:150px;max-width:100%;border:1px solid #e5e7eb;border-radius:10px;"><br><strong>Scan with your phone</strong><br><span style="color:#6b7280;font-size:12px;">Or <a href="${esc(links.preview)}" style="color:#4c2f93;">open it here</a>. It stays live for 24 hours once you open it.</span></td>
 </tr></table>
 <ul style="margin:0 0 20px;padding-left:20px;">
-<li style="${li}">Put it <strong>in your window or on the door</strong>: customers scan the QR code and save you in one tap</li>
-<li style="${li}">Put it <strong>on your website</strong>, in emails and on social media as a link</li>
-<li style="${li}"><strong>Book a table, View our menu and Get directions</strong> are each one tap</li>
-<li style="${li}">Change your details once and <strong>every saved copy updates itself</strong> (new menu, new hours)</li>
-<li style="${li}">Customers <strong>don't need an app to save you, or to claim your offers</strong>: a phone camera and browser are enough. With the <strong>free TapCard app</strong> they also get your news</li>
+<li style="${li}"><strong>Customers save you in one tap:</strong> your phone, menu, booking link and directions. No app needed.</li>
+<li style="${li}"><strong>Post an offer in about 30 seconds</strong>, like &ldquo;Free dessert with any main&rdquo;. Customers tap Claim and get a one-off QR code. Your staff scan it at the till, type a PIN, and it can never be used twice. You see how many claimed and how many came in.</li>
+<li style="${li}"><strong>Or run a stamp card:</strong> &ldquo;buy 3 coffees, get the 4th free&rdquo;.</li>
+<li style="margin:0;"><strong>Offers sit in your customers&rsquo; Apple or Google Wallet</strong> and in an Offers tab in the app, so they remember to come back.</li>
 </ul>
-<div style="margin:0 0 20px;padding:16px 18px;background:#f5f3ff;border-radius:12px;">
-<p style="margin:0 0 8px;font-size:17px;"><strong>Special offers and news with TapCard Promote</strong></p>
-<p style="margin:0 0 10px;">Everyone who saves your card becomes someone you can reach, with no mailing list to build.</p>
-<ol style="margin:0;padding-left:20px;">
-<li style="${li}"><strong>Post an offer</strong> from your card, such as &ldquo;Free dessert with any main&rdquo;, with an end date and a limit if you like.</li>
-<li style="${li}">People who have your card <strong>see it in TapCard</strong>, tap Claim, and get their own <strong>one-off QR code</strong>.</li>
-<li style="${li}">When they show it, <strong>scan it with your phone camera</strong>, type your staff PIN, and it is marked as used. It can never be used twice.</li>
-<li style="margin:0;">You see <strong>how many claimed</strong> and how many came in.</li>
-</ol>
-<p style="margin:12px 0 0;"><strong>Or run a stamp card:</strong> &ldquo;buy 3 coffees, get the 4th free&rdquo;, or &ldquo;buy a meal, get a child&rsquo;s meal free&rdquo;. You choose the number of visits and the reward. Your staff scan the customer&rsquo;s code and enter the PIN to add each stamp. Offers and news are checked automatically, so nothing abusive or gambling-related goes out under your name.</p>
-</div>
-<p style="margin:0 0 20px;">Promote is <strong>free for your first 3 months</strong>, then £49.99 a year (or £9.99 a month), and it includes sharing your own card. TapCard is free for your customers, always.</p>
-${codes && (codes.ios || codes.android) ? `<div style="margin:0 0 20px;padding:14px 16px;background:#ecfdf5;border-radius:12px;"><p style="margin:0 0 8px;"><strong>As one of the first restaurants on TapCard, your first 6 months of Promote are free</strong> (instead of 3). Tap the link for your phone:</p><p style="margin:0;">${codes.ios ? `<a href="${esc(redeemUrl("ios", codes.ios))}" style="${link}">On iPhone</a>` : ""}${codes.ios && codes.android ? " &nbsp;·&nbsp; " : ""}${codes.android ? `<a href="${esc(redeemUrl("android", codes.android))}" style="${link}">On Android</a>` : ""}</p></div>` : ""}
+<p style="margin:0 0 16px;"><strong>Free for your first 3 months</strong>, then £49.99 a year (or £9.99 a month). It&rsquo;s always free for your customers.</p>
+${codes && (codes.ios || codes.android) ? `<div style="margin:0 0 16px;padding:14px 16px;background:#ecfdf5;border-radius:12px;"><p style="margin:0 0 8px;"><strong>As one of the first restaurants on TapCard, your first 6 months are free</strong> (instead of 3). Tap the link for your phone:</p><p style="margin:0;">${codes.ios ? `<a href="${esc(redeemUrl("ios", codes.ios))}" style="${link}">On iPhone</a>` : ""}${codes.ios && codes.android ? " &nbsp;·&nbsp; " : ""}${codes.android ? `<a href="${esc(redeemUrl("android", codes.android))}" style="${link}">On Android</a>` : ""}</p></div>` : ""}
+<p style="margin:0 0 20px;color:#4b5563;">Setting up takes about a minute. You prove the card is yours once, with a code we email to an address on your own website, and then you can post.</p>
 <p style="margin:0 0 20px;"><a href="${esc(links.app)}" style="${btn}">Get TapCard</a></p>
-<p style="margin:0 0 24px;"><a href="${esc(links.how)}" style="${link}">See how it works</a> &nbsp;·&nbsp; <a href="${esc(links.app + '?to=guide')}" style="${link}">Watch the 1-minute demo</a></p>
+<p style="margin:0 0 24px;"><a href="${esc(links.how)}" style="${link}">See how it works</a> &nbsp;·&nbsp; <a href="${esc(links.app + '?to=guide')}" style="${link}">Watch the demo</a></p>
 <p style="margin:0 0 4px;">Martin Dobson</p>
 <p style="margin:0 0 28px;">Aiert Ltd</p>
 <p style="margin:0;font-size:12px;line-height:1.5;color:#6b7280;">You're receiving this because ${esc(footerReason("restaurant"))}. ${esc(MAILSHOT_COMPANY_LINE)}. <a href="https://www.aiert.co.uk/privacy" style="color:#6b7280;">Privacy</a><br>Not interested? <a href="${esc(links.unsubscribe)}" style="color:#6b7280;">Unsubscribe here</a> and I won't email you again.</p>
