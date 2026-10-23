@@ -1,5 +1,4 @@
 import sql from "@/lib/db";
-import { redeemUrl } from "@/lib/promoCodes";
 import { INVITE_LINK_ORIGIN, ensureInviteSchema } from "@/lib/tapcardInvites";
 
 // The cold-email "mailshot" to past business contacts: list import and checks, the email itself, and the
@@ -458,12 +457,9 @@ export function restaurantSubject(index: number, name: string): string {
 
 export type RestaurantCodes = { ios?: string; android?: string };
 
-function codeLinesText(codes?: RestaurantCodes): string {
-  if (!codes || (!codes.ios && !codes.android)) return "";
-  return `\nAs one of the first restaurants on TapCard, your first 6 months of Promote are free (instead of 3). Tap the link for your phone:\n${codes.ios ? `iPhone: ${redeemUrl("ios", codes.ios)}\n` : ""}${codes.android ? `Android: ${redeemUrl("android", codes.android)}\n` : ""}`;
-}
-
-export function restaurantText(name: string, links: MailshotLinks, codes?: RestaurantCodes): string {
+/// `codes` (the old "first 6 months free" links) is accepted but no longer used: the email promises the standard 3 months free.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function restaurantText(name: string, links: MailshotLinks, _codes?: RestaurantCodes): string {
   return `Hello ${name || "there"},
 
 Put a QR code in your window. Fill quiet tables with a 30-second offer.
@@ -478,7 +474,7 @@ What it does
 - Offers sit in your customers' Apple or Google Wallet and in an Offers tab in the app, so they remember to come back.
 
 Free for your first 3 months, then £49.99 a year (or £9.99 a month). It's always free for your customers.
-${codeLinesText(codes)}
+
 Setting up takes about a minute. You prove the card is yours once, with a code we email to an address on your own website, and then you can post.
 
 Get TapCard: ${links.app}
@@ -494,7 +490,8 @@ Not interested? Unsubscribe here and I won't email you again: ${links.unsubscrib
 `;
 }
 
-export function restaurantHtml(name: string, links: MailshotLinks, cardImageUrl: string, codes?: RestaurantCodes): string {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function restaurantHtml(name: string, links: MailshotLinks, cardImageUrl: string, _codes?: RestaurantCodes): string {
   const btn = "display:inline-block;background:#4c2f93;color:#ffffff;text-decoration:none;font-weight:600;padding:14px 26px;border-radius:10px;font-size:17px;";
   const link = "color:#4c2f93;font-weight:600;";
   const li = "margin:0 0 10px;";
@@ -514,7 +511,6 @@ export function restaurantHtml(name: string, links: MailshotLinks, cardImageUrl:
 <li style="margin:0;"><strong>Offers sit in your customers&rsquo; Apple or Google Wallet</strong> and in an Offers tab in the app, so they remember to come back.</li>
 </ul>
 <p style="margin:0 0 16px;"><strong>Free for your first 3 months</strong>, then £49.99 a year (or £9.99 a month). It&rsquo;s always free for your customers.</p>
-${codes && (codes.ios || codes.android) ? `<div style="margin:0 0 16px;padding:14px 16px;background:#ecfdf5;border-radius:12px;"><p style="margin:0 0 8px;"><strong>As one of the first restaurants on TapCard, your first 6 months are free</strong> (instead of 3). Tap the link for your phone:</p><p style="margin:0;">${codes.ios ? `<a href="${esc(redeemUrl("ios", codes.ios))}" style="${link}">On iPhone</a>` : ""}${codes.ios && codes.android ? " &nbsp;·&nbsp; " : ""}${codes.android ? `<a href="${esc(redeemUrl("android", codes.android))}" style="${link}">On Android</a>` : ""}</p></div>` : ""}
 <p style="margin:0 0 20px;color:#4b5563;">Setting up takes about a minute. You prove the card is yours once, with a code we email to an address on your own website, and then you can post.</p>
 <p style="margin:0 0 20px;"><a href="${esc(links.app)}" style="${btn}">Get TapCard</a></p>
 <p style="margin:0 0 24px;"><a href="${esc(links.how)}" style="${link}">See how it works</a> &nbsp;·&nbsp; <a href="${esc(links.app + '?to=guide')}" style="${link}">Watch the demo</a></p>
