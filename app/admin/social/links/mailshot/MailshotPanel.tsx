@@ -14,6 +14,7 @@ type Summary = {
   found: number; added: number; alreadyInList: number;
   skipped: { invalid: number; role: number; personal: number; duplicates: number; unsubscribed: number };
   personalExamples: string[];
+  deadRemoved?: number; cantTell?: number;
 };
 type PRow = { id: number; name: string; email: string; on: boolean };
 
@@ -32,7 +33,7 @@ type MailshotType = {
 const MAILSHOT_TYPES: MailshotType[] = [
   {
     id: "restaurants", label: "Restaurants", importKind: "restaurant", relationship: "restaurant", noun: "restaurant",
-    listHint: "A CSV with a header row and these columns: name, email, phone, website, address, booking, menu. Only name and email are needed.",
+    listHint: "Use the file from the restaurant finder. It has a header row (name, email, phone, website, address, booking, menu) and a \"check\" column: addresses that don't work are deleted, and ones that couldn't be checked are held back. Only name and email are needed.",
     sampleOptions: [{ value: "newfortune", label: "New Fortune Cookie (real details)" }, { value: "olive", label: "The Olive Table (made up)" }],
   },
 ];
@@ -51,6 +52,7 @@ export default function MailshotPanel({
   const [bounces, setBounces] = useState(initialBounces);
   const [list, setList] = useState("");
   const [includePersonal, setIncludePersonal] = useState(false);
+  const [includeUnchecked, setIncludeUnchecked] = useState(false);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [queue, setQueue] = useState<PRow[] | null>(null);
   const [queueOrig, setQueueOrig] = useState<Record<number, boolean>>({});
@@ -91,7 +93,7 @@ export default function MailshotPanel({
 
   // ---- step 1
   const doImport = run(1, async () => {
-    const data = await call("/api/admin/mailshot/import", { campaign, text: list, includePersonal, kind: type.importKind });
+    const data = await call("/api/admin/mailshot/import", { campaign, text: list, includePersonal, includeUnchecked, kind: type.importKind });
     setSummary(data.summary);
     setList("");
     await refresh();
@@ -200,6 +202,7 @@ export default function MailshotPanel({
         <div style={{ ...row, marginTop: "0.6rem" }}>
           <input type="file" accept=".csv,.txt,.tsv,text/csv,text/plain" onChange={async (e) => { const f = e.target.files?.[0]; if (f) setList(await f.text()); e.target.value = ""; }} />
           <label style={{ ...row, color: "#94a3b8" }}><input type="checkbox" checked={includePersonal} onChange={(e) => setIncludePersonal(e.target.checked)} /> Also include Gmail / Outlook-type addresses</label>
+          <label style={{ ...row, color: "#94a3b8" }} title="Some mail servers won't say whether an address works. They are held back unless you tick this."><input type="checkbox" checked={includeUnchecked} onChange={(e) => setIncludeUnchecked(e.target.checked)} /> Also include ones that couldn&rsquo;t be checked</label>
           <span style={{ flex: 1 }} />
           <button style={btn} disabled={busy || !list.trim()} onClick={doImport}>{busy ? "Working…" : "Add to list"}</button>
         </div>
@@ -207,6 +210,8 @@ export default function MailshotPanel({
           <p style={{ marginTop: "0.75rem", color: "#cbd5e1" }}>
             Added {summary.added} of {summary.found}.
             {summary.alreadyInList > 0 && ` ${summary.alreadyInList} were already in this list.`}
+            {!!summary.deadRemoved && ` Deleted ${summary.deadRemoved} dead address${summary.deadRemoved === 1 ? "" : "es"}.`}
+            {!!summary.cantTell && ` Held back ${summary.cantTell} that couldn’t be checked (under More tools, Show who was taken off).`}
             {(summary.skipped.personal + summary.skipped.role + summary.skipped.invalid + summary.skipped.unsubscribed + summary.skipped.duplicates) > 0 && (
               <> Held back: {[
                 summary.skipped.personal ? `${summary.skipped.personal} Gmail-type` : "",

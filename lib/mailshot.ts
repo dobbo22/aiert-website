@@ -172,6 +172,10 @@ export type ImportSummary = {
   alreadyInList: number;
   skipped: { invalid: number; role: number; personal: number; duplicates: number; unsubscribed: number };
   personalExamples: string[];
+  /// Addresses the check found dead: never added, and taken off this list if they were waiting in it.
+  deadRemoved?: number;
+  /// Addresses the check could not settle: held back (not deleted) unless asked for.
+  cantTell?: number;
 };
 
 /// Adds the usable addresses to a campaign's list. Personal-looking addresses (Gmail etc.) and role addresses
@@ -535,7 +539,8 @@ export function restaurantHtml(name: string, links: MailshotLinks, cardImageUrl:
 </div></body></html>`;
 }
 
-export type RestaurantRow = { name: string; email: string; phone: string; website: string; address: string; booking: string; menu: string };
+/// `check` is the result of the address check made when the list was built (valid, catch-all, unknown, dead, no-mail); blank when there was none.
+export type RestaurantRow = { name: string; email: string; phone: string; website: string; address: string; booking: string; menu: string; check: string };
 
 /// A CSV (or tab-separated) list with a header row: name (or restaurant), email, phone, website, address, booking, menu.
 export function parseRestaurantList(text: string): RestaurantRow[] {
@@ -563,6 +568,7 @@ export function parseRestaurantList(text: string): RestaurantRow[] {
     address: col(["address", "location"]),
     booking: col(["booking", "booking url", "book", "reservations"]),
     menu: col(["menu", "menu url"]),
+    check: col(["check", "email check", "address check"]),
   };
   if (c.email < 0 || c.name < 0) return [];
   const get = (cells: string[], i: number) => (i >= 0 ? (cells[i] ?? "").trim() : "");
@@ -572,6 +578,7 @@ export function parseRestaurantList(text: string): RestaurantRow[] {
       name: tidyName(get(cells, c.name)).slice(0, 80), email: get(cells, c.email).toLowerCase(),
       phone: get(cells, c.phone).slice(0, 40), website: get(cells, c.website).slice(0, 200),
       address: get(cells, c.address).slice(0, 200), booking: get(cells, c.booking).slice(0, 300), menu: get(cells, c.menu).slice(0, 300),
+      check: get(cells, c.check).toLowerCase(),
     };
   }).filter((r) => r.email);
 }
@@ -579,17 +586,33 @@ export function parseRestaurantList(text: string): RestaurantRow[] {
 /// Adds restaurants to a campaign's list. Role addresses (info@, bookings@) are what restaurants publish, so they are
 /// allowed here; personal-domain addresses (Gmail etc.) are held back unless asked for, since a small restaurant using
 /// one may be a sole trader, who would need to have agreed to marketing email.
-export async function importRestaurants(campaign: string, rows: RestaurantRow[], includePersonal: boolean): Promise<ImportSummary> {
+export async function importRestaurants(campaign: string, rows: RestaurantRow[], includePersonal: boolean, includeUnchecked = false): Promise<ImportSummary> {
   await ensureMailshotSchema();
   const summary: ImportSummary = {
     found: rows.length, added: 0, alreadyInList: 0,
-    skipped: { invalid: 0, role: 0, personal: 0, duplicates: 0, unsubscribed: 0 }, personalExamples: [],
+    skipped: { invalid: 0, role: 0, personal: 0, duplicates: 0, unsubscribed: 0 }, personalExamples: [], deadRemoved: 0, cantTell: 0,
   };
   const seen = new Set<string>();
   for (const r of rows) {
     const email = r.email.toLowerCase();
     if (seen.has(email)) { summary.skipped.duplicates++; continue; }
     seen.add(email);
+    // The address check made when the list was built: a dead address is never added, and is taken out of this list if it was
+    // waiting there (never one already emailed: that would break the results). It is also marked never-email, since it does not work.
+    if (r.check === "dead" || r.check === "no-mail") {
+      summary.deadRemoved = (summary.deadRemoved ?? 0) + 1;
+      const key = `e:${email}`;
+      const c = ((await sql`SELECT id FROM tapcard_invite_contacts WHERE dedupe_key = ${key}`) as { id: number }[])[0];
+      if (c) {
+        await sql`
+          DELETE FROM tapcard_mailshot_list
+          WHERE campaign = ${campaign} AND contact_id = ${c.id}
+            AND NOT EXISTS (SELECT 1 FROM tapcard_invite_sends s WHERE s.contact_id = ${c.id} AND s.campaign = ${campaign})
+        `;
+        await sql`UPDATE tapcard_invite_contacts SET do_not_contact = true WHERE id = ${c.id}`;
+      }
+      continue;
+    }
     const check = classifyEmail(email);
     if (check === "invalid") { summary.skipped.invalid++; continue; }
     if (check === "personal" && !includePersonal) {
@@ -612,11 +635,24 @@ export async function importRestaurants(campaign: string, rows: RestaurantRow[],
     const contact = ((await sql`SELECT id, do_not_contact FROM tapcard_invite_contacts WHERE dedupe_key = ${key}`) as { id: number; do_not_contact: boolean }[])[0];
     if (!contact) continue;
     if (contact.do_not_contact) { summary.skipped.unsubscribed++; continue; }
+    // Could not be checked: held back (under "taken off", with a Put back button) unless the person chose to include them.
+    const hold = r.check === "unknown" && !includeUnchecked;
+    if (hold) summary.cantTell = (summary.cantTell ?? 0) + 1;
     const res = (await sql`
-      INSERT INTO tapcard_mailshot_list (campaign, contact_id, relationship) VALUES (${campaign}, ${contact.id}, 'restaurant')
+      INSERT INTO tapcard_mailshot_list (campaign, contact_id, relationship, status, skip_reason)
+      VALUES (${campaign}, ${contact.id}, 'restaurant', ${hold ? "skipped" : "queued"}, ${hold ? "couldn't check" : null})
       ON CONFLICT DO NOTHING RETURNING contact_id
     `) as unknown[];
-    if (res.length) summary.added++; else summary.alreadyInList++;
+    if (res.length) summary.added++;
+    else {
+      summary.alreadyInList++;
+      // Already waiting in this list: take it off if the check could not settle it (never one that has been emailed).
+      if (hold) await sql`
+        UPDATE tapcard_mailshot_list SET status = 'skipped', skip_reason = 'couldn''t check'
+        WHERE campaign = ${campaign} AND contact_id = ${contact.id} AND status = 'queued'
+          AND NOT EXISTS (SELECT 1 FROM tapcard_invite_sends s WHERE s.contact_id = ${contact.id} AND s.campaign = ${campaign})
+      `;
+    }
   }
   return summary;
 }

@@ -31,7 +31,7 @@ export async function GET(req: Request) {
   }));
   const out = rows.map((r) => {
     const domain = r.email.split("@")[1]?.toLowerCase() ?? "";
-    return { id: r.id, name: r.name, email: r.email, reason: dead.has(domain) ? "no mail server" : "unticked" };
+    return { id: r.id, name: r.name, email: r.email, reason: dead.has(domain) ? "no mail server" : r.skip_reason ? r.skip_reason.replace(/^refused:.*/, "refused") : "unticked" };
   }).sort((a, b) => (a.reason === b.reason ? a.email.localeCompare(b.email) : a.reason === "no mail server" ? -1 : 1));
   return NextResponse.json({ skipped: out });
 }
