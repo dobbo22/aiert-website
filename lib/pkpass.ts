@@ -8,6 +8,7 @@ import type { TapCardRecord } from "@/lib/tapcardDb";
 import { findSiteIcon } from "@/lib/siteIcon";
 import { orgLogoBytesForCard } from "@/lib/tapcardBiz";
 import { renderBanner, renderLogoLockup } from "@/lib/tapcardPassArt";
+import type { CodeStatus } from "@/lib/tapcardOffers";
 import { isPersonalCard, sameName } from "@/lib/tapcardPassStyle";
 
 const PASS_TYPE_IDENTIFIER = "pass.com.mailbroom.tapcard";
@@ -215,6 +216,10 @@ export async function buildPkpass(card: TapCardRecord, shareURL: string): Promis
   const lockupWidth1x = Math.round(((await sharp(lockup).metadata()).width ?? 480) / 3);
   Object.assign(files, await scaled(lockup, "logo", lockupWidth1x, 50), await scaled(strip, "strip", 375, 144));
 
+  return zipPass(files);
+}
+
+async function zipPass(files: Record<string, Buffer>): Promise<Buffer> {
   const manifest: Record<string, string> = {};
   for (const [name, buffer] of Object.entries(files)) {
     manifest[name] = sha1Hex(buffer);
@@ -230,4 +235,53 @@ export async function buildPkpass(card: TapCardRecord, shareURL: string): Promis
   zip.file("signature", signatureBuffer);
 
   return zip.generateAsync({ type: "nodebuffer" });
+}
+
+/// A customer's offer or stamp card as a Wallet pass: the business's name and logo, the offer, and the one-off QR the till scans
+/// (the staff page /o/<code>). A snapshot like the card pass, so stamps shown are those at the time it was added.
+export async function buildOfferPkpass(card: TapCardRecord, code: string, status: CodeStatus): Promise<Buffer> {
+  const assets = await loadPassAssets();
+  const business = card.company || card.name || "TapCard";
+  const stamps = status.kind === "stamps";
+  const fields = (rows: [string, string, string | null | undefined][]) =>
+    rows.filter(([, , v]) => v).map(([key, label, value]) => ({ key, label, value: String(value) }));
+  const expires = status.expiresAt ? new Date(status.expiresAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London" }) : null;
+  const url = `https://tapcard.aiert.co.uk/o/${code}`;
+  const passJson = {
+    formatVersion: 1,
+    passTypeIdentifier: PASS_TYPE_IDENTIFIER,
+    teamIdentifier: TEAM_IDENTIFIER,
+    organizationName: business,
+    serialNumber: `offer-${code}`,
+    description: `${business} offer`,
+    foregroundColor: "rgb(255, 255, 255)",
+    backgroundColor: "rgb(17, 19, 24)",
+    labelColor: "rgb(196, 165, 255)",
+    ...(status.expiresAt ? { expirationDate: new Date(status.expiresAt).toISOString() } : {}),
+    storeCard: {
+      headerFields: [],
+      primaryFields: fields([["offer", stamps ? "STAMP CARD" : "OFFER", status.offerText]]),
+      secondaryFields: fields(stamps
+        ? [["stamps", "STAMPS", `${status.stamps ?? 0} of ${status.stampsRequired ?? 0}`], ["reward", "REWARD", status.rewardText]]
+        : [["expires", "VALID UNTIL", expires]]),
+      auxiliaryFields: [],
+      backFields: fields([
+        ["business", "BUSINESS", business],
+        ["code", "CODE", code],
+        ["how", "HOW IT WORKS", "Show this at the till. The business scans the code or types it in."],
+        ["view", "VIEW ONLINE", url],
+      ]),
+    },
+    barcodes: [{ message: url, format: "PKBarcodeFormatQR", messageEncoding: "iso-8859-1" }],
+  };
+  const files: Record<string, Buffer> = { "pass.json": Buffer.from(JSON.stringify(passJson), "utf-8"), ...assets };
+  const icon = await companyIcon(card);
+  if (icon) {
+    const square = await sharp(icon).resize(87, 87, { fit: "contain", background: "#fff" }).flatten({ background: "#fff" }).png().toBuffer();
+    Object.assign(files, await scaled(square, "icon", 29, 29));
+  }
+  const lockup = await renderLogoLockup(card, icon, 150);
+  const lockupWidth1x = Math.round(((await sharp(lockup).metadata()).width ?? 480) / 3);
+  Object.assign(files, await scaled(lockup, "logo", lockupWidth1x, 50));
+  return zipPass(files);
 }

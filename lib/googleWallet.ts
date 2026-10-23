@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import type { TapCardRecord } from "@/lib/tapcardDb";
+import type { CodeStatus } from "@/lib/tapcardOffers";
 import { isPersonalCard, sameName } from "@/lib/tapcardPassStyle";
 
 // Google Wallet version of the Apple pass (lib/pkpass.ts), for Android.
@@ -193,6 +194,57 @@ export async function googleWalletSaveUrl(card: TapCardRecord, shareURL: string)
     aud: "google",
     typ: "savetowallet",
     origins: ["https://tapcard.aiert.co.uk"],
+    payload: { genericObjects: [{ id: object.id }] },
+  }, sa.private_key);
+  return `https://pay.google.com/gp/v/save/${jwt}`;
+}
+
+const OFFER_CLASS_SUFFIX = "tapcard_offer_v1";
+let offerClassReady: Promise<void> | null = null;
+
+/// Creates/updates a customer's offer or stamp-card pass and returns its "Save to Google Wallet" URL.
+export async function googleWalletOfferSaveUrl(card: TapCardRecord, code: string, status: CodeStatus): Promise<string> {
+  const { issuerId, sa } = config();
+  const classId = `${issuerId}.${OFFER_CLASS_SUFFIX}`;
+  if (!offerClassReady) {
+    offerClassReady = upsert(sa, "genericClass", { id: classId }).catch((err) => {
+      offerClassReady = null;
+      throw err;
+    });
+  }
+  await offerClassReady;
+  const origin = "https://tapcard.aiert.co.uk";
+  const version = new Date(card.updated_at).getTime() || 0;
+  const business = card.company || card.name || "TapCard";
+  const localized = (value: string) => ({ defaultValue: { language: "en-GB", value } });
+  const stamps = status.kind === "stamps";
+  const expires = status.expiresAt ? new Date(status.expiresAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London" }) : "";
+  const url = `${origin}/o/${code}`;
+  const object = {
+    id: `${issuerId}.offer-${code}`,
+    classId,
+    state: "ACTIVE",
+    logo: { sourceUri: { uri: `${origin}/api/cards/${card.id}/wallet-logo?v=${version}` }, contentDescription: localized(business) },
+    cardTitle: localized(business),
+    subheader: localized(stamps ? "Stamp card" : "Offer"),
+    header: localized(status.offerText || "Offer"),
+    hexBackgroundColor: "#111318",
+    textModulesData: [
+      ...(stamps ? [{ id: "stamps", header: "Stamps", body: `${status.stamps ?? 0} of ${status.stampsRequired ?? 0}` }] : []),
+      ...(stamps && status.rewardText ? [{ id: "reward", header: "Reward", body: status.rewardText }] : []),
+      ...(!stamps && expires ? [{ id: "expires", header: "Valid until", body: expires }] : []),
+      { id: "how", header: "How it works", body: "Show this at the till. The business scans the code or types it in." },
+    ],
+    linksModuleData: { uris: [{ uri: `${origin}/s/${card.id}`, description: `${business} on TapCard`, id: "card" }] },
+    barcode: { type: "QR_CODE", value: url, alternateText: code },
+    ...(status.expiresAt ? { validTimeInterval: { end: { date: new Date(status.expiresAt).toISOString() } } } : {}),
+  };
+  await upsert(sa, "genericObject", object);
+  const jwt = signJwt({
+    iss: sa.client_email,
+    aud: "google",
+    typ: "savetowallet",
+    origins: [origin],
     payload: { genericObjects: [{ id: object.id }] },
   }, sa.private_key);
   return `https://pay.google.com/gp/v/save/${jwt}`;
