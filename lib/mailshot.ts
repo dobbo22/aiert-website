@@ -460,7 +460,7 @@ export type RestaurantCodes = { ios?: string; android?: string };
 /// `codes` (the old "first 6 months free" links) is accepted but no longer used: the email promises the standard 3 months free.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function restaurantText(name: string, links: MailshotLinks, _codes?: RestaurantCodes): string {
-  return `Hello ${name || "there"},
+  return `Hello,
 
 Put a QR code in your window. Fill quiet tables with a 30-second offer.
 
@@ -497,7 +497,7 @@ export function restaurantHtml(name: string, links: MailshotLinks, cardImageUrl:
   const li = "margin:0 0 10px;";
   return `<!doctype html><html><body style="margin:0;padding:0;background:#ffffff;">
 <div style="max-width:560px;margin:0 auto;padding:24px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#1f2937;">
-<p style="margin:0 0 14px;">Hello ${esc(name || "there")},</p>
+<p style="margin:0 0 14px;">Hello,</p>
 <p style="margin:0 0 16px;font-size:24px;line-height:1.25;font-weight:800;color:#111318;">Put a QR code in your window.<br>Fill quiet tables with a 30-second offer.</p>
 <p style="margin:0 0 16px;font-size:17px;line-height:1.45;">I made a <strong>free sample TapCard for ${esc(name || "your restaurant")}</strong>. Scan it and see it working on your own phone.</p>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;"><tr>
