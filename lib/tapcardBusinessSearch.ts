@@ -7,9 +7,9 @@ import sql from "@/lib/db";
 import { formatHours } from "@/lib/siteLinks";
 
 // Customers' lookups and the restaurant list-finder (src=finder) have separate daily allowances, so one can't starve the other.
-const DAILY_CAP = 1500;
+const DAILY_CAP = 400;
 const FINDER_CAP = 1500;
-const DEVICE_CAP = 20; // lookups per phone per day (apps send their install id as `device`; it is hashed and only counted)
+const DEVICE_CAP = 10; // Google lookups per phone per day (apps send their install id as `device`; it is hashed and only counted; Apple's search on the phone is free and tried first)
 
 export interface BusinessHit { id: string; name: string; address: string; website: string; phone: string; type: string; hours: string }
 
