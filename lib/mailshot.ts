@@ -449,9 +449,9 @@ export function mailshotHtml(firstName: string, links: MailshotLinks, relationsh
 // ---------- Restaurants ----------
 
 export const RESTAURANT_SUBJECTS = [
-  "{Name}: fill quiet tables with a 30-second offer",
-  "I made a TapCard for {Name}",
-  "Never order business cards again, {Name}",
+  "{Name}: instant promotions, free for 3 months",
+  "{Name}: fill quiet tables tonight in 30 seconds",
+  "I made a free TapCard for {Name}",
 ];
 
 export function restaurantSubject(index: number, name: string): string {
@@ -466,24 +466,30 @@ export type RestaurantCodes = { ios?: string; android?: string };
 export function restaurantText(name: string, links: MailshotLinks, _codes?: RestaurantCodes): string {
   return `Hello,
 
-Put a QR code in your window. Fill quiet tables with a 30-second offer.
+INSTANT MARKETING FOR YOUR RESTAURANT
+Post a promotion in 30 seconds. Your customers see it straight away.
 
 I made a free sample TapCard for ${name || "your restaurant"}. Scan it and see it working on your own phone (it stays live for 24 hours once you open it):
 ${links.preview}
 
-What it does
-- Customers save you in one tap: your phone, menu, booking link and directions. No app needed.
-- You post an offer in about 30 seconds. Everyone who follows you is notified instantly, and anyone who scans your QR code can claim it too.
-- Each customer gets a one-off QR code. Your staff scan it at the till, type a PIN, and it can never be used twice. You see how many claimed and how many came in.
-- Offers sit in your customers' Apple or Google Wallet and in an Offers tab in the app, so they remember to come back.
+Why owners like it
+- INSTANT: post an offer in about 30 seconds. Everyone who follows you is notified (up to two a week, so you never become annoying).
+- SIMPLE FOR CUSTOMERS: scan your QR code, save your phone, menu, booking link and directions. No app needed.
+- ONE USE ONLY: each customer gets a one-off QR code. Your staff scan it, type a PIN, and it can never be used twice.
+- KEEPS THEM COMING BACK: offers sit in your customers' Apple or Google Wallet and in the app's Offers tab.
+- REVIEWS: if you're on Google, your rating shows on your card, with a one-tap button to leave a review.
+- WINDOW POSTER: a ready-to-print QR sign, emailed to you.
+- YOU SEE THE RESULTS: how many followed, claimed and came in.
 
-Quick wins for a quiet night
-- "5 tables free tonight: 15% off any main". Post it at 5pm and watch them fill.
+Promotions you can run tonight
+- "5 tables free tonight: 15% off any main"
 - "Dessert on us for the first 20 tables"
 - "Bring a friend: second main half price"
 - A stamp card for regulars: "buy 5 coffees, get the 6th free"
 
-One flat price: free for your first 3 months, then £49.99 a year (or £9.99 a month). Post as many offers as you like. There is no charge per message or per customer, and it's always free for your customers.
+PRICE
+- Free for your first 3 months, then £49.99 a year (or £9.99 a month).
+- No charge per message or per customer. Always free for your customers.
 
 Setting up takes about a minute. You prove the card is yours once, with a code we email to an address on your own website, and then you can post.
 
@@ -502,34 +508,44 @@ Not interested? Unsubscribe here and I won't email you again: ${links.unsubscrib
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function restaurantHtml(name: string, links: MailshotLinks, cardImageUrl: string, _codes?: RestaurantCodes): string {
-  const btn = "display:inline-block;background:#4c2f93;color:#ffffff;text-decoration:none;font-weight:600;padding:14px 26px;border-radius:10px;font-size:17px;";
+  const btn = "display:inline-block;background:#4c2f93;color:#ffffff;text-decoration:none;font-weight:700;padding:15px 30px;border-radius:10px;font-size:18px;";
   const link = "color:#4c2f93;font-weight:600;";
-  const li = "margin:0 0 10px;";
+  const li = "margin:0 0 9px;";
+  const tag = "color:#4c2f93;font-weight:800;letter-spacing:.3px;";
   return `<!doctype html><html><body style="margin:0;padding:0;background:#ffffff;">
-<div style="max-width:560px;margin:0 auto;padding:24px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#1f2937;">
-<p style="margin:0 0 14px;">Hello,</p>
-<p style="margin:0 0 16px;font-size:24px;line-height:1.25;font-weight:800;color:#111318;">Put a QR code in your window.<br>Fill quiet tables with a 30-second offer.</p>
-<p style="margin:0 0 16px;font-size:17px;line-height:1.45;">I made a <strong>free sample TapCard for ${esc(name || "your restaurant")}</strong>. Scan it and see it working on your own phone.</p>
+<div style="max-width:560px;margin:0 auto;padding:24px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:16px;line-height:1.5;color:#1f2937;">
+<p style="margin:0 0 12px;">Hello,</p>
+<p style="margin:0 0 6px;font-size:13px;font-weight:800;letter-spacing:1px;color:#4c2f93;">INSTANT MARKETING FOR YOUR RESTAURANT</p>
+<p style="margin:0 0 16px;font-size:26px;line-height:1.2;font-weight:800;color:#111318;">Post a promotion in 30 seconds.<br>Your customers see it straight away.</p>
+<p style="margin:0 0 14px;font-size:17px;line-height:1.45;">I made a <strong>free sample TapCard for ${esc(name || "your restaurant")}</strong>. Scan it and see it working on your own phone.</p>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;"><tr>
 <td width="55%" valign="middle" align="center" style="padding-right:10px;"><a href="${esc(links.preview)}"><img src="${esc(cardImageUrl)}" alt="Your TapCard on a phone" width="230" style="width:230px;max-width:100%;"></a></td>
 <td width="45%" valign="middle" align="center" style="font-size:14px;line-height:1.45;"><img src="${esc(links.previewQr)}" alt="QR code for your TapCard preview" width="150" style="width:150px;max-width:100%;border:1px solid #e5e7eb;border-radius:10px;"><br><strong>Scan with your phone</strong><br><span style="color:#6b7280;font-size:12px;">Or <a href="${esc(links.preview)}" style="color:#4c2f93;">open it here</a>. It stays live for 24 hours once you open it.</span></td>
 </tr></table>
+<p style="margin:0 0 8px;font-size:18px;font-weight:800;color:#111318;">Why owners like it</p>
 <ul style="margin:0 0 20px;padding-left:20px;">
-<li style="${li}"><strong>Customers save you in one tap:</strong> your phone, menu, booking link and directions. No app needed.</li>
-<li style="${li}"><strong>Post an offer in about 30 seconds.</strong> Everyone who follows you is <strong>notified instantly</strong>, and anyone who scans your QR code can claim it too.</li>
-<li style="${li}">Each customer gets a <strong>one-off QR code</strong>. Your staff scan it at the till, type a PIN, and it can never be used twice. You see how many claimed and how many came in.</li>
-<li style="margin:0;"><strong>Offers sit in your customers&rsquo; Apple or Google Wallet</strong> and in an Offers tab in the app, so they remember to come back.</li>
+<li style="${li}"><span style="${tag}">INSTANT:</span> post an offer in about 30 seconds. Everyone who follows you is notified (up to two a week, so you never become annoying).</li>
+<li style="${li}"><span style="${tag}">SIMPLE FOR CUSTOMERS:</span> scan your QR code, save your phone, menu, booking link and directions. No app needed.</li>
+<li style="${li}"><span style="${tag}">ONE USE ONLY:</span> each customer gets a one-off QR code. Your staff scan it, type a PIN, and it can never be used twice.</li>
+<li style="${li}"><span style="${tag}">KEEPS THEM COMING BACK:</span> offers sit in your customers&rsquo; Apple or Google Wallet and in the app&rsquo;s Offers tab.</li>
+<li style="${li}"><span style="${tag}">REVIEWS:</span> if you&rsquo;re on Google, your rating shows on your card, with a one-tap button to leave a review.</li>
+<li style="${li}"><span style="${tag}">WINDOW POSTER:</span> a ready-to-print QR sign, emailed to you.</li>
+<li style="margin:0;"><span style="${tag}">YOU SEE THE RESULTS:</span> how many followed, claimed and came in.</li>
 </ul>
 <div style="margin:0 0 20px;padding:16px 18px;background:#fffbeb;border-radius:12px;">
-<p style="margin:0 0 8px;font-size:17px;"><strong>Quick wins for a quiet night</strong></p>
+<p style="margin:0 0 8px;font-size:17px;"><strong>Promotions you can run tonight</strong></p>
 <ul style="margin:0;padding-left:20px;">
-<li style="${li}">&ldquo;<strong>5 tables free tonight:</strong> 15% off any main&rdquo;. Post it at 5pm and watch them fill.</li>
+<li style="${li}">&ldquo;<strong>5 tables free tonight:</strong> 15% off any main&rdquo;</li>
 <li style="${li}">&ldquo;Dessert on us for the first 20 tables&rdquo;</li>
 <li style="${li}">&ldquo;Bring a friend: second main half price&rdquo;</li>
 <li style="margin:0;">A stamp card for regulars: &ldquo;buy 5 coffees, get the 6th free&rdquo;</li>
 </ul>
 </div>
-<p style="margin:0 0 16px;"><strong>One flat price:</strong> free for your first 3 months, then £49.99 a year (or £9.99 a month). Post as many offers as you like. <strong>There is no charge per message or per customer</strong>, and it&rsquo;s always free for your customers.</p>
+<p style="margin:0 0 8px;font-size:18px;font-weight:800;color:#111318;">Price</p>
+<ul style="margin:0 0 18px;padding-left:20px;">
+<li style="${li}"><strong>Free for your first 3 months,</strong> then £49.99 a year (or £9.99 a month).</li>
+<li style="margin:0;"><strong>No charge per message or per customer.</strong> Always free for your customers.</li>
+</ul>
 <p style="margin:0 0 20px;color:#4b5563;">Setting up takes about a minute. You prove the card is yours once, with a code we email to an address on your own website, and then you can post.</p>
 <p style="margin:0 0 20px;"><a href="${esc(links.app)}" style="${btn}">Get TapCard</a></p>
 <p style="margin:0 0 24px;"><a href="${esc(links.how)}" style="${link}">See how it works</a> &nbsp;·&nbsp; <a href="${esc(links.app + '?to=guide')}" style="${link}">Watch the demo</a></p>
