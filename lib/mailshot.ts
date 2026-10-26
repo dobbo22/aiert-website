@@ -235,12 +235,13 @@ export type MailshotStats = {
 };
 
 export type Relationship = "business" | "personal" | "restaurant";
-const footerReason = (r: Relationship) =>
+export const footerReasonFor = (r: Relationship, kind: PlaceKind = "restaurant") =>
   r === "restaurant"
-    ? "your restaurant's contact address is listed publicly on your website, and this is a one-off note about a tool for restaurants"
+    ? `your ${kind === "cafe" ? "cafe" : "restaurant"}'s contact address is listed publicly on your website, and this is a one-off note about a tool for ${kind === "cafe" ? "cafes" : "restaurants"}`
     : r === "personal"
       ? "you're a personal contact of mine"
       : "you're a past business contact of mine";
+const footerReason = (r: Relationship) => footerReasonFor(r);
 
 export type CandidateRow = { id: number; name: string; email: string; company: string; greeting: string };
 export type ContactsCandidates = { total: number; ok: CandidateRow[]; personal: number; role: number; invalid: number };
@@ -454,22 +455,39 @@ export const RESTAURANT_SUBJECTS = [
   "I made a free TapCard for {Name}",
 ];
 
-export function restaurantSubject(index: number, name: string): string {
-  const t = RESTAURANT_SUBJECTS[Math.min(Math.max(index, 0), RESTAURANT_SUBJECTS.length - 1)];
-  return t.replaceAll("{Name}", name || "your restaurant");
+export const CAFE_SUBJECTS = [
+  "{Name}: instant promotions, free for 3 months",
+  "{Name}: fill quiet hours with a 30-second offer",
+  "I made a free TapCard for {Name}",
+];
+
+/// The wording of the restaurant email follows the kind of place: restaurants and cafes / coffee shops.
+export type PlaceKind = "restaurant" | "cafe";
+
+export function restaurantSubject(index: number, name: string, kind: PlaceKind = "restaurant"): string {
+  const list = kind === "cafe" ? CAFE_SUBJECTS : RESTAURANT_SUBJECTS;
+  const t = list[Math.min(Math.max(index, 0), list.length - 1)];
+  return t.replaceAll("{Name}", name || (kind === "cafe" ? "your cafe" : "your restaurant"));
 }
+
+const placeIdeas = (kind: PlaceKind): string[] =>
+  kind === "cafe"
+    ? ["Free cake with any large coffee until 11am", "Bring a friend: second coffee half price", "Rainy-day special: free refill with any hot drink", "A stamp card for regulars: \"buy 5 coffees, get the 6th free\""]
+    : ["5 tables free tonight: 15% off any main", "Dessert on us for the first 20 tables", "Bring a friend: second main half price", "A stamp card for regulars: \"buy 5 coffees, get the 6th free\""];
 
 export type RestaurantCodes = { ios?: string; android?: string };
 
 /// `codes` (the old "first 6 months free" links) is accepted but no longer used: the email promises the standard 3 months free.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function restaurantText(name: string, links: MailshotLinks, _codes?: RestaurantCodes): string {
+export function restaurantText(name: string, links: MailshotLinks, _codes?: RestaurantCodes, kind: PlaceKind = "restaurant"): string {
+  const noun = kind === "cafe" ? "cafe" : "restaurant";
+  const ideas = placeIdeas(kind);
   return `Hello,
 
-INSTANT MARKETING FOR YOUR RESTAURANT
+INSTANT MARKETING FOR YOUR ${noun.toUpperCase()}
 Post a promotion in 30 seconds. Your customers see it straight away.
 
-I made a free sample TapCard for ${name || "your restaurant"}. Scan it and see it working on your own phone (it stays live for 24 hours once you open it):
+I made a free sample TapCard for ${name || "your " + noun}. Scan it and see it working on your own phone (it stays live for 24 hours once you open it):
 ${links.preview}
 
 Why owners like it
@@ -482,10 +500,7 @@ Why owners like it
 - YOU SEE THE RESULTS: how many followed, claimed and came in.
 
 Promotions you can run tonight
-- "5 tables free tonight: 15% off any main"
-- "Dessert on us for the first 20 tables"
-- "Bring a friend: second main half price"
-- A stamp card for regulars: "buy 5 coffees, get the 6th free"
+${ideas.map((i) => (i.startsWith("A stamp card") ? "- " + i : `- "${i}"`)).join("\n")}
 
 PRICE
 - Free for your first 3 months, then £49.99 a year (or £9.99 a month).
@@ -501,13 +516,15 @@ Martin Dobson
 Aiert Ltd
 
 --
-You're receiving this because ${footerReason("restaurant")}. ${MAILSHOT_COMPANY_LINE}. Privacy: https://www.aiert.co.uk/privacy
+You're receiving this because ${footerReasonFor("restaurant", kind)}. ${MAILSHOT_COMPANY_LINE}. Privacy: https://www.aiert.co.uk/privacy
 Not interested? Unsubscribe here and I won't email you again: ${links.unsubscribe}
 `;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function restaurantHtml(name: string, links: MailshotLinks, cardImageUrl: string, _codes?: RestaurantCodes): string {
+export function restaurantHtml(name: string, links: MailshotLinks, cardImageUrl: string, _codes?: RestaurantCodes, kind: PlaceKind = "restaurant"): string {
+  const noun = kind === "cafe" ? "cafe" : "restaurant";
+  const ideas = placeIdeas(kind);
   const btn = "display:inline-block;background:#4c2f93;color:#ffffff;text-decoration:none;font-weight:700;padding:15px 30px;border-radius:10px;font-size:18px;";
   const link = "color:#4c2f93;font-weight:600;";
   const li = "margin:0 0 9px;";
@@ -515,9 +532,9 @@ export function restaurantHtml(name: string, links: MailshotLinks, cardImageUrl:
   return `<!doctype html><html><body style="margin:0;padding:0;background:#ffffff;">
 <div style="max-width:560px;margin:0 auto;padding:24px 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:16px;line-height:1.5;color:#1f2937;">
 <p style="margin:0 0 12px;">Hello,</p>
-<p style="margin:0 0 6px;font-size:13px;font-weight:800;letter-spacing:1px;color:#4c2f93;">INSTANT MARKETING FOR YOUR RESTAURANT</p>
+<p style="margin:0 0 6px;font-size:13px;font-weight:800;letter-spacing:1px;color:#4c2f93;">INSTANT MARKETING FOR YOUR ${noun.toUpperCase()}</p>
 <p style="margin:0 0 16px;font-size:26px;line-height:1.2;font-weight:800;color:#111318;">Post a promotion in 30 seconds.<br>Your customers see it straight away.</p>
-<p style="margin:0 0 14px;font-size:17px;line-height:1.45;">I made a <strong>free sample TapCard for ${esc(name || "your restaurant")}</strong>. Scan it and see it working on your own phone.</p>
+<p style="margin:0 0 14px;font-size:17px;line-height:1.45;">I made a <strong>free sample TapCard for ${esc(name || "your " + noun)}</strong>. Scan it and see it working on your own phone.</p>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;"><tr>
 <td width="55%" valign="middle" align="center" style="padding-right:10px;"><a href="${esc(links.preview)}"><img src="${esc(cardImageUrl)}" alt="Your TapCard on a phone" width="230" style="width:230px;max-width:100%;"></a></td>
 <td width="45%" valign="middle" align="center" style="font-size:14px;line-height:1.45;"><img src="${esc(links.previewQr)}" alt="QR code for your TapCard preview" width="150" style="width:150px;max-width:100%;border:1px solid #e5e7eb;border-radius:10px;"><br><strong>Scan with your phone</strong><br><span style="color:#6b7280;font-size:12px;">Or <a href="${esc(links.preview)}" style="color:#4c2f93;">open it here</a>. It stays live for 24 hours once you open it.</span></td>
@@ -535,10 +552,7 @@ export function restaurantHtml(name: string, links: MailshotLinks, cardImageUrl:
 <div style="margin:0 0 20px;padding:16px 18px;background:#fffbeb;border-radius:12px;">
 <p style="margin:0 0 8px;font-size:17px;"><strong>Promotions you can run tonight</strong></p>
 <ul style="margin:0;padding-left:20px;">
-<li style="${li}">&ldquo;<strong>5 tables free tonight:</strong> 15% off any main&rdquo;</li>
-<li style="${li}">&ldquo;Dessert on us for the first 20 tables&rdquo;</li>
-<li style="${li}">&ldquo;Bring a friend: second main half price&rdquo;</li>
-<li style="margin:0;">A stamp card for regulars: &ldquo;buy 5 coffees, get the 6th free&rdquo;</li>
+${ideas.map((i, n) => `<li style="${n === ideas.length - 1 ? "margin:0;" : li}">${i.startsWith("A stamp card") ? esc(i).replace(/&quot;/g, "&rdquo;") : "&ldquo;" + esc(i) + "&rdquo;"}</li>`).join("\n")}
 </ul>
 </div>
 <p style="margin:0 0 8px;font-size:18px;font-weight:800;color:#111318;">Price</p>
@@ -551,7 +565,7 @@ export function restaurantHtml(name: string, links: MailshotLinks, cardImageUrl:
 <p style="margin:0 0 24px;"><a href="${esc(links.how)}" style="${link}">See how it works</a> &nbsp;·&nbsp; <a href="${esc(links.app + '?to=guide')}" style="${link}">Watch the demo</a></p>
 <p style="margin:0 0 4px;">Martin Dobson</p>
 <p style="margin:0 0 28px;">Aiert Ltd</p>
-<p style="margin:0;font-size:12px;line-height:1.5;color:#6b7280;">You're receiving this because ${esc(footerReason("restaurant"))}. ${esc(MAILSHOT_COMPANY_LINE)}. <a href="https://www.aiert.co.uk/privacy" style="color:#6b7280;">Privacy</a><br>Not interested? <a href="${esc(links.unsubscribe)}" style="color:#6b7280;">Unsubscribe here</a> and I won't email you again.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:#6b7280;">You're receiving this because ${esc(footerReasonFor("restaurant", kind))}. ${esc(MAILSHOT_COMPANY_LINE)}. <a href="https://www.aiert.co.uk/privacy" style="color:#6b7280;">Privacy</a><br>Not interested? <a href="${esc(links.unsubscribe)}" style="color:#6b7280;">Unsubscribe here</a> and I won't email you again.</p>
 </div></body></html>`;
 }
 

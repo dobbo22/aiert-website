@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 const TABS = [
   { href: "/admin/social/links", label: "Send invites", exact: true },
-  { href: "/admin/social/links/mailshot", label: "Mailshot" },
+  { href: "/admin/social/links/mailshot", label: "Mailshot (moved to Marketing)" },
   { href: "/admin/social/links/track", label: "Track invites" },
   { href: "/admin/social/links/clicks", label: "Link clicks" },
 ];

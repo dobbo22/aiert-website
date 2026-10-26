@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { NextResponse } from "next/server";
 import sql from "@/lib/db";
 import { ensureInviteSchema } from "@/lib/tapcardInvites";
+import { recordResendEvent } from "@/lib/marketing";
 
 // Resend delivery events for TapCard invite emails (delivered, bounced,
 // opened, complained), matched to a send by Resend's email id. Set up in
@@ -35,6 +36,8 @@ export async function POST(req: Request) {
   const emailId = event.data?.email_id;
   if (!emailId) return NextResponse.json({ ok: true });
 
+  // The restaurant / cafe marketing mailshot keeps its own records (lib/marketing.ts); anything else is a personal invite.
+  if (event.type && (await recordResendEvent(event.type, emailId, event.data?.bounce).catch(() => false))) return NextResponse.json({ ok: true });
   await ensureInviteSchema();
   switch (event.type) {
     case "email.delivered":

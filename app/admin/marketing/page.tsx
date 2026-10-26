@@ -6,6 +6,8 @@ import { getSearchPerformance } from "@/lib/googleSearchConsole";
 import LoginForm from "../mailbroom/LoginForm";
 import AdminHeader from "../AdminHeader";
 import ClicksSparkline from "./ClicksSparkline";
+import MarketingTabs from "./MarketingTabs";
+import "../social/social.css";
 import "../mailbroom/admin.css";
 import "./marketing.css";
 
@@ -97,6 +99,7 @@ export default async function MarketingPage() {
         <h1 className="admin-title" style={{ marginBottom: "1rem" }}>
           Marketing
         </h1>
+        <MarketingTabs />
 
         <p className="admin-mailbroom-note">
         Organic search performance for {data?.siteUrl ?? "mailbroom.app"} from Google Search

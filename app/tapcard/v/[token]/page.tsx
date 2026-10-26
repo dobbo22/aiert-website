@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import sql from "@/lib/db";
 import { ensureMailshotSchema } from "@/lib/mailshot";
 import { isBotUserAgent } from "@/lib/tapcardInvites";
+import { isMkToken, previewLeadByToken, recordPreviewOpened } from "@/lib/marketing";
 
 export const metadata: Metadata = { title: "Your TapCard preview", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -41,8 +42,11 @@ function mapsUrl(address: string, ua: string): string {
 export default async function PreviewPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const ua = (await headers()).get("user-agent") ?? "";
-  await ensureMailshotSchema();
-  const row = ((await sql`
+  const mk = isMkToken(token);
+  if (!mk) await ensureMailshotSchema();
+  const row = mk
+    ? ((await previewLeadByToken(token).catch(() => null)) as Row | null) ?? undefined
+    : ((await sql`
     SELECT s.sent_at, s.preview_first_at, c.name, c.company, c.phone, c.website, c.address, c.booking_url, c.menu_url
     FROM tapcard_invite_sends s JOIN tapcard_invite_contacts c ON c.id = s.contact_id
     WHERE s.token = ${token}
@@ -54,7 +58,7 @@ export default async function PreviewPage({ params }: { params: Promise<{ token:
     </main>
   );
   const getApp = (
-    <a href={`/i/${token}`} className="mt-5 block rounded-xl bg-white px-4 py-3 text-center font-semibold text-[#111318]">Get TapCard</a>
+    <a href={mk ? `/mk/${token}` : `/i/${token}`} className="mt-5 block rounded-xl bg-white px-4 py-3 text-center font-semibold text-[#111318]">Get TapCard</a>
   );
 
   if (!row) return shell(<p className="text-center">This preview link isn&apos;t valid.</p>);
@@ -64,7 +68,8 @@ export default async function PreviewPage({ params }: { params: Promise<{ token:
   let first = row.preview_first_at ? new Date(row.preview_first_at).getTime() : null;
   if (first === null && !isBotUserAgent(ua)) {
     // Link scanners don't start the clock; the first real visit does.
-    await sql`UPDATE tapcard_invite_sends SET preview_first_at = now() WHERE token = ${token} AND preview_first_at IS NULL`;
+    if (mk) await recordPreviewOpened(token).catch(() => {});
+    else await sql`UPDATE tapcard_invite_sends SET preview_first_at = now() WHERE token = ${token} AND preview_first_at IS NULL`;
     first = now;
   }
   const endsAt = Math.min((first ?? now) + HOURS * 3600_000, sentAt + MAX_DAYS_AFTER_SEND * 86_400_000);
