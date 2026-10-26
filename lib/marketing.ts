@@ -18,7 +18,7 @@ const MAX_PER_CALL = 40;
 const BOUNCE_PAUSE_RATE = 0.08;
 /// Email security scanners open every link within seconds of delivery. A click sooner than this after sending, or a burst of links all
 /// opened within a few seconds (BURST_SECONDS) of each other, is treated as a scanner and not counted.
-export const SCANNER_WINDOW_SECONDS = 45;
+export const SCANNER_WINDOW_SECONDS = 120;
 const BURST_SECONDS = 3;
 
 export type LeadState = "queued" | "held" | "removed" | "unsubscribed" | "emailed_before";
