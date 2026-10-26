@@ -351,6 +351,22 @@ export async function addAdmin(orgId: string, email: string, role = "admin"): Pr
   `;
 }
 
+/// A company may have up to this many admins.
+export const MAX_ADMINS = 5;
+
+export interface BizAdminRow { id: string; email: string; role: string; created_at: string; confirmed_at: string | null }
+
+/// The company's admins, first (the owner) to last.
+export async function listAdmins(orgId: string): Promise<BizAdminRow[]> {
+  await ensureSchema();
+  return (await sql`SELECT id, email, role, created_at, confirmed_at FROM tapcard_biz_admins WHERE org_id = ${orgId} ORDER BY created_at, id`) as BizAdminRow[];
+}
+
+export async function removeAdminById(orgId: string, adminId: string): Promise<void> {
+  await ensureSchema();
+  await sql`DELETE FROM tapcard_biz_admins WHERE org_id = ${orgId} AND id = ${adminId}`;
+}
+
 export interface BizAdmin {
   id: string;
   org_id: string;

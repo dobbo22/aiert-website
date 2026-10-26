@@ -42,6 +42,18 @@ export async function sendBizLoginEmail(email: string, link: string): Promise<vo
   await send(email, "Sign in to TapCard for Business", html, `Sign in: ${link}\n\nThis link works once and expires in 15 minutes.`);
 }
 
+export async function sendBizAdminInviteEmail(email: string, company: string, addedBy: string, link: string): Promise<void> {
+  const name = company.replace(/</g, "&lt;");
+  const html = `
+    <p><strong>${addedBy.replace(/</g, "&lt;")}</strong> has made you an admin of <strong>${name}</strong> on TapCard for Business.</p>
+    <p>Tap the link below to sign in. From then on you can sign in at tapcard.aiert.co.uk/business/admin with this email address.</p>
+    <p><a href="${link}">${link}</a></p>
+    <p>This link works once and expires in 15 minutes. If you weren't expecting it, ignore this email and no access is given.</p>
+  `;
+  await send(email, `You are now an admin of ${company} on TapCard for Business`, html,
+    `${addedBy} has made you an admin of ${company} on TapCard for Business.\n\nSign in: ${link}\n\nThis link works once and expires in 15 minutes. If you weren't expecting it, ignore this email and no access is given.`);
+}
+
 export async function sendBizTrialReminderEmail(email: string, company: string, endsOn: string): Promise<void> {
   const link = "https://tapcard.aiert.co.uk/business/admin/billing";
   const html = `

@@ -205,11 +205,19 @@ Sam Patel,sam@yourcompany.com,Account Manager`}</pre>
         <h2>Who can do what</h2>
         <ul>
           <li>
-            <strong>The company admin</strong> is the person who signed up. They sign in on the web with an emailed
-            link (no password) and can design the template, invite and remove cards, mark shops, choose who may post
-            for which shop, post for any shop from <strong>Offers &amp; numbers</strong>, and manage billing. Today a
-            company has one admin. To add a second admin, or to hand the company to someone else, email{" "}
-            <a href="mailto:enquiries@aiert.co.uk">enquiries@aiert.co.uk</a> from the current admin&apos;s address.
+            <strong>A company admin</strong> signs in on the web with an emailed link (no password). The first admin is the
+            person who signed up, the <strong>owner</strong>. An admin can design the template, invite and remove cards,
+            mark shops, choose who may post for which shop, post for any shop from <strong>Offers &amp; numbers</strong>,
+            add or remove other admins, and manage billing. A company can have up to 5 admins.
+          </li>
+          <li>
+            <strong>Adding a second admin.</strong> Open the <strong>Admins</strong> tab, type their work email and press{" "}
+            <strong>Add admin</strong>. They get an email with a sign-in link, and from then on they can sign in at{" "}
+            <a href="/business/admin">tapcard.aiert.co.uk/business/admin</a> with that address. The Admins tab shows who has
+            signed in yet. Any admin can remove another admin (the person is signed out at once), but nobody can remove
+            themselves, and the owner cannot be removed there: to hand the company to someone else, email{" "}
+            <a href="mailto:enquiries@aiert.co.uk">enquiries@aiert.co.uk</a> from the owner&apos;s address. An email address can
+            run only one company&apos;s account.
           </li>
           <li>
             <strong>A shop manager</strong> is an employee whose card has been ticked for one or more shops. They post
@@ -230,6 +238,10 @@ Sam Patel,sam@yourcompany.com,Account Manager`}</pre>
         </ul>
         <h3 className="mt-4 font-semibold">Keeping control as people come and go</h3>
         <ul>
+          <li>
+            <strong>An admin leaves:</strong> remove them on the <strong>Admins</strong> tab. Admins are different from cards, so
+            also remove their card on the Employees tab if they had one.
+          </li>
           <li>
             <strong>Someone leaves, or loses their phone:</strong> press <strong>Remove</strong> next to their card on
             the Employees tab. The card, its link and its QR code stop working at once, including copies they forwarded,
