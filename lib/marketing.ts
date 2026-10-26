@@ -195,9 +195,21 @@ export async function bringOverEarlierMailing(): Promise<{ leads: number; sends:
       FROM tapcard_mailshot_list l JOIN tapcard_invite_contacts c ON c.id = l.contact_id
       WHERE l.relationship = 'restaurant' AND c.email <> '' AND c.dedupe_key NOT LIKE 'r:test:%'
     `) as { id: number; name: string; email: string; phone: string; website: string; address: string; booking_url: string; menu_url: string; do_not_contact: boolean; campaign: string; status: string; skip_reason: string | null }[];
+    type OldSend = { id: number; contact_id: number; subject: string; resend_id: string | null; sent_at: string; delivered_at: string | null; opened_at: string | null; bounced_at: string | null; bounce_reason: string | null; click_count: number; first_click_at: string | null; preview_first_at: string | null };
+    // Load everything once: a query per contact ran past the function's time limit on a second press.
+    const allOld = (await sql`
+      SELECT id, contact_id, subject, resend_id, sent_at, delivered_at, opened_at, bounced_at, bounce_reason, click_count, first_click_at, preview_first_at
+      FROM tapcard_invite_sends WHERE campaign NOT LIKE '%-test'
+    `) as OldSend[];
+    const oldByContact = new Map<number, OldSend[]>();
+    for (const o of allOld) oldByContact.set(o.contact_id, [...(oldByContact.get(o.contact_id) ?? []), o]);
+    const copied = new Set(((await sql`SELECT legacy_send_id FROM mk_sends WHERE legacy_send_id IS NOT NULL`) as { legacy_send_id: number }[]).map((r) => r.legacy_send_id));
+    const known = new Set(((await sql`SELECT lower(email) AS email FROM mk_leads WHERE NOT is_test`) as { email: string }[]).map((r) => r.email));
     for (const c of contacts) {
       if (!validEmail(c.email)) continue;
-      const hasSend = ((await sql`SELECT 1 FROM tapcard_invite_sends WHERE contact_id = ${c.id} AND campaign NOT LIKE '%-test' LIMIT 1`) as unknown[]).length > 0;
+      const mine = oldByContact.get(c.id) ?? [];
+      if (known.has(c.email) && mine.every((o) => copied.has(o.id))) continue;
+      const hasSend = mine.length > 0;
       const state: LeadState = c.do_not_contact ? "unsubscribed" : c.status === "skipped" ? "held" : hasSend ? "emailed_before" : "queued";
       const reason = c.do_not_contact ? "asked not to be emailed, or bounced" : c.status === "skipped" ? (c.skip_reason ?? "taken off the list") : "";
       const kind = guessKind(c.name, c.website);
@@ -210,11 +222,8 @@ export async function bringOverEarlierMailing(): Promise<{ leads: number; sends:
       if (leadId) leads++;
       else leadId = ((await sql`SELECT id FROM mk_leads WHERE lower(email) = ${c.email} AND NOT is_test`) as { id: number }[])[0]?.id;
       if (!leadId) continue;
-      const old = (await sql`
-        SELECT id, subject, resend_id, sent_at, delivered_at, opened_at, bounced_at, bounce_reason, click_count, first_click_at, preview_first_at
-        FROM tapcard_invite_sends WHERE contact_id = ${c.id} AND campaign NOT LIKE '%-test'
-      `) as { id: number; subject: string; resend_id: string | null; sent_at: string; delivered_at: string | null; opened_at: string | null; bounced_at: string | null; bounce_reason: string | null; click_count: number; first_click_at: string | null; preview_first_at: string | null }[];
-      for (const o0 of old) {
+      for (const o0 of mine) {
+        if (copied.has(o0.id)) continue;
         // The earlier mailing counted every click, scanners included: keep only the ones after the scanner window, not in a burst.
         const times = ((await sql`SELECT clicked_at FROM tapcard_invite_clicks WHERE send_id = ${o0.id} ORDER BY clicked_at`.catch(() => [])) as { clicked_at: string }[]).map((x) => new Date(x.clicked_at).getTime());
         const sentMs = new Date(o0.sent_at).getTime();
