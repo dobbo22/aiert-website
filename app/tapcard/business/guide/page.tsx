@@ -4,14 +4,14 @@ import DocPage from "../../DocPage";
 export const metadata: Metadata = {
   title: "Admin Guide – TapCard for Business | AIERT Ltd",
   description:
-    "How to set up TapCard for Business: sign in, design your company card, invite your team from your own staff list, and manage cards and billing.",
+    "How to set up TapCard for Business: sign in, design your company card, invite your team from your own staff list, control who can post for which location, verify your business, and manage cards and billing.",
 };
 
 // Step-by-step guide for company admins. Describes the admin pages as they
 // are (app/tapcard/business/admin/*) — update it alongside them.
 export default function TapCardBusinessGuidePage() {
   return (
-    <DocPage title="TapCard for Business: Admin Guide" updated="6 October 2026">
+    <DocPage title="TapCard for Business: Admin Guide" updated="26 October 2026">
       <section>
         <h2>Overview</h2>
         <p>Setting up your team takes three steps:</p>
@@ -165,6 +165,152 @@ Sam Patel,sam@yourcompany.com,Account Manager`}</pre>
       </section>
 
       <section>
+        <h2>Several locations: a worked example</h2>
+        <p>For a restaurant group or any business with more than one shop, in this order:</p>
+        <ol className="ml-5 mt-2 space-y-1.5 [&>li]:list-decimal!">
+          <li>
+            <strong>Sign up with a work email on your company&apos;s own website,</strong> for example{" "}
+            <em>you@yourrestaurants.com</em> if your website is yourrestaurants.com. This is what lets your cards count
+            as verified automatically (see <em>Verifying your business</em> below). A Gmail or Outlook address works,
+            but then each card has to be verified one by one.
+          </li>
+          <li>
+            On the <strong>Billing</strong> tab, choose the number of locations (two or more) and pay. Each location
+            includes its own card and up to 10 staff cards.
+          </li>
+          <li>
+            On the <strong>Card template</strong> tab, set the logo, website and social links, and lock the details
+            staff must not change.
+          </li>
+          <li>
+            On the <strong>Employees</strong> tab, invite each shop&apos;s manager and staff. Each person taps their
+            link in the TapCard app and their card appears in your Active cards list.
+          </li>
+          <li>
+            In the Active cards list, tick <strong>This card is a shop / location</strong> on each shop&apos;s card.
+            Offers and news belong to that card, and customers follow it.
+          </li>
+          <li>
+            For each manager, under <strong>Can post offers and news for</strong>, tick the shop or shops they may post
+            for. Staff with no ticks cannot post.
+          </li>
+          <li>
+            Set the staff PIN when an offer is created and tell your staff, so any of them can confirm a customer&apos;s
+            code. Check results on the <strong>Offers &amp; numbers</strong> tab.
+          </li>
+        </ol>
+      </section>
+
+      <section>
+        <h2>Who can do what</h2>
+        <ul>
+          <li>
+            <strong>The company admin</strong> is the person who signed up. They sign in on the web with an emailed
+            link (no password) and can design the template, invite and remove cards, mark shops, choose who may post
+            for which shop, post for any shop from <strong>Offers &amp; numbers</strong>, and manage billing. Today a
+            company has one admin. To add a second admin, or to hand the company to someone else, email{" "}
+            <a href="mailto:enquiries@aiert.co.uk">enquiries@aiert.co.uk</a> from the current admin&apos;s address.
+          </li>
+          <li>
+            <strong>A shop manager</strong> is an employee whose card has been ticked for one or more shops. They post
+            offers and news for those shops from their own TapCard app, and for no others. They cannot see billing or
+            other people&apos;s cards.
+          </li>
+          <li>
+            <strong>Other staff</strong> have a card to share and nothing more. With no ticks they cannot post.
+          </li>
+          <li>
+            <strong>Anyone who knows the staff PIN</strong> can confirm a customer&apos;s offer code on the web page, with
+            no app or login. Change the PIN by setting the offer again if someone leaves who knew it.
+          </li>
+          <li>
+            <strong>Locked details.</strong> Anything you lock on the template shows greyed out on every employee card
+            and cannot be changed by them. Name is always editable.
+          </li>
+        </ul>
+        <h3 className="mt-4 font-semibold">Keeping control as people come and go</h3>
+        <ul>
+          <li>
+            <strong>Someone leaves, or loses their phone:</strong> press <strong>Remove</strong> next to their card on
+            the Employees tab. The card, its link and its QR code stop working at once, including copies they forwarded,
+            and that place in your plan frees up. Send a new invite if they are replaced.
+          </li>
+          <li>
+            <strong>A manager moves shop:</strong> untick the old shop and tick the new one. It takes effect straight
+            away.
+          </li>
+          <li>
+            <strong>Two people, one shop:</strong> a shop has one live offer at a time. Whoever posted it can change it
+            that day, and someone else allowed to post for that shop can replace it from the next day, so nobody
+            overwrites anybody else by accident.
+          </li>
+          <li>
+            <strong>An invite link is the key to a card.</strong> Each works once and expires after 30 days. Send it
+            only to the person it is for, and check the Active cards list matches who you expect.
+          </li>
+          <li>
+            <strong>If payment stops:</strong> existing cards keep working but new invites cannot be made, and the cards
+            that were counting as verified because of your plan stop doing so until billing is active again (see below).
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Verifying your business</h2>
+        <p>
+          A verified business can post offers and news, and people who look you up see that the card is genuinely
+          yours. TapCard checks you control the business&apos;s own website, never just the name.
+        </p>
+        <h3 className="mt-4 font-semibold">Your company cards: automatic when all three are true</h3>
+        <ol className="ml-5 mt-2 space-y-1.5 [&>li]:list-decimal!">
+          <li>Your company is active: a paid plan, or a free trial that has not ended.</li>
+          <li>
+            The card&apos;s website is your own domain (not Facebook, Linktree, a website-builder address or similar).
+          </li>
+          <li>
+            The admin has signed in with an email on that same domain. For example, an admin who signed in as{" "}
+            <em>you@yourrestaurants.com</em> verifies every card whose website is yourrestaurants.com.
+          </li>
+        </ol>
+        <h3 className="mt-4 font-semibold">When a card is not verified automatically</h3>
+        <p>
+          This happens if you signed up with Gmail, Outlook or a similar address, or if a location has its own website on
+          a different domain. Verify that card yourself. Open the card in the TapCard app, go to its offers and news
+          section and choose <strong>Verify your business</strong>, then use either:
+        </p>
+        <ul className="mt-2">
+          <li>
+            <strong>Option 1, an email code.</strong> Enter an address ending in the website&apos;s domain. We send a
+            6-digit code that works for 15 minutes, with 5 tries.
+          </li>
+          <li>
+            <strong>Option 2, your website.</strong> Add the one line shown to your website&apos;s home page (or save
+            the text as the file shown), then tap Check. A link to your TapCard page on your home page also works.
+          </li>
+        </ul>
+        <h3 className="mt-4 font-semibold">Good to know</h3>
+        <ul>
+          <li>
+            <strong>One verified card per website.</strong> If another card for your business was verified first, for
+            example by a manager or an agency, a second cannot be. Email{" "}
+            <a href="mailto:enquiries@aiert.co.uk">enquiries@aiert.co.uk</a> and we will move it.
+          </li>
+          <li>
+            A card that was verified with a code or your website <strong>stays verified</strong> whatever happens to
+            your plan. Only the automatic company verification depends on an active plan.
+          </li>
+          <li>
+            <strong>Free trials:</strong> one per company email domain. Gmail, Outlook and other shared addresses get one
+            trial per address.
+          </li>
+          <li>
+            <strong>Reporting.</strong> Anyone can report a card that looks fake or wrong from the card itself. We review
+            every report and can remove a card.
+          </li>
+        </ul>
+      </section>
+
+      <section>
         <h2>Offers and news: who posts, and who confirms a code</h2>
         <ul>
           <li>
@@ -259,6 +405,19 @@ Sam Patel,sam@yourcompany.com,Account Manager`}</pre>
           <li>
             <strong>&quot;Your company has used all its TapCard seats&quot;:</strong> remove a card you no longer need,
             or add a location on the Billing tab.
+          </li>
+          <li>
+            <strong>&quot;Verify your business first&quot; when posting:</strong> the card is not verified yet. Sign in to
+            the admin area with an email on your own website&apos;s domain, or verify that card with a code or your
+            website (see <em>Verifying your business</em>).
+          </li>
+          <li>
+            <strong>&quot;Another TapCard for this business is already verified&quot;:</strong> a card for your website was
+            verified earlier. Email <a href="mailto:enquiries@aiert.co.uk">enquiries@aiert.co.uk</a> and we will move it.
+          </li>
+          <li>
+            <strong>&quot;A free trial has already been used for this company&quot;:</strong> someone from your email
+            domain has taken the trial. Sign in instead, or choose a paid plan.
           </li>
           <li>
             <strong>The file shows 0 people:</strong> make sure it&apos;s a CSV with the columns name, email, title, or a

@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import sql from "@/lib/db";
-import { ensureSchema } from "@/lib/tapcardBiz";
+import { confirmAdminEmail, ensureSchema } from "@/lib/tapcardBiz";
 
 // Passwordless admin sign-in for TapCard for Business — modeled on
 // mailbroom-web's affiliate magic-link pattern (lib/affiliate-auth.ts
@@ -51,6 +51,8 @@ export async function consumeLoginToken(token: string): Promise<{ email: string;
     RETURNING admin_email, org_id
   `) as { admin_email: string; org_id: string | null }[];
   const row = rows[0];
+  // Opening the emailed link proves they control that mailbox.
+  if (row?.org_id) await confirmAdminEmail(row.org_id, row.admin_email).catch(() => {});
   return row ? { email: row.admin_email, orgId: row.org_id } : null;
 }
 

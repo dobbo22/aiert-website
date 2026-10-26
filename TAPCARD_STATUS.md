@@ -3,6 +3,14 @@
 Martin's notes for picking up TapCard work in Claude Code. Read this first,
 then check `git log` in each repo for anything newer.
 
+## 26 Oct 2026: verification for companies tightened; Google rating; QR sign extras
+- **Company cards are no longer verified just for belonging to a company.** `lib/tapcardVerify.ts` `companyCardVerified`: the company must be active (`isOrgActive`: paid, or trial not ended) AND a confirmed admin mailbox must sit on the card's own website domain (`orgHasConfirmedAdminOnDomain`, `lib/tapcardBiz.ts`). `tapcard_biz_admins.confirmed_at` is set when the emailed sign-in link is opened (`consumeLoginToken`); existing admins who had already used a link were backfilled. A card verified itself (emailed code or website proof) stays verified whatever the plan does. `matchBusiness` now uses the same rule. Domain helpers moved to `lib/tapcardDomain.ts` (`businessDomain`, `isFreeMailDomain`, `emailOnDomain`).
+- **Free trial and Gmail:** one trial per company email domain, but Gmail/Outlook/other shared domains get one per address (`emailHasUsedTrial`); the org's `domain` stays empty for them.
+- **Admin guide** (`/business/guide`) now has "Several locations: a worked example", "Who can do what" (one admin per company today: more admins by emailing enquiries) and "Verifying your business". Keep it in step with the admin pages.
+- **Google rating** (`lib/tapcardRating.ts`, `GET /api/rating?place=<id>`): from Places by place id (the id is in the card's google_review link), in memory 6 h, daily cap 3,000, nothing stored; shown as a gold star on the web card and in the apps (apps built from 26 Oct). Tripadvisor is a link only (no API).
+- **Logo plates** adapt to the logo's colours (`lib/logoBackdrop.ts`, apps' LogoBackdrop); `/api/logo` and `/api/favicon` send `access-control-allow-origin: *`.
+- **QR sign** is business cards only, "Email me the sign" only (no Print), headline "Scan to follow and receive news and offers", optional rating/map/social/review icons (off by default).
+
 ## Repos and where they live on the Mac
 
 | What | GitHub | Mac folder | Branch to work on |

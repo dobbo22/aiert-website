@@ -9,7 +9,7 @@ import { readLimited, safeFetch } from "@/lib/siteIcon";
 // A business proves it controls its card by entering a 6-digit code sent to an email address on its own website's domain.
 // One verified card per domain: a second card for the same business can follow, but not verify, unless support moves it.
 // Posting offers and news needs a verified card once TAPCARD_VERIFY_ENFORCE=1 (company cards from TapCard for Business count
-// as verified already). Reports of fake or wrong cards are saved here too and listed in the admin.
+// as verified while the company is active and a confirmed admin mailbox is on the card's own website domain). Reports of fake or wrong cards are saved here too and listed in the admin.
 
 let ready: Promise<unknown> | null = null;
 function ensureSchema(): Promise<unknown> {
@@ -31,31 +31,9 @@ function ensureSchema(): Promise<unknown> {
 
 export const verifyEnforced = () => process.env.TAPCARD_VERIFY_ENFORCE === "1";
 
-// Websites that are not a business's own domain: a code to one of these addresses proves nothing about the business.
-const NOT_OWN_DOMAIN = new Set([
-  "gmail.com", "googlemail.com", "outlook.com", "hotmail.com", "hotmail.co.uk", "live.com", "yahoo.com", "yahoo.co.uk", "icloud.com", "me.com",
-  "btinternet.com", "btopenworld.com", "sky.com", "aol.com", "proton.me", "protonmail.com",
-  "facebook.com", "fb.com", "instagram.com", "linktr.ee", "linkedin.com", "twitter.com", "x.com", "tiktok.com", "youtube.com", "google.com",
-  "wixsite.com", "wordpress.com", "squarespace.com", "weebly.com", "godaddysites.com", "business.site", "sites.google.com", "carrd.co",
-  "ubereats.com", "just-eat.co.uk", "deliveroo.co.uk", "opentable.com", "tripadvisor.co.uk", "tripadvisor.com", "yell.com", "yelp.com",
-]);
-const SECOND_LEVEL = new Set(["co.uk", "org.uk", "me.uk", "ltd.uk", "plc.uk", "gov.uk", "ac.uk", "sch.uk", "com.au", "co.nz", "co.za", "com.br", "co.in", "co.jp"]);
-
-/// The domain a website belongs to ("www.maguro-restaurant.com" -> "maguro-restaurant.com"), or "" when it is missing or is not a
-/// business's own domain (a social page, a free-mail address, a website-builder subdomain).
-export function businessDomain(website: string): string {
-  let host = "";
-  try {
-    host = new URL(/^[a-z]+:\/\//i.test(website.trim()) ? website.trim() : `https://${website.trim()}`).hostname.toLowerCase();
-  } catch { return ""; }
-  host = host.replace(/^www\./, "");
-  const parts = host.split(".");
-  if (parts.length < 2) return "";
-  const two = parts.slice(-2).join(".");
-  const reg = SECOND_LEVEL.has(two) && parts.length >= 3 ? parts.slice(-3).join(".") : two;
-  if (NOT_OWN_DOMAIN.has(reg) || NOT_OWN_DOMAIN.has(host)) return "";
-  return reg;
-}
+import { businessDomain } from "@/lib/tapcardDomain";
+import { getOrg, isOrgActive, orgHasConfirmedAdminOnDomain } from "@/lib/tapcardBiz";
+export { businessDomain };
 
 const emailDomainMatches = (email: string, domain: string): boolean => {
   const d = email.split("@")[1]?.toLowerCase() ?? "";
@@ -64,10 +42,24 @@ const emailDomainMatches = (email: string, domain: string): boolean => {
 
 const hashCode = (cardId: string, code: string) => crypto.createHash("sha256").update(`${cardId}:${code}`).digest("hex");
 
+/// A company card counts as verified only while the company is active (a paid plan, or a trial that has not ended) AND someone who
+/// has signed in with a mailbox on the card's own website domain is an admin of the company. That is the same proof as verifying a
+/// single card with an emailed code. A company with no such admin (a Gmail sign-up, or a website that is not theirs) verifies each
+/// card the normal way, and a card that was verified itself stays verified whatever happens to the plan.
+async function companyCardVerified(orgId: string | null | undefined, website: string): Promise<boolean> {
+  if (!orgId) return false;
+  const domain = businessDomain(website);
+  if (!domain) return false;
+  const org = await getOrg(orgId).catch(() => null);
+  if (!org || !isOrgActive(org)) return false;
+  return orgHasConfirmedAdminOnDomain(orgId, domain).catch(() => false);
+}
+
 export async function isCardVerified(cardId: string): Promise<boolean> {
   await ensureSchema();
-  const rows = (await sql`SELECT verified_at, org_id FROM tapcard_cards WHERE id = ${cardId}`.catch(() => [])) as { verified_at: string | null; org_id?: string | null }[];
-  return !!rows[0]?.verified_at || !!rows[0]?.org_id;
+  const rows = (await sql`SELECT verified_at, org_id, website FROM tapcard_cards WHERE id = ${cardId}`.catch(() => [])) as { verified_at: string | null; org_id?: string | null; website?: string }[];
+  const r = rows[0];
+  return !!r?.verified_at || (await companyCardVerified(r?.org_id, r?.website ?? ""));
 }
 
 /// What the apps and the card page show: verified or not, and the domain it was verified for.
@@ -76,7 +68,8 @@ export async function verifyStatus(cardId: string): Promise<{ verified: boolean;
   const rows = (await sql`SELECT verified_at, verified_domain, website, org_id FROM tapcard_cards WHERE id = ${cardId}`.catch(() => [])) as
     { verified_at: string | null; verified_domain: string; website: string; org_id?: string | null }[];
   const r = rows[0];
-  return { verified: !!r?.verified_at || !!r?.org_id, domain: r?.verified_domain ?? "", ownDomain: businessDomain(r?.website ?? ""), enforced: verifyEnforced(), company: !!r?.org_id };
+  const verified = !!r?.verified_at || (await companyCardVerified(r?.org_id, r?.website ?? ""));
+  return { verified, domain: r?.verified_domain || (verified ? businessDomain(r?.website ?? "") : ""), ownDomain: businessDomain(r?.website ?? ""), enforced: verifyEnforced(), company: !!r?.org_id };
 }
 
 /// Posting offers or news needs a verified card, once the rule is switched on. Personal cards and company cards are not held to it.
@@ -150,7 +143,7 @@ export async function matchBusiness(input: { website?: string; phone?: string; n
     const phoneOk = wantPhone.length >= 7 && digits(r.phone) === wantPhone;
     const hay = `${r.company}${r.name}`.toLowerCase().replace(/[^a-z0-9]/g, "");
     const nameOk = wantName.length >= 4 && (hay.includes(wantName) || wantName.includes(hay.slice(0, Math.max(4, hay.length))));
-    if (phoneOk || nameOk) return { id: r.id, name: r.company || r.name, verified: !!r.verified_at };
+    if (phoneOk || nameOk) return { id: r.id, name: r.company || r.name, verified: await isCardVerified(r.id) };
   }
   return null;
 }

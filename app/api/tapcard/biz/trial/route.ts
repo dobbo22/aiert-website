@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { addAdmin, createOrg, domainHasUsedTrial, domainOf, markTrialUsed, setOrgBilling } from "@/lib/tapcardBiz";
+import { addAdmin, createOrg, domainHasUsedTrial, domainOf, emailHasUsedTrial, markTrialUsed, setOrgBilling } from "@/lib/tapcardBiz";
+import { isFreeMailDomain } from "@/lib/tapcardDomain";
 import { createLoginToken } from "@/lib/tapcardBizAuth";
 import { sendBizLoginEmail } from "@/lib/tapcardBizEmail";
 import { TRIAL_DAYS, TRIAL_SEAT_LIMIT } from "@/lib/tapcardBizBilling";
@@ -33,14 +34,17 @@ export async function POST(req: NextRequest) {
   }
 
   const domain = domainOf(email);
-  if (await domainHasUsedTrial(domain)) {
+  // Gmail, Outlook and other shared domains: one trial per address (one per domain would give the whole of Gmail a single trial).
+  // A company's own domain still gets one trial for the company.
+  const shared = isFreeMailDomain(domain);
+  if (shared ? await emailHasUsedTrial(email) : await domainHasUsedTrial(domain)) {
     return NextResponse.json(
       { error: "A free trial has already been used for this company — sign in instead, or choose a paid plan." },
       { status: 409 }
     );
   }
 
-  const org = await createOrg(companyName, domain);
+  const org = await createOrg(companyName, shared ? "" : domain);
   await setOrgBilling(org.id, {
     billing_status: "active", seat_band: "trial", seat_limit: TRIAL_SEAT_LIMIT,
     current_period_end: new Date(Date.now() + TRIAL_DAYS * 86_400_000),

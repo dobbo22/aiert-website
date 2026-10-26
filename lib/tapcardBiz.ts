@@ -88,6 +88,7 @@ export function ensureSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS trial_used BOOLEAN NOT NULL DEFAULT false`)
       .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS trial_reminded_at TIMESTAMPTZ`)
       .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS locations INTEGER NOT NULL DEFAULT 0`)
+
       .then(() => sql`
         CREATE TABLE IF NOT EXISTS tapcard_biz_admins (
           id TEXT PRIMARY KEY,
@@ -97,6 +98,15 @@ export function ensureSchema(): Promise<unknown> {
           created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
           UNIQUE(org_id, email)
         )
+      `)
+      // Set when the admin opens the sign-in link emailed to this address: proof they control the mailbox.
+      .then(() => sql`ALTER TABLE tapcard_biz_admins ADD COLUMN IF NOT EXISTS confirmed_at TIMESTAMPTZ`)
+      // Admins who had already opened a sign-in link before this column existed count as confirmed from that moment.
+      .then(() => sql`
+        UPDATE tapcard_biz_admins a SET confirmed_at = t.first_used
+        FROM (SELECT org_id, lower(admin_email) AS email, min(consumed_at) AS first_used FROM tapcard_biz_login_tokens
+              WHERE consumed_at IS NOT NULL AND org_id IS NOT NULL GROUP BY org_id, lower(admin_email)) t
+        WHERE a.org_id = t.org_id AND a.email = t.email AND a.confirmed_at IS NULL
       `)
       .then(() => sql`
         CREATE TABLE IF NOT EXISTS tapcard_biz_login_tokens (
@@ -174,6 +184,37 @@ export async function domainHasUsedTrial(domain: string): Promise<boolean> {
   await ensureSchema();
   const rows = (await sql`
     SELECT 1 FROM tapcard_biz_orgs WHERE domain = ${domain} AND trial_used = true LIMIT 1
+  `) as unknown[];
+  return rows.length > 0;
+}
+
+/// Free trial already used by this exact address. Used instead of the domain check for Gmail and other shared domains, where
+/// everyone would otherwise share one trial.
+export async function emailHasUsedTrial(email: string): Promise<boolean> {
+  await ensureSchema();
+  const rows = (await sql`
+    SELECT 1 FROM tapcard_biz_admins a JOIN tapcard_biz_orgs o ON o.id = a.org_id
+    WHERE a.email = ${email.trim().toLowerCase()} AND o.trial_used = true LIMIT 1
+  `) as unknown[];
+  return rows.length > 0;
+}
+
+/// The admin has opened the sign-in link sent to this address, so they control that mailbox.
+export async function confirmAdminEmail(orgId: string, email: string): Promise<void> {
+  await ensureSchema();
+  await sql`UPDATE tapcard_biz_admins SET confirmed_at = now() WHERE org_id = ${orgId} AND email = ${email.trim().toLowerCase()} AND confirmed_at IS NULL`;
+}
+
+/// Has someone with a confirmed mailbox on this business domain signed in to the company? That is the company's proof that it
+/// owns the domain (the same standard as verifying a single card with an emailed code).
+export async function orgHasConfirmedAdminOnDomain(orgId: string, domain: string): Promise<boolean> {
+  if (!domain) return false;
+  await ensureSchema();
+  const rows = (await sql`
+    SELECT 1 FROM tapcard_biz_admins
+    WHERE org_id = ${orgId} AND confirmed_at IS NOT NULL
+      AND (split_part(email, '@', 2) = ${domain} OR split_part(email, '@', 2) LIKE ${"%." + domain})
+    LIMIT 1
   `) as unknown[];
   return rows.length > 0;
 }
