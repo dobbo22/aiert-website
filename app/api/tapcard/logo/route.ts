@@ -24,6 +24,8 @@ export async function GET(req: NextRequest) {
       "cache-control": "public, max-age=86400, s-maxage=604800, stale-while-revalidate=604800",
       "content-security-policy": "default-src 'none'; sandbox",
       "x-content-type-options": "nosniff",
+      // Public images: readable cross-origin so the card page can pick the plate colour behind a logo from its pixels.
+      "access-control-allow-origin": "*",
     },
   });
 }
