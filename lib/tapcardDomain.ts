@@ -11,7 +11,7 @@ const NOT_OWN_DOMAIN = new Set([
 ]);
 const SECOND_LEVEL = new Set(["co.uk", "org.uk", "me.uk", "ltd.uk", "plc.uk", "gov.uk", "ac.uk", "sch.uk", "com.au", "co.nz", "co.za", "com.br", "co.in", "co.jp"]);
 
-/// The domain a website belongs to ("www.maguro-restaurant.com" -> "maguro-restaurant.com"), or "" when it is missing or is not a
+/// The domain a website belongs to ("www.example-cafe.com" -> "example-cafe.com"), or "" when it is missing or is not a
 /// business's own domain (a social page, a free-mail address, a website-builder subdomain).
 export function businessDomain(website: string): string {
   let host = "";

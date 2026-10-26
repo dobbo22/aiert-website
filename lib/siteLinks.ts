@@ -305,7 +305,7 @@ export function socialOf(u: URL): { kind: Social; url: string } | null {
 }
 export interface SiteBranch { name: string; address: string; phone: string; hours: string }
 
-// `address` is whatever the card has so far; `name` is the card's name (e.g. "Dishoom Shoreditch"), used to pick the branch.
+// `address` is whatever the card has so far; `name` is the card's name (e.g. "Acme Cafe Shoreditch"), used to pick the branch.
 export async function findSiteLinks(websiteOrDomain: string, address?: string, name?: string): Promise<{ links: CardLink[]; details: SiteDetails; branches: SiteBranch[] }> {
   let host = websiteOrDomain.trim();
   try { host = new URL(/^[a-z]+:\/\//i.test(host) ? host : `https://${host}`).hostname; } catch { /* keep */ }

@@ -70,7 +70,7 @@ export async function searchBusinesses(queryRaw: string, near?: { lat: number; l
   const key = process.env.GOOGLE_PLACES_API_KEY;
   const q = queryRaw.trim().slice(0, 100);
   if (!key || q.length < 3) return [];
-  // The searcher's rough area (from their connection, never stored) puts the nearest branch first: "Maguro" in W9, not Manchester.
+  // The searcher's rough area (from their connection, never stored) puts the nearest branch first: a local branch first, not one in another city.
   const area = near && Number.isFinite(near.lat) && Number.isFinite(near.lng) && Math.abs(near.lat) <= 90 && Math.abs(near.lng) <= 180 ? near : null;
   const cacheKey = `${q.toLowerCase()}|${area ? `${area.lat.toFixed(1)},${area.lng.toFixed(1)}` : ""}`;
   const cached = cache.get(cacheKey);
