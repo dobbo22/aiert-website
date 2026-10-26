@@ -325,7 +325,7 @@ function LeadRows({ l, open, onToggle, onChanged }: { l: LeadRow; open: boolean;
   return (
     <>
       <tr className="row" onClick={onToggle}>
-        <td><div className="mkr-name">{l.name || l.email}</div><div className="mkr-sub">{l.email}{l.area ? ` · ${l.area}` : ""}{l.batch ? ` · ${l.batch}` : ""}</div></td>
+        <td><div className="mkr-name">{l.name || l.email}</div><div className="mkr-sub">{l.email}{l.area ? ` · ${l.area}` : ""}{l.batch && l.batch !== l.area ? ` · ${l.batch}` : ""}</div></td>
         <td><Pills l={l} /></td>
         <td>{l.sent_at ? <>{day(l.sent_at)}<div className="mkr-sub">{l.sends > 1 ? `${l.sends} emails` : ""}</div></> : <span className="mkr-sub">–</span>}</td>
         <td onClick={(e) => e.stopPropagation()}>
