@@ -83,8 +83,8 @@ export default function HowItWorksPage() {
             to hand. Pick a design in the app and your Wallet card updates to match. Offers and stamp cards you claim can go in Wallet too.
           </li>
           <li>
-            <strong>Print a QR sign:</strong> make a poster for a reception desk, till or window. Use a separate card
-            for it, so only the details you want to be public are shown. The sign carries your business name as its heading, and Email me the sign sends it to you as a PDF to print from a computer.
+            <strong>QR sign:</strong> make a poster for a reception desk, till or window. Use a separate card
+            for it, so only the details you want to be public are shown. The sign carries your business name as its heading and says "Scan to follow and receive news and offers". Email me the sign sends it to you as a PDF to print from a computer.
           </li>
           <li>
             <strong>No signal?</strong> Tap <strong>Offline QR</strong>. It shows a QR code that holds your contact

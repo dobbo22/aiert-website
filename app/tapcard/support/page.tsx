@@ -22,7 +22,7 @@ export default function TapCardSupportPage() {
         <h2>Sharing your card</h2>
         <ul>
           <li>Tap <strong>Share my card</strong> to get a link, a QR code and a Wallet pass (Apple Wallet or Google Wallet). Pick a design and your Wallet card updates to match.</li>
-          <li>Use <strong>Share</strong>, <strong>Send</strong> or <strong>Print</strong> to share the link, send it to contacts, or print a QR sign.</li>
+          <li>Use <strong>Share</strong>, <strong>Send</strong> or <strong>QR sign</strong> (business cards) to share the link, send it to contacts, or email yourself a QR sign for your window.</li>
           <li>No signal? Tap <strong>Offline QR</strong>. The code contains your contact details, so it works without signal or the app.</li>
           <li>People who scan the QR code see your card in their browser and can tap Save Contact. They don&apos;t need the app.</li>
           <li>Edits you save update the same link and QR code. </li>

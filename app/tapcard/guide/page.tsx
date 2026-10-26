@@ -21,8 +21,8 @@ const steps: { title: string; img?: string; alt?: string; text: string }[] = [
   {
     title: "Share your card",
     img: "share.png",
-    alt: "TapCard share screen with a QR code and Share, Send and Print buttons",
-    text: "Your QR code is the quickest way. Anyone scans it with their camera and saves you, with no app needed. Under it, Share sends your link, Send picks people from your contacts, and Print makes a QR sign headed with your business name. Most phones have no printer, so choose Email me the sign and print it from a computer. Add your card to Apple Wallet or Google Wallet and choose a design.",
+    alt: "TapCard share screen with a QR code and Share, Send and QR sign buttons",
+    text: "Your QR code is the quickest way. Anyone scans it with their camera and saves you, with no app needed. Under it, Share sends your link, Send picks people from your contacts, and QR sign (on business cards) makes a poster for your window or till, headed with your business name and \"Scan to follow and receive news and offers\". Choose Email me the sign and print it from a computer. Add your card to Apple Wallet or Google Wallet and choose a design.",
   },
   {
     title: "No signal? Use Offline QR",
