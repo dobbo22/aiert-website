@@ -33,6 +33,13 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Browsers ask for /favicon.ico by itself: on this host that is TapCard's icon, not the AIERT site-wide one.
+  if (request.nextUrl.pathname === "/favicon.ico") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/tapcard-favicon.ico";
+    return NextResponse.rewrite(url);
+  }
+
   // Already-prefixed paths pass through: the TapCard for Business pages
   // call /api/tapcard/biz/… from the browser, which must work on this host
   // as well as www.aiert.co.uk — rewriting them again gave

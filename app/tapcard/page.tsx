@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     title: TITLE,
     description: DESCRIPTION,
     url: "https://tapcard.aiert.co.uk/",
-    images: ["https://www.aiert.co.uk/tapcard-email-card.png"],
+    images: [{ url: "https://www.aiert.co.uk/tapcard-og.png", width: 1200, height: 630, alt: "TapCard: your business card on your phone" }],
     siteName: "TapCard",
     type: "website",
   },
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: TITLE,
     description: DESCRIPTION,
-    images: ["https://www.aiert.co.uk/tapcard-email-card.png"],
+    images: ["https://www.aiert.co.uk/tapcard-og.png"],
   },
 };
 
