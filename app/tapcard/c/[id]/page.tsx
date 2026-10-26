@@ -9,6 +9,7 @@ import { BannerBrand, BrandProvider, FaviconBadge } from "../../CardBrand";
 import ContactIcon, { type ContactIconName } from "../../ContactIcon";
 import AcceptRecipientForm from "../../AcceptRecipientForm";
 import { callActionLabel, isTapLink, linkIcon, parseStoredLinks } from "@/lib/tapcardLinks";
+import { placeIdFromLinks, placeRating } from "@/lib/tapcardRating";
 import SaveContactButton from "../../SaveContactButton";
 import CarryCardToInstall from "../../CarryCardToInstall";
 import { publicAnnouncement, publicOffer, recentAnnouncements } from "@/lib/tapcardOffers";
@@ -129,6 +130,8 @@ export default async function CardPage({
     iconBg: "#0E8C99",
   }));
   const visibleLines = [...contactLines.filter((line) => line.value), ...linkRows];
+  // Google's rating for a business found through Google (its review link carries the place id); nothing is stored here.
+  const googleRating = await placeRating(placeIdFromLinks(parseStoredLinks(card.links))).catch(() => null);
 
   const socialLinks: { name: string; value: string; icon: ContactIconName; iconBg: string }[] = [
     { name: "LinkedIn", value: card.linkedin_url, icon: "linkedin", iconBg: "#0A66C2" },
@@ -203,6 +206,14 @@ export default async function CardPage({
             <h1 className="mt-4 text-2xl font-bold text-white">{card.name}</h1>
             {(card.title || card.company) && (
               <p className="mt-1 text-sm text-white">{[card.title, card.company].filter(Boolean).join(" · ")}</p>
+            )}
+            {googleRating && (
+              <p className="mt-1.5 flex items-center justify-center gap-1.5 text-sm text-white" aria-label={`Rated ${googleRating.rating} out of 5 on Google`}>
+                <span className="text-base text-[#FBBC04]" aria-hidden="true">★</span>
+                <span className="font-bold">{googleRating.rating.toFixed(1)}</span>
+                {googleRating.count > 0 && <span>({googleRating.count.toLocaleString("en-GB")})</span>}
+                <span>on Google</span>
+              </p>
             )}
 
             <CarryCardToInstall cardLink={`${TAPCARD_ORIGIN}/c/${id}`} />
