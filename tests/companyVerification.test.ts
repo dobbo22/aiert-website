@@ -4,7 +4,8 @@ import assert from "node:assert/strict";
 // The database is not available here, so this loads the pure rule with the database module stubbed out.
 import Module from "node:module";
 const realLoad = (Module as unknown as { _load: (...a: unknown[]) => unknown })._load;
-(Module as unknown as { _load: (...a: unknown[]) => unknown })._load = function (request: string, ...rest: unknown[]) {
+(Module as unknown as { _load: (...a: unknown[]) => unknown })._load = function (this: unknown, ...args: unknown[]) {
+  const [request, ...rest] = args as [string, ...unknown[]];
   if (request === "@/lib/db" || request.endsWith("/lib/db")) return { default: () => [] };
   if (request === "@vercel/blob") return { del: async () => {} };
   return realLoad.call(this, request, ...rest);

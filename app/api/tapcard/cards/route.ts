@@ -10,6 +10,7 @@ import { resolveSiteBranding } from "@/lib/siteBrandColor";
 import { applyOrgLocks } from "@/lib/tapcardBiz";
 import { isBusinessLabel, sanitizeLinks } from "@/lib/tapcardLinks";
 import { sendCardUpdatedEmail } from "@/lib/tapcardRecipientEmail";
+import { MAX_CARDS_PER_INSTALL, makeRoomForInstall } from "@/lib/tapcardCardLimits";
 
 // Fields worth quietly notifying recipients about — avatar/colour tweaks
 // shouldn't spam anyone who was sent this card directly.
@@ -174,6 +175,10 @@ export async function POST(req: NextRequest) {
   const ipHash = clientIpHash(req);
   if ((await countRecentCreates(ipHash)) >= MAX_CREATES_PER_HOUR) {
     return NextResponse.json({ error: "too many cards created, try again later" }, { status: 429 });
+  }
+  // One install may keep a handful of cards. Past that an unused card is cleared to make room, else the new one is refused.
+  if (!(await makeRoomForInstall(fields.grouping_id).catch(() => true))) {
+    return NextResponse.json({ error: `This phone already has ${MAX_CARDS_PER_INSTALL} shared cards. Delete one you no longer use, then try again.`, code: "too_many_cards" }, { status: 409 });
   }
   const id = await createCard(fields, hashSecret(token), ipHash);
   // Resolved after responding — the app gets its id back immediately and
