@@ -16,6 +16,10 @@ import { restaurantHtml, restaurantSubject, restaurantText, parseRestaurantList,
 export const HARD_DAILY_LIMIT = 100;
 const MAX_PER_CALL = 40;
 const BOUNCE_PAUSE_RATE = 0.08;
+/// Email security scanners open every link within seconds of delivery. A click sooner than this after sending, or a burst of links all
+/// opened within a few seconds (BURST_SECONDS) of each other, is treated as a scanner and not counted.
+export const SCANNER_WINDOW_SECONDS = 45;
+const BURST_SECONDS = 3;
 
 export type LeadState = "queued" | "held" | "removed" | "unsubscribed" | "emailed_before";
 export type LeadStage = "new" | "interested" | "signed_up" | "not_interested";
@@ -67,6 +71,8 @@ export function ensureMarketingSchema(): Promise<unknown> {
           complained_at TIMESTAMPTZ,
           unsubscribed_at TIMESTAMPTZ
         )`)
+      .then(() => sql`ALTER TABLE mk_sends ADD COLUMN IF NOT EXISTS engaged_at TIMESTAMPTZ`)
+      .then(() => sql`ALTER TABLE mk_sends ADD COLUMN IF NOT EXISTS engaged_count INTEGER NOT NULL DEFAULT 0`)
       .then(() => sql`CREATE INDEX IF NOT EXISTS mk_sends_lead ON mk_sends (lead_id, sent_at DESC)`)
       .then(() => sql`CREATE INDEX IF NOT EXISTS mk_sends_resend ON mk_sends (resend_id)`)
       .then(() => sql`
@@ -208,7 +214,13 @@ export async function bringOverEarlierMailing(): Promise<{ leads: number; sends:
         SELECT id, subject, resend_id, sent_at, delivered_at, opened_at, bounced_at, bounce_reason, click_count, first_click_at, preview_first_at
         FROM tapcard_invite_sends WHERE contact_id = ${c.id} AND campaign NOT LIKE '%-test'
       `) as { id: number; subject: string; resend_id: string | null; sent_at: string; delivered_at: string | null; opened_at: string | null; bounced_at: string | null; bounce_reason: string | null; click_count: number; first_click_at: string | null; preview_first_at: string | null }[];
-      for (const o of old) {
+      for (const o0 of old) {
+        // The earlier mailing counted every click, scanners included: keep only the ones after the scanner window, not in a burst.
+        const times = ((await sql`SELECT clicked_at FROM tapcard_invite_clicks WHERE send_id = ${o0.id} ORDER BY clicked_at`.catch(() => [])) as { clicked_at: string }[]).map((x) => new Date(x.clicked_at).getTime());
+        const sentMs = new Date(o0.sent_at).getTime();
+        const human = times.filter((t, i) => t - sentMs > SCANNER_WINDOW_SECONDS * 1000 && !(i > 0 && t - times[i - 1] < BURST_SECONDS * 1000));
+        const previewOk = o0.preview_first_at && new Date(o0.preview_first_at).getTime() - sentMs > SCANNER_WINDOW_SECONDS * 1000;
+        const o = { ...o0, click_count: times.length ? human.length : (o0.first_click_at && new Date(o0.first_click_at).getTime() - sentMs > SCANNER_WINDOW_SECONDS * 1000 ? o0.click_count : 0), first_click_at: human.length ? new Date(human[0]).toISOString() : (times.length ? null : (o0.first_click_at && new Date(o0.first_click_at).getTime() - sentMs > SCANNER_WINDOW_SECONDS * 1000 ? o0.first_click_at : null)), preview_first_at: previewOk ? o0.preview_first_at : null };
         const made = (await sql`
           INSERT INTO mk_sends (lead_id, token, resend_id, subject, legacy_send_id, sent_at, delivered_at, opened_at, open_count, clicked_at, click_count, preview_first_at, bounced_at, bounce_reason)
           VALUES (${leadId}, ${"old-" + o.id}, ${o.resend_id}, ${o.subject}, ${o.id}, ${o.sent_at}, ${o.delivered_at}, ${o.opened_at}, ${o.opened_at ? 1 : 0}, ${o.first_click_at}, ${o.click_count}, ${o.preview_first_at}, ${o.bounced_at}, ${o.bounce_reason})
@@ -343,18 +355,57 @@ export async function sendByToken(token: string): Promise<SendRef | null> {
   return ((await sql`SELECT id, lead_id FROM mk_sends WHERE token = ${token}`) as SendRef[])[0] ?? null;
 }
 
-export async function recordClick(token: string, target: string): Promise<void> {
-  const s = await sendByToken(token);
-  if (!s) return;
-  await sql`UPDATE mk_sends SET click_count = click_count + 1, clicked_at = COALESCE(clicked_at, now()) WHERE id = ${s.id}`;
-  await addEvent(s.id, s.lead_id, "clicked", target);
+/// Is this visit probably an email security scanner? Too soon after sending, or part of a burst of links opened together.
+async function looksLikeScanner(s: { id: number; sent_at: string }): Promise<boolean> {
+  const age = (Date.now() - new Date(s.sent_at).getTime()) / 1000;
+  if (age < SCANNER_WINDOW_SECONDS) return true;
+  const recent = ((await sql`
+    SELECT COUNT(*)::int AS n FROM mk_events WHERE send_id = ${s.id} AND type IN ('clicked', 'preview', 'click_auto') AND created_at > now() - ${`${BURST_SECONDS} seconds`}::interval`) as { n: number }[])[0]?.n ?? 0;
+  return recent >= 1;
 }
 
-export async function recordPreviewOpened(token: string): Promise<void> {
-  const s = await sendByToken(token);
-  if (!s) return;
-  const r = (await sql`UPDATE mk_sends SET preview_first_at = now() WHERE id = ${s.id} AND preview_first_at IS NULL RETURNING id`) as unknown[];
-  if (r.length) await addEvent(s.id, s.lead_id, "preview", "opened their sample card");
+/// A burst was detected: the earlier visit in it was a scanner too, so it stops counting.
+async function reclassifyBurst(s: { id: number; lead_id: number }) {
+  const prior = (await sql`
+    UPDATE mk_events SET type = 'click_auto' WHERE send_id = ${s.id} AND type = 'clicked' AND created_at > now() - ${`${BURST_SECONDS} seconds`}::interval RETURNING id`) as unknown[];
+  if (prior.length) {
+    await sql`UPDATE mk_sends SET click_count = GREATEST(0, click_count - ${prior.length}) WHERE id = ${s.id}`;
+    await sql`UPDATE mk_sends SET clicked_at = NULL WHERE id = ${s.id} AND click_count = 0`;
+  }
+  const pv = (await sql`UPDATE mk_events SET type = 'preview_auto' WHERE send_id = ${s.id} AND type = 'preview' AND created_at > now() - ${`${BURST_SECONDS} seconds`}::interval RETURNING id`) as unknown[];
+  if (pv.length) await sql`UPDATE mk_sends SET preview_first_at = NULL WHERE id = ${s.id} AND NOT EXISTS (SELECT 1 FROM mk_events e WHERE e.send_id = ${s.id} AND e.type = 'preview')`;
+}
+
+export async function recordClick(token: string, target: string): Promise<void> {
+  const row = ((await (async () => { await ensureMarketingSchema(); return sql`SELECT id, lead_id, sent_at FROM mk_sends WHERE token = ${token}`; })()) as { id: number; lead_id: number; sent_at: string }[])[0];
+  if (!row) return;
+  if (await looksLikeScanner(row)) {
+    await addEvent(row.id, row.lead_id, "click_auto", target);
+    await reclassifyBurst(row);
+    return;
+  }
+  await sql`UPDATE mk_sends SET click_count = click_count + 1, clicked_at = COALESCE(clicked_at, now()) WHERE id = ${row.id}`;
+  await addEvent(row.id, row.lead_id, "clicked", target);
+}
+
+export async function recordPreviewOpened(token: string): Promise<boolean> {
+  await ensureMarketingSchema();
+  const row = ((await sql`SELECT id, lead_id, sent_at, preview_first_at FROM mk_sends WHERE token = ${token}`) as { id: number; lead_id: number; sent_at: string; preview_first_at: string | null }[])[0];
+  if (!row || row.preview_first_at) return !!row;
+  // A scanner opening the preview must not start the 24 hours or count as interest.
+  if (await looksLikeScanner(row)) { await addEvent(row.id, row.lead_id, "preview_auto", "scanner"); await reclassifyBurst(row); return false; }
+  const r = (await sql`UPDATE mk_sends SET preview_first_at = now() WHERE id = ${row.id} AND preview_first_at IS NULL RETURNING id`) as unknown[];
+  if (r.length) await addEvent(row.id, row.lead_id, "preview", "opened their sample card");
+  return true;
+}
+
+/// Someone really used their sample card: a tap, scroll or press on it (a scanner only loads the page). The strongest sign of interest.
+export async function recordEngaged(token: string, what: string): Promise<void> {
+  await ensureMarketingSchema();
+  const row = ((await sql`SELECT id, lead_id, sent_at FROM mk_sends WHERE token = ${token}`) as { id: number; lead_id: number; sent_at: string }[])[0];
+  if (!row || (Date.now() - new Date(row.sent_at).getTime()) / 1000 < SCANNER_WINDOW_SECONDS) return;
+  const first = (await sql`UPDATE mk_sends SET engaged_count = engaged_count + 1, engaged_at = COALESCE(engaged_at, now()) WHERE id = ${row.id} RETURNING engaged_count`) as { engaged_count: number }[];
+  if (first[0] && first[0].engaged_count <= 6) await addEvent(row.id, row.lead_id, "engaged", what.slice(0, 80) || "used their sample card");
 }
 
 export async function recordUnsubscribe(token: string): Promise<void> {
@@ -410,12 +461,12 @@ export async function previewLeadByToken(token: string): Promise<PreviewLead | n
 export type LeadRow = {
   id: number; name: string; email: string; phone: string; website: string; address: string; kind: string; area: string; batch: string;
   state: LeadState; hold_reason: string; stage: LeadStage; notes: string; created_at: string;
-  sends: number; sent_at: string | null; delivered_at: string | null; opened_at: string | null; open_count: number; clicked_at: string | null; click_count: number;
+  sends: number; sent_at: string | null; delivered_at: string | null; opened_at: string | null; open_count: number; clicked_at: string | null; click_count: number; engaged_at: string | null; engaged_count: number;
   preview_first_at: string | null; bounced_at: string | null; bounce_reason: string | null; unsubscribed_at: string | null; subject: string | null;
   card_at: string | null; card_verified: boolean;
 };
 
-export type Summary = { leads: number; toSend: number; held: number; removed: number; emailed: number; delivered: number; opened: number; clicked: number; previewed: number; bounced: number; unsubscribed: number; signedUp: number; interested: number };
+export type Summary = { engaged: number; scanClicks: number; leads: number; toSend: number; held: number; removed: number; emailed: number; delivered: number; opened: number; clicked: number; previewed: number; bounced: number; unsubscribed: number; signedUp: number; interested: number };
 export type DayRow = { day: string; sent: number; opened: number; clicked: number };
 export type BatchRow = { batch: string; leads: number; emailed: number; opened: number; clicked: number; signedUp: number };
 
@@ -427,7 +478,7 @@ export async function dashboard(): Promise<Dashboard> {
     SELECT l.id, l.name, l.email, l.phone, l.website, l.address, l.kind, l.area, l.batch, l.state, l.hold_reason, l.stage, l.notes, l.created_at,
            (SELECT COUNT(*)::int FROM mk_sends x WHERE x.lead_id = l.id AND NOT x.is_test) AS sends,
            s.sent_at, s.delivered_at, s.opened_at, COALESCE(s.open_count, 0) AS open_count, s.clicked_at, COALESCE(s.click_count, 0) AS click_count,
-           s.preview_first_at, s.bounced_at, s.bounce_reason, s.unsubscribed_at, s.subject
+           s.preview_first_at, s.bounced_at, s.bounce_reason, s.unsubscribed_at, s.subject, s.engaged_at, COALESCE(s.engaged_count, 0) AS engaged_count
     FROM mk_leads l
     LEFT JOIN LATERAL (SELECT * FROM mk_sends WHERE lead_id = l.id AND NOT is_test ORDER BY sent_at DESC LIMIT 1) s ON true
     WHERE NOT l.is_test
@@ -452,7 +503,10 @@ export async function dashboard(): Promise<Dashboard> {
   });
 
   const emailedRows = rows.filter((r) => r.sends > 0);
+  const scanClicks = ((await sql`SELECT COUNT(*)::int AS n FROM mk_events WHERE type IN ('click_auto', 'preview_auto')`) as { n: number }[])[0]?.n ?? 0;
   const summary: Summary = {
+    engaged: emailedRows.filter((r) => r.engaged_at).length,
+    scanClicks,
     leads: rows.length,
     toSend: rows.filter((r) => r.state === "queued" && r.sends === 0).length,
     held: rows.filter((r) => r.state === "held").length,
@@ -460,7 +514,7 @@ export async function dashboard(): Promise<Dashboard> {
     emailed: emailedRows.length,
     delivered: emailedRows.filter((r) => r.delivered_at || r.opened_at || r.clicked_at).length,
     opened: emailedRows.filter((r) => r.opened_at).length,
-    clicked: emailedRows.filter((r) => r.click_count > 0).length,
+    clicked: emailedRows.filter((r) => r.click_count > 0 || r.engaged_at).length,
     previewed: emailedRows.filter((r) => r.preview_first_at).length,
     bounced: emailedRows.filter((r) => r.bounced_at).length,
     unsubscribed: rows.filter((r) => r.state === "unsubscribed" && r.hold_reason !== "asked not to be emailed, or bounced before").length,
@@ -473,7 +527,7 @@ export async function dashboard(): Promise<Dashboard> {
     SELECT to_char(d.day, 'YYYY-MM-DD') AS day,
       (SELECT COUNT(*)::int FROM mk_sends s WHERE NOT s.is_test AND (s.sent_at AT TIME ZONE 'Europe/London')::date = d.day) AS sent,
       (SELECT COUNT(DISTINCT e.send_id)::int FROM mk_events e WHERE e.type = 'opened' AND (e.created_at AT TIME ZONE 'Europe/London')::date = d.day) AS opened,
-      (SELECT COUNT(DISTINCT e.send_id)::int FROM mk_events e WHERE e.type IN ('clicked', 'preview') AND (e.created_at AT TIME ZONE 'Europe/London')::date = d.day) AS clicked
+      (SELECT COUNT(DISTINCT e.send_id)::int FROM mk_events e WHERE e.type IN ('clicked', 'engaged') AND (e.created_at AT TIME ZONE 'Europe/London')::date = d.day) AS clicked
     FROM d ORDER BY d.day`) as DayRow[];
 
   const byBatch = new Map<string, BatchRow>();
@@ -481,7 +535,7 @@ export async function dashboard(): Promise<Dashboard> {
     const key = r.batch || "No list name";
     const b = byBatch.get(key) ?? { batch: key, leads: 0, emailed: 0, opened: 0, clicked: 0, signedUp: 0 };
     b.leads++;
-    if (r.sends > 0) { b.emailed++; if (r.opened_at) b.opened++; if (r.click_count > 0) b.clicked++; }
+    if (r.sends > 0) { b.emailed++; if (r.opened_at) b.opened++; if (r.click_count > 0 || r.engaged_at) b.clicked++; }
     if (r.card_at || r.stage === "signed_up") b.signedUp++;
     byBatch.set(key, b);
   }

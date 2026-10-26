@@ -12,8 +12,8 @@ const pct = (n: number, of: number) => (of > 0 ? `${Math.round((n / of) * 100)}%
 const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "");
 const when = (iso: string) => new Date(iso).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
-/// Hot: they did something that shows interest (clicked, opened their sample card, made a TapCard, or you marked them interested).
-const isHot = (l: LeadRow) => l.click_count > 0 || !!l.preview_first_at || !!l.card_at || l.stage === "interested" || l.stage === "signed_up";
+/// Hot: they did something a person does and a security scanner doesn't (a click that wasn't instant, a tap on their sample card), made a TapCard, or you marked them interested.
+const isHot = (l: LeadRow) => l.click_count > 0 || !!l.engaged_at || !!l.card_at || l.stage === "interested" || l.stage === "signed_up";
 const isEmailed = (l: LeadRow) => l.sends > 0;
 
 function matches(l: LeadRow, f: Filter): boolean {
@@ -23,7 +23,7 @@ function matches(l: LeadRow, f: Filter): boolean {
     case "tosend": return l.state === "queued" && l.sends === 0;
     case "emailed": return isEmailed(l);
     case "opened": return !!l.opened_at;
-    case "clicked": return l.click_count > 0 || !!l.preview_first_at;
+    case "clicked": return l.click_count > 0 || !!l.engaged_at;
     case "signedup": return !!l.card_at || l.stage === "signed_up";
     case "interested": return l.stage === "interested";
     case "bounced": return !!l.bounced_at;
@@ -101,7 +101,7 @@ export default function RestaurantMarketing() {
           <input type="search" placeholder="Search name, email, area or list" value={search} onChange={(e) => { setSearch(e.target.value); setShown(50); }} style={{ minWidth: 260 }} aria-label="Search leads" />
           <button className="mkr-btn ghost" onClick={() => downloadCsv(leads)} disabled={leads.length === 0}>Download these as CSV</button>
         </div>
-        {filter === "hot" && <p className="mkr-muted" style={{ marginBottom: "0.8rem" }}>Hot = clicked a link, opened their sample card, made a TapCard, or you marked them interested. Ring these first.</p>}
+        {filter === "hot" && <p className="mkr-muted" style={{ marginBottom: "0.8rem" }}>Hot = clicked a link, tapped on their sample card, made a TapCard, or you marked them interested. Ring these first.</p>}
         <div className="mkr-scroll">
           <table className="mkr-table">
             <thead><tr><th>Place</th><th>What happened</th><th>Last email</th><th>Stage</th></tr></thead>
@@ -124,7 +124,7 @@ export default function RestaurantMarketing() {
 function Results({ data }: { data: Data }) {
   const s = data.summary;
   const hotCount = data.leads.filter((l) => isHot(l) && l.state !== "unsubscribed").length;
-  const funnel: [string, number][] = [["Emailed", s.emailed], ["Delivered", s.delivered], ...(data.opensSeen ? ([["Opened", s.opened]] as [string, number][]) : []), ["Clicked or previewed", data.leads.filter((l) => l.click_count > 0 || l.preview_first_at).length], ["Signed up", s.signedUp]];
+  const funnel: [string, number][] = [["Emailed", s.emailed], ["Delivered", s.delivered], ...(data.opensSeen ? ([["Opened", s.opened]] as [string, number][]) : []), ["Clicked or tapped sample card", data.leads.filter((l) => l.click_count > 0 || l.engaged_at).length], ["Signed up", s.signedUp]];
   return (
     <section className="mkr-section">
       <h2>Results</h2>
@@ -132,7 +132,7 @@ function Results({ data }: { data: Data }) {
         <div className="mkr-kpi"><b>{s.emailed}</b><span>Emailed</span><small>{s.toSend} still to send</small></div>
         <div className="mkr-kpi"><b>{s.delivered}</b><span>Delivered</span><small>{pct(s.delivered, s.emailed)} of emailed</small></div>
         <div className="mkr-kpi"><b>{data.opensSeen ? s.opened : "–"}</b><span>Opened</span><small>{data.opensSeen ? pct(s.opened, s.emailed) : "not tracked on purpose"}</small></div>
-        <div className="mkr-kpi hot"><b>{hotCount}</b><span>Hot leads</span><small>clicked, previewed or signed up</small></div>
+        <div className="mkr-kpi hot"><b>{hotCount}</b><span>Hot leads</span><small>real clicks, taps or signups</small></div>
         <div className="mkr-kpi good"><b>{s.signedUp}</b><span>Signed up</span><small>{pct(s.signedUp, s.emailed)} of emailed</small></div>
         <div className="mkr-kpi bad"><b>{s.bounced}</b><span>Bounced</span><small>{pct(s.bounced, s.emailed)}</small></div>
         <div className="mkr-kpi"><b>{s.unsubscribed}</b><span>Unsubscribed</span><small>{pct(s.unsubscribed, s.emailed)}</small></div>
@@ -147,6 +147,9 @@ function Results({ data }: { data: Data }) {
         ))}
       </div>
       <DayChart days={data.days} />
+      <p className="mkr-muted" style={{ marginTop: "0.75rem", fontSize: "0.85rem" }}>
+        Clicks are checked for email security scanners: a click in the first 45 seconds after sending, or several links opened within seconds of each other, is ignored{s.scanClicks > 0 ? ` (${s.scanClicks} ignored so far)` : ""}. &ldquo;Tapped sample card&rdquo; means someone actually used it, which a scanner never does.
+      </p>
       {!data.opensSeen && (
         <p className="mkr-muted" style={{ marginTop: "0.75rem", fontSize: "0.85rem" }}>
           Opens aren&apos;t tracked, on purpose: a hidden tracking pixel can push cold emails into junk, and Apple Mail hides opens anyway. Clicks, sample-card views, unsubscribes and signups are the signals that count.
@@ -299,7 +302,8 @@ function Pills({ l }: { l: LeadRow }) {
   const pills: [string, string][] = [];
   if (l.card_at) pills.push([l.card_verified ? "Has a verified TapCard" : "Made a TapCard", "good"]);
   if (l.click_count > 0) pills.push([`Clicked${l.click_count > 1 ? ` ×${l.click_count}` : ""}`, "hot"]);
-  if (l.preview_first_at) pills.push(["Opened sample card", "hot"]);
+  if (l.engaged_at) pills.push([`Tapped sample card${l.engaged_count > 1 ? ` ×${l.engaged_count}` : ""}`, "hot"]);
+  else if (l.preview_first_at) pills.push(["Viewed sample card", "blue"]);
   if (l.opened_at) pills.push([`Opened${l.open_count > 1 ? ` ×${l.open_count}` : ""}`, "blue"]);
   if (l.bounced_at) pills.push(["Bounced", "bad"]);
   if (l.state === "unsubscribed") pills.push(["Unsubscribed", "bad"]);
@@ -364,7 +368,7 @@ function LeadRows({ l, open, onToggle, onChanged }: { l: LeadRow; open: boolean;
   );
 }
 
-const labelFor = (e: TimelineEvent) => ({ sent: "Email sent", opened: "Opened the email", clicked: `Clicked: ${e.detail}`, preview: "Opened their sample card", bounced: `Bounced ${e.detail}`, unsubscribed: "Unsubscribed", complained: "Marked as spam", stage: `You moved them to ${e.detail}` } as Record<string, string>)[e.type] ?? e.type;
+const labelFor = (e: TimelineEvent) => ({ sent: "Email sent", opened: "Opened the email", clicked: `Clicked: ${e.detail}`, engaged: `Used their sample card: ${e.detail}`, click_auto: `Ignored (looked like a security scanner): ${e.detail}`, preview_auto: "Ignored (looked like a security scanner)", preview: "Viewed their sample card", bounced: `Bounced ${e.detail}`, unsubscribed: "Unsubscribed", complained: "Marked as spam", stage: `You moved them to ${e.detail}` } as Record<string, string>)[e.type] ?? e.type;
 
 function downloadCsv(rows: LeadRow[]) {
   const head = ["name", "email", "phone", "website", "address", "area", "list", "stage", "state", "emails sent", "last sent", "opened", "clicks", "opened sample card", "made a TapCard", "notes"];

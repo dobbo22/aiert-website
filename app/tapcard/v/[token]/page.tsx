@@ -4,6 +4,7 @@ import sql from "@/lib/db";
 import { ensureMailshotSchema } from "@/lib/mailshot";
 import { isBotUserAgent } from "@/lib/tapcardInvites";
 import { isMkToken, previewLeadByToken, recordPreviewOpened } from "@/lib/marketing";
+import PreviewEngage from "./PreviewEngage";
 
 export const metadata: Metadata = { title: "Your TapCard preview", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -112,7 +113,7 @@ export default async function PreviewPage({ params }: { params: Promise<{ token:
         {row.company && row.company !== row.name ? <p className="text-center text-white/90">{row.company}</p> : null}
         <div className="mt-4 space-y-2">
           {rows.map((r) => (
-            <a key={r.label} href={r.href} className="flex items-center gap-3 rounded-2xl bg-white/10 px-3 py-3">
+            <a key={r.label} href={r.href} data-label={r.label} className="flex items-center gap-3 rounded-2xl bg-white/10 px-3 py-3">
               <span className="h-9 w-9 shrink-0 rounded-xl" style={{ background: r.color }} />
               <span className="min-w-0">
                 <span className="block text-sm font-semibold">{r.label}</span>
@@ -127,6 +128,7 @@ export default async function PreviewPage({ params }: { params: Promise<{ token:
         This is how your customers would see you after scanning your QR code. With TapCard Promote you could also post offers and news, with 3 months free.
       </p>
       {getApp}
+      {mk ? <PreviewEngage token={token} /> : null}
     </>,
   );
 }
