@@ -186,6 +186,16 @@ export async function importLeads(text: string, opts: { batch: string; includeUn
 
 /// Copies the restaurants from the earlier Mailshot page (lists, who was emailed, opens and clicks) into this system, once.
 /// Safe to run again: anything already copied is skipped.
+/// The earlier mailing counted every click, scanners included: keep only the ones after the scanner window, not in a burst.
+function humanOnly<T extends { sent_at: string; click_count: number; first_click_at: string | null; preview_first_at: string | null }>(o0: T, times: number[]): T {
+  const sentMs = new Date(o0.sent_at).getTime();
+  const late = (iso: string | null) => !!iso && new Date(iso).getTime() - sentMs > SCANNER_WINDOW_SECONDS * 1000;
+  const human = times.filter((t, i) => t - sentMs > SCANNER_WINDOW_SECONDS * 1000 && !(i > 0 && t - times[i - 1] < BURST_SECONDS * 1000));
+  const click_count = times.length ? human.length : late(o0.first_click_at) ? o0.click_count : 0;
+  const first_click_at = human.length ? new Date(human[0]).toISOString() : times.length ? null : late(o0.first_click_at) ? o0.first_click_at : null;
+  return { ...o0, click_count, first_click_at, preview_first_at: late(o0.preview_first_at) ? o0.preview_first_at : null };
+}
+
 export async function bringOverEarlierMailing(): Promise<{ leads: number; sends: number }> {
   await ensureMarketingSchema();
   let leads = 0, sends = 0;
@@ -204,6 +214,24 @@ export async function bringOverEarlierMailing(): Promise<{ leads: number; sends:
     const oldByContact = new Map<number, OldSend[]>();
     for (const o of allOld) oldByContact.set(o.contact_id, [...(oldByContact.get(o.contact_id) ?? []), o]);
     const copied = new Set(((await sql`SELECT legacy_send_id FROM mk_sends WHERE legacy_send_id IS NOT NULL`) as { legacy_send_id: number }[]).map((r) => r.legacy_send_id));
+    const clicksBySend = new Map<number, number[]>();
+    for (const r of (await sql`SELECT send_id, clicked_at FROM tapcard_invite_clicks ORDER BY clicked_at`.catch(() => [])) as { send_id: number; clicked_at: string }[]) {
+      clicksBySend.set(r.send_id, [...(clicksBySend.get(r.send_id) ?? []), new Date(r.clicked_at).getTime()]);
+    }
+    // Sends copied by an earlier press (before the scanner filter existed) are re-filtered in place.
+    for (const o0 of allOld) {
+      if (!copied.has(o0.id)) continue;
+      const o = humanOnly(o0, clicksBySend.get(o0.id) ?? []);
+      const fixed = (await sql`
+        UPDATE mk_sends SET clicked_at = ${o.first_click_at}, click_count = ${o.click_count}, preview_first_at = ${o.preview_first_at}
+        WHERE legacy_send_id = ${o0.id} AND (click_count IS DISTINCT FROM ${o.click_count} OR clicked_at IS DISTINCT FROM ${o.first_click_at}::timestamptz OR preview_first_at IS DISTINCT FROM ${o.preview_first_at}::timestamptz)
+        RETURNING id, lead_id
+      `) as { id: number; lead_id: number }[];
+      if (!fixed[0]) continue;
+      await sql`DELETE FROM mk_events WHERE send_id = ${fixed[0].id} AND type IN ('clicked', 'preview')`;
+      if (o.first_click_at) await sql`INSERT INTO mk_events (send_id, lead_id, type, created_at) VALUES (${fixed[0].id}, ${fixed[0].lead_id}, 'clicked', ${o.first_click_at})`;
+      if (o.preview_first_at) await sql`INSERT INTO mk_events (send_id, lead_id, type, created_at) VALUES (${fixed[0].id}, ${fixed[0].lead_id}, 'preview', ${o.preview_first_at})`;
+    }
     const known = new Set(((await sql`SELECT lower(email) AS email FROM mk_leads WHERE NOT is_test`) as { email: string }[]).map((r) => r.email));
     for (const c of contacts) {
       if (!validEmail(c.email)) continue;
@@ -224,12 +252,7 @@ export async function bringOverEarlierMailing(): Promise<{ leads: number; sends:
       if (!leadId) continue;
       for (const o0 of mine) {
         if (copied.has(o0.id)) continue;
-        // The earlier mailing counted every click, scanners included: keep only the ones after the scanner window, not in a burst.
-        const times = ((await sql`SELECT clicked_at FROM tapcard_invite_clicks WHERE send_id = ${o0.id} ORDER BY clicked_at`.catch(() => [])) as { clicked_at: string }[]).map((x) => new Date(x.clicked_at).getTime());
-        const sentMs = new Date(o0.sent_at).getTime();
-        const human = times.filter((t, i) => t - sentMs > SCANNER_WINDOW_SECONDS * 1000 && !(i > 0 && t - times[i - 1] < BURST_SECONDS * 1000));
-        const previewOk = o0.preview_first_at && new Date(o0.preview_first_at).getTime() - sentMs > SCANNER_WINDOW_SECONDS * 1000;
-        const o = { ...o0, click_count: times.length ? human.length : (o0.first_click_at && new Date(o0.first_click_at).getTime() - sentMs > SCANNER_WINDOW_SECONDS * 1000 ? o0.click_count : 0), first_click_at: human.length ? new Date(human[0]).toISOString() : (times.length ? null : (o0.first_click_at && new Date(o0.first_click_at).getTime() - sentMs > SCANNER_WINDOW_SECONDS * 1000 ? o0.first_click_at : null)), preview_first_at: previewOk ? o0.preview_first_at : null };
+        const o = humanOnly(o0, clicksBySend.get(o0.id) ?? []);
         const made = (await sql`
           INSERT INTO mk_sends (lead_id, token, resend_id, subject, legacy_send_id, sent_at, delivered_at, opened_at, open_count, clicked_at, click_count, preview_first_at, bounced_at, bounce_reason)
           VALUES (${leadId}, ${"old-" + o.id}, ${o.resend_id}, ${o.subject}, ${o.id}, ${o.sent_at}, ${o.delivered_at}, ${o.opened_at}, ${o.opened_at ? 1 : 0}, ${o.first_click_at}, ${o.click_count}, ${o.preview_first_at}, ${o.bounced_at}, ${o.bounce_reason})
