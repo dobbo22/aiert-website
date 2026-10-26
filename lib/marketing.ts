@@ -271,6 +271,7 @@ export async function bringOverEarlierMailing(): Promise<{ leads: number; sends:
     console.error("bring over earlier mailing failed", e);
     throw new Error("Couldn't read the earlier mailing. " + (e instanceof Error ? e.message : ""));
   }
+  await settleSends();
   return { leads, sends };
 }
 
@@ -408,6 +409,39 @@ async function reclassifyBurst(s: { id: number; lead_id: number }) {
   if (pv.length) await sql`UPDATE mk_sends SET preview_first_at = NULL WHERE id = ${s.id} AND NOT EXISTS (SELECT 1 FROM mk_events e WHERE e.send_id = ${s.id} AND e.type = 'preview')`;
 }
 
+/// Visits that arrived together (parallel requests can't see each other as they land) or inside the scanner window stop counting.
+/// Run after each visit, and over every send when the earlier mailing is brought over.
+export async function settleSends(sendId?: number): Promise<number> {
+  await ensureMarketingSchema();
+  type Ev = { id: number; send_id: number; type: string; created_at: string; sent_at: string };
+  const evs = (sendId
+    ? await sql`SELECT e.id, e.send_id, e.type, e.created_at, s.sent_at FROM mk_events e JOIN mk_sends s ON s.id = e.send_id WHERE e.send_id = ${sendId} AND e.type IN ('clicked', 'preview') ORDER BY e.created_at`
+    : await sql`SELECT e.id, e.send_id, e.type, e.created_at, s.sent_at FROM mk_events e JOIN mk_sends s ON s.id = e.send_id WHERE s.legacy_send_id IS NULL AND NOT s.is_test AND e.type IN ('clicked', 'preview') ORDER BY e.created_at`) as Ev[];
+  const bySend = new Map<number, Ev[]>();
+  for (const e of evs) bySend.set(e.send_id, [...(bySend.get(e.send_id) ?? []), e]);
+  let changed = 0;
+  for (const [id, list] of bySend) {
+    const t = (e: Ev) => new Date(e.created_at).getTime();
+    const sentMs = new Date(list[0].sent_at).getTime();
+    const auto = new Set<number>();
+    list.forEach((e, i) => {
+      if (t(e) - sentMs < SCANNER_WINDOW_SECONDS * 1000) auto.add(e.id);
+      const near = (o: Ev | undefined) => !!o && Math.abs(t(e) - t(o)) < BURST_SECONDS * 1000;
+      if (near(list[i - 1]) || near(list[i + 1])) { auto.add(e.id); if (near(list[i - 1])) auto.add(list[i - 1].id); if (near(list[i + 1])) auto.add(list[i + 1].id); }
+    });
+    if (!auto.size) continue;
+    changed++;
+    const ids = [...auto];
+    await sql`UPDATE mk_events SET type = CASE type WHEN 'clicked' THEN 'click_auto' ELSE 'preview_auto' END WHERE id = ANY(${ids})`;
+    await sql`UPDATE mk_sends SET
+      click_count = (SELECT COUNT(*) FROM mk_events WHERE send_id = ${id} AND type = 'clicked'),
+      clicked_at = (SELECT MIN(created_at) FROM mk_events WHERE send_id = ${id} AND type = 'clicked'),
+      preview_first_at = (SELECT MIN(created_at) FROM mk_events WHERE send_id = ${id} AND type = 'preview')
+      WHERE id = ${id}`;
+  }
+  return changed;
+}
+
 export async function recordClick(token: string, target: string): Promise<void> {
   const row = ((await (async () => { await ensureMarketingSchema(); return sql`SELECT id, lead_id, sent_at FROM mk_sends WHERE token = ${token}`; })()) as { id: number; lead_id: number; sent_at: string }[])[0];
   if (!row) return;
@@ -418,6 +452,7 @@ export async function recordClick(token: string, target: string): Promise<void> 
   }
   await sql`UPDATE mk_sends SET click_count = click_count + 1, clicked_at = COALESCE(clicked_at, now()) WHERE id = ${row.id}`;
   await addEvent(row.id, row.lead_id, "clicked", target);
+  await settleSends(row.id);
 }
 
 export async function recordPreviewOpened(token: string): Promise<boolean> {
@@ -427,7 +462,7 @@ export async function recordPreviewOpened(token: string): Promise<boolean> {
   // A scanner opening the preview must not start the 24 hours or count as interest.
   if (await looksLikeScanner(row)) { await addEvent(row.id, row.lead_id, "preview_auto", "scanner"); await reclassifyBurst(row); return false; }
   const r = (await sql`UPDATE mk_sends SET preview_first_at = now() WHERE id = ${row.id} AND preview_first_at IS NULL RETURNING id`) as unknown[];
-  if (r.length) await addEvent(row.id, row.lead_id, "preview", "opened their sample card");
+  if (r.length) { await addEvent(row.id, row.lead_id, "preview", "opened their sample card"); await settleSends(row.id); }
   return true;
 }
 
