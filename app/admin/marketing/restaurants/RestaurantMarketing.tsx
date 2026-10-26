@@ -124,14 +124,14 @@ export default function RestaurantMarketing() {
 function Results({ data }: { data: Data }) {
   const s = data.summary;
   const hotCount = data.leads.filter((l) => isHot(l) && l.state !== "unsubscribed").length;
-  const funnel: [string, number][] = [["Emailed", s.emailed], ["Delivered", s.delivered], ["Opened", s.opened], ["Clicked or previewed", data.leads.filter((l) => l.click_count > 0 || l.preview_first_at).length], ["Signed up", s.signedUp]];
+  const funnel: [string, number][] = [["Emailed", s.emailed], ["Delivered", s.delivered], ...(data.opensSeen ? ([["Opened", s.opened]] as [string, number][]) : []), ["Clicked or previewed", data.leads.filter((l) => l.click_count > 0 || l.preview_first_at).length], ["Signed up", s.signedUp]];
   return (
     <section className="mkr-section">
       <h2>Results</h2>
       <div className="mkr-kpis">
         <div className="mkr-kpi"><b>{s.emailed}</b><span>Emailed</span><small>{s.toSend} still to send</small></div>
         <div className="mkr-kpi"><b>{s.delivered}</b><span>Delivered</span><small>{pct(s.delivered, s.emailed)} of emailed</small></div>
-        <div className="mkr-kpi"><b>{s.opened}</b><span>Opened</span><small>{pct(s.opened, s.emailed)}{data.opensSeen ? "" : " (not tracking yet)"}</small></div>
+        <div className="mkr-kpi"><b>{data.opensSeen ? s.opened : "–"}</b><span>Opened</span><small>{data.opensSeen ? pct(s.opened, s.emailed) : "not tracked on purpose"}</small></div>
         <div className="mkr-kpi hot"><b>{hotCount}</b><span>Hot leads</span><small>clicked, previewed or signed up</small></div>
         <div className="mkr-kpi good"><b>{s.signedUp}</b><span>Signed up</span><small>{pct(s.signedUp, s.emailed)} of emailed</small></div>
         <div className="mkr-kpi bad"><b>{s.bounced}</b><span>Bounced</span><small>{pct(s.bounced, s.emailed)}</small></div>
@@ -147,8 +147,10 @@ function Results({ data }: { data: Data }) {
         ))}
       </div>
       <DayChart days={data.days} />
-      {!data.opensSeen && s.emailed >= 10 && (
-        <p className="mkr-note">No opens recorded yet. To track opens, turn on <b>open tracking</b> for your sending domain in Resend (Domains), and make sure the Resend webhook includes <b>email.opened</b>. Opens are only a guide, because Apple Mail hides them: clicks and sample-card views are the reliable signal.</p>
+      {!data.opensSeen && (
+        <p className="mkr-muted" style={{ marginTop: "0.75rem", fontSize: "0.85rem" }}>
+          Opens aren&apos;t tracked, on purpose: a hidden tracking pixel can push cold emails into junk, and Apple Mail hides opens anyway. Clicks, sample-card views, unsubscribes and signups are the signals that count.
+        </p>
       )}
     </section>
   );
