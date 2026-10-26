@@ -53,6 +53,7 @@ export interface BizOrg {
 
 import { DEFAULT_LOCKED_FIELDS, LOCKABLE_FIELDS } from "@/lib/tapcardBizFields";
 import { TRIAL_DAYS } from "@/lib/tapcardBizBilling";
+import { emailOnDomain } from "@/lib/tapcardDomain";
 export { DEFAULT_LOCKED_FIELDS, LOCKABLE_FIELDS };
 
 let schemaReady: Promise<unknown> | null = null;
@@ -205,18 +206,17 @@ export async function confirmAdminEmail(orgId: string, email: string): Promise<v
   await sql`UPDATE tapcard_biz_admins SET confirmed_at = now() WHERE org_id = ${orgId} AND email = ${email.trim().toLowerCase()} AND confirmed_at IS NULL`;
 }
 
+/// The rule behind company verification: at least one admin has opened their emailed sign-in link (so controls that mailbox) and that
+/// mailbox is on, or under, the business domain. Pure so it can be tested.
+export function adminsConfirmDomain(admins: { email: string; confirmed_at: string | Date | null }[], domain: string): boolean {
+  return !!domain && admins.some((a) => !!a.confirmed_at && emailOnDomain(a.email, domain));
+}
+
 /// Has someone with a confirmed mailbox on this business domain signed in to the company? That is the company's proof that it
 /// owns the domain (the same standard as verifying a single card with an emailed code).
 export async function orgHasConfirmedAdminOnDomain(orgId: string, domain: string): Promise<boolean> {
   if (!domain) return false;
-  await ensureSchema();
-  const rows = (await sql`
-    SELECT 1 FROM tapcard_biz_admins
-    WHERE org_id = ${orgId} AND confirmed_at IS NOT NULL
-      AND (split_part(email, '@', 2) = ${domain} OR split_part(email, '@', 2) LIKE ${"%." + domain})
-    LIMIT 1
-  `) as unknown[];
-  return rows.length > 0;
+  return adminsConfirmDomain(await listAdmins(orgId), domain);
 }
 
 export async function getOrg(id: string): Promise<BizOrg | null> {
