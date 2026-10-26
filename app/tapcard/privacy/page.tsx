@@ -81,7 +81,7 @@ export default function TapCardPrivacyPage() {
           If you tap <strong>Add missing details to my contact</strong>, TapCard asks for Contacts access (on iOS 18
           and later you can allow just your own contact), shows you which details from your card are missing from
           that contact, and adds only the ones you tick. It never removes or changes anything already in the
-          contact, and this all happens on your iPhone. Nothing from your contacts is sent to us.
+          contact, and this all happens on your iPhone. Your address book is never sent to us. The one exception is when you choose to send your card to a person: see <em>When you send your card to someone</em> below.
         </p>
       </section>
 
@@ -106,6 +106,26 @@ export default function TapCardPrivacyPage() {
           Edits you save to a shared card are sent the same way so the link stays up to date. To limit abuse, when a
           card is first shared we keep a one-way hash of the sending IP address to cap how many cards can be
           created in an hour. We never store the IP address itself.
+        </p>
+      </section>
+
+      <section>
+        <h2>When you send your card to someone</h2>
+        <p>
+          If you use <strong>Send</strong> and pick a person from your Contacts, the app tells our server that one
+          person&apos;s <strong>name, phone number and email address</strong> (not the rest of your address book).
+          We keep them so that:
+        </p>
+        <ul>
+          <li>you can see in the app whether they have opened or accepted your card;</li>
+          <li>they can be emailed a short note if you later change a detail on your card. Every such email has a
+            &ldquo;Don&apos;t send me these&rdquo; link, and we stop straight away when they use it; and</li>
+          <li>they can choose to share their own details back through a page we send them. If they do, what they
+            choose to share (name, phone, email, job title, company, website) is kept with the entry and shown to you.</li>
+        </ul>
+        <p className="mt-3">
+          This is kept until you remove that person in the app or delete the card, and it is deleted with the card.
+          It is not used for anything else and is not shared with anyone.
         </p>
       </section>
 
