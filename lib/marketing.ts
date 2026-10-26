@@ -269,7 +269,7 @@ function refusedAddress(message: string): boolean {
 
 function mailer() {
   if (!process.env.RESEND_API_KEY) throw new Error("RESEND_API_KEY is not set, so nothing can be sent");
-  return { resend: new Resend(process.env.RESEND_API_KEY), from: process.env.MAILSHOT_FROM || process.env.TAPCARD_INVITE_FROM || "Martin Dobson <martin@aiert.co.uk>", replyTo: inviteEmailRoute().replyTo };
+  return { resend: new Resend(process.env.RESEND_API_KEY), from: process.env.MAILSHOT_FROM || process.env.TAPCARD_INVITE_FROM || "Martin Dobson <martin@aiert.co.uk>", replyTo: process.env.MAILSHOT_REPLY_TO || inviteEmailRoute().replyTo };
 }
 
 export async function sendTest(to: string, sample: "restaurant" | "cafe", subjectIndex: number): Promise<void> {
