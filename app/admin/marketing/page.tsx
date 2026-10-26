@@ -18,7 +18,7 @@ type SnapshotRow = { snapshot_date: string; clicks: number; impressions: number 
 async function getTrend(): Promise<SnapshotRow[]> {
   try {
     const rows = (await sql`
-      SELECT snapshot_date, clicks, impressions
+      SELECT to_char(snapshot_date, 'YYYY-MM-DD') AS snapshot_date, clicks, impressions
       FROM search_console_snapshots
       WHERE host = ${ALL_HOSTS_KEY}
       ORDER BY snapshot_date ASC
