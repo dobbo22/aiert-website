@@ -30,9 +30,10 @@ function host(url: string | null): string | null {
 }
 const web = (u: string) => (/^https?:\/\//i.test(u) ? u : `https://${u}`);
 
-function mapsUrl(address: string, ua: string): string {
+function mapsUrl(address: string, ua: string, place = ""): string {
   const a = address.trim();
-  const q = encodeURIComponent(/^[A-Za-z]{1,2}\d[A-Za-z\d]?\s*\d[A-Za-z]{2}$/.test(a) ? `${a}, UK` : a);
+  const named = place.trim() && !a.toLowerCase().includes(place.trim().toLowerCase()) ? `${place.trim()}, ${a}` : a;
+  const q = encodeURIComponent(/^[A-Za-z]{1,2}\d[A-Za-z\d]?\s*\d[A-Za-z]{2}$/.test(a) ? `${a}, UK` : named);
   if (/iPhone|iPad|iPod/i.test(ua)) return `https://maps.apple.com/?q=${q}`;
   return `https://www.google.com/maps/search/?api=1&query=${q}`;
 }
@@ -90,7 +91,7 @@ export default async function PreviewPage({ params }: { params: Promise<{ token:
   if (row.booking_url || domain) rows.push({ color: "#0e8c99", label: "Book a table", value: host(row.booking_url) ?? domain ?? "", href: web(row.booking_url || row.website || "") });
   if (row.menu_url || domain) rows.push({ color: "#0e8c99", label: "View our menu", value: host(row.menu_url) ?? domain ?? "", href: web(row.menu_url || row.website || "") });
   if (domain) rows.push({ color: "#3b82f6", label: "Visit our site", value: domain, href: web(row.website ?? "") });
-  if (row.address) rows.push({ color: "#ef4444", label: "Get directions", value: row.address, href: mapsUrl(row.address, ua) });
+  if (row.address) rows.push({ color: "#ef4444", label: "Get directions", value: row.address, href: mapsUrl(row.address, ua, row.company ?? "") });
   const ends = new Date(endsAt).toLocaleString("en-GB", { timeZone: "Europe/London", weekday: "short", hour: "2-digit", minute: "2-digit" });
 
   return shell(

@@ -116,7 +116,7 @@ export default async function CardPage({
     {
       action: "Get directions",
       value: card.address,
-      href: mapsUrl(card.address, requestHeaders.get("user-agent") ?? ""),
+      href: mapsUrl(card.address, requestHeaders.get("user-agent") ?? "", card.company),
       icon: "mapPin",
       iconBg: "#EF4444",
     },
@@ -426,10 +426,12 @@ function extractDomain(website: string): string | null {
 /// handler (Google Maps, Waze, whatever) — this is what "whichever is the
 /// default" means in practice, and only Android actually has one. Desktop
 /// gets a plain Google Maps web search, the only option that needs no app.
-function mapsUrl(address: string, userAgent: string): string {
+function mapsUrl(address: string, userAgent: string, place = ""): string {
   // A bare UK postcode gets ", UK" so Maps doesn't have to guess the country.
   const a = address.trim();
-  const query = encodeURIComponent(/^[A-Za-z]{1,2}\d[A-Za-z\d]?\s*\d[A-Za-z]{2}$/.test(a) ? `${a}, UK` : address);
+  // The business name goes in too, so the map app finds the place itself rather than guessing from the address text.
+  const named = place.trim() && !a.toLowerCase().includes(place.trim().toLowerCase()) ? `${place.trim()}, ${a}` : a;
+  const query = encodeURIComponent(/^[A-Za-z]{1,2}\d[A-Za-z\d]?\s*\d[A-Za-z]{2}$/.test(a) ? `${a}, UK` : named);
   if (/Android/i.test(userAgent)) return `geo:0,0?q=${query}`;
   if (/iPhone|iPad|iPod/i.test(userAgent)) return `https://maps.apple.com/?q=${query}`;
   return `https://www.google.com/maps/search/?api=1&query=${query}`;
