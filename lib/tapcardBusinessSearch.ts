@@ -30,6 +30,16 @@ function ensureSchema(): Promise<unknown> {
   return ready;
 }
 
+// The apps search as the person types, so "royal", "royal malta" and "royal malta yacht club" arrive seconds apart: one typing
+// session counts as one lookup, not one per pause. Remembered per device in memory (best effort across server instances).
+const lastQuery = new Map<string, { q: string; at: number }>();
+function sameTypingSession(device: string, q: string): boolean {
+  const now = Date.now(), n = q.toLowerCase().trim(), prev = lastQuery.get(device);
+  if (lastQuery.size > 2000) lastQuery.clear();
+  lastQuery.set(device, { q: n, at: now });
+  return !!prev && now - prev.at < 45_000 && (n.startsWith(prev.q) || prev.q.startsWith(n));
+}
+
 async function underDeviceCap(device: string): Promise<boolean> {
   await ensureSchema();
   const hash = createHash("sha256").update(`tapcard-lookup|${device}`).digest("hex").slice(0, 32);
@@ -76,7 +86,7 @@ export async function searchBusinesses(queryRaw: string, near?: { lat: number; l
   const cached = cache.get(cacheKey);
   if (cached && Date.now() - cached.at < 10 * 60_000) return cached.hits;
   // A phone past its own 20 a day gets nothing (the apps then use their on-device fallback or typing); cached answers above are free.
-  if (!finder && device && !(await underDeviceCap(device).catch(() => true))) return [];
+  if (!finder && device && !sameTypingSession(device, q) && !(await underDeviceCap(device).catch(() => true))) return [];
   if (!(await underCap(finder).catch(() => false))) return [];
   const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
     method: "POST",
