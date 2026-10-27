@@ -92,7 +92,7 @@ export async function searchBusinesses(queryRaw: string, near?: { lat: number; l
     method: "POST",
     headers: {
       "Content-Type": "application/json", "X-Goog-Api-Key": key,
-      "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.websiteUri,places.nationalPhoneNumber,places.primaryTypeDisplayName,places.regularOpeningHours",
+      "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.websiteUri,places.internationalPhoneNumber,places.primaryTypeDisplayName,places.regularOpeningHours",
     },
     body: JSON.stringify({
       textQuery: q, maxResultCount: 5, regionCode: "GB",
@@ -101,10 +101,10 @@ export async function searchBusinesses(queryRaw: string, near?: { lat: number; l
     signal: AbortSignal.timeout(6000),
   }).catch(() => null);
   if (!res?.ok) { console.warn(`business-search: Google Places ${res ? res.status : "no response"}`); return []; }
-  const j = (await res.json().catch(() => ({}))) as { places?: { id?: string; displayName?: { text?: string }; formattedAddress?: string; websiteUri?: string; nationalPhoneNumber?: string; primaryTypeDisplayName?: { text?: string }; regularOpeningHours?: { periods?: { open?: { day?: number; hour?: number; minute?: number }; close?: { day?: number; hour?: number; minute?: number } }[] } }[] };
+  const j = (await res.json().catch(() => ({}))) as { places?: { id?: string; displayName?: { text?: string }; formattedAddress?: string; websiteUri?: string; internationalPhoneNumber?: string; primaryTypeDisplayName?: { text?: string }; regularOpeningHours?: { periods?: { open?: { day?: number; hour?: number; minute?: number }; close?: { day?: number; hour?: number; minute?: number } }[] } }[] };
   const hits: BusinessHit[] = (j.places ?? []).flatMap((p) => p.id && p.displayName?.text ? [{
     id: p.id, name: p.displayName.text.slice(0, 120), address: (p.formattedAddress ?? "").slice(0, 200),
-    website: cleanSite(p.websiteUri ?? "").slice(0, 200), phone: (p.nationalPhoneNumber ?? "").slice(0, 40), type: (p.primaryTypeDisplayName?.text ?? "").slice(0, 60), hours: hoursOf(p.regularOpeningHours?.periods),
+    website: cleanSite(p.websiteUri ?? "").slice(0, 200), phone: (p.internationalPhoneNumber ?? "").slice(0, 40), type: (p.primaryTypeDisplayName?.text ?? "").slice(0, 60), hours: hoursOf(p.regularOpeningHours?.periods),
   }] : []);
   if (cache.size > 500) cache.clear();
   cache.set(cacheKey, { at: Date.now(), hits });
