@@ -318,17 +318,27 @@ export function socialOf(u: URL): { kind: Social; url: string } | null {
 export interface SiteBranch { name: string; address: string; phone: string; hours: string }
 
 // `address` is whatever the card has so far; `name` is the card's name (e.g. "Acme Cafe Shoreditch"), used to pick the branch.
-export async function findSiteLinks(websiteOrDomain: string, address?: string, name?: string): Promise<{ links: CardLink[]; details: SiteDetails; branches: SiteBranch[] }> {
+// `prefetched` is the home page as a phone read it (some sites refuse requests from our servers): it is used instead of fetching it here.
+export async function findSiteLinks(websiteOrDomain: string, address?: string, name?: string, prefetched?: { html: string; url: string }): Promise<{ links: CardLink[]; details: SiteDetails; branches: SiteBranch[] }> {
   let host = websiteOrDomain.trim();
   try { host = new URL(/^[a-z]+:\/\//i.test(host) ? host : `https://${host}`).hostname; } catch { /* keep */ }
   const domain = normalizeDomain(host);
   if (!domain) return { links: [], details: {}, branches: [] };
-  const page = await fetchHomePage(domain);
-  if (!page || !(page.res.headers.get("content-type") ?? "").includes("text/html")) return { links: [], details: {}, branches: [] };
-  const buf = await readLimited(page.res, MAX_HTML);
-  if (!buf) return { links: [], details: {}, branches: [] };
-  const html = buf.toString("utf8");
-  const base = page.url;
+  let html: string;
+  let base: URL;
+  if (prefetched) {
+    // Only a page of the site that was asked about counts.
+    try { base = new URL(prefetched.url); } catch { return { links: [], details: {}, branches: [] }; }
+    if (base.protocol !== "https:" || base.hostname.replace(/^www\./, "") !== domain.replace(/^www\./, "")) return { links: [], details: {}, branches: [] };
+    html = prefetched.html.slice(0, MAX_HTML);
+  } else {
+    const page = await fetchHomePage(domain);
+    if (!page || !(page.res.headers.get("content-type") ?? "").includes("text/html")) return { links: [], details: {}, branches: [] };
+    const buf = await readLimited(page.res, MAX_HTML);
+    if (!buf) return { links: [], details: {}, branches: [] };
+    html = buf.toString("utf8");
+    base = page.url;
+  }
   const siteHost = base.hostname.replace(/^www\./, "");
   const found = new Map<LinkKind, string>();
   const extras: CardLink[] = [];
