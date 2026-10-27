@@ -437,5 +437,12 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
     if (reviews.google && !found.has("google_review")) found.set("google_review", reviews.google);
     if (reviews.tripadvisor && !found.has("tripadvisor")) found.set("tripadvisor", reviews.tripadvisor);
   }
+  // A restaurant's plain "Book now" page is its table booking (on other kinds of business it stays a general booking link).
+  const bookNow = extras.find((e) => /^book( now| online)?$/i.test(e.label.replace(/[!.]/g, "").trim()));
+  const foodPlace = found.has("menu") || found.has("tripadvisor") || /restaurant|bistro|caf[eé]|trattoria|pizzeria|brasserie|grill|kitchen|tavern|osteria|bar\b|pub\b/i.test(name ?? "");
+  if (bookNow && foodPlace && !found.has("book_table") && !found.has("book_room") && !found.has("appointment")) {
+    found.set("book_table", bookNow.value);
+    extras.splice(extras.indexOf(bookNow), 1);
+  }
   return { links: sanitizeLinks([...[...found].map(([kind, value]) => ({ kind, label: "", value })), ...extras]), details, branches };
 }
