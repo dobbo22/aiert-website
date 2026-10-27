@@ -12,7 +12,7 @@ const IMG = "https://www.aiert.co.uk/tapcard-guide";
 const steps: { title: string; img?: string; alt?: string; text: string }[] = [
   {
     title: "Make your card in seconds",
-    text: "The first screen asks What is the card for? Choose A business or Just me. For a business, start typing its name and TapCard offers to find it and fills in its address, phone and website. Tap Build my card and it reads your website to add your logo, booking and menu links, opening hours and social profiles. For Just me, give your name (scan a paper business card, use Sign in with Apple, or let TapCard find you in Contacts), then choose Personal or Work and add your job and phone. There is no account to make. Under a business card, a Finish setting up list shows what to do next: share your card, send your first offer, add booking links, or set up several locations.",
+    text: "The first screen asks What is the card for? Choose A business or Just me. For a business, start typing its name and TapCard offers to find it and fills in its address, phone and website. Tap your business in the list and the card is built straight away: it reads your website to add your logo, booking and menu links, opening hours and social profiles. For Just me, type your name (TapCard looks you up in Contacts as you type, and lets you combine entries and choose which number, email and address show, or scan a paper business card), then choose Personal or Work and add your job and phone. There is no account to make and no permission screens first. Under a business card, Finish setting up shows one step at a time: share your card, verify your business, add booking links, send your first offer, or set up several locations. Skip this step or Add later puts a step off.",
   },
   {
     title: "Scan a paper business card",
@@ -22,7 +22,7 @@ const steps: { title: string; img?: string; alt?: string; text: string }[] = [
     title: "Share your card",
     img: "share.png",
     alt: "TapCard share screen with a QR code and Share, Send and QR sign buttons",
-    text: "Your QR code is the quickest way. Anyone scans it with their camera and saves you, with no app needed. Under it, Share sends your link, Send picks people from your contacts, and QR sign (on business cards) makes a poster for your window or till, headed with your business name and \"Scan to follow and receive news and offers\". Choose Email me the sign and print it from a computer. Add your card to Apple Wallet or Google Wallet and choose a design.",
+    text: "Your QR code is the quickest way. Anyone scans it with their camera and saves you, with no app needed. Under it, Share sends your link, Send picks people from your contacts, and QR sign (on business cards) makes a poster for your window or till, headed with your business name and \"Scan to follow and receive news and offers\". Choose Email me the sign and print it from a computer. Add your card to Apple Wallet or Google Wallet and choose a design: Brand (a business's own logo and colours, the first choice for businesses), Artwork or Photo.",
   },
   {
     title: "No signal? Use Offline QR",
@@ -44,7 +44,7 @@ const steps: { title: string; img?: string; alt?: string; text: string }[] = [
     title: "Add your own details",
     img: "contact.png",
     alt: "A received card showing the user's own extra phone, email, where they met and notes",
-    text: "Open someone's card and tap My details to add where you met, a photo, another phone or email, and notes. They appear as extra rows on their card, and you can tap to call or email. This works for people you scanned and for people you picked from your phone contacts. New phones, emails and photos are added to their phone contact too. If they stop sharing, your details are kept.",
+    text: "Open someone's card and tap My details to add where you met, a photo, another phone or email, and notes. They appear as extra rows on their card, and you can tap to call or email. This works for people you scanned and for people you picked from your phone contacts. Tap Reposition photo to drag and zoom a photo you added. New phones, emails and photos are added to their phone contact too. If they stop sharing, your details are kept.",
   },
   {
     title: "Bookings, shop and more for your business",

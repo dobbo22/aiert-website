@@ -46,18 +46,22 @@ export default function HowItWorksPage() {
         </p>
         <p>
           <strong>A business</strong> (a restaurant, shop, salon, club or any business): start typing its name and TapCard offers to
-          find it, then fills in its address, phone number and website for you. Tap <strong>Build my card</strong> and TapCard reads
-          your website to add your logo, booking and menu links, opening hours and social profiles. If you do not have a website, or
-          it is not listed, type the name and website yourself. Your card is made straight away, with a short{" "}
-          <strong>Finish setting up</strong> list underneath: share your card, send your first offer, add booking or review links,
-          or set up several locations and staff cards with <a href="/business">TapCard for Business</a>.
+          find it (the search runs when you tap <strong>Find business</strong> or the Search key). Tap your business in the list and your
+          card is built straight away: its address, phone number and website, then your logo, booking and menu links, opening hours
+          and social profiles read from your website. If it is not listed, tap <strong>Not listed? Search Google</strong>, or type the
+          name and website yourself. There are no permission screens first. Under your card a{" "}
+          <strong>Finish setting up</strong> list shows one step at a time: share your card, verify your business, add booking or
+          review links, send your first offer, and set up several locations and staff cards with{" "}
+          <a href="/business">TapCard for Business</a>. Each step has its own button, and Skip this step or Add later puts it off.
+          Offers and news are switched on once your business is verified.
         </p>
         <p>
-          <strong>Just me</strong> (your own business card): two screens. First your name. To save typing, scan a paper business
-          card with the camera, use Sign in with Apple, or let TapCard find you in your Contacts. On Android there is also a
-          one-tap phone number from your phone. Then choose Personal or Work and add your job title, company, phone and email,
-          all optional. Your keyboard can suggest your own number and email as you type. You can add a photo, website and social
-          links afterwards.
+          <strong>Just me</strong> (your own business card): two screens. First your name. As you type, TapCard looks you up in your
+          Contacts (it asks once; on iPhone choose Share All Contacts). If you appear more than once, tick the entries that are you to
+          combine them and choose which phone number, email and address show. Or scan a paper business card with the camera. There is
+          no account or sign-in. Then choose Personal or Work and add your job title, company, phone and email,
+          all optional. Your keyboard can suggest your own number and email as you type. You can add a photo (and drag or pinch to{" "}
+          <strong>Reposition photo</strong>), a website and social links afterwards.
         </p>
         <p>
           <strong>Scanning a paper business card</strong> reads the text on your phone and suggests your name, job, company, phone,
