@@ -102,6 +102,13 @@ function ensureSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS address TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS links TEXT NOT NULL DEFAULT '[]'`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS card_kind TEXT NOT NULL DEFAULT ''`)
+      // One-off data changes, each run once: the name is recorded here so a later choice by an owner is never overwritten.
+      .then(() => sql`CREATE TABLE IF NOT EXISTS tapcard_migrations (name TEXT PRIMARY KEY, ran_at TIMESTAMPTZ NOT NULL DEFAULT now())`)
+      // Business cards moved to the Wallet "brand" style (the business's own logo and colours, like the card) from the old default.
+      .then(async () => {
+        const first = await sql`INSERT INTO tapcard_migrations (name) VALUES ('business-brand-pass-style') ON CONFLICT DO NOTHING RETURNING name`;
+        if (first.length) await sql`UPDATE tapcard_cards SET pass_style = 'brand' WHERE pass_style = 'artwork' AND label !~* 'personal' AND card_kind <> 'person'`;
+      })
       // "Send your card back": a receiver's app returning its own (already
       // public) card to the card it scanned. Only the two ids are stored —
       // the returned details are read live from tapcard_cards, so nothing is
