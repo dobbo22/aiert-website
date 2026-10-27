@@ -33,6 +33,15 @@ function anchors(html: string, base: URL): Anchor[] {
   return out;
 }
 
+/// Cloudflare hides an address on a page as a hex string: the first byte is a key, and each later byte is the key XOR a letter.
+function decodeCloudflareEmail(hex: string): string | null {
+  if (!/^[0-9a-f]{6,}$/i.test(hex) || hex.length % 2) return null;
+  const key = parseInt(hex.slice(0, 2), 16);
+  let out = "";
+  for (let i = 2; i < hex.length; i += 2) out += String.fromCharCode(parseInt(hex.slice(i, i + 2), 16) ^ key);
+  return out;
+}
+
 /// First tel: and mailto: addresses on the page (a plain contact link the visitor can tap).
 function contactLinks(html: string, domain: string): { phone?: string; email?: string } {
   const phones: string[] = [], emails: string[] = [];
@@ -42,7 +51,10 @@ function contactLinks(html: string, domain: string): { phone?: string; email?: s
     const raw = decodeURIComponent((m[1] ?? m[2] ?? "").trim().replace(/&amp;/g, "&"));
     if (/^tel:/i.test(raw)) phones.push(raw.slice(4).replace(/[^+\d\s()-]/g, "").trim());
     else if (/^mailto:/i.test(raw)) emails.push(raw.slice(7).split("?")[0].trim().toLowerCase());
+    else if (/\/cdn-cgi\/l\/email-protection#/i.test(raw)) { const e = decodeCloudflareEmail(raw.split("#")[1] ?? ""); if (e) emails.push(e.trim().toLowerCase()); }
   }
+  // Cloudflare's other form: <a class="__cf_email__" data-cfemail="...">[email protected]</a>
+  for (const m2 of html.matchAll(/data-cfemail\s*=\s*["']([0-9a-f]+)["']/gi)) { const e = decodeCloudflareEmail(m2[1]); if (e && emails.length < 8) emails.push(e.trim().toLowerCase()); }
   const email = emails.find((e) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e) && e.endsWith(`@${domain}`)) ?? emails.find((e) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e));
   return { phone: phones.find((p) => p.replace(/\D/g, "").length >= 9), email };
 }
