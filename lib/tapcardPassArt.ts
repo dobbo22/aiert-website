@@ -3,8 +3,10 @@ import sharp from "sharp";
 import fs from "node:fs/promises";
 import path from "node:path";
 import type { TapCardRecord } from "@/lib/tapcardDb";
-import { effectiveStyle, type PassStyle } from "@/lib/tapcardPassStyle";
+import { effectiveStyle, isPersonalCard, type PassStyle } from "@/lib/tapcardPassStyle";
 import { paletteFor } from "@/lib/brandPalette";
+import { findSiteLogo, normalizeDomain } from "@/lib/siteIcon";
+import { orgLogoBytesForCard } from "@/lib/tapcardBiz";
 
 // The picture parts of TapCard's Wallet passes — the Apple store-card strip,
 // the Google hero banner, and the Apple header logo. Wallet only allows the
@@ -62,6 +64,43 @@ async function fetchPhoto(url: string | null): Promise<Buffer | null> {
   }
 }
 
+/// The business's wide logo, the same one the card shows (its company upload, else the logo its website declares), or null.
+async function bannerLogo(card: TapCardRecord): Promise<Buffer | null> {
+  const orgLogo = await orgLogoBytesForCard(card).catch(() => null);
+  if (orgLogo) return orgLogo;
+  if (!card.website) return null;
+  let host = card.website.trim();
+  try { host = new URL(/^[a-z]+:\/\//i.test(host) ? host : `https://${host}`).hostname; } catch { return null; }
+  const domain = normalizeDomain(host);
+  if (!domain) return null;
+  return (await findSiteLogo(domain, { iconFallback: false }).catch(() => null))?.bytes ?? null;
+}
+
+/// The logo on a rounded plate in the middle of the strip, like the card: a dark plate for a light logo, a white one for a dark logo,
+/// and for a logo with its own solid background, that colour.
+async function logoPlate(logo: Buffer, w: number, h: number): Promise<string> {
+  const panelW = Math.round(w * 0.62), panelH = Math.round(h * 0.78);
+  const px = (w - panelW) / 2, py = (h - panelH) / 2;
+  const pad = panelH * 0.1;
+  const inner = await sharp(logo).resize(Math.round(panelW - pad * 2), Math.round(panelH - pad * 2), { fit: "inside" }).png().toBuffer();
+  const meta = await sharp(inner).metadata();
+  const small = await sharp(inner).resize(48, 48, { fit: "inside" }).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  let lum = 0, counted = 0, solid = 0;
+  for (let i = 0; i < small.data.length; i += 4) {
+    const a = small.data[i + 3];
+    if (a > 240) solid++;
+    if (a > 40) { lum += (0.2126 * small.data[i] + 0.7152 * small.data[i + 1] + 0.0722 * small.data[i + 2]) / 255; counted++; }
+  }
+  const total = small.info.width * small.info.height;
+  const hasTransparency = solid < total * 0.9;
+  const plate = hasTransparency
+    ? (counted && lum / counted > 0.6 ? "rgba(20,22,28,0.92)" : "rgba(255,255,255,0.96)")
+    : `rgb(${small.data[0]},${small.data[1]},${small.data[2]})`;
+  const iw = meta.width ?? panelW, ih = meta.height ?? panelH;
+  return `<rect x="${px}" y="${py}" width="${panelW}" height="${panelH}" rx="${panelH * 0.1}" fill="${plate}" stroke="rgba(255,255,255,0.22)" stroke-width="${Math.max(2, h * 0.008)}"/>
+    <image href="${dataUri(inner)}" x="${px + (panelW - iw) / 2}" y="${py + (panelH - ih) / 2}" width="${iw}" height="${ih}"/>`;
+}
+
 export interface BannerOptions {
   width: number;
   height: number;
@@ -77,6 +116,9 @@ export async function renderBanner(card: TapCardRecord, opts: BannerOptions): Pr
   const style = effectiveStyle(card, opts.style);
   const photo = await fetchPhoto(card.photo_url);
   const palette = paletteFor(card.brand_color);
+  // A business's own logo, when it has one, is the picture on the "brand" strip: the same look as the card, not initials in a circle.
+  const logo = style === "brand" && !isPersonalCard(card) ? await bannerLogo(card) : null;
+  const logoLayer = logo ? await logoPlate(logo, w, h).catch(() => "") : "";
 
   let background = "";
   if (style === "artwork") {
@@ -135,10 +177,10 @@ export async function renderBanner(card: TapCardRecord, opts: BannerOptions): Pr
       <filter id="lift" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${d * 0.08}"/></filter>
     </defs>
     ${background}
-    <circle cx="${cx}" cy="${cy + d * 0.05}" r="${d / 2}" fill="rgba(0,0,0,0.35)" filter="url(#lift)"/>
+    ${logoLayer || `<circle cx="${cx}" cy="${cy + d * 0.05}" r="${d / 2}" fill="rgba(0,0,0,0.35)" filter="url(#lift)"/>
     ${avatar}
     <circle cx="${cx}" cy="${cy}" r="${d / 2 - ring / 2}" fill="none" stroke="#fff" stroke-width="${ring}"/>
-    ${text}
+    ${text}`}
   </svg>`;
   return sharp(renderSvg(svg)).png({ compressionLevel: 9 }).toBuffer();
 }
