@@ -2,7 +2,7 @@
 // publishes on its own website, so TapCard can offer to add them to the card.
 // Only links the page itself contains (nothing guessed or invented); the owner
 // ticks which to keep.
-import { normalizeDomain, readLimited, safeFetch } from "@/lib/siteIcon";
+import { fetchHomePage, normalizeDomain, readLimited, safeFetch } from "@/lib/siteIcon";
 import { findReviewLinks } from "@/lib/reviewLookup";
 import { sanitizeLinks, type CardLink, type LinkKind } from "@/lib/tapcardLinks";
 
@@ -311,7 +311,7 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
   try { host = new URL(/^[a-z]+:\/\//i.test(host) ? host : `https://${host}`).hostname; } catch { /* keep */ }
   const domain = normalizeDomain(host);
   if (!domain) return { links: [], details: {}, branches: [] };
-  const page = await safeFetch(`https://${domain}/`);
+  const page = await fetchHomePage(domain);
   if (!page || !(page.res.headers.get("content-type") ?? "").includes("text/html")) return { links: [], details: {}, branches: [] };
   const buf = await readLimited(page.res, MAX_HTML);
   if (!buf) return { links: [], details: {}, branches: [] };
@@ -358,7 +358,7 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
       else if (/^(order( online| now)?|takeaway|click (&|and) collect)$/.test(t) || /\/(order|order-online)\/?$/.test(path)) pick(found, "order", href);
       else if (/^(news|latest news|news (&|and) events|blog|our blog|the blog|what'?s on|events|journal|updates)$/.test(t) || /^\/(news|blog|latest-news|whats-on|events|journal)\/?$/.test(path)) addExtra("Latest news", href);
       else if (/^(prices?|pricing|price list|full price list|see (our )?prices|our prices)$/.test(t) || /^\/(pricing|prices|price-list)\/?$/.test(path)) addExtra("View prices", href);
-      else if (/^(book( now| online)?|schedule( a)?( pick ?up| collection| delivery| visit)?|make a booking|book (an )?appointment|book a visit)$/.test(t) || /^\/(book|booking|bookings|book-now|appointments?|schedule)\/?$/.test(path)) addExtra(t ? t.replace(/\b\w/g, (c) => c.toUpperCase()).slice(0, 40) : "Book now", href);
+      else if (/^(book( now| online)?|schedule( a)?( pick ?up| collection| delivery| visit)?|make a booking|book (an )?appointment|book a visit)$/.test(t) || /^\/(book|booking|bookings|book-?now|appointments?|schedule)\/?$/.test(path)) addExtra(t ? t.replace(/\b\w/g, (c) => c.toUpperCase()).slice(0, 40) : "Book now", href);
       else if (/^(shop|online shop|store|shop online|web ?shop|our (online )?shop|shop now|buy online|buy now|order flowers|send flowers|buy flowers|order a bouquet|order your flowers)$/.test(t) || /\/(shop|store|order-flowers|send-flowers|buy-flowers)(\.html?)?\/?$/.test(path)) pick(found, "shop", href);
     }
   }

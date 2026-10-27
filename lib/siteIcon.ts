@@ -33,7 +33,7 @@ export function normalizeDomain(input: string): string | null {
 }
 
 export async function findSiteIcon(domain: string, { allowIco = true } = {}): Promise<SiteIcon | null> {
-  const page = await safeFetch(`https://${domain}/`);
+  const page = await fetchHomePage(domain);
   const candidates: string[] = [];
   let origin = `https://${domain}`;
   let themeColor: string | null = null;
@@ -260,6 +260,13 @@ async function fetchIcon(url: string): Promise<Omit<SiteIcon, "themeColor" | "ad
 }
 
 /// Follows redirects by hand so every hop is re-checked as HTTPS to a public address.
+/// A business's home page: the domain as given, then its www. form (some sites answer only on www, and the bare domain never connects).
+export async function fetchHomePage(domain: string): Promise<{ res: Response; url: URL } | null> {
+  const page = await safeFetch(`https://${domain}/`);
+  if (page || domain.startsWith("www.")) return page;
+  return safeFetch(`https://www.${domain}/`);
+}
+
 export async function safeFetch(start: string): Promise<{ res: Response; url: URL } | null> {
   let url: URL;
   try {
