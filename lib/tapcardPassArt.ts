@@ -65,7 +65,7 @@ async function fetchPhoto(url: string | null): Promise<Buffer | null> {
 }
 
 /// The business's wide logo, the same one the card shows (its company upload, else the logo its website declares), or null.
-async function bannerLogo(card: TapCardRecord): Promise<Buffer | null> {
+export async function bannerLogo(card: TapCardRecord): Promise<Buffer | null> {
   const orgLogo = await orgLogoBytesForCard(card).catch(() => null);
   if (orgLogo) return orgLogo;
   if (!card.website) return null;
@@ -107,6 +107,8 @@ export interface BannerOptions {
   /// Name and title drawn in (Apple strip); Google shows those as pass text already.
   withText: boolean;
   style?: PassStyle;
+  /// The wide logo when the caller already has it (null = none); left out, the banner looks it up itself.
+  logo?: Buffer | null;
 }
 
 /// The wide picture across the pass: background for the style, round photo
@@ -117,7 +119,7 @@ export async function renderBanner(card: TapCardRecord, opts: BannerOptions): Pr
   const photo = await fetchPhoto(card.photo_url);
   const palette = paletteFor(card.brand_color);
   // A business's own logo, when it has one, is the picture on the "brand" strip: the same look as the card, not initials in a circle.
-  const logo = style === "brand" && !isPersonalCard(card) ? await bannerLogo(card) : null;
+  const logo = style === "brand" && !isPersonalCard(card) ? (opts.logo !== undefined ? opts.logo : await bannerLogo(card)) : null;
   const logoLayer = logo ? await logoPlate(logo, w, h).catch(() => "") : "";
 
   let background = "";

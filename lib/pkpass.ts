@@ -7,9 +7,9 @@ import crypto from "node:crypto";
 import type { TapCardRecord } from "@/lib/tapcardDb";
 import { findSiteIcon } from "@/lib/siteIcon";
 import { orgLogoBytesForCard } from "@/lib/tapcardBiz";
-import { renderBanner, renderLogoLockup } from "@/lib/tapcardPassArt";
+import { bannerLogo, renderBanner, renderLogoLockup } from "@/lib/tapcardPassArt";
 import type { CodeStatus } from "@/lib/tapcardOffers";
-import { isPersonalCard, sameName } from "@/lib/tapcardPassStyle";
+import { effectiveStyle, isPersonalCard, sameName } from "@/lib/tapcardPassStyle";
 
 const PASS_TYPE_IDENTIFIER = "pass.com.mailbroom.tapcard";
 const TEAM_IDENTIFIER = "ATMHQQQQ5S";
@@ -199,7 +199,9 @@ export async function buildPkpass(card: TapCardRecord, shareURL: string): Promis
 
   const files: Record<string, Buffer> = { "pass.json": passJsonBuffer, ...assets };
 
-  const icon = await companyIcon(card);
+  // A business with a wide logo on its strip does not also show its website's tiny favicon (often a generic glyph) in the header.
+  const wideLogo = effectiveStyle(card) === "brand" && !isPersonalCard(card) ? await bannerLogo(card) : null;
+  const icon = wideLogo ? null : await companyIcon(card);
   // Lock-screen/notification icon: the company icon when there is one, on
   // white (favicons are often a dark glyph on transparency); otherwise the
   // bundled TapCard icon already in `files`.
@@ -211,7 +213,7 @@ export async function buildPkpass(card: TapCardRecord, shareURL: string): Promis
   // Header logo (up to 160x50 pt) and the strip (375x144 pt), drawn at 3x.
   const [lockup, strip] = await Promise.all([
     renderLogoLockup(card, icon, 150),
-    renderBanner(card, { width: 1125, height: 432, withText: true }),
+    renderBanner(card, { width: 1125, height: 432, withText: true, logo: wideLogo }),
   ]);
   const lockupWidth1x = Math.round(((await sharp(lockup).metadata()).width ?? 480) / 3);
   Object.assign(files, await scaled(lockup, "logo", lockupWidth1x, 50), await scaled(strip, "strip", 375, 144));
