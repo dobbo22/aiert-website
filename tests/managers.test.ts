@@ -52,7 +52,7 @@ test("an admin adds a manager for chosen shops, who is emailed what they can do"
   assert.equal(ctx.outbox[0].to, email);
   assert.match(ctx.outbox[0].subject, /manager at Mgr Co/);
   assert.match(ctx.outbox[0].html, /QR sign/);
-  assert.match(ctx.outbox[0].html, /not part of your access/);
+  assert.match(ctx.outbox[0].html, /Offers &amp; numbers/);
   assert.match(ctx.outbox[0].html, /login\//);
   assert.match(ctx.outbox[0].html, /Make your shop's card/, "the card link comes in the same email");
   assert.match(ctx.outbox[0].html, /business\/claim#/);
@@ -81,7 +81,7 @@ test("an admin adds a manager for chosen shops, who is emailed what they can do"
   ctx.cookie = undefined;
 });
 
-test("a manager is closed out of every admin route and page, and cannot post offers", async () => {
+test("a manager is closed out of every admin route and page", async () => {
   const t = await setup();
   const { addAdmin } = await import("../lib/tapcardBiz");
   const { requireBizSession, requireBizUser } = await import("../lib/tapcardBizSession");
@@ -110,7 +110,7 @@ test("a manager is closed out of every admin route and page, and cannot post off
   for (const [mod, fn, r] of denied) assert.equal((await call(mod, fn, r)).status, 401, `${mod} ${fn}`);
 
   // every admin page is empty for a manager
-  for (const page of ["billing", "template", "locations", "admins", "promote"]) {
+  for (const page of ["billing", "template", "locations", "admins"]) {
     assert.equal(await show(() => import(`../app/tapcard/business/admin/${page}/page`)), "", `${page} page`);
   }
   // offers and news: the posting routes are for admins and ticked phones only
@@ -127,11 +127,13 @@ test("only the few manager routes use the manager-capable session", async () => 
     "app/api/tapcard/biz/cards/[id]/route.ts",
     "app/api/tapcard/biz/invites/route.ts",
     "app/api/tapcard/biz/locations/sign/route.ts",
+    "app/api/tapcard/biz/promote/route.ts",
     // The public business search only reads who is signed in, to count the lookup against their company's daily allowance.
     "app/api/tapcard/business-search/route.ts",
     "app/tapcard/business/admin/employees/page.tsx",
     "app/tapcard/business/admin/layout.tsx",
     "app/tapcard/business/admin/page.tsx",
+    "app/tapcard/business/admin/promote/page.tsx",
     "app/tapcard/business/admin/qr-sign/page.tsx",
   ]);
 });
@@ -236,7 +238,8 @@ test("the navigation shows a manager only QR sign and Employees (and Overview)",
   assert.match(manager, /Overview/);
   assert.match(manager, /QR sign/);
   assert.match(manager, /Employees/);
-  for (const hidden of ["Card template", "Locations", "Offers & numbers", "Admins", "Billing"]) assert.ok(!manager.includes(hidden), hidden);
+  assert.match(manager, /Offers & numbers/);
+  for (const hidden of ["Card template", "Locations", "Admins", "Billing"]) assert.ok(!manager.includes(hidden), hidden);
   const admin = text(renderToStaticMarkup(AdminNav({ role: "admin" }) as never));
   for (const shown of ["Card template", "Locations", "Offers & numbers", "Admins", "Billing", "QR sign", "Employees"]) assert.ok(admin.includes(shown), shown);
 });
@@ -322,5 +325,38 @@ test("a shop whose card is gone shows as waiting again, and removing the already
   assert.equal(((await sql`SELECT claimed_card_id FROM tapcard_biz_locations WHERE id = ${t.bardfield.id}`)[0] as { claimed_card_id: string | null }).claimed_card_id, null);
   // a card that was never anyone's is still a 404
   assert.equal((await del.DELETE(req("/x/nope", { method: "DELETE" }), { params: Promise.resolve({ id: "nope" }) })).status, 404);
+  ctx.cookie = undefined;
+});
+
+test("a manager posts for their own shop only, and an admin can switch that off per manager", async () => {
+  const t = await setup();
+  const { signInvite } = await import("../lib/tapcardBizInvite");
+  const claim = await import("../app/api/tapcard/biz/claim/route");
+  const admins = await import("../app/api/tapcard/biz/admins/route");
+  const promote = await import("../app/api/tapcard/biz/promote/route");
+  t.asAdmin();
+  await admins.POST(req("/x", { body: { email: "pat@mgr.example", role: "manager", locationIds: [t.dunmow.id] } }));
+  const made = (loc: { id: string }) => claim.POST(req("/x", { body: { token: signInvite(t.org, { name: "", email: "", title: "" }, Date.now(), loc.id) } })).then(json);
+  const dun = await made(t.dunmow);
+  const bard = await made(t.bardfield);
+  const canPost = async (id: string) => ((await sql`SELECT org_can_post FROM tapcard_cards WHERE id = ${id}`)[0] as { org_can_post: boolean }).org_can_post;
+  assert.equal(await canPost(dun.card.id), true, "a managed shop's phone may post by default");
+  const post = (cardId: string) => promote.POST(req("/x", { body: { cardId, action: "withdrawNews" } }));
+
+  t.asManager("pat@mgr.example");
+  assert.equal((await post(dun.card.id)).status, 200, "their own shop");
+  assert.equal((await post(bard.card.id)).status, 403, "another shop");
+
+  t.asAdmin();
+  assert.equal((await post(bard.card.id)).status, 200, "the admin posts for any shop");
+  const pat = ((await sql`SELECT id FROM tapcard_biz_admins WHERE email = 'pat@mgr.example'`)[0] as { id: string }).id;
+  assert.equal((await admins.PATCH(req("/x", { method: "PATCH", body: { id: pat, canPost: false } }))).status, 200);
+  assert.equal(await canPost(dun.card.id), false, "switched off for the shop's phone too");
+  t.asManager("pat@mgr.example");
+  assert.equal((await post(dun.card.id)).status, 403, "switched off");
+  t.asAdmin();
+  assert.equal((await post(dun.card.id)).status, 200, "the admin still can");
+  await admins.PATCH(req("/x", { method: "PATCH", body: { id: pat, canPost: true } }));
+  assert.equal(await canPost(dun.card.id), true);
   ctx.cookie = undefined;
 });

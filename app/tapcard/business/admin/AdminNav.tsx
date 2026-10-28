@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const MANAGER_TABS = ["/business/admin", "/business/admin/qr-sign", "/business/admin/employees"];
+const MANAGER_TABS = ["/business/admin", "/business/admin/qr-sign", "/business/admin/employees", "/business/admin/promote"];
 const TABS = [
   { href: "/business/admin", label: "Overview" },
   { href: "/business/admin/template", label: "Card template" },

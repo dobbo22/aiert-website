@@ -5,7 +5,7 @@ import { canEdit, hashSecret, readEditToken } from "@/lib/tapcardAuth";
 import { isPersonalCard } from "@/lib/tapcardPassStyle";
 import { attachCardToOrg, cardOrgId, countOrgCards, getOrg, orgCanProvision, spendInvite, wasRemovedByCompany } from "@/lib/tapcardBiz";
 import { verifyInvite } from "@/lib/tapcardBizInvite";
-import { getLocation, markLocationClaimed } from "@/lib/tapcardBizLocations";
+import { getLocation, markLocationClaimed, syncShopPosting } from "@/lib/tapcardBizLocations";
 import { setCardStaffLocation } from "@/lib/tapcardBiz";
 import sql from "@/lib/db";
 
@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
     if (!(await spendInvite(invite.j, org.id))) return NextResponse.json({ error: "this invite link was already used" }, { status: 409 });
     const newToken = crypto.randomBytes(32).toString("base64url").replace(/=/g, "");
     await replaceEditToken(card.id, hashSecret(newToken));
+    if (invite.l) await syncShopPosting(org.id, [invite.l]);
     const handed = (await getCard(card.id)) ?? card;
     return NextResponse.json({
       card: { ...publicCardJSON(handed), orgID: org.id, orgLockedFields: org.locked_fields, orgPolicyVersion: org.policy_version, orgLogoURL: org.logo_url },
@@ -65,7 +66,7 @@ export async function POST(req: NextRequest) {
     await attachCardToOrg(existing.id, org.id, org.locked_fields);
     // Opened from a shop's link: the person's own card becomes that shop's card.
     const shopFor = invite.l ? await getLocation(invite.l) : null;
-    if (shopFor && shopFor.org_id === org.id && !shopFor.claimed_card_id) await markLocationClaimed(shopFor.id, existing.id);
+    if (shopFor && shopFor.org_id === org.id && !shopFor.claimed_card_id) { await markLocationClaimed(shopFor.id, existing.id); await syncShopPosting(org.id, [shopFor.id]); }
     const joined = await getCard(existing.id);
     if (!joined) return NextResponse.json({ error: "something went wrong joining your card" }, { status: 500 });
     return NextResponse.json({
@@ -118,6 +119,8 @@ export async function POST(req: NextRequest) {
   }
   if (location) {
     await markLocationClaimed(location.id, cardId);
+    // The shop's manager may post its offers and news from their phone (the admin can too, from the web).
+    await syncShopPosting(org.id, [location.id]);
     // Offers and news are for admins to post (from the web). A manager's phone cannot post for its shop unless an admin ticks it on the
     // Employees tab, so nothing is ticked here.
   }

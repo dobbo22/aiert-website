@@ -111,6 +111,8 @@ export function ensureSchema(): Promise<unknown> {
       // Set when the admin opens the sign-in link emailed to this address: proof they control the mailbox.
       .then(() => sql`ALTER TABLE tapcard_biz_admins ADD COLUMN IF NOT EXISTS confirmed_at TIMESTAMPTZ`)
       .then(() => sql`ALTER TABLE tapcard_biz_admins ADD COLUMN IF NOT EXISTS location_ids TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`)
+      // A manager may post their shops' offers and news unless an admin switches it off.
+      .then(() => sql`ALTER TABLE tapcard_biz_admins ADD COLUMN IF NOT EXISTS can_post BOOLEAN NOT NULL DEFAULT true`)
       .then(() => sql`
         CREATE TABLE IF NOT EXISTS tapcard_biz_login_tokens (
           token_hash TEXT PRIMARY KEY,
@@ -386,12 +388,12 @@ export async function addAdmin(orgId: string, email: string, role = "admin", loc
 /// A company may have up to this many admins.
 export const MAX_ADMINS = 5;
 
-export interface BizAdminRow { id: string; email: string; role: string; created_at: string; confirmed_at: string | null; location_ids: string[] }
+export interface BizAdminRow { id: string; email: string; role: string; created_at: string; confirmed_at: string | null; location_ids: string[]; can_post: boolean }
 
 /// The company's admins, first (the owner) to last.
 export async function listAdmins(orgId: string): Promise<BizAdminRow[]> {
   await ensureSchema();
-  return (await sql`SELECT id, email, role, created_at, confirmed_at, location_ids FROM tapcard_biz_admins WHERE org_id = ${orgId} ORDER BY created_at, id`) as BizAdminRow[];
+  return (await sql`SELECT id, email, role, created_at, confirmed_at, location_ids, can_post FROM tapcard_biz_admins WHERE org_id = ${orgId} ORDER BY created_at, id`) as BizAdminRow[];
 }
 
 /// Managers: people who run one or more shops. They sign in with an emailed link like an admin, but only see their own shops' QR sign

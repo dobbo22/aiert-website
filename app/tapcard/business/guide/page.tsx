@@ -223,14 +223,13 @@ Sam Patel,sam@yourcompany.com,Account Manager`}</pre>
             <strong>A shop manager (web access).</strong> On the <strong>Admins</strong> tab, under <strong>Managers</strong>, type
             their email, tick the shop or shops they look after and press <strong>Add manager</strong>. They are emailed what they can do
             and a sign-in link. A manager signs in at the same address as an admin but sees only <strong>QR sign</strong> (to print and
-            word their shop&apos;s sign) and <strong>Employees</strong> (to create invite links for their shop&apos;s staff, and to remove a
-            staff card when someone leaves). They cannot post offers or news, and never see billing, the template, locations or other
-            admins. You can change a manager&apos;s shops, or remove them, at any time.
+            word their shop&apos;s sign), <strong>Employees</strong> (to create invite links for their shop&apos;s staff, and to remove a
+            staff card when someone leaves) and <strong>Offers &amp; numbers</strong> (to post offers and news for their own shop). They never
+            see billing, the template, locations or other admins. You can change a manager&apos;s shops, or remove them, at any time.
           </li>
           <li>
-            <strong>A shop manager (in the app)</strong> is an employee who has made their shop&apos;s card from an invite link. Offers and
-            news are posted by admins from the web. A manager&apos;s phone posts for its shop only if an admin ticks it on the
-            <strong> Employees</strong> tab.
+            <strong>A shop manager (in the app)</strong> is an employee who has made their shop&apos;s card from an invite link. Both the
+            manager and the company&apos;s admins can post for the shop: the manager from their phone or the web, the admins from the web.
           </li>
           <li>
             <strong>Other staff</strong> have a card to share and nothing more. With no ticks they cannot post.

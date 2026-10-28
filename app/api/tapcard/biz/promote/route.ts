@@ -1,14 +1,14 @@
 import { after, NextResponse } from "next/server";
 import { pushToFollowers } from "@/lib/tapcardPush";
 import sql from "@/lib/db";
-import { requireBizSession } from "@/lib/tapcardBizSession";
+import { requireBizUser } from "@/lib/tapcardBizSession";
 import { getOrg, isOrgActive } from "@/lib/tapcardBiz";
 import { clearAnnouncement, clearOffers, setAnnouncement, setOffer } from "@/lib/tapcardOffers";
 
-// A company admin posts or withdraws a location's offer or news from the web. Only for the admin's own company's
+// An admin posts or withdraws any shop's offer or news from the web; a manager only for their own shops. Only for the company's own
 // cards, and only while the company's billing is active.
 export async function POST(req: Request) {
-  const session = await requireBizSession();
+  const session = await requireBizUser();
   if (!session) return NextResponse.json({ error: "Please sign in again." }, { status: 401 });
   const org = await getOrg(session.orgId);
   if (!org || !isOrgActive(org)) return NextResponse.json({ error: "Your company's billing isn't active, so offers and news are paused." }, { status: 402 });
@@ -16,6 +16,11 @@ export async function POST(req: Request) {
   const cardId = String(body?.cardId ?? "");
   const owns = ((await sql`SELECT 1 FROM tapcard_cards WHERE id = ${cardId} AND org_id = ${org.id}`) as unknown[]).length > 0;
   if (!owns) return NextResponse.json({ error: "That card isn't one of your company's." }, { status: 404 });
+  if (session.role === "manager") {
+    const mine = ((await sql`SELECT 1 FROM tapcard_biz_locations WHERE org_id = ${org.id} AND claimed_card_id = ${cardId} AND id = ANY(${session.locationIds})`) as unknown[]).length > 0;
+    if (!mine) return NextResponse.json({ error: "That isn't one of your shops' cards." }, { status: 403 });
+    if (!session.canPost) return NextResponse.json({ error: "Your admin has switched off posting for you. Ask them to post, or to turn it back on." }, { status: 403 });
+  }
 
   switch (body?.action) {
     case "offer": {
@@ -47,7 +52,8 @@ export async function POST(req: Request) {
 
 // CSV of the dashboard numbers, per location.
 export async function GET() {
-  const session = await requireBizSession();
+  const session = await requireBizUser();
+  if (session && session.role !== "admin") return new Response("Admins only.", { status: 403 });
   if (!session) return new Response("Please sign in again.", { status: 401 });
   const { orgPromoteRows } = await import("@/lib/tapcardOffers");
   const rows = await orgPromoteRows(session.orgId);

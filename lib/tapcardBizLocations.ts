@@ -99,6 +99,20 @@ export async function deleteLocation(orgId: string, id: string, allowClaimed = f
   return rows.length > 0;
 }
 
+/// A shop card may post from its phone while one of the shop's managers is allowed to post (or the shop has no manager rows at all, e.g. an
+/// admin made it). Called after a card is made or handed over, and when an admin changes a manager's setting or shops.
+export async function syncShopPosting(orgId: string, locationIds: string[]): Promise<void> {
+  await ensureLocationSchema();
+  if (!locationIds.length) return;
+  await sql`
+    UPDATE tapcard_cards c SET org_can_post = (
+      NOT EXISTS (SELECT 1 FROM tapcard_biz_admins a WHERE a.org_id = ${orgId} AND a.role = 'manager' AND l.id = ANY(a.location_ids))
+      OR EXISTS (SELECT 1 FROM tapcard_biz_admins a WHERE a.org_id = ${orgId} AND a.role = 'manager' AND l.id = ANY(a.location_ids) AND a.can_post)
+    )
+    FROM tapcard_biz_locations l
+    WHERE l.org_id = ${orgId} AND l.id = ANY(${locationIds}) AND l.claimed_card_id = c.id`;
+}
+
 /// The shop's card was removed: the shop is unclaimed again (its prepared details stay), ready for a new manager invite.
 export async function releaseShopCard(orgId: string, cardId: string): Promise<boolean> {
   await ensureLocationSchema();

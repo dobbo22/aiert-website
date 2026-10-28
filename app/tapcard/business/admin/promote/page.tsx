@@ -1,17 +1,24 @@
-import { requireBizSession } from "@/lib/tapcardBizSession";
-import { getOrg, isOrgActive } from "@/lib/tapcardBiz";
+import { requireBizUser } from "@/lib/tapcardBizSession";
+import { getOrg, isOrgActive, listOrgCards } from "@/lib/tapcardBiz";
+import { listLocations } from "@/lib/tapcardBizLocations";
 import { orgPromoteRows } from "@/lib/tapcardOffers";
 import LocationPromote from "./LocationPromote";
 
 export const dynamic = "force-dynamic";
 
-// Offers, news and numbers for every location (company card), in one place.
+// Offers, news and numbers for every shop card, in one place. A manager sees and posts for only their own shops; an admin for all of them.
 export default async function BizPromotePage() {
-  const session = await requireBizSession();
+  const session = await requireBizUser();
   if (!session) return null;
   const org = await getOrg(session.orgId);
   if (!org) return null;
-  const rows = await orgPromoteRows(org.id);
+  const shops = (await listLocations(org.id).catch(() => [])).filter((l) => session.role === "admin" || session.locationIds.includes(l.id));
+  const shopCardIds = new Set(shops.map((l) => l.claimed_card_id).filter(Boolean) as string[]);
+  // Shop cards only: the shops' own cards, and (for an admin) any card marked as a business, not each member of staff.
+  const businessIds = session.role === "admin" ? new Set((await listOrgCards(org.id)).filter((c) => c.card_kind === "business").map((c) => c.id)) : new Set<string>();
+  const rows = (await orgPromoteRows(org.id)).filter((r) => shopCardIds.has(r.id) || businessIds.has(r.id));
+  const blocked = session.role === "manager" && !session.canPost;
+  const waiting = shops.filter((l) => !l.claimed_card_id);
   const sum = (f: (r: (typeof rows)[number]) => number) => rows.reduce((n, r) => n + f(r), 0);
   const active = isOrgActive(org);
   const stat = (v: number, l: string) => (
@@ -35,9 +42,16 @@ export default async function BizPromotePage() {
       </div>
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-cloud">Locations</h2>
-        <a className="text-sm text-gold underline" href="/api/tapcard/biz/promote">Download as CSV</a>
+        {session.role === "admin" && <a className="text-sm text-gold underline" href="/api/tapcard/biz/promote">Download as CSV</a>}
       </div>
-      {rows.length === 0 && <p className="text-cloud">No location cards yet. Invite people on the Employees page; each card they activate appears here.</p>}
+      {blocked && <p className="rounded-xl bg-white/10 px-4 py-3 text-cloud">Your admin has switched off posting for you. You can still see how your shop&apos;s offers are doing; ask your admin to post, or to turn it back on.</p>}
+      {waiting.length > 0 && (
+        <p className="rounded-xl bg-white/10 px-4 py-3 text-cloud">
+          Offers and news are posted on a shop&apos;s own card, so {waiting.map((l) => l.name).join(", ")} can post once {waiting.length === 1 ? "its card has" : "their cards have"} been made
+          (the manager opens the invite link in the TapCard app, or you hand over a card you made).
+        </p>
+      )}
+      {rows.length === 0 && waiting.length === 0 && <p className="text-cloud">No shop cards yet.</p>}
       <div className="space-y-4">
         {rows.map((r) => (
           <section key={r.id} className="rounded-2xl bg-charcoal p-4 ring-1 ring-white/10 text-cloud">
@@ -50,7 +64,7 @@ export default async function BizPromotePage() {
               <p><strong>News:</strong> {r.news ?? "none"}</p>
               <p className="sm:col-span-2"><strong>All time:</strong> {r.claimedTotal} claimed, {r.redeemedTotal} used</p>
             </div>
-            {active && <div className="mt-3"><LocationPromote cardId={r.id} hasOffer={!!r.offerText} hasNews={!!r.news} /></div>}
+            {active && !blocked && <div className="mt-3"><LocationPromote cardId={r.id} hasOffer={!!r.offerText} hasNews={!!r.news} /></div>}
           </section>
         ))}
       </div>

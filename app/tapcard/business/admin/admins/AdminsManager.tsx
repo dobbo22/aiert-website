@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 export interface AdminRowData { id: string; email: string; owner: boolean; confirmed: boolean; you: boolean }
 
 /// Add another admin by email (they are emailed a sign-in link) and remove admins other than yourself and the owner.
-export interface ManagerRowData { id: string; email: string; confirmed: boolean; locationIds: string[] }
+export interface ManagerRowData { id: string; email: string; confirmed: boolean; locationIds: string[]; canPost: boolean }
 export interface ShopOption { id: string; label: string }
 
 export default function AdminsManager({ admins, max, managers, maxManagers, shops }: { admins: AdminRowData[]; max: number; managers: ManagerRowData[]; maxManagers: number; shops: ShopOption[] }) {
@@ -28,6 +28,13 @@ export default function AdminsManager({ admins, max, managers, maxManagers, shop
     if (!ids.length) { window.alert("A manager needs at least one shop."); return; }
     setBusy(true);
     await fetch("/api/tapcard/biz/admins", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: m.id, locationIds: ids }) }).catch(() => null);
+    setBusy(false);
+    router.refresh();
+  }
+
+  async function togglePost(m: ManagerRowData, canPost: boolean) {
+    setBusy(true);
+    await fetch("/api/tapcard/biz/admins", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: m.id, canPost }) }).catch(() => null);
     setBusy(false);
     router.refresh();
   }
@@ -100,7 +107,7 @@ export default function AdminsManager({ admins, max, managers, maxManagers, shop
         <h2 className="text-lg font-bold text-cloud">Managers</h2>
         <p className="mt-1 text-sm text-mist">
           A manager looks after one or more shops. They sign in with an emailed link and can print their shop&apos;s QR sign and create or remove
-          their shop&apos;s staff cards. They can&apos;t post offers or news, and never see billing, the template, locations or other admins.
+          their shop&apos;s staff cards. They can post their shop&apos;s offers and news unless you switch that off for them below. They never see billing, the template, locations or other admins.
         </p>
         {managers.length > 0 && (
           <ul className="mt-4 divide-y divide-slate/50">
@@ -113,6 +120,10 @@ export default function AdminsManager({ admins, max, managers, maxManagers, shop
                   </div>
                   <button type="button" onClick={() => removeManager(m)} disabled={busy} className="text-sm text-mist underline">Remove</button>
                 </div>
+                <label className="mt-2 flex items-center gap-1.5 text-sm">
+                  <input type="checkbox" checked={m.canPost} disabled={busy} onChange={(e) => void togglePost(m, e.target.checked)} />
+                  May post offers and news for their shops
+                </label>
                 <div className="mt-2 flex flex-wrap gap-3 text-sm">
                   {shops.map((sh) => (
                     <label key={sh.id} className="flex items-center gap-1.5">

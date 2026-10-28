@@ -23,7 +23,7 @@ export default async function BizAdminsPage() {
         max={MAX_ADMINS}
         maxManagers={MAX_MANAGERS}
         admins={admins.map((a, i) => ({ id: a.id, email: a.email, owner: i === 0, confirmed: !!a.confirmed_at, you: a.email === session.email }))}
-        managers={managers.map((m) => ({ id: m.id, email: m.email, confirmed: !!m.confirmed_at, locationIds: m.location_ids ?? [] }))}
+        managers={managers.map((m) => ({ id: m.id, email: m.email, confirmed: !!m.confirmed_at, locationIds: m.location_ids ?? [], canPost: m.can_post !== false }))}
         shops={locations.map((l) => ({ id: l.id, label: town(l.address, l.name) }))}
       />
       {!session.support && <SupportAccess until={until} />}

@@ -3,7 +3,7 @@ import { rateLimited } from "@/lib/rateLimit";
 import { MAX_ADMINS, MAX_MANAGERS, addAdmin, findAdminOrgsByEmail, getOrg, listAdmins, removeAdminById } from "@/lib/tapcardBiz";
 import { createLoginToken } from "@/lib/tapcardBizAuth";
 import { sendBizAdminInviteEmail, sendBizManagerInviteEmail } from "@/lib/tapcardBizEmail";
-import { listLocations, shopCardLinks } from "@/lib/tapcardBizLocations";
+import { listLocations, shopCardLinks, syncShopPosting } from "@/lib/tapcardBizLocations";
 import sql from "@/lib/db";
 import { requireBizSession } from "@/lib/tapcardBizSession";
 
@@ -73,13 +73,20 @@ export async function PATCH(req: NextRequest) {
   const session = await requireBizSession();
   if (!session) return NextResponse.json({ error: "not signed in" }, { status: 401 });
   if (session.support) return NextResponse.json({ error: "support access cannot change admins" }, { status: 403 });
-  const body = (await req.json().catch(() => null)) as { id?: string; locationIds?: string[] } | null;
+  const body = (await req.json().catch(() => null)) as { id?: string; locationIds?: string[]; canPost?: boolean } | null;
   const admins = await listAdmins(session.orgId);
   const target = admins.find((a) => a.id === body?.id && a.role === "manager");
   if (!target) return NextResponse.json({ error: "not found" }, { status: 404 });
+  // Allow or stop this manager posting their shops' offers and news (web and the shop card's phone).
+  if (typeof body?.canPost === "boolean") {
+    await sql`UPDATE tapcard_biz_admins SET can_post = ${body.canPost} WHERE id = ${target.id} AND org_id = ${session.orgId}`;
+    await syncShopPosting(session.orgId, target.location_ids ?? []);
+    return NextResponse.json({ ok: true });
+  }
   const mine = new Set((await listLocations(session.orgId)).map((l) => l.id));
   const ids = (Array.isArray(body?.locationIds) ? body!.locationIds! : []).filter((x) => mine.has(x));
   if (!ids.length) return NextResponse.json({ error: "Choose at least one shop." }, { status: 400 });
   await sql`UPDATE tapcard_biz_admins SET location_ids = ${ids} WHERE id = ${target.id} AND org_id = ${session.orgId}`;
+  await syncShopPosting(session.orgId, [...new Set([...(target.location_ids ?? []), ...ids])]);
   return NextResponse.json({ ok: true });
 }

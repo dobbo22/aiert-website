@@ -208,11 +208,12 @@ export async function sendBizManagerInviteEmail(email: string, company: string, 
     <ul>
       <li><strong>QR sign:</strong> print a window or till sign with your shop's QR code, and change its wording.</li>
       <li><strong>Employees:</strong> create invite links for your shop's staff, and remove a staff card when someone leaves. Each person installs the free TapCard app and opens their link.</li>
+      <li><strong>Offers &amp; numbers:</strong> post or withdraw your shop's offers and news, and see how many people followed and used them. Your company's admins can post for your shop too.</li>
     </ul>
-    <p>Offers and news are posted by the company's admins, so they are not part of your access. Ask ${esc(addedBy)} if you want one posted. Reply to this email if you need help.</p>
+    <p>Reply to this email if you need help.</p>
   `;
   await send(email, `You are now a manager at ${company} on TapCard for Business`, html,
-    `${addedBy} has made you a manager at ${company} on TapCard for Business, for ${shopList}.\n\nSign in: ${link}\n\nThis link works once and expires in 15 minutes. If you weren't expecting it, ignore this email and no access is given.\n\n${cardLinks.length ? `\n\nMake your shop's card in the TapCard app (install the free app, then open the link on your phone; each link works once and lasts 30 days):\n${cardLinks.map((c) => `${c.shop}: ${c.link}`).join("\n")}` : ""}\n\nWhat you can do as a manager on the web: QR sign (print your shop's sign and change its wording) and Employees (create invite links for your shop's staff, remove a card when someone leaves). Offers and news are posted by the company's admins.`);
+    `${addedBy} has made you a manager at ${company} on TapCard for Business, for ${shopList}.\n\nSign in: ${link}\n\nThis link works once and expires in 15 minutes. If you weren't expecting it, ignore this email and no access is given.\n\n${cardLinks.length ? `\n\nMake your shop's card in the TapCard app (install the free app, then open the link on your phone; each link works once and lasts 30 days):\n${cardLinks.map((c) => `${c.shop}: ${c.link}`).join("\n")}` : ""}\n\nWhat you can do as a manager on the web: QR sign (print your shop's sign and change its wording), Employees (create invite links for your shop's staff, remove a card when someone leaves) and Offers & numbers (post your shop's offers and news; your company's admins can post for your shop too).`);
 }
 
 /// All of a company's waiting shop card links in one email to an admin (to open on a phone, forward to a manager, or show as a QR code).

@@ -8,7 +8,7 @@ export default async function BizAdminOverview() {
   const org = await getOrg(session.orgId);
   if (!org) return null;
 
-  // A shop manager's home: their shops and the two things they can do.
+  // A shop manager's home: their shops and what they can do.
   if (session.role === "manager") {
     const shops = (await listLocations(org.id).catch(() => [])).filter((l) => session.locationIds.includes(l.id));
     return (
@@ -26,7 +26,7 @@ export default async function BizAdminOverview() {
           <p className="mt-4 text-sm text-mist">
             Use <a href="/business/admin/qr-sign" className="text-gold underline">QR sign</a> to print your shop&apos;s sign, and{" "}
             <a href="/business/admin/employees" className="text-gold underline">Employees</a> to invite your staff and remove a card when someone leaves.
-            Offers and news are posted by your company&apos;s admins.
+            Post your shop&apos;s offers and news from <a href="/business/admin/promote" className="text-gold underline">Offers &amp; numbers</a>, or from the TapCard app; your company&apos;s admins can post for it too.
           </p>
         </div>
       </div>
