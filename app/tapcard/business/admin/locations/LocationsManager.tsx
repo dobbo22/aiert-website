@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import LinkQr from "../LinkQr";
 
 interface Loc { id: string; name: string; address: string; phone: string; claimed: boolean }
 interface Hit { id: string; name: string; address: string; website: string; phone: string; type: string; hours: string }
@@ -162,6 +163,7 @@ export default function LocationsManager({ initial, allowed, orgName }: { initia
                     <button type="button" onClick={() => navigator.clipboard?.writeText(links[l.id])} className="rounded-xl px-4 py-2 font-semibold text-cloud ring-1 ring-slate">Copy link</button>
                     <a href={mailto(l, links[l.id])} className="rounded-xl px-4 py-2 font-semibold text-cloud ring-1 ring-slate">Email it</a>
                   </div>
+                  <LinkQr link={links[l.id]} />
                 </div>
               )}
               <button type="button" onClick={() => void remove(l)} className="mt-3 text-sm text-mist underline">Remove this location</button>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import LinkQr from "../LinkQr";
 import { parseVcards } from "@/lib/vcardImport";
 
 type Person = { name: string; email: string; title: string };
@@ -286,6 +287,7 @@ export default function InvitePeople({ billingActive, orgName, domain, shops = [
                     >
                       Email
                     </a>
+                    <span className="ml-4 align-top"><LinkQr link={i.link} /></span>
                   </td>
                 </tr>
               ))}
