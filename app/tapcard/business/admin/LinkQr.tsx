@@ -10,7 +10,7 @@ export default function LinkQr({ link }: { link: string }) {
   useEffect(() => {
     if (!open) return;
     let live = true;
-    QRCode.toDataURL(link, { margin: 2, width: 520, errorCorrectionLevel: "L" }).then((u) => { if (live) setSrc(u); }).catch(() => {});
+    QRCode.toDataURL(link, { margin: 4, width: 1100, errorCorrectionLevel: "L", color: { dark: "#000000", light: "#ffffff" } }).then((u) => { if (live) setSrc(u); }).catch(() => {});
     return () => { live = false; };
   }, [open, link]);
   return (
@@ -20,9 +20,9 @@ export default function LinkQr({ link }: { link: string }) {
         <span className="mt-3 block">
           {src ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={src} alt="QR code for the invite link" className="h-64 w-64 rounded-xl bg-white p-2" />
+            <img src={src} alt="QR code for the invite link" className="aspect-square w-full max-w-[34rem] rounded-xl bg-white" />
           ) : <span className="text-sm text-mist">Making the QR code…</span>}
-          <span className="mt-2 block text-sm text-mist">Point the phone&apos;s camera at this. It opens the link, so no email is needed on the phone. The link works once.</span>
+          <span className="mt-2 block text-sm text-mist">Hold the phone about 20 to 30 cm from the screen with the screen brightness turned up, and keep the whole code in view. It opens the link, so no email is needed on the phone. The link works once.</span>
         </span>
       )}
     </span>
