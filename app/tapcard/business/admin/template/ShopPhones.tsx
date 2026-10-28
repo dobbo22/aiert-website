@@ -19,10 +19,11 @@ const same = (a: Shop, b: { address: string; phone: string }) => {
   const pa = postcode(a.address), pb = postcode(b.address);
   return pa && pb ? pa === pb : !!a.phone && a.phone.replace(/\D/g, "") === b.phone.replace(/\D/g, "");
 };
+/// Just the town on the tab (the shop's name is the same for every shop): "Great Dunmow", not the whole address.
 function tabLabel(s: Shop): string {
-  const parts = s.address.split(",").map((p) => p.trim()).filter(Boolean);
-  const town = parts.length >= 2 ? parts[parts.length - 2].replace(/[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}/i, "").trim() || parts[0] : parts[0] ?? "";
-  return town ? `${s.name} · ${town}` : s.name;
+  const parts = s.address.split(",").map((p) => p.replace(/[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}/i, "").trim()).filter(Boolean);
+  const town = parts.length >= 2 ? parts[1] : parts[0] ?? "";
+  return town || s.name || "New shop";
 }
 
 /// The shops as the app shows them: a phone screen for each, in tabs. A found shop is previewed until it is added; an added shop can be
@@ -67,6 +68,12 @@ const ShopPhones = forwardRef<ShopHandle, { initial: Shop[]; allowed: number; we
   useImperativeHandle(ref, () => ({ addFromHit }));
 
   const shop = shops[sel];
+  function addManually() {
+    const blank: Shop = { key: `manual-${Date.now()}`, name: shops[0]?.name ?? "", address: "", phone: "", email: "", website, hours: "", links: [], claimed: false, source: "typed" };
+    setShops((l) => [...l, blank]);
+    setSel(shops.length);
+    setNote("Type the shop's details, then press Add this shop. Its opening hours and links are read from your website.");
+  }
   const qrText = (shop?.website || website || "https://tapcard.aiert.co.uk").replace(/^(?!https?:\/\/)/i, "https://");
   // A sample QR (the shop's website): the real one, for the shop's own card link, exists once its manager makes the card.
   useEffect(() => {
@@ -104,6 +111,7 @@ const ShopPhones = forwardRef<ShopHandle, { initial: Shop[]; allowed: number; we
         <h2 className="text-lg font-bold text-cloud">Your shops</h2>
         <p className="mt-1 text-sm text-mist">Find your business above and its card appears here as a phone screen, with your other shops in tabs.</p>
         {busy && <p className="mt-3 text-sm text-gold">{note}</p>}
+        <button type="button" onClick={addManually} className="mt-4 rounded-xl px-3 py-2 text-sm font-semibold text-gold ring-1 ring-gold">+ Add a shop manually</button>
       </div>
     );
   }
@@ -126,10 +134,11 @@ const ShopPhones = forwardRef<ShopHandle, { initial: Shop[]; allowed: number; we
             {s.id ? "" : "+ "}{tabLabel(s)}
           </button>
         ))}
+        <button type="button" onClick={addManually} className="shrink-0 rounded-xl px-3 py-2 text-sm font-semibold text-gold ring-1 ring-gold">+ Add a shop manually</button>
       </div>
       <div className="mt-4 flex flex-wrap items-start gap-8">
         <Phone large label={shop.id ? (shop.claimed ? "Card made" : "Added, waiting for its manager") : "Found, not added yet"}>
-          <CardFace name={shop.name} kind="Business" typed="" stage={3} rows={rows.filter((r) => !r.social)} socials={rows.filter((r) => r.social)} interactive={false} domain={domain} onOpen={() => {}} logoSrc={logoUrl} />
+          <CardFace name={shop.name} kind="Business" typed="" stage={3} rows={rows.filter((r) => !r.social)} socials={rows.filter((r) => r.social)} interactive={false} domain={domain} onOpen={() => {}} logoSrc={logoUrl} noFavicon />
           <div className="space-y-3 px-4 pb-8">
             <p className="w-full rounded-2xl bg-blue-500 py-3 text-center text-sm font-semibold">▦ Share my card</p>
             {qr && (

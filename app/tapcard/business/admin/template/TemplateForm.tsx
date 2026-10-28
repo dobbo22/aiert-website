@@ -85,7 +85,13 @@ export default function TemplateForm({ org, shops, allowed }: { org: BizOrg; sho
       for (const l of (data.links ?? []) as { label: string; value: string }[]) rest.push(`${l.label}: ${l.value}`);
       setFound(summary.length ? [`Filled in below: ${summary.join(", ")}.`] : []);
       if (!summary.length && !rest.length) setFindNote("Nothing more was found on that website. You can type the details below.");
-      await changeLogo(fetch("/api/tapcard/biz/logo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ website: site }) }));
+      // The site answers some requests and refuses others, so the logo is asked for up to three times.
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const r = await fetch("/api/tapcard/biz/logo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ website: site }) });
+        if (r.ok) { const d = await r.json().catch(() => ({})); setLogoURL(d.url ?? null); setLogoError(null); break; }
+        if (attempt === 2) setLogoError("Couldn't get the logo from the website just now. Press Use logo from website to try again, or upload one.");
+        else await new Promise((res) => setTimeout(res, 1500));
+      }
     } catch {
       setFindNote("Something went wrong. Try again, or type the details below.");
     } finally { setFinding(false); setSaved(false); }

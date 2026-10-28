@@ -46,10 +46,12 @@ function domainOf(website: string): string {
   try { return new URL(/^https?:\/\//i.test(website) ? website : `https://${website}`).hostname.replace(/^www\./, ""); } catch { return ""; }
 }
 
-export function CardFace({ name, kind, typed, stage, rows, socials, interactive, domain, onOpen, logoSrc }: {
+export function CardFace({ name, kind, typed, stage, rows, socials, interactive, domain, onOpen, logoSrc, noFavicon }: {
   name: string; kind: string; typed: string; stage: number; rows: Row[]; socials: Row[]; interactive: boolean; domain: string; onOpen: (r: Row) => void;
   /** The logo already stored for the company: used in place of looking it up on the website again. */
   logoSrc?: string | null;
+  /** Never fall back to the site's small favicon (a plain shop icon instead). */
+  noFavicon?: boolean;
 }) {
   // A tap opens inside the phone; a modified click (new tab) still goes to the real page.
   const tap = (r: Row) => (e: React.MouseEvent) => {
@@ -73,7 +75,7 @@ export function CardFace({ name, kind, typed, stage, rows, socials, interactive,
       {/* One brand mark only: the banner logo when the site has one; otherwise the round favicon avatar (or a shop icon). */}
       {!logoLoaded ? (
         <div className="-mt-7 mx-auto flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-[#1c1f27] ring-4 ring-[#111318] transition-all duration-500" style={{ opacity: stage >= 2 ? 1 : 0, transform: stage >= 2 ? "scale(1)" : "scale(0.6)" }}>
-          {domain && !iconFailed ? (
+          {domain && !iconFailed && !noFavicon ? (
             // A favicon of 16 or 32 pixels (often a website builder's default) looks poor and may not be theirs: use the shop icon instead.
             // eslint-disable-next-line @next/next/no-img-element
             <img
