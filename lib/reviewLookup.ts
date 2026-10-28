@@ -5,6 +5,7 @@
 import crypto from "crypto";
 import sql from "@/lib/db";
 import { postcodeOf } from "@/lib/siteLinks";
+import { appleSearch, appleMapsConfigured } from "@/lib/appleMaps";
 
 const DAILY_CAP = 300;
 const TTL_DAYS = 30;
@@ -36,9 +37,35 @@ const samePostcode = (card: string, found: string) => { const c = postcodeOf(car
 
 const hostOf = (u: string) => { try { return new URL(/^[a-z]+:\/\//i.test(u) ? u : `https://${u}`).hostname.toLowerCase().replace(/^www\./, ""); } catch { return ""; } };
 
+/// The cheap way to Google's "write a review" link: Apple (free) says where the shop is, then Google is asked for the place ID only
+/// within about 150 m of that spot. An ID-only search needs no paid fields. Nothing is returned if Apple does not know the shop, and
+/// the caller then uses the full search below.
+async function googleLinkByPosition(name: string, address: string): Promise<string | undefined> {
+  const key = process.env.GOOGLE_PLACES_API_KEY;
+  if (!key || !appleMapsConfigured()) return undefined;
+  const pc = postcodeOf(address);
+  const spot = (await appleSearch(`${name} ${address}`.trim())).find((p) => similar(p.name, name) && (!pc || !postcodeOf(p.address) || postcodeOf(p.address) === pc));
+  if (!spot || !spot.lat) return undefined;
+  const dLat = 0.0014, dLng = 0.0024;
+  const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Goog-Api-Key": key, "X-Goog-FieldMask": "places.id" },
+    body: JSON.stringify({
+      textQuery: name, maxResultCount: 1, regionCode: "GB",
+      locationRestriction: { rectangle: { low: { latitude: spot.lat - dLat, longitude: spot.lng - dLng }, high: { latitude: spot.lat + dLat, longitude: spot.lng + dLng } } },
+    }),
+    signal: AbortSignal.timeout(6000),
+  }).catch(() => null);
+  if (!res?.ok) return undefined;
+  const id = ((await res.json().catch(() => ({}))) as { places?: { id?: string }[] }).places?.[0]?.id;
+  return id ? `https://search.google.com/local/writereview?placeid=${encodeURIComponent(id)}` : undefined;
+}
+
 async function googleLink(name: string, address: string, website = ""): Promise<string | undefined> {
   const key = process.env.GOOGLE_PLACES_API_KEY;
   if (!key) return undefined;
+  const cheap = await googleLinkByPosition(name, address).catch(() => undefined);
+  if (cheap) return cheap;
   const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-Goog-Api-Key": key, "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.websiteUri" },

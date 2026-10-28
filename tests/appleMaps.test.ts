@@ -162,3 +162,53 @@ test("a picked shop's details come from TomTom, then HERE, filling in what is mi
   assert.deepEqual(used, []);
   ctx.session = null;
 });
+
+test("Google's review link: found with an ID-only search near Apple's position, else the full search", async () => {
+  process.env.GOOGLE_PLACES_API_KEY = "g-key";
+  configure();
+  const { findReviewLinks } = await import("../lib/reviewLookup");
+  const googleCalls: { mask: string; body: Record<string, any> }[] = [];
+  const go = (apple: unknown[], googleIdOnly: unknown[], googleFull: unknown[]) => {
+    googleCalls.length = 0;
+    (globalThis as { fetch: unknown }).fetch = async (input: string | URL, init?: { headers?: Record<string, string>; body?: string }) => {
+      const url = String(input);
+      if (url.includes("/v1/token")) return new Response(JSON.stringify({ accessToken: "tok" }), { status: 200 });
+      if (url.includes("maps-api.apple.com/v1/search")) return new Response(JSON.stringify({ results: apple }), { status: 200 });
+      if (url.includes("places.googleapis.com")) {
+        const mask = init?.headers?.["X-Goog-FieldMask"] ?? "";
+        googleCalls.push({ mask, body: JSON.parse(init?.body ?? "{}") });
+        return new Response(JSON.stringify({ places: mask === "places.id" ? googleIdOnly : googleFull }), { status: 200 });
+      }
+      return new Response("{}", { status: 404 });
+    };
+  };
+  const rose = place("A1", "The Rose Garden", ["16A High Street", "Dunmow", "CM6 1AG"], 51.8722, 0.3629);
+
+  // Apple knows it: one Google call, ID only, restricted to a small box around the shop
+  go([rose], [{ id: "ChIJidonly" }], []);
+  let r = await findReviewLinks("The Rose Garden", "16A High Street, Dunmow, CM6 1AG", "");
+  assert.equal(r.google, "https://search.google.com/local/writereview?placeid=ChIJidonly");
+  assert.equal(googleCalls.length, 1);
+  assert.equal(googleCalls[0].mask, "places.id", "no paid fields asked for");
+  const box = googleCalls[0].body.locationRestriction.rectangle;
+  assert.ok(Math.abs((box.low.latitude + box.high.latitude) / 2 - 51.8722) < 0.0001);
+  assert.ok(box.high.latitude - box.low.latitude < 0.005, "a box of a few hundred metres, not a town");
+
+  // a different shop is asked about: Apple has no match, so the full search runs and decides
+  go([], [], [{ id: "ChIJfull", displayName: { text: "Corner Bakery" }, formattedAddress: "2 Mill Lane, Thaxted, CM6 2LW", websiteUri: "" }]);
+  r = await findReviewLinks("Corner Bakery", "2 Mill Lane, Thaxted, CM6 2LW", "");
+  assert.equal(r.google, "https://search.google.com/local/writereview?placeid=ChIJfull");
+  assert.equal(googleCalls.length, 1);
+  assert.notEqual(googleCalls[0].mask, "places.id");
+
+  // Apple knows it but Google finds nothing near it: falls back to the full search
+  go([place("A2", "Harbour Cafe", ["5 Quay Rd", "Maldon", "CM9 5AA"], 51.73, 0.67)], [], []);
+  r = await findReviewLinks("Harbour Cafe", "5 Quay Rd, Maldon, CM9 5AA", "");
+  assert.equal(r.google, undefined);
+  assert.equal(googleCalls.length, 2, "ID-only first, then the full search");
+  // the answer is remembered: asking again costs nothing
+  go([], [], []);
+  await findReviewLinks("The Rose Garden", "16A High Street, Dunmow, CM6 1AG", "");
+  assert.equal(googleCalls.length, 0);
+  delete process.env.GOOGLE_PLACES_API_KEY;
+});

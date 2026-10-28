@@ -5,8 +5,10 @@
 // their API, so the card only links to its review page.
 import sql from "@/lib/db";
 
-const DAILY_CAP = 3000;
-const HOLD_MS = 6 * 3600_000;
+// Each lookup is a paid Google call, so the cap is low and an answer is held for a day (the CDN holds it too): the busiest businesses keep
+// their stars and the bill stays small.
+const DAILY_CAP = 300;
+const HOLD_MS = 24 * 3600_000;
 
 export interface GoogleRating { rating: number; count: number }
 
