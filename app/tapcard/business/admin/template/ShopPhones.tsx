@@ -4,6 +4,7 @@ import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import QRCode from "qrcode";
 import { CardFace, Phone } from "../../../demo/Phones";
 import { rowsFor } from "../../../demo/DemoBuilder";
+import { enrichPlace } from "../placeClient";
 
 export interface ShopLink { kind: string; label: string; value: string }
 export interface Shop {
@@ -37,7 +38,9 @@ const ShopPhones = forwardRef<ShopHandle, { initial: Shop[]; allowed: number; we
 
   const savedCount = (list: Shop[]) => list.filter((s) => s.id).length;
 
-  async function save(hit: { name: string; address: string; phone: string; website: string; hours: string }): Promise<Shop | null> {
+  async function save(picked: { name: string; address: string; phone: string; website: string; hours: string }): Promise<Shop | null> {
+    // A shop found on Apple Maps has only a name and address: one lookup fills in its phone, website and hours as it is added.
+    const hit = await enrichPlace({ id: "", type: "", ...picked });
     const res = await fetch("/api/tapcard/biz/locations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ hit }) }).catch(() => null);
     const data = (await res?.json().catch(() => null)) as { error?: string; location?: Shop & { id: string } } | null;
     if (res?.ok && data?.location) return { ...data.location, key: data.location.id, hours: "", claimed: false };

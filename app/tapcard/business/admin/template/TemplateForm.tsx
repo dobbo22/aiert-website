@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import ShopPhones, { type Shop, type ShopHandle } from "./ShopPhones";
+import { enrichPlace, searchPlaces } from "../placeClient";
 import type { BizOrg } from "@/lib/tapcardBiz";
 import { LOCKABLE_FIELDS } from "@/lib/tapcardBizFields";
 
@@ -48,9 +49,7 @@ export default function TemplateForm({ org, shops, allowed }: { org: BizOrg; sho
     if (q.length < 3) return;
     setFinding(true); setFindNote(null); setHits([]); setFound([]);
     try {
-      const res = await fetch(`/api/tapcard/business-search?q=${encodeURIComponent(q)}`);
-      const data = await res.json().catch(() => ({}));
-      const list = Array.isArray(data.hits) ? data.hits : [];
+      const list = await searchPlaces(q);
       setHits(list);
       if (!list.length) setFindNote("No business found. Try the name with the town, or type your website below and tap Fetch from my website.");
     } catch {
@@ -97,9 +96,13 @@ export default function TemplateForm({ org, shops, allowed }: { org: BizOrg; sho
     } finally { setFinding(false); setSaved(false); }
   }
 
-  async function pick(hit: { name: string; address: string; website: string; phone: string; hours: string }) {
-    setName(hit.name);
+  async function pick(picked: { id: string; name: string; address: string; website: string; phone: string; hours: string }) {
+    setName(picked.name);
     setHits([]);
+    // A match from Apple has only a name and address: one lookup fills in its phone, website and hours.
+    setFinding(true);
+    const hit = await enrichPlace({ ...picked, type: "" });
+    setFinding(false);
     if (hit.website) { const site = hit.website.replace(/^http:\/\//i, "https://"); setWebsite(site); await fillFrom(site, hit); }
     else setFindNote("That business has no website listed. Type it below and tap Fetch from my website.");
     // The picked business becomes a phone preview below (and the company's first shop), with its other shops found alongside.

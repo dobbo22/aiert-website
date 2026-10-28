@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import LinkQr from "../LinkQr";
+import { enrichPlace, searchPlaces } from "../placeClient";
 
 interface Loc { id: string; name: string; address: string; phone: string; claimed: boolean }
 interface Hit { id: string; name: string; address: string; website: string; phone: string; type: string; hours: string }
@@ -21,16 +22,15 @@ export default function LocationsManager({ initial, allowed, orgName }: { initia
   async function search() {
     if (query.trim().length < 3) return;
     setBusy(true); setNote(null); setHits([]);
-    const res = await fetch(`/api/tapcard/business-search?q=${encodeURIComponent(query.trim())}`).catch(() => null);
-    const data = (await res?.json().catch(() => null)) as { hits?: Hit[] } | null;
+    const list = (await searchPlaces(query.trim())) as Hit[];
     setBusy(false);
-    const list = data?.hits ?? [];
     setHits(list);
     if (!list.length) setNote("No business found. Try the name with the town.");
   }
 
-  async function add(h: Hit) {
+  async function add(picked: Hit) {
     setBusy(true); setNote("Reading the details from Google and the website…"); setHits([]);
+    const h = (await enrichPlace(picked)) as Hit;
     const res = await fetch("/api/tapcard/biz/locations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ hit: h }) }).catch(() => null);
     const data = (await res?.json().catch(() => null)) as { error?: string; location?: Loc } | null;
     setBusy(false);
@@ -82,8 +82,9 @@ export default function LocationsManager({ initial, allowed, orgName }: { initia
     setNote((data?.candidates ?? []).length ? null : "No other shops found. Add them by name and town above.");
   }
 
-  async function addCandidate(c: Hit & { source: string }) {
+  async function addCandidate(picked: Hit & { source: string }) {
     setBusy(true);
+    const c = { ...(await enrichPlace({ ...picked, type: picked.type ?? "" })), source: picked.source } as Hit & { source: string };
     const res = await fetch("/api/tapcard/biz/locations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ hit: c }) }).catch(() => null);
     const data = (await res?.json().catch(() => null)) as { error?: string; location?: Loc } | null;
     setBusy(false);

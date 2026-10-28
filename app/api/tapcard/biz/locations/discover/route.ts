@@ -3,11 +3,23 @@ import { getOrg } from "@/lib/tapcardBiz";
 import { requireBizSession } from "@/lib/tapcardBizSession";
 import { listLocations } from "@/lib/tapcardBizLocations";
 import { searchBusinesses } from "@/lib/tapcardBusinessSearch";
+import { appleSearch, appleMapsConfigured, type ApplePlace } from "@/lib/appleMaps";
 import { addressKey, findSiteLinks, postcodeOf } from "@/lib/siteLinks";
 import { rateLimited } from "@/lib/rateLimit";
 
-// "Find my other shops": the company's other locations, so they need not be typed one by one. Two sources: Google listings that share
-// the company's website, and the branches the website itself lists (its schema.org data). Anything already added is left out.
+// "Find my other shops": the company's other locations, so they need not be typed one by one. Sources, cheapest first:
+//  1. Apple Maps (free): places with the company's name within about 40 km of a shop it already has. Apple gives no website, so
+//     the phone, website and hours are filled in by one Google lookup only when the admin adds a shop.
+//  2. The branches the company's own website lists (its schema.org data).
+//  3. Google listings that share the company's website, only when Apple is not set up or found nothing.
+// Anything already added is left out.
+const km = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) => {
+  const r = Math.PI / 180, dLat = (b.lat - a.lat) * r, dLng = (b.lng - a.lng) * r;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dLng / 2) ** 2;
+  return 6371 * 2 * Math.asin(Math.sqrt(h));
+};
+const plain = (s: string) => s.toLowerCase().replace(/^the\s+/, "").replace(/[^a-z0-9]+/g, " ").trim();
+
 export async function POST(req: NextRequest) {
   const session = await requireBizSession();
   if (!session) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -31,17 +43,45 @@ export async function POST(req: NextRequest) {
     out.push(c);
   };
 
-  // Google: listings under the company's name whose website is the company's own.
-  const near = req.headers.get("x-vercel-ip-latitude") && req.headers.get("x-vercel-ip-longitude")
+  const ipNear = req.headers.get("x-vercel-ip-latitude") && req.headers.get("x-vercel-ip-longitude")
     ? { lat: Number(req.headers.get("x-vercel-ip-latitude")), lng: Number(req.headers.get("x-vercel-ip-longitude")) } : null;
-  const queries = [...new Set([org.name, ...(have[0] ? [`${org.name} ${have[0].address.split(",").slice(-3, -1).join(" ").trim()}`] : [])].filter((q) => q.trim().length >= 3))];
-  for (const q of queries) {
-    for (const h of await searchBusinesses(q, near, false, `biz-${session.orgId}`).catch(() => [])) {
-      if (domain && host(h.website) === domain) add({ ...h, source: "Google" });
+  const townOf = (address: string) => address.split(",").map((p) => p.replace(/[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}/i, "").trim()).filter(Boolean).slice(-2).join(" ");
+
+  // 1. Apple: find where an existing shop is, then the company's name nearby.
+  let appleFound = false;
+  if (appleMapsConfigured() && org.name.trim().length >= 3) {
+    let centre: { lat: number; lng: number } | null = ipNear;
+    let myType = "";
+    if (have[0]) {
+      const here = await appleSearch(`${org.name} ${townOf(have[0].address)}`, ipNear);
+      const pc = postcodeOf(have[0].address);
+      const mine = here.find((p) => pc && postcodeOf(p.address) === pc) ?? here[0];
+      if (mine) { centre = { lat: mine.lat, lng: mine.lng }; myType = mine.type; }
+    }
+    const pool: ApplePlace[] = [...(await appleSearch(org.name, centre)), ...(have[0] ? await appleSearch(`${org.name} ${townOf(have[0].address)}`, centre) : [])];
+    const me = plain(org.name);
+    for (const p of pool) {
+      const pn = plain(p.name);
+      if (!pn || !(pn === me || pn.startsWith(me) || me.startsWith(pn))) continue;
+      if (centre && p.lat && km(centre, p) > 40) continue;
+      // The same kind of place as the shop the company already has (a cafe of a similar name is not its shop).
+      if (myType && p.type && p.type !== myType) continue;
+      add({ id: `apple:${p.id}`, name: p.name, address: p.address, website: "", phone: "", type: p.type, hours: "", source: "Apple Maps" });
+      appleFound = true;
     }
   }
 
-  // The website's own list of branches.
+  // 3. Google, only when Apple gave nothing: listings under the company's name whose website is the company's own.
+  if (!appleFound) {
+    const queries = [...new Set([org.name, ...(have[0] ? [`${org.name} ${townOf(have[0].address)}`] : [])].filter((q) => q.trim().length >= 3))];
+    for (const q of queries) {
+      for (const h of await searchBusinesses(q, ipNear, false, `biz-${session.orgId}`).catch(() => [])) {
+        if (domain && host(h.website) === domain) add({ ...h, source: "Google" });
+      }
+    }
+  }
+
+  // 2. The website's own list of branches.
   if (org.website) {
     const site = await findSiteLinks(org.website).catch(() => null);
     for (const b of site?.branches ?? []) {
