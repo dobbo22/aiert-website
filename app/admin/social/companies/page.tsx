@@ -1,6 +1,7 @@
 import { isAdminRequest } from "@/lib/adminRequest";
 import { listCompaniesForSupport, recentSupportLog } from "@/lib/tapcardBizSupport";
 import { CompanyTools, CreateCompany, RemoveManager } from "./Tools";
+import { capFor, providerUsage } from "@/lib/providerCaps";
 
 export const metadata = { title: "TapCard companies — Admin", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -18,6 +19,8 @@ export default async function CompaniesPage() {
     recentSupportLog().catch(() => []),
   ]);
   const nameOf = new Map(companies.map((c) => [c.id, c.name]));
+  const usage = await providerUsage().catch(() => []);
+  const used = (p: "apple" | "tomtom" | "here", period: "day" | "month") => usage.find((u) => u.provider === p && u.period.length === (period === "day" ? 10 : 7))?.n ?? 0;
   return (
     <div className="text-cloud">
       <h2 style={{ fontWeight: 700, marginBottom: ".5rem" }}>Set a company up for them</h2>
@@ -48,6 +51,12 @@ export default async function CompaniesPage() {
           })}
         </tbody>
       </table>
+      <h2 style={{ fontWeight: 700, margin: "1.5rem 0 .5rem" }}>Place lookups (free tiers)</h2>
+      <ul style={{ fontSize: 14 }}>
+        <li>Apple Maps: {used("apple", "day")} today of {capFor("apple", "day")} a day (Apple allows 25,000)</li>
+        <li>TomTom: {used("tomtom", "day")} today of {capFor("tomtom", "day")} a day (free tier 2,500)</li>
+        <li>HERE: {used("here", "month")} this month of {capFor("here", "month")} (free tier 250,000)</li>
+      </ul>
       <h2 style={{ fontWeight: 700, margin: "1.5rem 0 .5rem" }}>Support log</h2>
       {log.length === 0 ? <p>Nothing yet.</p> : (
         <ul style={{ fontSize: 14 }}>

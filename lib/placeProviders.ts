@@ -1,4 +1,5 @@
 import { postcodeOf } from "@/lib/siteLinks";
+import { underProviderCap } from "@/lib/providerCaps";
 
 // Free-tier place data for a picked shop's phone, website and opening hours, tried before Google: TomTom, then HERE. Each needs its own key
 // (TOMTOM_API_KEY, HERE_API_KEY) and is skipped when it is not set. They return the same shape so the caller can fill in whatever is missing.
@@ -46,6 +47,7 @@ export async function tomtomDetails(name: string, address: string, near?: Near):
   const none = empty("tomtom");
   if (!tomtomConfigured()) return none;
   try {
+    if (!(await underProviderCap("tomtom"))) return none;
     const loc = near && Number.isFinite(near.lat) && Number.isFinite(near.lng) ? `&lat=${near.lat.toFixed(4)}&lon=${near.lng.toFixed(4)}` : "";
     const q = encodeURIComponent(`${name} ${address}`.slice(0, 200));
     const res = await fetch(`https://api.tomtom.com/search/2/search/${q}.json?key=${encodeURIComponent(process.env.TOMTOM_API_KEY!)}&limit=5&countrySet=GB&language=en-GB${loc}`, { signal: AbortSignal.timeout(6000) });
@@ -71,6 +73,7 @@ export async function hereDetails(name: string, address: string, at?: Near): Pro
   const none = empty("here");
   if (!hereConfigured()) return none;
   try {
+    if (!(await underProviderCap("here"))) return none;
     const pos = at && Number.isFinite(at.lat) && Number.isFinite(at.lng) ? at : { lat: 52.5, lng: -1.5 };
     const q = encodeURIComponent(`${name} ${address}`.slice(0, 200));
     const res = await fetch(`https://discover.search.hereapi.com/v1/discover?q=${q}&at=${pos.lat.toFixed(4)},${pos.lng.toFixed(4)}&limit=5&lang=en-GB&apiKey=${encodeURIComponent(process.env.HERE_API_KEY!)}`, { signal: AbortSignal.timeout(6000) });

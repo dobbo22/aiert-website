@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { underProviderCap } from "@/lib/providerCaps";
 
 // Apple Maps Server API: a free list of matching places (name, address, category, position) for the company admin's Find business /
 // Find shop / Find my other shops. It does NOT return phone, website or opening hours, so a place's contact details still come from one
@@ -40,6 +41,7 @@ export async function appleSearch(query: string, near?: { lat: number; lng: numb
   const q = query.trim().slice(0, 100);
   if (q.length < 3) return [];
   try {
+    if (!(await underProviderCap("apple"))) return [];
     const token = await accessToken();
     if (!token) return [];
     const loc = near && Number.isFinite(near.lat) && Number.isFinite(near.lng) ? `&userLocation=${near.lat.toFixed(4)},${near.lng.toFixed(4)}` : "";

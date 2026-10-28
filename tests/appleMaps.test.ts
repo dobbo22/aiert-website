@@ -224,3 +224,39 @@ test("a provider's phone number is dropped when it cannot be right", async () =>
   assert.equal(sanePhone("+447720299576"), "+447720299576", "a mobile");
   assert.equal(sanePhone(""), "");
 });
+
+test("each free provider has a daily limit below its free tier: over it, the provider is skipped and the next one is tried", async () => {
+  const { capFor, providerUsage } = await import("../lib/providerCaps");
+  const { appleSearch } = await import("../lib/appleMaps");
+  const { tomtomDetails, hereDetails } = await import("../lib/placeProviders");
+  assert.ok(capFor("tomtom", "day") <= 2500, "under TomTom's 2,500 a day");
+  assert.ok(capFor("apple", "day") <= 25000, "under Apple's 25,000 a day");
+  assert.ok(capFor("here", "month") <= 250000, "under HERE's 250,000 a month");
+
+  process.env.TOMTOM_API_KEY = "tt"; process.env.HERE_API_KEY = "he"; configure();
+  process.env.PROVIDER_CAP_TOMTOM_DAY = "2"; process.env.PROVIDER_CAP_HERE_DAY = "1"; process.env.PROVIDER_CAP_APPLE_DAY = "3";
+  let calls = { tomtom: 0, here: 0, apple: 0 };
+  (globalThis as { fetch: unknown }).fetch = async (input: string | URL) => {
+    const u = String(input);
+    if (u.includes("tomtom")) { calls.tomtom++; return new Response(JSON.stringify({ results: [{ poi: { name: "The Rose Garden", phone: "+44 1371 872882", url: "www.x.co.uk" }, address: { postalCode: "CM6 1AG" } }] }), { status: 200 }); }
+    if (u.includes("here")) { calls.here++; return new Response(JSON.stringify({ items: [] }), { status: 200 }); }
+    if (u.includes("/v1/token")) return new Response(JSON.stringify({ accessToken: "tok" }), { status: 200 });
+    calls.apple++; return new Response(JSON.stringify({ results: [] }), { status: 200 });
+  };
+  // reset today's counts for a clean start
+  await sql`DELETE FROM tapcard_provider_cap`;
+  for (let i = 0; i < 4; i++) await tomtomDetails("The Rose Garden", "16A High Street, Dunmow, CM6 1AG");
+  assert.equal(calls.tomtom, 2, "TomTom is called twice, then skipped");
+  for (let i = 0; i < 3; i++) await hereDetails("The Rose Garden", "16A High Street, Dunmow, CM6 1AG");
+  assert.equal(calls.here, 1);
+  for (let i = 0; i < 6; i++) await appleSearch("The Rose Garden Dunmow");
+  assert.equal(calls.apple, 3);
+  const usage = await providerUsage();
+  assert.ok(usage.some((u) => u.provider === "tomtom" && u.n >= 2));
+  // a limit of 0 means no limit
+  process.env.PROVIDER_CAP_TOMTOM_DAY = "0";
+  await tomtomDetails("The Rose Garden", "16A High Street, Dunmow, CM6 1AG");
+  assert.equal(calls.tomtom, 3);
+  delete process.env.PROVIDER_CAP_TOMTOM_DAY; delete process.env.PROVIDER_CAP_HERE_DAY; delete process.env.PROVIDER_CAP_APPLE_DAY;
+  delete process.env.TOMTOM_API_KEY; delete process.env.HERE_API_KEY;
+});
