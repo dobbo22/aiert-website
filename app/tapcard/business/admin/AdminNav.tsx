@@ -7,6 +7,7 @@ const TABS = [
   { href: "/business/admin", label: "Overview" },
   { href: "/business/admin/template", label: "Card template" },
   { href: "/business/admin/locations", label: "Locations" },
+  { href: "/business/admin/qr-sign", label: "QR sign" },
   { href: "/business/admin/employees", label: "Employees" },
   { href: "/business/admin/promote", label: "Offers & numbers" },
   { href: "/business/admin/admins", label: "Admins" },

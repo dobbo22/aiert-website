@@ -8,7 +8,7 @@ import type { CardLink } from "@/lib/tapcardLinks";
 
 export interface BizLocation {
   id: string; org_id: string; name: string; address: string; phone: string; email: string; website: string;
-  links: string; claimed_card_id: string | null; created_at: string;
+  links: string; claimed_card_id: string | null; created_at: string; sign: string;
 }
 
 let ready: Promise<unknown> | null = null;
@@ -19,6 +19,7 @@ function ensureLocationSchema(): Promise<unknown> {
         id TEXT PRIMARY KEY, org_id TEXT NOT NULL, name TEXT NOT NULL DEFAULT '', address TEXT NOT NULL DEFAULT '',
         phone TEXT NOT NULL DEFAULT '', email TEXT NOT NULL DEFAULT '', website TEXT NOT NULL DEFAULT '',
         links TEXT NOT NULL DEFAULT '[]', claimed_card_id TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT now())`)
+      .then(() => sql`ALTER TABLE tapcard_biz_locations ADD COLUMN IF NOT EXISTS sign TEXT NOT NULL DEFAULT '{}'`)
       .then(() => sql`CREATE INDEX IF NOT EXISTS tapcard_biz_locations_org ON tapcard_biz_locations (org_id)`)
       .catch((e) => { ready = null; throw e; });
   }
@@ -50,6 +51,28 @@ export async function updateLocation(orgId: string, id: string, d: { name: strin
   const rows = await sql`
     UPDATE tapcard_biz_locations SET name = ${d.name.slice(0, 200)}, address = ${d.address.slice(0, 300)}, phone = ${d.phone.slice(0, 40)}, email = ${d.email.slice(0, 200)}
     WHERE id = ${id} AND org_id = ${orgId} AND claimed_card_id IS NULL RETURNING id`;
+  return rows.length > 0;
+}
+
+/// The QR sign's wording and options for one shop (what the admin set on the QR sign page).
+export interface SignSettings { headline: string; line: string; footer: string; showLogo: boolean; showSocials: boolean; showApp: boolean }
+export const DEFAULT_SIGN: SignSettings = { headline: "Scan to follow and receive news and offers", line: "", footer: "Free TapCard app for iPhone and Android", showLogo: true, showSocials: false, showApp: true };
+
+export function parseSign(raw: string | null | undefined): SignSettings {
+  try {
+    const j = JSON.parse(raw || "{}") as Partial<SignSettings>;
+    return {
+      headline: typeof j.headline === "string" && j.headline.trim() ? j.headline.slice(0, 120) : DEFAULT_SIGN.headline,
+      line: typeof j.line === "string" ? j.line.slice(0, 120) : "",
+      footer: typeof j.footer === "string" ? j.footer.slice(0, 120) : DEFAULT_SIGN.footer,
+      showLogo: j.showLogo !== false, showSocials: j.showSocials === true, showApp: j.showApp !== false,
+    };
+  } catch { return { ...DEFAULT_SIGN }; }
+}
+
+export async function saveSign(orgId: string, id: string, sign: SignSettings): Promise<boolean> {
+  await ensureLocationSchema();
+  const rows = await sql`UPDATE tapcard_biz_locations SET sign = ${JSON.stringify(parseSign(JSON.stringify(sign)))} WHERE id = ${id} AND org_id = ${orgId} RETURNING id`;
   return rows.length > 0;
 }
 

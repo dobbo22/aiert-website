@@ -174,6 +174,7 @@ const ShopPhones = forwardRef<ShopHandle, { initial: Shop[]; allowed: number; we
             {shop.id && <button type="button" onClick={() => void saveEdits()} disabled={busy} className="btn-gold rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-60">Save changes</button>}
             {shop.id && !shop.claimed && <button type="button" onClick={() => void removeThis()} className="text-sm text-mist underline">Remove</button>}
             {shop.claimed && shop.cardId && <button type="button" onClick={() => void removeCard()} className="text-sm text-mist underline">Remove this card</button>}
+            {shop.id && <a href={`/business/admin/qr-sign?shop=${shop.id}`} className="text-sm font-semibold text-gold underline">QR sign</a>}
             {shop.id && !shop.claimed && <a href="/business/admin/locations" className="text-sm font-semibold text-gold underline">Invite its manager</a>}
           </div>
           {!shop.id && savedCount(shops) >= allowed && <p className="text-sm text-gold">Your plan has {allowed} location{allowed === 1 ? "" : "s"}, all added. Change the number on the Billing tab to add more.</p>}

@@ -117,12 +117,18 @@ export function buildBizWelcomeEmail(email: string, company: string, opts: BizWe
       body: `The <strong>Offers &amp; numbers</strong> tab shows, for each location, views, scans, saves, followers, and how many people claimed and used each offer. You can download it as a spreadsheet.` },
   ];
 
-  // What matters for verification depends on the address they signed up with.
-  const verifyBody = ownDomain
-    ? `You signed up with ${email}, which is on your own domain (${mailDomain}). Set the <strong>Website</strong> on your Card template to ${mailDomain} and, once your first sign-in link has been used, your company cards are marked verified automatically (the company's plan must be active). Verified cards can post offers and news.`
-    : `You signed up with ${email}, a shared mailbox, so your cards are not verified automatically. Each card can still be verified one at a time, by an emailed code or a proof on your website. To have all your company cards verified at once, add an admin whose email is on your website's own domain (for example you@yourcompany.com) on the <strong>Admins</strong> tab.`;
-  const verifyHtml = `<p><strong>Verified business.</strong> ${verifyBody}</p>`;
-  const verifyText = `Verified business. ${verifyBody.replace(/<[^>]+>/g, "")}`;
+  // What matters for verification depends on the address they signed up with. The HTML and the plain text are built separately, so an
+  // address with markup in it can never become markup in the email.
+  const verifyHtml = `<p><strong>Verified business.</strong> ${
+    ownDomain
+      ? `You signed up with ${esc(email)}, which is on your own domain (${esc(mailDomain)}). Set the <strong>Website</strong> on your Card template to ${esc(mailDomain)} and, once your first sign-in link has been used, your company cards are marked verified automatically (the company's plan must be active). Verified cards can post offers and news.`
+      : `You signed up with ${esc(email)}, a shared mailbox, so your cards are not verified automatically. Each card can still be verified one at a time, by an emailed code or a proof on your website. To have all your company cards verified at once, add an admin whose email is on your website's own domain (for example you@yourcompany.com) on the <strong>Admins</strong> tab.`
+  }</p>`;
+  const verifyText = `Verified business. ${
+    ownDomain
+      ? `You signed up with ${email}, which is on your own domain (${mailDomain}). Set the Website on your Card template to ${mailDomain} and, once your first sign-in link has been used, your company cards are marked verified automatically (the company's plan must be active). Verified cards can post offers and news.`
+      : `You signed up with ${email}, a shared mailbox, so your cards are not verified automatically. Each card can still be verified one at a time, by an emailed code or a proof on your website. To have all your company cards verified at once, add an admin whose email is on your website's own domain (for example you@yourcompany.com) on the Admins tab.`
+  }`;
 
   const trialHtml = opts.kind === "trial"
     ? `<p><strong>Ready for the whole business?</strong> TapCard for Business starts at two locations: £42 a year per location for 2 to 4 locations (£34 each for 5 to 19, £27 each from 20), each with up to 10 staff cards and Promote included. Choose a plan any time on the <a href="${billing}">Billing tab</a>. We'll email you a few days before the trial ends, and if you don't carry on there is nothing to do.</p>`

@@ -104,13 +104,6 @@ export function ensureSchema(): Promise<unknown> {
       `)
       // Set when the admin opens the sign-in link emailed to this address: proof they control the mailbox.
       .then(() => sql`ALTER TABLE tapcard_biz_admins ADD COLUMN IF NOT EXISTS confirmed_at TIMESTAMPTZ`)
-      // Admins who had already opened a sign-in link before this column existed count as confirmed from that moment.
-      .then(() => sql`
-        UPDATE tapcard_biz_admins a SET confirmed_at = t.first_used
-        FROM (SELECT org_id, lower(admin_email) AS email, min(consumed_at) AS first_used FROM tapcard_biz_login_tokens
-              WHERE consumed_at IS NOT NULL AND org_id IS NOT NULL GROUP BY org_id, lower(admin_email)) t
-        WHERE a.org_id = t.org_id AND a.email = t.email AND a.confirmed_at IS NULL
-      `)
       .then(() => sql`
         CREATE TABLE IF NOT EXISTS tapcard_biz_login_tokens (
           token_hash TEXT PRIMARY KEY,
@@ -119,6 +112,13 @@ export function ensureSchema(): Promise<unknown> {
           expires_at TIMESTAMPTZ NOT NULL,
           consumed_at TIMESTAMPTZ
         )
+      `)
+      // (After the login-tokens table exists, so a brand-new database sets up cleanly.) Admins who had already opened a sign-in link before this column existed count as confirmed from that moment.
+      .then(() => sql`
+        UPDATE tapcard_biz_admins a SET confirmed_at = t.first_used
+        FROM (SELECT org_id, lower(admin_email) AS email, min(consumed_at) AS first_used FROM tapcard_biz_login_tokens
+              WHERE consumed_at IS NOT NULL AND org_id IS NOT NULL GROUP BY org_id, lower(admin_email)) t
+        WHERE a.org_id = t.org_id AND a.email = t.email AND a.confirmed_at IS NULL
       `)
       // Single-use invite links (lib/tapcardBizInvite.ts) are signed, not
       // stored — this only records each spent invite's random id (hashed),
@@ -545,6 +545,13 @@ export async function setCardOverrides(orgId: string, cardId: string, patch: Par
   }
   await sql`UPDATE tapcard_cards SET name = ${next.name}, address = ${next.address}, phone = ${next.phone}, email = ${next.email}, org_overrides = ${JSON.stringify(overrides)}, updated_at = now() WHERE id = ${cardId} AND org_id = ${orgId}`;
   return { before: { name: row.name, address: row.address, phone: row.phone, email: row.email }, after: next };
+}
+
+/// The owner's app has applied the admin's changes to its own copy, so they stop overriding what the phone saves: from here the
+/// manager's own later edits stick. (Apps that never confirm keep the admin's values locked, which is the safe side.)
+export async function clearCardOverrides(cardId: string): Promise<void> {
+  await ensureSchema();
+  await sql`UPDATE tapcard_cards SET org_overrides = '{}' WHERE id = ${cardId} AND org_id IS NOT NULL`;
 }
 
 /// What the admin has set for a card, for the owner's app to pick up (the app proves it holds the card with its edit token).
