@@ -113,13 +113,13 @@ test("a picked shop's details come from TomTom, then HERE, filling in what is mi
     (globalThis as { fetch: unknown }).fetch = async (input: string | URL) => {
       const url = String(input);
       if (url.includes("api.tomtom.com")) { used.push("tomtom"); return new Response(JSON.stringify(tomtom(tt)), { status: 200 }); }
-      if (url.includes("hereapi.com")) { used.push("here"); return new Response(JSON.stringify({ items: here ? [here] : [] }), { status: 200 }); }
+      if (url.includes("hereapi.com")) { used.push("here"); assert.match(url, /discover\.search\.hereapi\.com\/v1\/discover/); assert.match(url, /at=51\.8722,0\.3629/); return new Response(JSON.stringify({ items: here ? [here] : [] }), { status: 200 }); }
       return new Response("{}", { status: 404 });
     };
   };
-  const ask = async () => json(await places.POST(req("/x", { method: "POST", body: { name: "The Rose Garden", address: "16A High Street, Dunmow, CM6 1AG" } })));
+  const ask = async () => json(await places.POST(req("/x", { method: "POST", body: { name: "The Rose Garden", address: "16A High Street, Dunmow, CM6 1AG", lat: 51.8722, lng: 0.3629 } })));
   const ttPlace = { poi: { name: "The Rose Garden", phone: "+44 1371 872882", url: "www.therosegardenflorists.co.uk" }, address: { freeformAddress: "16A High Street, Dunmow", postalCode: "CM6 1AG" } };
-  const herePlace = { title: "The Rose Garden", address: { label: "16A High St, Dunmow, CM6 1AG", postalCode: "CM6 1AG" }, contacts: [{ phone: [{ value: "+44 1371 872882" }], www: [{ value: "https://www.therosegardenflorists.co.uk" }] }], openingHours: [{ text: ["Mon-Fri: 09:30 - 17:00", "Sat: 09:30 - 15:00"] }] };
+  const herePlace = { title: "The Rose Garden", address: { label: "16A High St, Dunmow, CM6 1AG", postalCode: "CM6 1AG" }, contacts: [{ phone: [{ value: "+44 1371 872882" }], www: [{ value: "http://business.data.gov.uk/id/company/09745942" }, { value: "https://www.facebook.com/490512074460597" }, { value: "http://www.therosegardenflorists.co.uk" }, { value: "https://www.therosegardenflorists.co.uk" }] }], openingHours: [{ text: ["Mon-Fri: 09:30 - 17:00", "Sat: 09:30 - 15:00"] }] };
 
   // TomTom has everything we need: HERE and Google are not asked
   setup(ttPlace, herePlace);
@@ -134,7 +134,7 @@ test("a picked shop's details come from TomTom, then HERE, filling in what is mi
   setup({ ...ttPlace, poi: { ...ttPlace.poi, url: "" } }, herePlace);
   r = await ask();
   assert.equal(r.hit.source, "tomtom+here");
-  assert.equal(r.hit.website, "https://www.therosegardenflorists.co.uk");
+  assert.equal(r.hit.website, "https://www.therosegardenflorists.co.uk", "the business's own site, not Facebook or the company record");
   assert.equal(r.hit.hours, "Mon–Fri: 09:30–17:00; Sat: 09:30–15:00");
   assert.deepEqual(used, ["tomtom", "here"]);
 
