@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
   if (!priceId) return NextResponse.json({ error: "Paid plans are not open yet. Please start the free trial or email enquiries@aiert.co.uk." }, { status: 503 });
 
   const session = await requireBizSession();
+  if (session?.support) return NextResponse.json({ error: "support access cannot change billing" }, { status: 403 });
   const existingOrg = session ? await getOrg(session.orgId) : null;
 
   let orgId: string;

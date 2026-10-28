@@ -6,6 +6,7 @@ import { stripe } from "@/lib/tapcardBizBilling";
 export async function POST() {
   const session = await requireBizSession();
   if (!session) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (session.support) return NextResponse.json({ error: "support access cannot change billing" }, { status: 403 });
 
   const org = await getOrg(session.orgId);
   if (!org?.stripe_customer_id) return NextResponse.json({ error: "no billing account yet" }, { status: 400 });

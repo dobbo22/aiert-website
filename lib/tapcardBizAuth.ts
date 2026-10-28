@@ -59,8 +59,8 @@ export async function consumeLoginToken(token: string): Promise<{ email: string;
 /// cookie value: "<orgId>.<email-base64url>.<expiresAtMs>.<hmac>" — the
 /// email is base64url-encoded since it can contain characters that would
 /// otherwise collide with the "." separator in an unusual edge case.
-export function createSessionCookie(orgId: string, email: string): string {
-  const expiresAt = Date.now() + SESSION_TTL_MS;
+export function createSessionCookie(orgId: string, email: string, ttlMs: number = SESSION_TTL_MS): string {
+  const expiresAt = Date.now() + ttlMs;
   const emailPart = Buffer.from(email.toLowerCase().trim()).toString("base64url");
   const payload = `${orgId}.${emailPart}.${expiresAt}`;
   return `${payload}.${hmac(payload)}`;

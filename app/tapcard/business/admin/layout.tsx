@@ -21,6 +21,11 @@ export default async function BizAdminLayout({ children }: { children: React.Rea
   return (
     <main className="min-h-screen px-4 py-10">
       <div className="mx-auto max-w-4xl">
+        {session.support && (
+          <p className="mb-4 rounded-xl bg-gold px-4 py-2 text-sm font-semibold text-black">
+            AIERT support is viewing this company (allowed by the company, two-hour session, billing locked, logged).
+          </p>
+        )}
         <header className="flex items-center justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wider text-teal">TapCard for Business</p>

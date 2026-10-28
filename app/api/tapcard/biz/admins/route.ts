@@ -19,6 +19,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const session = await requireBizSession();
   if (!session) return NextResponse.json({ error: "not signed in" }, { status: 401 });
+  if (session.support) return NextResponse.json({ error: "support access cannot change admins" }, { status: 403 });
   if (rateLimited(req, "biz-add-admin", 10, 60 * 60_000)) return NextResponse.json({ error: "Too many attempts. Try again in an hour." }, { status: 429 });
   const body = (await req.json().catch(() => null)) as { email?: string } | null;
   const email = (body?.email ?? "").trim().toLowerCase().slice(0, 200);
@@ -39,6 +40,7 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const session = await requireBizSession();
   if (!session) return NextResponse.json({ error: "not signed in" }, { status: 401 });
+  if (session.support) return NextResponse.json({ error: "support access cannot change admins" }, { status: 403 });
   const id = req.nextUrl.searchParams.get("id") ?? "";
   const admins = await listAdmins(session.orgId);
   const target = admins.find((a) => a.id === id);

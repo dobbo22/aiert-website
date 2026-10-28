@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { consumeLoginToken, COOKIE_NAME, createSessionCookie } from "@/lib/tapcardBizAuth";
+import { isSupportEmail, logSupport, supportAccessOpen, SUPPORT_SESSION_MS } from "@/lib/tapcardBizSupport";
 
 // The link an admin clicks from their magic-link email. Opening it (GET)
 // only shows a "Sign in" button; pressing that (POST, back to this same
@@ -50,12 +51,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     return NextResponse.redirect(new URL("/business/admin?error=expired", req.url), 303);
   }
 
+  // An AIERT support entry: only while the company's own support access is open, for two hours, and logged.
+  const support = isSupportEmail(result.email);
+  if (support) {
+    if (!(await supportAccessOpen(result.orgId))) return NextResponse.redirect(new URL("/business/admin?error=expired", req.url), 303);
+    await logSupport(result.orgId, result.email.slice(8), "opened the company admin");
+  }
   const response = NextResponse.redirect(new URL("/business/admin", req.url), 303);
-  response.cookies.set(COOKIE_NAME, createSessionCookie(result.orgId, result.email), {
+  response.cookies.set(COOKIE_NAME, createSessionCookie(result.orgId, result.email, support ? SUPPORT_SESSION_MS : undefined), {
     httpOnly: true,
     secure: true,
     sameSite: "lax",
-    maxAge: 30 * 24 * 60 * 60,
+    maxAge: support ? SUPPORT_SESSION_MS / 1000 : 30 * 24 * 60 * 60,
     path: "/",
   });
   return response;
