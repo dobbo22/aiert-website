@@ -25,13 +25,13 @@ function TabBar({ active }: { active: "cards" | "contacts" }) {
   );
 }
 
-export function Phone({ label, children, overlay, tab }: { label: string; children: React.ReactNode; overlay?: React.ReactNode; tab?: "cards" | "contacts" }) {
+export function Phone({ label, children, overlay, tab, large }: { label: string; children: React.ReactNode; overlay?: React.ReactNode; tab?: "cards" | "contacts"; large?: boolean }) {
   return (
-    <div className="w-full max-w-[17rem]">
+    <div className={`w-full ${large ? "max-w-[23rem]" : "max-w-[17rem]"}`}>
       <p className="mb-2 text-center text-sm font-semibold text-cloud">{label}</p>
       <div className="rounded-[2.2rem] bg-black p-2.5 shadow-2xl ring-1 ring-white/20">
         {/* Fixed height: the screen scrolls, it never grows. A tapped link opens over the screen, like an in-app browser. */}
-        <div className="relative h-[34rem] overflow-hidden rounded-[1.8rem] bg-[#111318] text-white">
+        <div className={`relative ${large ? "h-[50rem]" : "h-[34rem]"} overflow-hidden rounded-[1.8rem] bg-[#111318] text-white`}>
           <div className={`h-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${tab ? "pb-20" : ""}`}>{children}</div>
           {tab ? <TabBar active={tab} /> : null}
           {overlay}

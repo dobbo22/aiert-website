@@ -1,6 +1,7 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import QRCode from "qrcode";
 import { CardFace, Phone } from "../../../demo/Phones";
 import { rowsFor } from "../../../demo/DemoBuilder";
 
@@ -31,6 +32,7 @@ const ShopPhones = forwardRef<ShopHandle, { initial: Shop[]; allowed: number; we
   const [sel, setSel] = useState(0);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  const [qr, setQr] = useState("");
 
   const savedCount = (list: Shop[]) => list.filter((s) => s.id).length;
 
@@ -65,6 +67,13 @@ const ShopPhones = forwardRef<ShopHandle, { initial: Shop[]; allowed: number; we
   useImperativeHandle(ref, () => ({ addFromHit }));
 
   const shop = shops[sel];
+  const qrText = (shop?.website || website || "https://tapcard.aiert.co.uk").replace(/^(?!https?:\/\/)/i, "https://");
+  // A sample QR (the shop's website): the real one, for the shop's own card link, exists once its manager makes the card.
+  useEffect(() => {
+    let live = true;
+    QRCode.toDataURL(qrText, { margin: 1, width: 240, errorCorrectionLevel: "H" }).then((u) => { if (live) setQr(u); }).catch(() => {});
+    return () => { live = false; };
+  }, [qrText]);
   const patch = (p: Partial<Shop>) => setShops((l) => l.map((s, i) => (i === sel ? { ...s, ...p } : s)));
 
   async function saveEdits() {
@@ -119,8 +128,19 @@ const ShopPhones = forwardRef<ShopHandle, { initial: Shop[]; allowed: number; we
         ))}
       </div>
       <div className="mt-4 flex flex-wrap items-start gap-8">
-        <Phone label={shop.id ? (shop.claimed ? "Card made" : "Added, waiting for its manager") : "Found, not added yet"}>
+        <Phone large label={shop.id ? (shop.claimed ? "Card made" : "Added, waiting for its manager") : "Found, not added yet"}>
           <CardFace name={shop.name} kind="Business" typed="" stage={3} rows={rows.filter((r) => !r.social)} socials={rows.filter((r) => r.social)} interactive={false} domain={domain} onOpen={() => {}} logoSrc={logoUrl} />
+          <div className="space-y-3 px-4 pb-8">
+            <p className="w-full rounded-2xl bg-blue-500 py-3 text-center text-sm font-semibold">▦ Share my card</p>
+            {qr && (
+              <div className="rounded-2xl bg-white/10 p-4 text-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={qr} alt="QR code" className="mx-auto h-44 w-44 rounded-lg bg-white p-2" />
+                <p className="mt-2 text-xs font-semibold">Scan to get my card</p>
+                <p className="mt-0.5 text-[10px] text-white/70">TapCard from AIERT</p>
+              </div>
+            )}
+          </div>
         </Phone>
         <div className="min-w-[16rem] flex-1 space-y-3">
           {([["name", "Shop name"], ["address", "Address"], ["phone", "Phone"], ["email", "Email"]] as const).map(([k, label]) => (
