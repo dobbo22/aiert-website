@@ -89,6 +89,7 @@ export function ensureSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS trial_used BOOLEAN NOT NULL DEFAULT false`)
       .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS trial_reminded_at TIMESTAMPTZ`)
       .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS locations INTEGER NOT NULL DEFAULT 0`)
+      .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS welcome_sent TEXT`)
 
       .then(() => sql`
         CREATE TABLE IF NOT EXISTS tapcard_biz_admins (
@@ -217,6 +218,16 @@ export function adminsConfirmDomain(admins: { email: string; confirmed_at: strin
 export async function orgHasConfirmedAdminOnDomain(orgId: string, domain: string): Promise<boolean> {
   if (!domain) return false;
   return adminsConfirmDomain(await listAdmins(orgId), domain);
+}
+
+/// Claims the right to send a company its welcome email ("trial" once at sign-up, "paid" once when a plan starts), so a repeated
+/// request or a re-delivered Stripe event never sends it twice. True when this caller should send it.
+export async function claimWelcomeEmail(orgId: string, kind: "trial" | "paid"): Promise<boolean> {
+  await ensureSchema();
+  const rows = kind === "trial"
+    ? await sql`UPDATE tapcard_biz_orgs SET welcome_sent = 'trial' WHERE id = ${orgId} AND welcome_sent IS NULL RETURNING id`
+    : await sql`UPDATE tapcard_biz_orgs SET welcome_sent = 'paid' WHERE id = ${orgId} AND welcome_sent IS DISTINCT FROM 'paid' RETURNING id`;
+  return rows.length > 0;
 }
 
 export async function getOrg(id: string): Promise<BizOrg | null> {

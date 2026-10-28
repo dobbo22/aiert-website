@@ -9,6 +9,7 @@ const TRIAL_ID = "trial" as const;
 export default function SignupForm() {
   const [companyName, setCompanyName] = useState("");
   const [email, setEmail] = useState("");
+  const [yourName, setYourName] = useState("");
   const [plan, setPlan] = useState<"trial" | "locations">(TRIAL_ID);
   const [locations, setLocations] = useState(MIN_LOCATIONS);
   const [submitting, setSubmitting] = useState(false);
@@ -47,7 +48,7 @@ export default function SignupForm() {
         signal,
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ companyName, email }),
+        body: JSON.stringify({ companyName, email, name: yourName }),
       });
       const data = await res.json();
       setSubmitting(false);
@@ -63,7 +64,7 @@ export default function SignupForm() {
       signal,
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ companyName, email, locations }),
+      body: JSON.stringify({ companyName, email, locations, name: yourName }),
     });
     const data = await res.json();
     if (!res.ok || !data.url) {
@@ -94,6 +95,16 @@ export default function SignupForm() {
           required
           value={companyName}
           onChange={(e) => setCompanyName(e.target.value)}
+          className="mt-1 w-full rounded-xl bg-slate/40 px-3 py-2 text-cloud ring-1 ring-slate"
+        />
+      </label>
+      <label className="mt-4 block">
+        <span className="text-sm text-mist">Your name (so we can address you properly)</span>
+        <input
+          value={yourName}
+          onChange={(e) => setYourName(e.target.value)}
+          autoComplete="name"
+          maxLength={100}
           className="mt-1 w-full rounded-xl bg-slate/40 px-3 py-2 text-cloud ring-1 ring-slate"
         />
       </label>

@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { addAdmin, createOrg, domainHasUsedTrial, domainOf, emailHasUsedTrial, markTrialUsed, setOrgBilling } from "@/lib/tapcardBiz";
+import { addAdmin, claimWelcomeEmail, createOrg, domainHasUsedTrial, domainOf, emailHasUsedTrial, markTrialUsed, setOrgBilling } from "@/lib/tapcardBiz";
 import { isFreeMailDomain } from "@/lib/tapcardDomain";
 import { createLoginToken } from "@/lib/tapcardBizAuth";
-import { sendBizLoginEmail } from "@/lib/tapcardBizEmail";
+import { sendBizLoginEmail, sendBizWelcomeEmail } from "@/lib/tapcardBizEmail";
 import { TRIAL_DAYS, TRIAL_SEAT_LIMIT } from "@/lib/tapcardBizBilling";
 
 interface Body {
   companyName?: string;
   email?: string;
+  name?: string;
 }
 
 // The free path alongside the paid seat bands (app/api/tapcard/biz/checkout)
@@ -28,6 +29,7 @@ export async function POST(req: NextRequest) {
   const body: Body = parsed;
   const companyName = (body.companyName ?? "").trim().slice(0, 200);
   const email = (body.email ?? "").trim().toLowerCase().slice(0, 200);
+  const name = typeof body.name === "string" ? body.name.trim().slice(0, 100) : "";
 
   if (!companyName || !/^\S+@\S+\.\S+$/.test(email)) {
     return NextResponse.json({ error: "company name and a valid email are required" }, { status: 400 });
@@ -54,6 +56,11 @@ export async function POST(req: NextRequest) {
 
   const token = await createLoginToken(email, org.id);
   await sendBizLoginEmail(email, `https://tapcard.aiert.co.uk/api/biz/login/${token}`).catch((e) => console.error("tapcard biz email failed:", e));
+  // The how-to-use email, once: the sign-in link above works for 15 minutes; this one is the reference to keep.
+  if (await claimWelcomeEmail(org.id, "trial").catch(() => false)) {
+    const endsOn = new Date(Date.now() + TRIAL_DAYS * 86_400_000).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+    await sendBizWelcomeEmail(email, companyName, { kind: "trial", endsOn, name }).catch((e) => console.error("tapcard biz welcome email failed:", e));
+  }
 
   return NextResponse.json({ ok: true });
 }

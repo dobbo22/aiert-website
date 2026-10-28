@@ -7,6 +7,7 @@ import { requireBizSession } from "@/lib/tapcardBizSession";
 interface Body {
   companyName?: string;
   email?: string;
+  name?: string;
   /// How many locations to pay for (2 to 100). The Stripe price has volume tiers, so the total follows.
   locations?: number;
 }
@@ -60,7 +61,7 @@ export async function POST(req: NextRequest) {
     line_items: [{ price: priceId, quantity: locations, adjustable_quantity: { enabled: true, minimum: MIN_LOCATIONS, maximum: MAX_LOCATIONS } }],
     success_url: `${origin}/business/welcome?org=${orgId}`,
     cancel_url: existingOrg ? `${origin}/business/admin/billing?canceled=1` : `${origin}/business?canceled=1`,
-    metadata: { orgId, adminEmail: email },
+    metadata: { orgId, adminEmail: email, adminName: typeof body.name === "string" ? body.name.trim().slice(0, 100) : "" },
   });
 
   if (!checkoutSession.url) return NextResponse.json({ error: "could not start checkout" }, { status: 502 });

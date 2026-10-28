@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { stripe } from "@/lib/tapcardBizBilling";
-import { addAdmin, getOrg, getOrgByStripeSubscriptionId, setOrgBilling } from "@/lib/tapcardBiz";
+import { addAdmin, claimWelcomeEmail, getOrg, getOrgByStripeSubscriptionId, setOrgBilling } from "@/lib/tapcardBiz";
 import { createLoginToken } from "@/lib/tapcardBizAuth";
-import { sendBizLoginEmail } from "@/lib/tapcardBizEmail";
+import { sendBizLoginEmail, sendBizWelcomeEmail } from "@/lib/tapcardBizEmail";
 import { cardAllowance } from "@/lib/tapcardBizPricing";
 
 /// The number of locations on a per-location subscription (its quantity), and the card allowance that goes with it.
@@ -48,6 +48,11 @@ export async function POST(req: NextRequest) {
       const token = await createLoginToken(email, orgId);
       const origin = "https://tapcard.aiert.co.uk";
       await sendBizLoginEmail(email, `${origin}/api/biz/login/${token}`).catch((e) => console.error("tapcard biz email failed:", e));
+      // The full welcome and how-to-use email, once per paid start (a repeated Stripe event does not send it again).
+      const paid = await getOrg(orgId);
+      if (paid && (await claimWelcomeEmail(orgId, "paid").catch(() => false))) {
+        await sendBizWelcomeEmail(email, paid.name, { kind: "paid", locations: paid.locations || 0, name: session.metadata?.adminName || session.customer_details?.name || "" }).catch((e) => console.error("tapcard biz welcome email failed:", e));
+      }
       break;
     }
 
