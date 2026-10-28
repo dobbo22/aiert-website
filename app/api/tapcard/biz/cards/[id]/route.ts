@@ -15,7 +15,11 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const { found, photoUrl } = session.role === "manager"
     ? await getStaffCardInScope(session.orgId, id, session.locationIds)
     : await getOrgCardPhoto(session.orgId, id);
-  if (!found) return NextResponse.json({ error: "not found" }, { status: 404 });
+  if (!found) {
+    // Already gone: if a shop still pointed at it, it is waiting again, and the removal has done what was asked.
+    if (session.role === "admin" && await releaseShopCard(session.orgId, id)) return NextResponse.json({ ok: true, alreadyGone: true });
+    return NextResponse.json({ error: "not found" }, { status: 404 });
+  }
 
   await markCardRemovedByCompany(id, session.orgId);
   await deleteCard(id);

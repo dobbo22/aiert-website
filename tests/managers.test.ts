@@ -303,3 +303,22 @@ test("removing a made shop card puts the shop back to waiting, ready for a new i
   assert.equal((await mk()).status, 200, "a new link now builds a new card for the same shop");
   ctx.cookie = undefined;
 });
+
+test("a shop whose card is gone shows as waiting again, and removing the already-gone card works", async () => {
+  const t = await setup();
+  const loc = await import("../app/api/tapcard/biz/locations/route");
+  const del = await import("../app/api/tapcard/biz/cards/[id]/route");
+  t.asAdmin();
+  // the shop points at a card that no longer exists (it was deleted some other way)
+  await sql`UPDATE tapcard_biz_locations SET claimed_card_id = 'gone-card-id' WHERE id = ${t.dunmow.id}`;
+  const listed = await json(await loc.GET());
+  assert.equal(listed.locations.find((l: { id: string }) => l.id === t.dunmow.id).claimed, false, "no longer 'Card made'");
+  await sql`UPDATE tapcard_biz_locations SET claimed_card_id = 'gone-card-id' WHERE id = ${t.bardfield.id}`;
+  // pressing Remove on a card that is already gone succeeds and frees the shop
+  const res = await del.DELETE(req("/x/gone-card-id", { method: "DELETE" }), { params: Promise.resolve({ id: "gone-card-id" }) });
+  assert.equal(res.status, 200);
+  assert.equal(((await sql`SELECT claimed_card_id FROM tapcard_biz_locations WHERE id = ${t.bardfield.id}`)[0] as { claimed_card_id: string | null }).claimed_card_id, null);
+  // a card that was never anyone's is still a 404
+  assert.equal((await del.DELETE(req("/x/nope", { method: "DELETE" }), { params: Promise.resolve({ id: "nope" }) })).status, 404);
+  ctx.cookie = undefined;
+});

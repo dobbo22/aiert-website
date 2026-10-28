@@ -26,13 +26,22 @@ function ensureLocationSchema(): Promise<unknown> {
   return ready;
 }
 
+/// A shop whose card no longer exists (removed, or deleted by its owner) is waiting for its manager again, so it never shows "Card made"
+/// for a card that is gone.
+async function releaseGoneCards(): Promise<void> {
+  await sql`UPDATE tapcard_biz_locations l SET claimed_card_id = NULL
+            WHERE l.claimed_card_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM tapcard_cards c WHERE c.id = l.claimed_card_id)`;
+}
+
 export async function listLocations(orgId: string): Promise<BizLocation[]> {
   await ensureLocationSchema();
+  await releaseGoneCards();
   return (await sql`SELECT * FROM tapcard_biz_locations WHERE org_id = ${orgId} ORDER BY created_at`) as BizLocation[];
 }
 
 export async function getLocation(id: string): Promise<BizLocation | null> {
   await ensureLocationSchema();
+  await releaseGoneCards();
   const rows = (await sql`SELECT * FROM tapcard_biz_locations WHERE id = ${id}`) as BizLocation[];
   return rows[0] ?? null;
 }
@@ -91,9 +100,10 @@ export async function deleteLocation(orgId: string, id: string, allowClaimed = f
 }
 
 /// The shop's card was removed: the shop is unclaimed again (its prepared details stay), ready for a new manager invite.
-export async function releaseShopCard(orgId: string, cardId: string): Promise<void> {
+export async function releaseShopCard(orgId: string, cardId: string): Promise<boolean> {
   await ensureLocationSchema();
-  await sql`UPDATE tapcard_biz_locations SET claimed_card_id = NULL WHERE org_id = ${orgId} AND claimed_card_id = ${cardId}`;
+  const rows = await sql`UPDATE tapcard_biz_locations SET claimed_card_id = NULL WHERE org_id = ${orgId} AND claimed_card_id = ${cardId} RETURNING id`;
+  return rows.length > 0;
 }
 
 /// True for the one caller that claims it (a location becomes one card).
