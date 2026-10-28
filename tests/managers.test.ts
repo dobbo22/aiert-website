@@ -127,6 +127,8 @@ test("only the few manager routes use the manager-capable session", async () => 
     "app/api/tapcard/biz/cards/[id]/route.ts",
     "app/api/tapcard/biz/invites/route.ts",
     "app/api/tapcard/biz/locations/sign/route.ts",
+    // The public business search only reads who is signed in, to count the lookup against their company's daily allowance.
+    "app/api/tapcard/business-search/route.ts",
     "app/tapcard/business/admin/employees/page.tsx",
     "app/tapcard/business/admin/layout.tsx",
     "app/tapcard/business/admin/page.tsx",
