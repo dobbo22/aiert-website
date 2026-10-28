@@ -3,7 +3,15 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-const btn = { border: "1px solid rgba(255,255,255,.5)", borderRadius: 8, padding: "6px 14px", marginRight: 8 } as const;
+// The same pill the tabs at the top of the page use.
+function Pill({ children, disabled, onClick }: { children: React.ReactNode; disabled?: boolean; onClick: () => void }) {
+  return (
+    <button type="button" disabled={disabled} onClick={onClick} className="social-tab social-tab-active"
+      style={{ cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.5 : 1, marginRight: 8, marginBottom: 6 }}>
+      {children}
+    </button>
+  );
+}
 const input = { background: "#fff", color: "#111", border: "1px solid #9ca3af", borderRadius: 6, padding: "6px 10px", marginRight: 8, marginBottom: 8 } as const;
 
 async function call(body: Record<string, unknown>) {
@@ -39,12 +47,12 @@ export function CompanyTools({ orgId, open, locations }: { orgId: string; open: 
   const b = (label: string) => (busy === label ? "Working…" : label);
   return (
     <div>
-      <button type="button" style={btn} disabled={!!busy} onClick={() => run("Open admin (support)", { action: "open" }, () => "Sign-in link ready (it works once and lasts 15 minutes).")}>{b("Open admin (support)")}</button>
+      <Pill disabled={!!busy} onClick={() => run("Open admin (support)", { action: "open" }, () => "Sign-in link ready (it works once and lasts 15 minutes).")}>{b("Open admin (support)")}</Pill>
       <input style={{ ...input, width: 54 }} value={n} onChange={(e) => setN(e.target.value)} inputMode="numeric" aria-label="Locations" />
-      <button type="button" style={btn} disabled={!!busy} onClick={() => confirm(`Make this company free for ${n} locations?`) && run("Make free", { action: "free", locations: Number(n) }, () => `Done: free for ${n} locations.`)}>{b("Make free")}</button>
+      <Pill disabled={!!busy} onClick={() => confirm(`Make this company free for ${n} locations?`) && run("Make free", { action: "free", locations: Number(n) }, () => `Done: free for ${n} locations.`)}>{b("Make free")}</Pill>
       <br />
       <input style={{ ...input, width: 230, marginTop: 6 }} placeholder="Manager's email (all shops)" value={mgr} onChange={(e) => setMgr(e.target.value)} />
-      <button type="button" style={btn} disabled={!!busy || !mgr.includes("@")} onClick={() => run("Add manager", { action: "manager", email: mgr }, () => `Added ${mgr} as a manager of every shop. They have been emailed what they can do and a sign-in link.`, () => setMgr(""))}>{b("Add manager")}</button>
+      <Pill disabled={!!busy || !mgr.includes("@")} onClick={() => run("Add manager", { action: "manager", email: mgr }, () => `Added ${mgr} as a manager of every shop. They have been emailed what they can do and a sign-in link.`, () => setMgr(""))}>{b("Add manager")}</Pill>
       {note && (
         <p style={{ marginTop: 6, padding: "6px 10px", borderRadius: 8, fontSize: 14, background: note.ok ? "rgba(34,197,94,.18)" : "rgba(248,113,113,.2)", border: `1px solid ${note.ok ? "rgba(34,197,94,.5)" : "rgba(248,113,113,.6)"}` }} role="status">
           {note.ok && !busy ? "✓ " : note.ok ? "" : "✗ "}{note.text}
@@ -73,7 +81,7 @@ export function CreateCompany() {
       <input style={input} placeholder="Admin email" value={email} onChange={(e) => setEmail(e.target.value)} />
       <input style={{ ...input, width: 60 }} value={locations} onChange={(e) => setLocations(e.target.value)} inputMode="numeric" aria-label="Locations" />
       <label style={{ marginRight: 8 }}><input type="checkbox" checked={sendEmail} onChange={(e) => setSendEmail(e.target.checked)} /> Email them the sign-in link and welcome</label>
-      <button type="button" style={btn} disabled={busy || !name.trim() || !email.trim()} onClick={create}>{busy ? "…" : "Create"}</button>
+      <Pill disabled={busy || !name.trim() || !email.trim()} onClick={create}>{busy ? "…" : "Create"}</Pill>
       {note && (
         <p style={{ marginTop: 8, padding: "6px 10px", borderRadius: 8, fontSize: 14, background: /^Created/.test(note) || /^Creating/.test(note) ? "rgba(34,197,94,.18)" : "rgba(248,113,113,.2)" }} role="status">{note}</p>
       )}

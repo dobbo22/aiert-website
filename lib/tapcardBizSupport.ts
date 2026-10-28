@@ -57,6 +57,8 @@ export async function logSupport(orgId: string, actor: string, action: string, d
 export interface SupportCompanyRow {
   id: string; name: string; seat_band: string; locations: number; seat_limit: number; billing_status: string; created_at: string;
   cards: number; admins: number; support_access_until: string | null;
+  /// Everyone who can sign in to the company: admins and shop managers.
+  people: { email: string; role: string; confirmed: boolean }[];
 }
 
 export async function listCompaniesForSupport(): Promise<SupportCompanyRow[]> {
@@ -64,7 +66,8 @@ export async function listCompaniesForSupport(): Promise<SupportCompanyRow[]> {
   return (await sql`
     SELECT o.id, o.name, o.seat_band, o.locations, o.seat_limit, o.billing_status, o.created_at, o.support_access_until,
            (SELECT count(*) FROM tapcard_cards c WHERE c.org_id = o.id)::int AS cards,
-           (SELECT count(*) FROM tapcard_biz_admins a WHERE a.org_id = o.id)::int AS admins
+           (SELECT count(*) FROM tapcard_biz_admins a WHERE a.org_id = o.id)::int AS admins,
+           COALESCE((SELECT json_agg(json_build_object('email', a.email, 'role', a.role, 'confirmed', a.confirmed_at IS NOT NULL) ORDER BY a.created_at) FROM tapcard_biz_admins a WHERE a.org_id = o.id), '[]'::json) AS people
     FROM tapcard_biz_orgs o ORDER BY o.created_at DESC LIMIT 200
   `) as SupportCompanyRow[];
 }

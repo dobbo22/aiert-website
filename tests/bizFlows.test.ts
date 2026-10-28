@@ -327,3 +327,12 @@ test("AIERT can add a shop manager to a company that allows support access", asy
   assert.equal((await add("other@aiert.co.uk")).status, 401);
   ctx.admin = true;
 });
+
+test("the Companies page lists who can sign in to each company", async () => {
+  const { createManagedCompany, listCompaniesForSupport } = await import("../lib/tapcardBizSupport");
+  const { addAdmin } = await import("../lib/tapcardBiz");
+  const org = await createManagedCompany({ name: "People Co", adminEmail: "owner@people.example", locations: 2 });
+  await addAdmin(org.id, "mgr@people.example", "manager", []);
+  const row = (await listCompaniesForSupport()).find((c) => c.id === org.id)!;
+  assert.deepEqual(row.people.map((p) => [p.email, p.role, p.confirmed]), [["owner@people.example", "admin", false], ["mgr@people.example", "manager", false]]);
+});

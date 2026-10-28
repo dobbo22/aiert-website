@@ -25,7 +25,7 @@ export default async function CompaniesPage() {
       <h2 style={{ fontWeight: 700, margin: "1.5rem 0 .5rem" }}>Companies ({companies.length})</h2>
       {listError && <p style={{ color: "#fca5a5", fontSize: 14 }}>Couldn&apos;t load the companies: {listError}</p>}
       <table style={{ width: "100%", fontSize: 14 }}>
-        <thead><tr style={{ textAlign: "left" }}><th>Company</th><th>Plan</th><th>Cards</th><th>Admins</th><th>Support access</th><th></th></tr></thead>
+        <thead><tr style={{ textAlign: "left" }}><th>Company</th><th>Plan</th><th>Cards</th><th>People</th><th>Support access</th><th></th></tr></thead>
         <tbody>
           {companies.map((c) => {
             const open = !!c.support_access_until && new Date(c.support_access_until).getTime() > Date.now();
@@ -34,7 +34,11 @@ export default async function CompaniesPage() {
                 <td style={{ padding: "6px 8px 6px 0" }}>{c.name || c.id}<br /><span style={{ opacity: .7 }}>{fmt(c.created_at)}</span></td>
                 <td>{c.seat_band === "trial" ? "Free trial" : c.seat_band === "locations" ? `${c.locations} locations` : c.seat_band || "-"}<br /><span style={{ opacity: .7 }}>{c.billing_status}</span></td>
                 <td>{c.cards}/{c.seat_limit}</td>
-                <td>{c.admins}</td>
+                <td style={{ paddingRight: 8 }}>
+                  {(c.people ?? []).map((p) => (
+                    <div key={p.email}>{p.email} <span style={{ opacity: .7 }}>({p.role === "manager" ? "manager" : "admin"}{p.confirmed ? "" : ", not signed in yet"})</span></div>
+                  ))}
+                </td>
                 <td>{open ? `Open until ${fmt(c.support_access_until!)}` : "Not allowed"}</td>
                 <td><CompanyTools orgId={c.id} open={open} locations={c.locations || 3} /></td>
               </tr>
