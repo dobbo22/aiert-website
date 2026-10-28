@@ -61,7 +61,9 @@ export function CardFace({ name, kind, typed, stage, rows, socials, interactive,
   };
   const [logoFailed, setLogoFailed] = useState(false);
   const [iconFailed, setIconFailed] = useState(false);
-  const [logoLoaded, setLogoLoaded] = useState(false);
+  const [logoLoadedState, setLogoLoaded] = useState(false);
+  // A stored company logo is the picture: no round avatar or shop icon beside it.
+  const logoLoaded = logoLoadedState || (!!logoSrc && !logoFailed);
   const d = encodeURIComponent(domain);
   return (
     <div className="pb-6 text-center">
