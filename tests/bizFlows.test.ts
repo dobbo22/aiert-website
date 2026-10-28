@@ -336,3 +336,23 @@ test("the Companies page lists who can sign in to each company", async () => {
   const row = (await listCompaniesForSupport()).find((c) => c.id === org.id)!;
   assert.deepEqual(row.people.map((p) => [p.email, p.role, p.confirmed]), [["owner@people.example", "admin", false], ["mgr@people.example", "manager", false]]);
 });
+
+test("AIERT can remove a shop manager (never an admin) from a company that allows support access", async () => {
+  const { createManagedCompany, setSupportAccess } = await import("../lib/tapcardBizSupport");
+  const { addAdmin, listAdmins } = await import("../lib/tapcardBiz");
+  const { POST } = await import("../app/api/admin/tapcard/companies/route");
+  const org = await createManagedCompany({ name: "Remove Co", adminEmail: "owner@removeco.example", locations: 2 });
+  await addAdmin(org.id, "tester@removeco.example", "manager", []);
+  const rm = (email: string) => POST(req("/api/admin/tapcard/companies", { body: { action: "removeManager", orgId: org.id, email } }));
+  ctx.admin = true;
+  assert.equal((await rm("owner@removeco.example")).status, 404, "an admin cannot be removed here");
+  assert.equal((await rm("nobody@removeco.example")).status, 404);
+  assert.equal((await rm("Tester@RemoveCo.example")).status, 200);
+  assert.deepEqual((await listAdmins(org.id)).map((a) => a.email), ["owner@removeco.example"]);
+  await addAdmin(org.id, "again@removeco.example", "manager", []);
+  await setSupportAccess(org.id, null, "company");
+  assert.equal((await rm("again@removeco.example")).status, 403, "needs the company's support window");
+  ctx.admin = false;
+  assert.equal((await rm("again@removeco.example")).status, 401);
+  ctx.admin = true;
+});

@@ -88,3 +88,24 @@ export function CreateCompany() {
     </div>
   );
 }
+
+/// Removes a shop manager from a company that allows support access (for testing). Asks first, then says what happened.
+export function RemoveManager({ orgId, email }: { orgId: string; email: string }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  async function remove() {
+    if (!confirm(`Remove ${email} as a manager? They will be signed out straight away.`)) return;
+    setBusy(true); setError("");
+    const r = await call({ action: "removeManager", orgId, email });
+    setBusy(false);
+    if (!r.ok) { setError(r.data.error ?? "That didn't work. Try again."); return; }
+    router.refresh();
+  }
+  return (
+    <>
+      <button type="button" disabled={busy} onClick={remove} className="social-tab social-tab-active" style={{ cursor: "pointer", opacity: busy ? 0.5 : 1, marginLeft: 8, padding: "1px 10px", fontSize: 12 }}>{busy ? "Removing…" : "Remove"}</button>
+      {error && <span style={{ color: "#fca5a5", marginLeft: 8 }}>{error}</span>}
+    </>
+  );
+}

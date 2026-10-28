@@ -1,6 +1,6 @@
 import { isAdminRequest } from "@/lib/adminRequest";
 import { listCompaniesForSupport, recentSupportLog } from "@/lib/tapcardBizSupport";
-import { CompanyTools, CreateCompany } from "./Tools";
+import { CompanyTools, CreateCompany, RemoveManager } from "./Tools";
 
 export const metadata = { title: "TapCard companies — Admin", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -36,7 +36,9 @@ export default async function CompaniesPage() {
                 <td>{c.cards}/{c.seat_limit}</td>
                 <td style={{ paddingRight: 8 }}>
                   {(c.people ?? []).map((p) => (
-                    <div key={p.email}>{p.email} <span style={{ opacity: .7 }}>({p.role === "manager" ? "manager" : "admin"}{p.confirmed ? "" : ", not signed in yet"})</span></div>
+                    <div key={p.email}>{p.email} <span style={{ opacity: .7 }}>({p.role === "manager" ? "manager" : "admin"}{p.confirmed ? "" : ", not signed in yet"})</span>
+                      {p.role === "manager" && open ? <RemoveManager orgId={c.id} email={p.email} /> : null}
+                    </div>
                   ))}
                 </td>
                 <td>{open ? `Open until ${fmt(c.support_access_until!)}` : "Not allowed"}</td>

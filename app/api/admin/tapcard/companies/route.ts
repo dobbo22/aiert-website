@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAdminRequest } from "@/lib/adminRequest";
 import { getOrg } from "@/lib/tapcardBiz";
 import { createLoginToken } from "@/lib/tapcardBizAuth";
-import { addAdmin, findAdminOrgsByEmail, listAdmins, MAX_MANAGERS } from "@/lib/tapcardBiz";
+import { addAdmin, findAdminOrgsByEmail, listAdmins, MAX_MANAGERS, removeAdminById } from "@/lib/tapcardBiz";
 import { listLocations, shopCardLinks } from "@/lib/tapcardBizLocations";
 import { sendBizLoginEmail, sendBizManagerInviteEmail, sendBizWelcomeEmail } from "@/lib/tapcardBizEmail";
 import { cardAllowance } from "@/lib/tapcardBizPricing";
@@ -57,6 +57,16 @@ export async function POST(req: NextRequest) {
     const token = await createLoginToken(email, org.id);
     await sendBizManagerInviteEmail(email, org.name, "AIERT support", `https://tapcard.aiert.co.uk/api/biz/login/${token}`, shops.map((l) => `${l.name}, ${l.address.split(",").slice(-3, -1).join(" ").trim()}`), await shopCardLinks(org, shops.map((l) => l.id), email).catch(() => [])).catch((e) => console.error("support manager email failed", e));
     return NextResponse.json({ ok: true, shops: shops.length });
+  }
+
+  // Removes a shop manager (never an admin), e.g. after testing. They are signed out at once.
+  if (body.action === "removeManager") {
+    const email = (body.email ?? "").trim().toLowerCase();
+    const person = (await listAdmins(org.id)).find((p) => p.email === email && p.role === "manager");
+    if (!person) return NextResponse.json({ error: "No manager with that address on this company." }, { status: 404 });
+    await removeAdminById(org.id, person.id);
+    await logSupport(org.id, SUPPORT_ACTOR, "removed a manager", email);
+    return NextResponse.json({ ok: true });
   }
 
   if (body.action === "free") {
