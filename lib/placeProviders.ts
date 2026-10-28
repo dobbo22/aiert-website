@@ -12,8 +12,15 @@ export function sanePhone(raw: string): string {
   const v = (raw ?? "").trim();
   const digits = v.replace(/\D/g, "");
   if (!digits) return "";
-  if (v.startsWith("+44") || digits.startsWith("44")) return digits.length - 2 >= 9 && digits.length - 2 <= 10 ? v : "";
-  if (digits.startsWith("0")) return digits.length === 10 || digits.length === 11 ? v : "";
+  // 10 digits after the country code (or after the leading 0, so 11 with it), except a few 01 areas that have 9.
+  if (v.startsWith("+44") || digits.startsWith("44")) {
+    const n = digits.slice(2);
+    return n.length === 10 || (n.length === 9 && n.startsWith("1")) ? v : "";
+  }
+  if (digits.startsWith("0")) {
+    const n = digits.slice(1);
+    return n.length === 10 || (n.length === 9 && n.startsWith("1")) ? v : "";
+  }
   return digits.length >= 7 ? v : "";
 }
 
