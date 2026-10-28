@@ -276,7 +276,7 @@ test("a company's own website lists its other shops, even a new address with no 
   assert.ok(blake, "the postcode-less shop is found by its heading");
   assert.equal(blake.addressText, "Unit 15ab, Blake End");
   assert.equal(blake.phone, "01371 872882");
-  assert.equal(blake.hoursText, "Mon: Closed; Tues–Sat: 9.30am–4.30pm");
+  assert.equal(blake.hoursText, "Mon: Closed; Tue–Sat: 9.30am–4.30pm");
   // the page title line is not a shop
   assert.ok(!found.some((p) => /contact/i.test(p.label)));
   // nothing is invented for a page that does not list shops
