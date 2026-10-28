@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     ? { lat: Number(req.headers.get("x-vercel-ip-latitude")), lng: Number(req.headers.get("x-vercel-ip-longitude")) } : null;
   const queries = [...new Set([org.name, ...(have[0] ? [`${org.name} ${have[0].address.split(",").slice(-3, -1).join(" ").trim()}`] : [])].filter((q) => q.trim().length >= 3))];
   for (const q of queries) {
-    for (const h of await searchBusinesses(q, near).catch(() => [])) {
+    for (const h of await searchBusinesses(q, near, false, `biz-${session.orgId}`).catch(() => [])) {
       if (domain && host(h.website) === domain) add({ ...h, source: "Google" });
     }
   }
