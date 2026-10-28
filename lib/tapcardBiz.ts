@@ -248,6 +248,12 @@ export function orgCanProvision(org: Pick<BizOrg, "billing_status" | "seat_band"
   return isOrgActive(org);
 }
 
+/// A company AIERT set up free of charge (the Companies page): locations on the paid-plan fields, active, with no Stripe subscription or
+/// customer and no renewal date. Nothing is ever charged, so the billing page says so instead of offering a plan.
+export function isComplimentary(org: Pick<BizOrg, "seat_band" | "billing_status" | "stripe_subscription_id" | "stripe_customer_id" | "current_period_end">): boolean {
+  return org.seat_band === "locations" && org.billing_status === "active" && !org.stripe_subscription_id && !org.stripe_customer_id && !org.current_period_end;
+}
+
 type TrialFields = Pick<BizOrg, "seat_band" | "current_period_end" | "created_at">;
 
 /// When a free-trial company's trial ends: its stored end date, or 30 days after it was created for trials made

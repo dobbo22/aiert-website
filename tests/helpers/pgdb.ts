@@ -4,7 +4,7 @@
 import Module from "node:module";
 import { PGlite } from "@electric-sql/pglite";
 
-export const ctx: { session: { orgId: string; email: string; support?: boolean } | null; admin: boolean; cookie: string | undefined } = { session: null, admin: true, cookie: undefined };
+export const ctx: { session: { orgId: string; email: string; support?: boolean } | null; admin: boolean; cookie: string | undefined; outbox: { to: string; subject: string; html: string; text: string }[] } = { session: null, admin: true, cookie: undefined, outbox: [] };
 const db = new PGlite();
 
 function sql(strings: TemplateStringsArray, ...values: unknown[]) {
@@ -19,9 +19,23 @@ export function installStubs(opts: { realSession?: boolean } = {}) {
   installed = true;
   process.env.TAPCARD_BIZ_SESSION_SECRET = "test-secret-for-tests";
   process.env.ADMIN_PASSWORD = "test-admin";
+  process.env.TAPCARD_INVITE_EMAIL_VIA = "resend";
+  process.env.RESEND_API_KEY = "re_test";
   (Module as unknown as { _load: (...a: unknown[]) => unknown })._load = function (this: unknown, ...args: unknown[]) {
     const [request, ...rest] = args as [string, ...unknown[]];
     if (request === "@/lib/db" || request.endsWith("/lib/db")) return { __esModule: true, default: sql };
+    // Emails go to an outbox the tests can read instead of the network.
+    if (request === "resend") {
+      return { Resend: class { emails = { send: async (m: { to: string; subject: string; html: string; text: string }) => { ctx.outbox.push({ to: m.to, subject: m.subject, html: m.html, text: m.text }); return { error: null }; } }; } };
+    }
+    // `after()` only exists inside a real request: here the callback runs straight away (its failures are ignored, as in production).
+    if (request === "next/server") {
+      const real = realLoad.call(this, request, ...rest) as Record<string, unknown>;
+      return { ...real, after: (task: unknown) => { void Promise.resolve(typeof task === "function" ? (task as () => unknown)() : task).catch(() => {}); } };
+    }
+    if (request === "next/navigation") {
+      return { useRouter: () => ({ refresh() {}, push() {}, replace() {}, back() {} }), usePathname: () => "/business/admin", useSearchParams: () => new URLSearchParams(), redirect() {}, notFound() {} };
+    }
     if (request === "@vercel/blob") return { del: async () => {}, put: async () => ({ url: "https://blob.test/x" }) };
     if (request === "@/lib/adminRequest" || request.endsWith("/lib/adminRequest")) return { isAdminRequest: async () => ctx.admin };
     if (request === "next/headers") return { cookies: async () => ({ get: () => (ctx.cookie ? { value: ctx.cookie } : undefined) }) };

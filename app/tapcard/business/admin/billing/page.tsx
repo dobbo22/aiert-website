@@ -1,5 +1,5 @@
 import { requireBizSession } from "@/lib/tapcardBizSession";
-import { getOrg, orgStatusLabel, trialEndsAt } from "@/lib/tapcardBiz";
+import { getOrg, isComplimentary, orgStatusLabel, trialEndsAt } from "@/lib/tapcardBiz";
 import { bandById } from "@/lib/tapcardBizBilling";
 import BillingPortalButton from "./BillingPortalButton";
 import UpgradePicker from "./UpgradePicker";
@@ -11,21 +11,27 @@ export default async function BizBillingPage() {
   if (!org) return null;
 
   const band = bandById(org.seat_band);
+  const free = isComplimentary(org);
 
   return (
     <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
       <h2 className="text-lg font-bold text-cloud">Billing</h2>
       <dl className="mt-4 space-y-2 text-cloud">
         <Row label="Status" value={orgStatusLabel(org)} />
-        <Row label="Plan" value={org.seat_band === "trial" ? "Free trial" : org.seat_band === "locations" ? `${org.locations} locations` : band?.label ?? (org.seat_band || "–")} />
+        <Row label="Plan" value={free ? `Free, ${org.locations} location${org.locations === 1 ? "" : "s"}` : org.seat_band === "trial" ? "Free trial" : org.seat_band === "locations" ? `${org.locations} locations` : band?.label ?? (org.seat_band || "–")} />
         <Row label="Cards allowed" value={String(org.seat_limit || "–")} />
         <Row
-          label={org.seat_band === "trial" ? "Trial ends" : "Renews"}
-          value={(org.seat_band === "trial" ? trialEndsAt(org) : org.current_period_end ? new Date(org.current_period_end) : null)?.toLocaleDateString("en-GB") ?? "–"}
+          label={org.seat_band === "trial" ? "Trial ends" : free ? "Cost" : "Renews"}
+          value={free ? "Nothing to pay" : (org.seat_band === "trial" ? trialEndsAt(org) : org.current_period_end ? new Date(org.current_period_end) : null)?.toLocaleDateString("en-GB") ?? "–"}
         />
       </dl>
 
-      {org.stripe_customer_id ? (
+      {free ? (
+        <p className="mt-6 text-cloud">
+          This company has free access, set up by AIERT. There is nothing to pay and nothing to set up here. To change the number of
+          locations, or if you have any questions, email <a href="mailto:enquiries@aiert.co.uk" className="text-gold underline">enquiries@aiert.co.uk</a>.
+        </p>
+      ) : org.stripe_customer_id ? (
         <BillingPortalButton />
       ) : (
         <div className="mt-6">
