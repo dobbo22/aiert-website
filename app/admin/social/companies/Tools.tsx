@@ -18,28 +18,40 @@ async function call(body: Record<string, unknown>) {
 
 export function CompanyTools({ orgId, open, locations }: { orgId: string; open: boolean; locations: number }) {
   const router = useRouter();
-  const [busy, setBusy] = useState(false);
-  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState<string | null>(null);
+  const [note, setNote] = useState<{ text: string; ok: boolean; link?: string } | null>(null);
   const [n, setN] = useState(String(locations));
   const [mgr, setMgr] = useState("");
-  async function run(body: Record<string, unknown>, then?: (url?: string) => void) {
-    setBusy(true); setNote("");
+
+  // Every button says what it is doing, and afterwards says what happened (or why it did not).
+  async function run(label: string, body: Record<string, unknown>, done: (r: { url?: string }) => string, after?: () => void) {
+    setBusy(label); setNote({ text: `${label}…`, ok: true });
     const r = await call({ ...body, orgId });
-    setBusy(false);
-    if (!r.ok) { setNote(r.data.error ?? "Failed"); return; }
-    then?.(r.data.url); router.refresh();
+    setBusy(null);
+    if (!r.ok) { setNote({ text: r.data.error ?? "That didn't work. Try again.", ok: false }); return; }
+    if (r.data.url) window.open(r.data.url, "_blank", "noopener");
+    setNote({ text: done(r.data), ok: true, link: r.data.url });
+    after?.();
+    router.refresh();
   }
+
   if (!open) return <span style={{ opacity: .6 }}>The company must allow support access first</span>;
+  const b = (label: string) => (busy === label ? "Working…" : label);
   return (
-    <span>
-      <button type="button" style={btn} disabled={busy} onClick={() => run({ action: "open" }, (url) => url && window.open(url, "_blank", "noopener"))}>Open admin (support)</button>
+    <div>
+      <button type="button" style={btn} disabled={!!busy} onClick={() => run("Open admin (support)", { action: "open" }, () => "Sign-in link ready (it works once and lasts 15 minutes).")}>{b("Open admin (support)")}</button>
       <input style={{ ...input, width: 54 }} value={n} onChange={(e) => setN(e.target.value)} inputMode="numeric" aria-label="Locations" />
-      <button type="button" style={btn} disabled={busy} onClick={() => confirm(`Make this company free for ${n} locations?`) && run({ action: "free", locations: Number(n) })}>Make free</button>
+      <button type="button" style={btn} disabled={!!busy} onClick={() => confirm(`Make this company free for ${n} locations?`) && run("Make free", { action: "free", locations: Number(n) }, () => `Done: free for ${n} locations.`)}>{b("Make free")}</button>
       <br />
-      <input style={{ ...input, width: 220, marginTop: 6 }} placeholder="Manager's email (all shops)" value={mgr} onChange={(e) => setMgr(e.target.value)} />
-      <button type="button" style={btn} disabled={busy || !mgr.includes("@")} onClick={() => run({ action: "manager", email: mgr }, () => { setNote(`Manager added: ${mgr}. They have been emailed.`); setMgr(""); })}>Add manager</button>
-      {note && <span style={{ color: note.startsWith("Manager added") ? "inherit" : "#fca5a5" }}>{note}</span>}
-    </span>
+      <input style={{ ...input, width: 230, marginTop: 6 }} placeholder="Manager's email (all shops)" value={mgr} onChange={(e) => setMgr(e.target.value)} />
+      <button type="button" style={btn} disabled={!!busy || !mgr.includes("@")} onClick={() => run("Add manager", { action: "manager", email: mgr }, () => `Added ${mgr} as a manager of every shop. They have been emailed what they can do and a sign-in link.`, () => setMgr(""))}>{b("Add manager")}</button>
+      {note && (
+        <p style={{ marginTop: 6, padding: "6px 10px", borderRadius: 8, fontSize: 14, background: note.ok ? "rgba(34,197,94,.18)" : "rgba(248,113,113,.2)", border: `1px solid ${note.ok ? "rgba(34,197,94,.5)" : "rgba(248,113,113,.6)"}` }} role="status">
+          {note.ok && !busy ? "✓ " : note.ok ? "" : "✗ "}{note.text}
+          {note.link && <> <a href={note.link} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "underline", fontWeight: 700 }}>Open the company admin</a></>}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -62,7 +74,9 @@ export function CreateCompany() {
       <input style={{ ...input, width: 60 }} value={locations} onChange={(e) => setLocations(e.target.value)} inputMode="numeric" aria-label="Locations" />
       <label style={{ marginRight: 8 }}><input type="checkbox" checked={sendEmail} onChange={(e) => setSendEmail(e.target.checked)} /> Email them the sign-in link and welcome</label>
       <button type="button" style={btn} disabled={busy || !name.trim() || !email.trim()} onClick={create}>{busy ? "…" : "Create"}</button>
-      {note && <p style={{ marginTop: 6, fontSize: 14 }}>{note}</p>}
+      {note && (
+        <p style={{ marginTop: 8, padding: "6px 10px", borderRadius: 8, fontSize: 14, background: /^Created/.test(note) || /^Creating/.test(note) ? "rgba(34,197,94,.18)" : "rgba(248,113,113,.2)" }} role="status">{note}</p>
+      )}
     </div>
   );
 }
