@@ -3,16 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-// The same pill the tabs at the top of the page use.
-function Pill({ children, disabled, onClick }: { children: React.ReactNode; disabled?: boolean; onClick: () => void }) {
-  return (
-    <button type="button" disabled={disabled} onClick={onClick} className="social-tab social-tab-active"
-      style={{ cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.5 : 1, marginRight: 8, marginBottom: 6 }}>
-      {children}
-    </button>
-  );
-}
-const input = { background: "#fff", color: "#111", border: "1px solid #9ca3af", borderRadius: 6, padding: "6px 10px", marginRight: 8, marginBottom: 8 } as const;
+const input = { background: "#fff", color: "#111", border: "1px solid #9ca3af", borderRadius: 8, padding: "8px 12px", marginRight: 8, marginBottom: 8 } as const;
 
 async function call(body: Record<string, unknown>) {
   try {
@@ -22,6 +13,18 @@ async function call(body: Record<string, unknown>) {
   } catch {
     return { ok: false, data: { error: "Couldn't reach the server. Check your connection and retry." } as { error?: string; url?: string; orgId?: string } };
   }
+}
+
+// The gold button used across the admin.
+const GOLD = "linear-gradient(90deg, #f5c451, #eaa43a)";
+function Pill({ children, disabled, onClick, small }: { children: React.ReactNode; disabled?: boolean; onClick: () => void; small?: boolean }) {
+  return (
+    <button type="button" disabled={disabled} onClick={onClick}
+      style={{ background: GOLD, color: "#111", fontWeight: 700, border: "none", borderRadius: 10, cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.45 : 1,
+        padding: small ? "3px 12px" : "9px 18px", fontSize: small ? 12 : 14, whiteSpace: "nowrap" }}>
+      {children}
+    </button>
+  );
 }
 
 export function CompanyTools({ orgId, open, locations }: { orgId: string; open: boolean; locations: number }) {
@@ -45,14 +48,24 @@ export function CompanyTools({ orgId, open, locations }: { orgId: string; open: 
 
   if (!open) return <span style={{ opacity: .6 }}>The company must allow support access first</span>;
   const b = (label: string) => (busy === label ? "Working…" : label);
+  const row = { display: "flex", alignItems: "center", gap: 10, marginBottom: 10, flexWrap: "nowrap" } as const;
+  const label = { fontSize: 13, opacity: 0.75, minWidth: 96 } as const;
   return (
-    <div>
-      <Pill disabled={!!busy} onClick={() => run("Open admin (support)", { action: "open" }, () => "Sign-in link ready (it works once and lasts 15 minutes).")}>{b("Open admin (support)")}</Pill>
-      <input style={{ ...input, width: 54 }} value={n} onChange={(e) => setN(e.target.value)} inputMode="numeric" aria-label="Locations" />
-      <Pill disabled={!!busy} onClick={() => confirm(`Make this company free for ${n} locations?`) && run("Make free", { action: "free", locations: Number(n) }, () => `Done: free for ${n} locations.`)}>{b("Make free")}</Pill>
-      <br />
-      <input style={{ ...input, width: 230, marginTop: 6 }} placeholder="Manager's email (all shops)" value={mgr} onChange={(e) => setMgr(e.target.value)} />
-      <Pill disabled={!!busy || !mgr.includes("@")} onClick={() => run("Add manager", { action: "manager", email: mgr }, () => `Added ${mgr} as a manager of every shop. They have been emailed what they can do and a sign-in link.`, () => setMgr(""))}>{b("Add manager")}</Pill>
+    <div style={{ minWidth: 420 }}>
+      <div style={row}>
+        <span style={label}>Company admin</span>
+        <Pill disabled={!!busy} onClick={() => run("Open admin (support)", { action: "open" }, () => "Sign-in link ready (it works once and lasts 15 minutes).")}>{b("Open admin (support)")}</Pill>
+      </div>
+      <div style={row}>
+        <span style={label}>Locations</span>
+        <input style={{ ...input, width: 64, marginRight: 0, marginBottom: 0 }} value={n} onChange={(e) => setN(e.target.value)} inputMode="numeric" aria-label="Number of locations" />
+        <Pill disabled={!!busy} onClick={() => confirm(`Set this company to ${n} locations (free)? It is ${locations} now.`) && run("Set locations", { action: "free", locations: Number(n) }, () => `Done: free for ${n} locations.`)}>{b("Set locations")}</Pill>
+      </div>
+      <div style={row}>
+        <span style={label}>Add manager</span>
+        <input style={{ ...input, width: 190, marginRight: 0, marginBottom: 0 }} placeholder="Manager's email (all shops)" value={mgr} onChange={(e) => setMgr(e.target.value)} />
+        <Pill disabled={!!busy || !mgr.includes("@")} onClick={() => run("Add manager", { action: "manager", email: mgr }, () => `Added ${mgr} as a manager of every shop. They have been emailed what they can do and their shop card links.`, () => setMgr(""))}>{b("Add manager")}</Pill>
+      </div>
       {note && (
         <p style={{ marginTop: 6, padding: "6px 10px", borderRadius: 8, fontSize: 14, background: note.ok ? "rgba(34,197,94,.18)" : "rgba(248,113,113,.2)", border: `1px solid ${note.ok ? "rgba(34,197,94,.5)" : "rgba(248,113,113,.6)"}` }} role="status">
           {note.ok && !busy ? "✓ " : note.ok ? "" : "✗ "}{note.text}
@@ -104,7 +117,7 @@ export function RemoveManager({ orgId, email }: { orgId: string; email: string }
   }
   return (
     <>
-      <button type="button" disabled={busy} onClick={remove} className="social-tab social-tab-active" style={{ cursor: "pointer", opacity: busy ? 0.5 : 1, marginLeft: 8, padding: "1px 10px", fontSize: 12 }}>{busy ? "Removing…" : "Remove"}</button>
+      <span style={{ marginLeft: 8 }}><Pill small disabled={busy} onClick={remove}>{busy ? "Removing…" : "Remove"}</Pill></span>
       {error && <span style={{ color: "#fca5a5", marginLeft: 8 }}>{error}</span>}
     </>
   );

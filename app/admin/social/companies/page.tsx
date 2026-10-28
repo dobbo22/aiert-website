@@ -24,25 +24,25 @@ export default async function CompaniesPage() {
       <CreateCompany />
       <h2 style={{ fontWeight: 700, margin: "1.5rem 0 .5rem" }}>Companies ({companies.length})</h2>
       {listError && <p style={{ color: "#fca5a5", fontSize: 14 }}>Couldn&apos;t load the companies: {listError}</p>}
-      <table style={{ width: "100%", fontSize: 14 }}>
-        <thead><tr style={{ textAlign: "left" }}><th>Company</th><th>Plan</th><th>Cards</th><th>People</th><th>Support access</th><th></th></tr></thead>
+      <table style={{ width: "100%", fontSize: 14, borderCollapse: "collapse" }}>
+        <thead><tr style={{ textAlign: "left", opacity: 0.8 }}>{["Company", "Plan", "Cards", "People", "Support access", "Actions"].map((h) => <th key={h} style={{ padding: "8px 14px 8px 0" }}>{h}</th>)}</tr></thead>
         <tbody>
           {companies.map((c) => {
             const open = !!c.support_access_until && new Date(c.support_access_until).getTime() > Date.now();
             return (
-              <tr key={c.id} style={{ borderTop: "1px solid rgba(255,255,255,.12)", verticalAlign: "top" }}>
-                <td style={{ padding: "6px 8px 6px 0" }}>{c.name || c.id}<br /><span style={{ opacity: .7 }}>{fmt(c.created_at)}</span></td>
-                <td>{c.seat_band === "trial" ? "Free trial" : c.seat_band === "locations" ? `${c.locations} locations` : c.seat_band || "-"}<br /><span style={{ opacity: .7 }}>{c.billing_status}</span></td>
-                <td>{c.cards}/{c.seat_limit}</td>
-                <td style={{ paddingRight: 8 }}>
+              <tr key={c.id} style={{ borderTop: "1px solid rgba(255,255,255,.15)" }}>
+                <td style={{ padding: "10px 14px 10px 0", verticalAlign: "top" }}>{c.name || c.id}<br /><span style={{ opacity: .7 }}>{fmt(c.created_at)}</span></td>
+                <td style={{ padding: "10px 14px 10px 0", verticalAlign: "top" }}>{c.seat_band === "trial" ? "Free trial" : c.seat_band === "locations" ? `${c.locations} locations` : c.seat_band || "-"}<br /><span style={{ opacity: .7 }}>{c.billing_status}</span></td>
+                <td style={{ padding: "10px 14px 10px 0", verticalAlign: "top" }}>{c.cards}/{c.seat_limit}</td>
+                <td style={{ padding: "10px 14px 10px 0", verticalAlign: "top", lineHeight: 1.9 }}>
                   {(c.people ?? []).map((p) => (
                     <div key={p.email}>{p.email} <span style={{ opacity: .7 }}>({p.role === "manager" ? "manager" : "admin"}{p.confirmed ? "" : ", not signed in yet"})</span>
                       {p.role === "manager" && open ? <RemoveManager orgId={c.id} email={p.email} /> : null}
                     </div>
                   ))}
                 </td>
-                <td>{open ? `Open until ${fmt(c.support_access_until!)}` : "Not allowed"}</td>
-                <td><CompanyTools orgId={c.id} open={open} locations={c.locations || 3} /></td>
+                <td style={{ padding: "10px 14px 10px 0", verticalAlign: "top" }}>{open ? `Open until ${fmt(c.support_access_until!)}` : "Not allowed"}</td>
+                <td style={{ padding: "10px 14px 10px 0", verticalAlign: "top" }}><CompanyTools orgId={c.id} open={open} locations={c.locations || 3} /></td>
               </tr>
             );
           })}
