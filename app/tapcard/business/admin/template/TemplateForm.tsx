@@ -208,7 +208,24 @@ export default function TemplateForm({ org, shops, allowed }: { org: BizOrg; sho
 
       <ShopPhones ref={shopsRef} initial={shops} allowed={allowed} website={website} logoUrl={logoURL} socials={{ linkedIn: linkedInURL, twitter: twitterURL, instagram: instagramURL, facebook: facebookURL, tiktok: tiktokURL }} />
 
-      <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
+      <details className="group rounded-2xl bg-charcoal ring-1 ring-white/10">
+        <summary className="flex cursor-pointer list-none items-center gap-4 p-5">
+          {logoURL ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoURL} alt="" className="h-10 w-16 rounded-lg bg-white object-contain p-1" />
+          ) : (
+            <span className="flex h-10 w-16 items-center justify-center rounded-lg bg-slate/40 text-xs text-mist">No logo</span>
+          )}
+          <span className="min-w-0 flex-1">
+            <span className="block truncate font-bold text-cloud">{name || "Company details"}</span>
+            <span className="block truncate text-sm text-mist">{[website.replace(/^https?:\/\//, ""), brandColor].filter(Boolean).join(" · ") || "Website, colour, logo and social links"}</span>
+          </span>
+          {brandColor && /^#[0-9a-f]{6}$/i.test(brandColor) && <span className="h-6 w-6 rounded-full ring-1 ring-white/30" style={{ background: brandColor }} />}
+          <span className="text-sm font-semibold text-gold group-open:hidden">Edit</span>
+          <span className="hidden text-sm font-semibold text-gold group-open:inline">Close</span>
+        </summary>
+        <div className="space-y-6 px-5 pb-6">
+      <div>
         <h2 className="text-lg font-bold text-cloud">Company details</h2>
         <p className="mt-1 text-sm text-mist">
           These fill in every employee&apos;s card automatically, and are locked by default below.
@@ -220,7 +237,7 @@ export default function TemplateForm({ org, shops, allowed }: { org: BizOrg; sho
         </div>
       </div>
 
-      <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
+      <div className="border-t border-slate/50 pt-6">
         <h2 className="text-lg font-bold text-cloud">Company logo</h2>
         <p className="mt-1 text-sm text-mist">
           Shown on every employee&apos;s card and Wallet pass. The logo from your website&apos;s header usually works
@@ -274,7 +291,7 @@ export default function TemplateForm({ org, shops, allowed }: { org: BizOrg; sho
         {logoError && <p className="mt-3 text-sm text-gold">{logoError}</p>}
       </div>
 
-      <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
+      <div className="border-t border-slate/50 pt-6">
         <h2 className="text-lg font-bold text-cloud">Company social links</h2>
         <p className="mt-1 text-sm text-mist">Shown on every employee&apos;s card instead of a personal profile.</p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -287,7 +304,7 @@ export default function TemplateForm({ org, shops, allowed }: { org: BizOrg; sho
         </div>
       </div>
 
-      <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
+      <div className="border-t border-slate/50 pt-6">
         <h2 className="text-lg font-bold text-cloud">What employees can edit</h2>
         <p className="mt-1 text-sm text-mist">
           Ticked fields are locked to the company&apos;s value above — employees can&apos;t change them. Name is always
@@ -303,7 +320,7 @@ export default function TemplateForm({ org, shops, allowed }: { org: BizOrg; sho
         </div>
       </div>
 
-      <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
+      <div className="border-t border-slate/50 pt-6">
         <h2 className="text-lg font-bold text-cloud">Personal cards</h2>
         <label className="mt-3 flex items-center gap-2 text-cloud">
           <input
@@ -314,6 +331,9 @@ export default function TemplateForm({ org, shops, allowed }: { org: BizOrg; sho
           Let employees add a second, personal card alongside their company one
         </label>
       </div>
+
+        </div>
+      </details>
 
       <div className="flex items-center gap-4">
         <button type="submit" disabled={saving} className="btn-gold rounded-xl px-6 py-3 font-semibold">
