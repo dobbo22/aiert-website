@@ -5,6 +5,8 @@ import { canEdit, hashSecret, readEditToken } from "@/lib/tapcardAuth";
 import { isPersonalCard } from "@/lib/tapcardPassStyle";
 import { attachCardToOrg, cardOrgId, countOrgCards, getOrg, orgCanProvision, spendInvite, wasRemovedByCompany } from "@/lib/tapcardBiz";
 import { verifyInvite } from "@/lib/tapcardBizInvite";
+import { getLocation, markLocationClaimed } from "@/lib/tapcardBizLocations";
+import sql from "@/lib/db";
 
 // The app calls this once, right after the employee taps their invite link
 // (tapcard.aiert.co.uk/business/claim#<token> — the token arrives in the
@@ -57,18 +59,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "this invite link was already used" }, { status: 409 });
   }
 
+  // A location the admin prepared on the web: the card is built already, with its address, phone and links, as a shop / location.
+  const loc = invite.l ? await getLocation(invite.l) : null;
+  const location = loc && loc.org_id === org.id && !loc.claimed_card_id ? loc : null;
+
   const editToken = crypto.randomBytes(32).toString("base64url").replace(/=/g, "");
   const cardId = await createCard(
     {
       label: org.name || "Work",
       grouping_id: "",
-      name: invite.n,
-      title: invite.t,
+      name: location ? location.name : invite.n,
+      title: location ? "" : invite.t,
       company: org.name,
-      phone: "",
-      email: invite.e,
+      phone: location?.phone ?? "",
+      email: location ? location.email : invite.e,
       website: org.website,
-      address: "",
+      address: location?.address ?? "",
       linkedin_url: org.linkedin_url,
       twitter_url: org.twitter_url,
       instagram_url: org.instagram_url,
@@ -80,11 +86,17 @@ export async function POST(req: NextRequest) {
       // its own place on the card (orgLogoUrlForCard).
       photo_url: null,
       pass_style: "brand",
+      ...(location ? { links: location.links, card_kind: "business" } : {}),
     },
     hashSecret(editToken),
     hashSecret(`biz-claim:${org.id}`)
   );
   await attachCardToOrg(cardId, org.id, org.locked_fields);
+  if (location) {
+    await markLocationClaimed(location.id, cardId);
+    // The shop's own phone may post offers and news for the shop (the admin can change this on the Employees tab).
+    await sql`UPDATE tapcard_cards SET org_posts_for = ${[cardId]} WHERE id = ${cardId}`;
+  }
 
   const card = await getCard(cardId);
   if (!card) return NextResponse.json({ error: "something went wrong creating your card" }, { status: 500 });

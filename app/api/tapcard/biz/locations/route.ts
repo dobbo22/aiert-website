@@ -1,0 +1,68 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getOrg, orgCanProvision } from "@/lib/tapcardBiz";
+import { requireBizSession } from "@/lib/tapcardBizSession";
+import { createLocation, deleteLocation, listLocations } from "@/lib/tapcardBizLocations";
+import { findSiteLinks, tidyAddress } from "@/lib/siteLinks";
+import { inviteLink, signInvite } from "@/lib/tapcardBizInvite";
+import { getLocation } from "@/lib/tapcardBizLocations";
+import { rateLimited } from "@/lib/rateLimit";
+import type { CardLink } from "@/lib/tapcardLinks";
+
+// Locations prepared on the web (see lib/tapcardBizLocations.ts). GET lists them; POST adds one from a business the admin picked
+// (the card is built as the apps do: address, phone, hours, links from its website), or, with `invite`, signs a claim link for a
+// manager; DELETE removes one that has not been claimed.
+export async function GET() {
+  const session = await requireBizSession();
+  if (!session) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  const locations = await listLocations(session.orgId);
+  return NextResponse.json({ locations: locations.map((l) => ({ id: l.id, name: l.name, address: l.address, phone: l.phone, claimed: !!l.claimed_card_id })) });
+}
+
+export async function POST(req: NextRequest) {
+  const session = await requireBizSession();
+  if (!session) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  const org = await getOrg(session.orgId);
+  if (!org) return NextResponse.json({ error: "not found" }, { status: 404 });
+  if (!orgCanProvision(org)) return NextResponse.json({ error: "Billing isn't active, so locations can't be added right now." }, { status: 402 });
+  if (rateLimited(req, "biz-locations", 30)) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  const body = (await req.json().catch(() => null)) as {
+    invite?: { locationId?: string; name?: string; email?: string };
+    hit?: { name?: string; address?: string; phone?: string; website?: string; hours?: string };
+  } | null;
+  if (!body) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+
+  if (body.invite) {
+    const loc = body.invite.locationId ? await getLocation(body.invite.locationId) : null;
+    if (!loc || loc.org_id !== org.id) return NextResponse.json({ error: "Location not found" }, { status: 404 });
+    if (loc.claimed_card_id) return NextResponse.json({ error: "This location already has its card." }, { status: 409 });
+    const person = { name: String(body.invite.name ?? "").trim().slice(0, 200), email: String(body.invite.email ?? "").trim().slice(0, 200), title: "" };
+    return NextResponse.json({ link: inviteLink(signInvite(org, person, Date.now(), loc.id)) });
+  }
+
+  const hit = body.hit;
+  const name = String(hit?.name ?? "").trim();
+  if (!hit || !name) return NextResponse.json({ error: "Pick a business first." }, { status: 400 });
+  // One location per shop in the plan (a trial is one card).
+  const have = (await listLocations(org.id)).length;
+  const allowed = org.seat_band === "locations" ? Math.max(org.locations, 1) : 1;
+  if (have >= allowed) return NextResponse.json({ error: `Your plan has ${allowed} location${allowed === 1 ? "" : "s"}, and ${have === 1 ? "it is" : "they are"} already set up.` }, { status: 409 });
+
+  const website = String(hit.website ?? "").trim().slice(0, 200);
+  const address = tidyAddress(String(hit.address ?? "")).slice(0, 300);
+  const site = website ? await findSiteLinks(website, address, name).catch(() => null) : null;
+  const links: CardLink[] = [...(site?.links ?? [])];
+  // Google's opening hours when the site has none of its own.
+  if (hit.hours && !links.some((l) => l.kind === "hours")) links.push({ kind: "hours", label: "Opening hours", value: String(hit.hours).slice(0, 300) });
+  const loc = await createLocation(org.id, {
+    name, address: address || site?.details.address || "", phone: String(hit.phone ?? site?.details.phone ?? "").slice(0, 40),
+    email: site?.details.email ?? "", website: org.website || website, links,
+  });
+  return NextResponse.json({ location: { id: loc.id, name: loc.name, address: loc.address, phone: loc.phone, claimed: false } });
+}
+
+export async function DELETE(req: NextRequest) {
+  const session = await requireBizSession();
+  if (!session) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  const ok = await deleteLocation(session.orgId, req.nextUrl.searchParams.get("id") ?? "");
+  return NextResponse.json({ ok }, { status: ok ? 200 : 404 });
+}

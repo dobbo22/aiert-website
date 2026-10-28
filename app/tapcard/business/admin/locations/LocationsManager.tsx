@@ -1,0 +1,132 @@
+"use client";
+
+import { useState } from "react";
+
+interface Loc { id: string; name: string; address: string; phone: string; claimed: boolean }
+interface Hit { id: string; name: string; address: string; website: string; phone: string; type: string; hours: string }
+
+/// Build each shop's card on the web, as the apps do: find the business, tap it, and its address, phone, opening hours and booking,
+/// menu and review links are filled in from Google and its website. Then create a link for the manager, who taps it in the TapCard app
+/// and gets the finished card.
+export default function LocationsManager({ initial, allowed, orgName }: { initial: Loc[]; allowed: number; orgName: string }) {
+  const [locations, setLocations] = useState<Loc[]>(initial);
+  const [query, setQuery] = useState("");
+  const [hits, setHits] = useState<Hit[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  const [people, setPeople] = useState<Record<string, { name: string; email: string }>>({});
+  const [links, setLinks] = useState<Record<string, string>>({});
+
+  async function search() {
+    if (query.trim().length < 3) return;
+    setBusy(true); setNote(null); setHits([]);
+    const res = await fetch(`/api/tapcard/business-search?q=${encodeURIComponent(query.trim())}`).catch(() => null);
+    const data = (await res?.json().catch(() => null)) as { hits?: Hit[] } | null;
+    setBusy(false);
+    const list = data?.hits ?? [];
+    setHits(list);
+    if (!list.length) setNote("No business found. Try the name with the town.");
+  }
+
+  async function add(h: Hit) {
+    setBusy(true); setNote("Reading the details from Google and the website…"); setHits([]);
+    const res = await fetch("/api/tapcard/biz/locations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ hit: h }) }).catch(() => null);
+    const data = (await res?.json().catch(() => null)) as { error?: string; location?: Loc } | null;
+    setBusy(false);
+    if (res?.ok && data?.location) { setLocations((l) => [...l, data.location!]); setNote(`Added ${data.location.name}. Now create a link for its manager.`); setQuery(""); }
+    else setNote(data?.error ?? "Couldn't add that location. Try again.");
+  }
+
+  async function invite(l: Loc) {
+    const p = people[l.id] ?? { name: "", email: "" };
+    setBusy(true); setNote(null);
+    const res = await fetch("/api/tapcard/biz/locations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ invite: { locationId: l.id, name: p.name, email: p.email } }) }).catch(() => null);
+    const data = (await res?.json().catch(() => null)) as { error?: string; link?: string } | null;
+    setBusy(false);
+    if (res?.ok && data?.link) setLinks((m) => ({ ...m, [l.id]: data.link! }));
+    else setNote(data?.error ?? "Couldn't create the link. Try again.");
+  }
+
+  async function remove(l: Loc) {
+    if (!window.confirm(`Remove ${l.name}? You can add it again.`)) return;
+    const res = await fetch(`/api/tapcard/biz/locations?id=${encodeURIComponent(l.id)}`, { method: "DELETE" }).catch(() => null);
+    if (res?.ok) setLocations((x) => x.filter((y) => y.id !== l.id));
+  }
+
+  function mailto(l: Loc, link: string) {
+    const to = people[l.id]?.email ?? "";
+    const first = (people[l.id]?.name ?? "").trim().split(/\s+/)[0];
+    const subject = `Your TapCard for ${l.name}`;
+    const body = `${first ? `Hi ${first},` : "Hello,"}\n\nWe use TapCard for ${orgName}. Your card for ${l.name} is ready, with the address, phone number, opening hours and links already filled in.\n\n1. Install the free TapCard app (search "TapCard" in the App Store or Google Play).\n2. Open this link on your phone: ${link}\n\nYour card appears in the app and you can share it straight away. The link works once and lasts 30 days.\n\nThanks`;
+    return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  }
+
+  const full = locations.length >= allowed;
+  return (
+    <div className="space-y-8">
+      <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
+        <h2 className="text-lg font-bold text-cloud">Add a location</h2>
+        <p className="mt-1 text-sm text-mist">
+          Find the shop the way the TapCard app does: type its name and town, tap it, and its address, phone number, opening hours and
+          booking, menu and review links are filled in from Google and its website. Your plan has {allowed} location{allowed === 1 ? "" : "s"}
+          ({locations.length} added).
+        </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <input value={query} onChange={(e) => setQuery(e.target.value)} disabled={full}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void search(); } }}
+            placeholder={`${orgName || "Your business"} and the shop's town`}
+            className="min-w-0 flex-1 rounded-xl bg-slate/40 px-3 py-2 text-cloud ring-1 ring-slate disabled:opacity-50" />
+          <button type="button" onClick={() => void search()} disabled={busy || full || query.trim().length < 3}
+            className="btn-gold rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-60">{busy ? "Working…" : "Find shop"}</button>
+        </div>
+        {hits.length > 0 && (
+          <ul className="mt-3 space-y-2">
+            {hits.map((h) => (
+              <li key={h.id}>
+                <button type="button" onClick={() => void add(h)} className="w-full rounded-xl bg-slate/40 px-4 py-3 text-left text-cloud ring-1 ring-slate hover:ring-gold">
+                  <span className="font-semibold">{h.name}</span>
+                  <span className="block text-sm text-mist">{[h.type, h.address].filter(Boolean).join(" · ")}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {full && <p className="mt-3 text-sm text-gold">All {allowed} locations are set up. To add more, change the number of locations on the Billing tab.</p>}
+        {note && <p className="mt-3 text-sm text-gold">{note}</p>}
+      </div>
+
+      {locations.map((l) => (
+        <div key={l.id} className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="font-bold text-cloud">{l.name}</h3>
+              <p className="text-sm text-mist">{[l.address, l.phone].filter(Boolean).join(" · ")}</p>
+            </div>
+            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${l.claimed ? "bg-teal/20 text-teal" : "bg-gold/20 text-gold"}`}>{l.claimed ? "Card made" : "Waiting for its manager"}</span>
+          </div>
+          {!l.claimed && (
+            <div className="mt-4">
+              <div className="flex flex-wrap gap-3">
+                <input placeholder="Manager's name" value={people[l.id]?.name ?? ""} onChange={(e) => setPeople((m) => ({ ...m, [l.id]: { name: e.target.value, email: m[l.id]?.email ?? "" } }))}
+                  className="min-w-0 flex-1 rounded-xl bg-slate/40 px-3 py-2 text-cloud ring-1 ring-slate" />
+                <input placeholder="Manager's email" value={people[l.id]?.email ?? ""} onChange={(e) => setPeople((m) => ({ ...m, [l.id]: { name: m[l.id]?.name ?? "", email: e.target.value } }))}
+                  className="min-w-0 flex-1 rounded-xl bg-slate/40 px-3 py-2 text-cloud ring-1 ring-slate" />
+                <button type="button" onClick={() => void invite(l)} disabled={busy} className="btn-gold rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-60">Create link</button>
+              </div>
+              {links[l.id] && (
+                <div className="mt-3 space-y-2 text-sm text-cloud">
+                  <p className="break-all rounded-xl bg-slate/40 p-3">{links[l.id]}</p>
+                  <div className="flex gap-3">
+                    <button type="button" onClick={() => navigator.clipboard?.writeText(links[l.id])} className="rounded-xl px-4 py-2 font-semibold text-cloud ring-1 ring-slate">Copy link</button>
+                    <a href={mailto(l, links[l.id])} className="rounded-xl px-4 py-2 font-semibold text-cloud ring-1 ring-slate">Email it</a>
+                  </div>
+                </div>
+              )}
+              <button type="button" onClick={() => void remove(l)} className="mt-3 text-sm text-mist underline">Remove this location</button>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
