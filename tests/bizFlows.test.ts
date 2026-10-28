@@ -386,3 +386,30 @@ test("the trial welcome email carries the admin's own card link, and an admin ca
   assert.equal((await loc.POST(req("/x", { body: { emailLinks: true } }))).status, 403, "support cannot trigger it");
   ctx.session = null;
 });
+
+test("a shop's phone and hours come from its own website first, then from the provider", async () => {
+  const { stubs } = await import("./helpers/pgdb");
+  const { createManagedCompany } = await import("../lib/tapcardBizSupport");
+  const { listLocations } = await import("../lib/tapcardBizLocations");
+  const { parseStoredLinks } = await import("../lib/tapcardLinks");
+  const loc = await import("../app/api/tapcard/biz/locations/route");
+  const org = await createManagedCompany({ name: "Site First Co", adminEmail: "a@sitefirst.example", locations: 3 });
+  ctx.session = { orgId: org.id, email: "a@sitefirst.example" };
+  const add = async (address: string, hit: Record<string, string>) => json(await loc.POST(req("/x", { body: { hit: { name: "Site First Co", address, website: "https://sitefirst.example", ...hit } } })));
+
+  // the site gives its own phone and hours: they win over the provider's
+  stubs.findSiteLinks = async () => ({ links: [{ kind: "hours", label: "Opening hours", value: "Mon–Fri: 9.30am–5pm" }], details: { phone: "01371 111111", email: "shop@sitefirst.example" }, branches: [] });
+  await add("1 High St, Dunmow, CM6 1AA", { phone: "+44 1371 999999", hours: "Mon-Sat: 09:00 - 17:00" });
+  // the site has no hours and no phone for this shop: the provider's are used
+  stubs.findSiteLinks = async () => ({ links: [], details: {}, branches: [] });
+  await add("2 Mill Ln, Thaxted, CM6 2AA", { phone: "+44 1371 888888", hours: "Mon-Sat: 09:00 - 17:00" });
+  stubs.findSiteLinks = undefined;
+
+  const [one, two] = await listLocations(org.id);
+  assert.equal(one.phone, "01371 111111", "the website's phone beats the provider's");
+  assert.deepEqual(parseStoredLinks(one.links).filter((l) => l.kind === "hours").map((l) => l.value), ["Mon–Fri: 9.30am–5pm"], "the website's hours, not the provider's");
+  assert.equal(one.email, "shop@sitefirst.example");
+  assert.equal(two.phone, "+44 1371 888888");
+  assert.deepEqual(parseStoredLinks(two.links).filter((l) => l.kind === "hours").map((l) => l.value), ["Mon-Sat: 09:00 - 17:00"], "the provider's hours when the site has none");
+  ctx.session = null;
+});

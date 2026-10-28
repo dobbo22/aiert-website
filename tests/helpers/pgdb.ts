@@ -4,6 +4,7 @@
 import Module from "node:module";
 import { PGlite } from "@electric-sql/pglite";
 
+export const stubs: { findSiteLinks?: (...a: unknown[]) => unknown } = {};
 export const ctx: { session: { orgId: string; email: string; support?: boolean } | null; admin: boolean; cookie: string | undefined; outbox: { to: string; subject: string; html: string; text: string }[] } = { session: null, admin: true, cookie: undefined, outbox: [] };
 const db = new PGlite();
 
@@ -35,6 +36,11 @@ export function installStubs(opts: { realSession?: boolean } = {}) {
     }
     if (request === "next/navigation") {
       return { useRouter: () => ({ refresh() {}, push() {}, replace() {}, back() {} }), usePathname: () => "/business/admin", useSearchParams: () => new URLSearchParams(), redirect() {}, notFound() {} };
+    }
+    // A test can stand in for reading a website (no network): see `stubs.findSiteLinks`.
+    if (request === "@/lib/siteLinks" || request.endsWith("/lib/siteLinks")) {
+      const real = realLoad.call(this, request, ...rest) as Record<string, unknown>;
+      return { ...real, findSiteLinks: (...a: unknown[]) => (stubs.findSiteLinks ? stubs.findSiteLinks(...a) : (real.findSiteLinks as (...b: unknown[]) => unknown)(...a)) };
     }
     if (request === "@vercel/blob") return { del: async () => {}, put: async () => ({ url: "https://blob.test/x" }) };
     if (request === "@/lib/adminRequest" || request.endsWith("/lib/adminRequest")) return { isAdminRequest: async () => ctx.admin };

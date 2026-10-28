@@ -99,10 +99,11 @@ export async function POST(req: NextRequest) {
   const address = tidyAddress(String(hit.address ?? "")).slice(0, 300);
   const site = website ? await findSiteLinks(website, address, name).catch(() => null) : null;
   const links: CardLink[] = [...(site?.links ?? [])];
-  // Google's opening hours when the site has none of its own.
+  // The shop's own website is the best source for its hours and phone: a provider's opening hours are used only when the site has none,
+  // and its phone only when the site gives none for this shop.
   if (hit.hours && !links.some((l) => l.kind === "hours")) links.push({ kind: "hours", label: "Opening hours", value: String(hit.hours).slice(0, 300) });
   const loc = await createLocation(org.id, {
-    name, address: address || site?.details.address || "", phone: String(hit.phone ?? site?.details.phone ?? "").slice(0, 40),
+    name, address: address || site?.details.address || "", phone: String(site?.details.phone || hit.phone || "").slice(0, 40),
     email: site?.details.email ?? "", website: org.website || website, links,
   });
   return NextResponse.json({ location: shape(loc) });
