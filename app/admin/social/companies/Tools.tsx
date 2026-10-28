@@ -33,6 +33,7 @@ export function CompanyTools({ orgId, open, locations }: { orgId: string; open: 
   const [note, setNote] = useState<{ text: string; ok: boolean; link?: string } | null>(null);
   const [n, setN] = useState(String(locations));
   const [mgr, setMgr] = useState("");
+  const [adm, setAdm] = useState(""), [admName, setAdmName] = useState(""), [owner, setOwner] = useState(true), [welcome, setWelcome] = useState(true);
 
   // Every button says what it is doing, and afterwards says what happened (or why it did not).
   async function run(label: string, body: Record<string, unknown>, done: (r: { url?: string }) => string, after?: () => void) {
@@ -60,6 +61,14 @@ export function CompanyTools({ orgId, open, locations }: { orgId: string; open: 
         <span style={label}>Locations</span>
         <input style={{ ...input, width: 64, marginRight: 0, marginBottom: 0 }} value={n} onChange={(e) => setN(e.target.value)} inputMode="numeric" aria-label="Number of locations" />
         <Pill disabled={!!busy} onClick={() => confirm(`Set this company to ${n} locations (free)? It is ${locations} now.`) && run("Set locations", { action: "free", locations: Number(n) }, () => `Done: free for ${n} locations.`)}>{b("Set locations")}</Pill>
+      </div>
+      <div style={{ ...row, flexWrap: "wrap" }}>
+        <span style={label}>Add admin</span>
+        <input style={{ ...input, width: 130, marginRight: 0, marginBottom: 0 }} placeholder="Their name" value={admName} onChange={(e) => setAdmName(e.target.value)} />
+        <input style={{ ...input, width: 190, marginRight: 0, marginBottom: 0 }} placeholder="Admin's email" value={adm} onChange={(e) => setAdm(e.target.value)} />
+        <label style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 4 }}><input type="checkbox" checked={owner} onChange={(e) => setOwner(e.target.checked)} /> Make owner</label>
+        <label style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 4 }}><input type="checkbox" checked={welcome} onChange={(e) => setWelcome(e.target.checked)} /> Send full welcome</label>
+        <Pill disabled={!!busy || !adm.includes("@")} onClick={() => run("Add admin", { action: "addAdmin", email: adm, personName: admName, makeOwner: owner, sendEmail: welcome }, () => `Added ${adm}${owner ? " as the owner" : " as an admin"}. They have been emailed a sign-in link${welcome ? " and the welcome" : ""}.`, () => { setAdm(""); setAdmName(""); })}>{b("Add admin")}</Pill>
       </div>
       <div style={row}>
         <span style={label}>Add manager</span>

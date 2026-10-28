@@ -413,3 +413,32 @@ test("a shop's phone and hours come from its own website first, then from the pr
   assert.deepEqual(parseStoredLinks(two.links).filter((l) => l.kind === "hours").map((l) => l.value), ["Mon-Sat: 09:00 - 17:00"], "the provider's hours when the site has none");
   ctx.session = null;
 });
+
+test("AIERT can add a company admin and make them the owner", async () => {
+  const { createManagedCompany } = await import("../lib/tapcardBizSupport");
+  const { listAdmins } = await import("../lib/tapcardBiz");
+  const { POST } = await import("../app/api/admin/tapcard/companies/route");
+  const org = await createManagedCompany({ name: "Owner Swap Co", adminEmail: "info@ownerswap.example", locations: 2 });
+  const add = (body: Record<string, unknown>) => POST(req("/x", { body: { action: "addAdmin", orgId: org.id, ...body } }));
+  ctx.admin = true;
+  ctx.outbox.length = 0;
+  assert.equal((await add({ email: "bad" })).status, 400);
+  assert.equal((await add({ email: "info@ownerswap.example" })).status, 409, "already there");
+  assert.equal((await add({ email: "stephanie@ownerswap.example", personName: "Stephanie Harris", makeOwner: true, sendEmail: true })).status, 200);
+  const people = await listAdmins(org.id);
+  assert.deepEqual(people.map((p) => p.email), ["stephanie@ownerswap.example", "info@ownerswap.example"], "she is first, so she is the owner");
+  assert.ok(ctx.outbox.some((m) => /admin of Owner Swap Co/.test(m.subject) && m.to === "stephanie@ownerswap.example"), "sign-in email");
+  const welcome = ctx.outbox.find((m) => /Welcome/.test(m.subject))!;
+  assert.match(welcome.html, /Hi Stephanie,/);
+  // an ordinary extra admin does not become the owner
+  assert.equal((await add({ email: "helper@ownerswap.example" })).status, 200);
+  assert.equal((await listAdmins(org.id))[0].email, "stephanie@ownerswap.example");
+  // the old address can now be removed by the new owner (it is no longer first)
+  const { removeAdminById } = await import("../lib/tapcardBiz");
+  const old = (await listAdmins(org.id)).find((p) => p.email === "info@ownerswap.example")!;
+  await removeAdminById(org.id, old.id);
+  assert.ok(!(await listAdmins(org.id)).some((p) => p.email === "info@ownerswap.example"));
+  ctx.admin = false;
+  assert.equal((await add({ email: "x@y.co" })).status, 401);
+  ctx.admin = true;
+});

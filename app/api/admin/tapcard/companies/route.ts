@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAdminRequest } from "@/lib/adminRequest";
 import { getOrg } from "@/lib/tapcardBiz";
 import { createLoginToken } from "@/lib/tapcardBizAuth";
-import { addAdmin, findAdminOrgsByEmail, listAdmins, MAX_MANAGERS, removeAdminById } from "@/lib/tapcardBiz";
+import { addAdmin, findAdminOrgsByEmail, listAdmins, MAX_ADMINS, MAX_MANAGERS, removeAdminById } from "@/lib/tapcardBiz";
 import { listLocations, shopCardLinks } from "@/lib/tapcardBizLocations";
-import { sendBizLoginEmail, sendBizManagerInviteEmail, sendBizWelcomeEmail } from "@/lib/tapcardBizEmail";
+import { sendBizAdminInviteEmail, sendBizLoginEmail, sendBizManagerInviteEmail, sendBizWelcomeEmail } from "@/lib/tapcardBizEmail";
 import { cardAllowance } from "@/lib/tapcardBizPricing";
 import { createManagedCompany, logSupport, supportAccessOpen, SUPPORT_ACTOR, SUPPORT_PREFIX } from "@/lib/tapcardBizSupport";
 import sql from "@/lib/db";
@@ -14,7 +14,7 @@ import sql from "@/lib/db";
 // up and the 30 days have not passed).
 export async function POST(req: NextRequest) {
   if (!(await isAdminRequest())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const body = (await req.json().catch(() => null)) as { action?: string; orgId?: string; name?: string; adminEmail?: string; locations?: number; sendEmail?: boolean; email?: string } | null;
+  const body = (await req.json().catch(() => null)) as { action?: string; orgId?: string; name?: string; adminEmail?: string; locations?: number; sendEmail?: boolean; email?: string; personName?: string; makeOwner?: boolean } | null;
   if (!body) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
 
   if (body.action === "create") {
@@ -57,6 +57,28 @@ export async function POST(req: NextRequest) {
     const token = await createLoginToken(email, org.id);
     await sendBizManagerInviteEmail(email, org.name, "AIERT support", `https://tapcard.aiert.co.uk/api/biz/login/${token}`, shops.map((l) => `${l.name}, ${l.address.split(",").slice(-3, -1).join(" ").trim()}`), await shopCardLinks(org, shops.map((l) => l.id), email).catch(() => [])).catch((e) => console.error("support manager email failed", e));
     return NextResponse.json({ ok: true, shops: shops.length });
+  }
+
+  // Adds a company admin (e.g. the owner's own address), optionally making them the owner. The owner is the first admin, so "make owner"
+  // dates them before everyone else; the previous owner then stays an ordinary admin who can be removed. They are emailed a sign-in link
+  // and, with `sendEmail`, the full welcome.
+  if (body.action === "addAdmin") {
+    const email = (body.email ?? "").trim().toLowerCase();
+    if (!/^\S+@\S+\.\S+$/.test(email)) return NextResponse.json({ error: "Enter the admin's full email address." }, { status: 400 });
+    const people = await listAdmins(org.id);
+    if (people.some((p) => p.email === email)) return NextResponse.json({ error: "That address is already on this company." }, { status: 409 });
+    if (people.filter((p) => p.role !== "manager").length >= MAX_ADMINS) return NextResponse.json({ error: "This company has all its admins." }, { status: 409 });
+    if ((await findAdminOrgsByEmail(email)).length > 0) return NextResponse.json({ error: "That address already runs another TapCard for Business account." }, { status: 409 });
+    await addAdmin(org.id, email, "admin");
+    if (body.makeOwner) {
+      await sql`UPDATE tapcard_biz_admins SET created_at = (SELECT min(created_at) FROM tapcard_biz_admins WHERE org_id = ${org.id}) - interval '1 second' WHERE org_id = ${org.id} AND email = ${email}`;
+    }
+    await logSupport(org.id, SUPPORT_ACTOR, body.makeOwner ? "added the owner" : "added an admin", email);
+    const token = await createLoginToken(email, org.id);
+    const link = `https://tapcard.aiert.co.uk/api/biz/login/${token}`;
+    await sendBizAdminInviteEmail(email, org.name, "AIERT", link).catch((e) => console.error("support admin email failed", e));
+    if (body.sendEmail) await sendBizWelcomeEmail(email, org.name, { kind: "paid", locations: org.locations || 1, name: body.personName }).catch((e) => console.error("support admin welcome failed", e));
+    return NextResponse.json({ ok: true });
   }
 
   // Removes a shop manager (never an admin), e.g. after testing. They are signed out at once.
