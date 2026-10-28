@@ -49,7 +49,8 @@ export async function POST(req: NextRequest) {
     got.phone ||= d.phone; got.website ||= d.website; got.hours ||= d.hours;
   };
   take(await tomtomDetails(name, address, near));
-  if (!got.website) take(await hereDetails(name, address, near));
+  // HERE is free and has opening hours, which TomTom does not, so it is asked whenever the website or the hours are still missing.
+  if (!got.website || !got.hours) take(await hereDetails(name, address, near));
   let fromGoogle: BusinessHit | undefined;
   if (!got.website) {
     const found = await searchBusinesses(`${name} ${address}`, near, false, `biz-${session.orgId}`).catch((): BusinessHit[] => []);
