@@ -17,7 +17,11 @@ export default async function BizAdminOverview() {
           <h2 className="text-lg font-bold text-cloud">Welcome</h2>
           <p className="mt-2 text-cloud">You manage {shops.length === 1 ? "this shop" : "these shops"} for {org.name}:</p>
           <ul className="mt-3 space-y-1 text-cloud">
-            {shops.map((s) => <li key={s.id}>{s.name}{s.address ? `, ${s.address}` : ""}</li>)}
+            {shops.map((s) => {
+              const parts = s.address.split(",").map((p) => p.replace(/[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}/i, "").trim()).filter(Boolean);
+              const town = (parts.length >= 2 ? parts[1] : parts[0]) || s.name;
+              return <li key={s.id}><strong>{town}</strong><span className="text-mist"> · {s.address}</span></li>;
+            })}
           </ul>
           <p className="mt-4 text-sm text-mist">
             Use <a href="/business/admin/qr-sign" className="text-gold underline">QR sign</a> to print your shop&apos;s sign, and{" "}
