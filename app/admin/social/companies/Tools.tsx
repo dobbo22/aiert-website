@@ -7,8 +7,13 @@ const btn = { border: "1px solid rgba(255,255,255,.3)", borderRadius: 8, padding
 const input = { color: "#111", borderRadius: 6, padding: "4px 8px", marginRight: 8 } as const;
 
 async function call(body: Record<string, unknown>) {
-  const res = await fetch("/api/admin/tapcard/companies", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-  return { ok: res.ok, data: await res.json().catch(() => ({})) as { error?: string; url?: string; orgId?: string } };
+  try {
+    const res = await fetch("/api/admin/tapcard/companies", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const data = await res.json().catch(() => ({})) as { error?: string; url?: string; orgId?: string };
+    return { ok: res.ok, data: res.ok || data.error ? data : { ...data, error: `The server answered ${res.status}. Sign in to the admin again, then retry.` } };
+  } catch {
+    return { ok: false, data: { error: "Couldn't reach the server. Check your connection and retry." } as { error?: string; url?: string; orgId?: string } };
+  }
 }
 
 export function CompanyTools({ orgId, open, locations }: { orgId: string; open: boolean; locations: number }) {
@@ -39,7 +44,7 @@ export function CreateCompany() {
   const [name, setName] = useState(""), [email, setEmail] = useState(""), [locations, setLocations] = useState("3");
   const [sendEmail, setSendEmail] = useState(false), [busy, setBusy] = useState(false), [note, setNote] = useState("");
   async function create() {
-    setBusy(true); setNote("");
+    setBusy(true); setNote(sendEmail ? "Creating and sending the emails…" : "Creating…");
     const r = await call({ action: "create", name, adminEmail: email, locations: Number(locations), sendEmail });
     setBusy(false);
     setNote(r.ok ? `Created. ${sendEmail ? "Sign-in and welcome emails sent." : "No email sent; open it below as support, or sign in from their admin page."}` : r.data.error ?? "Failed");
