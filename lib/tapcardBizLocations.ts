@@ -96,3 +96,16 @@ export async function markLocationClaimed(id: string, cardId: string): Promise<b
   const rows = await sql`UPDATE tapcard_biz_locations SET claimed_card_id = ${cardId} WHERE id = ${id} AND claimed_card_id IS NULL RETURNING id`;
   return rows.length > 0;
 }
+
+/// An invite link for each of these shops that has no card yet, for the manager's email: opening it in the app builds the shop's card.
+export async function shopCardLinks(org: { id: string; name: string }, shopIds: string[], managerEmail: string): Promise<{ shop: string; link: string }[]> {
+  const { signInvite, inviteLink } = await import("@/lib/tapcardBizInvite");
+  const out: { shop: string; link: string }[] = [];
+  for (const id of shopIds) {
+    const l = await getLocation(id);
+    if (!l || l.org_id !== org.id || l.claimed_card_id) continue;
+    const parts = l.address.split(",").map((p) => p.replace(/[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}/i, "").trim()).filter(Boolean);
+    out.push({ shop: (parts.length >= 2 ? parts[1] : parts[0]) || l.name, link: inviteLink(signInvite(org, { name: "", email: managerEmail, title: "" }, Date.now(), l.id)) });
+  }
+  return out;
+}

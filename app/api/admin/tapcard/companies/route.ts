@@ -3,7 +3,7 @@ import { isAdminRequest } from "@/lib/adminRequest";
 import { getOrg } from "@/lib/tapcardBiz";
 import { createLoginToken } from "@/lib/tapcardBizAuth";
 import { addAdmin, findAdminOrgsByEmail, listAdmins, MAX_MANAGERS } from "@/lib/tapcardBiz";
-import { listLocations } from "@/lib/tapcardBizLocations";
+import { listLocations, shopCardLinks } from "@/lib/tapcardBizLocations";
 import { sendBizLoginEmail, sendBizManagerInviteEmail, sendBizWelcomeEmail } from "@/lib/tapcardBizEmail";
 import { cardAllowance } from "@/lib/tapcardBizPricing";
 import { createManagedCompany, logSupport, supportAccessOpen, SUPPORT_ACTOR, SUPPORT_PREFIX } from "@/lib/tapcardBizSupport";
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     await addAdmin(org.id, email, "manager", shops.map((l) => l.id));
     await logSupport(org.id, SUPPORT_ACTOR, "added a manager", email);
     const token = await createLoginToken(email, org.id);
-    await sendBizManagerInviteEmail(email, org.name, "AIERT support", `https://tapcard.aiert.co.uk/api/biz/login/${token}`, shops.map((l) => `${l.name}, ${l.address.split(",").slice(-3, -1).join(" ").trim()}`)).catch((e) => console.error("support manager email failed", e));
+    await sendBizManagerInviteEmail(email, org.name, "AIERT support", `https://tapcard.aiert.co.uk/api/biz/login/${token}`, shops.map((l) => `${l.name}, ${l.address.split(",").slice(-3, -1).join(" ").trim()}`), await shopCardLinks(org, shops.map((l) => l.id), email).catch(() => [])).catch((e) => console.error("support manager email failed", e));
     return NextResponse.json({ ok: true, shops: shops.length });
   }
 

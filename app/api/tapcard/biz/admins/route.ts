@@ -3,7 +3,7 @@ import { rateLimited } from "@/lib/rateLimit";
 import { MAX_ADMINS, MAX_MANAGERS, addAdmin, findAdminOrgsByEmail, getOrg, listAdmins, removeAdminById } from "@/lib/tapcardBiz";
 import { createLoginToken } from "@/lib/tapcardBizAuth";
 import { sendBizAdminInviteEmail, sendBizManagerInviteEmail } from "@/lib/tapcardBizEmail";
-import { listLocations } from "@/lib/tapcardBizLocations";
+import { listLocations, shopCardLinks } from "@/lib/tapcardBizLocations";
 import sql from "@/lib/db";
 import { requireBizSession } from "@/lib/tapcardBizSession";
 
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
   await addAdmin(session.orgId, email, asManager ? "manager" : "admin", shops.map((x) => x.id));
   const token = await createLoginToken(email, session.orgId);
   const link = `https://tapcard.aiert.co.uk/api/biz/login/${token}`;
-  if (asManager) await sendBizManagerInviteEmail(email, org.name, session.email, link, shops.map((x) => x.name)).catch((e) => console.error("tapcard biz manager email failed:", e));
+  if (asManager) await sendBizManagerInviteEmail(email, org.name, session.email, link, shops.map((x) => x.name), await shopCardLinks(org, shops.map((x) => x.id), email).catch(() => [])).catch((e) => console.error("tapcard biz manager email failed:", e));
   else await sendBizAdminInviteEmail(email, org.name, session.email, link).catch((e) => console.error("tapcard biz admin email failed:", e));
   return NextResponse.json({ ok: true });
 }

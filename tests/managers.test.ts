@@ -54,9 +54,19 @@ test("an admin adds a manager for chosen shops, who is emailed what they can do"
   assert.match(ctx.outbox[0].html, /QR sign/);
   assert.match(ctx.outbox[0].html, /not part of your access/);
   assert.match(ctx.outbox[0].html, /login\//);
+  assert.match(ctx.outbox[0].html, /Make your shop's card/, "the card link comes in the same email");
+  assert.match(ctx.outbox[0].html, /business\/claim#/);
+  assert.match(ctx.outbox[0].text, /Great Dunmow: https:\/\/tapcard\.aiert\.co\.uk\/business\/claim#/);
   const row = (await sql`SELECT role, location_ids FROM tapcard_biz_admins WHERE email = ${email}`)[0] as { role: string; location_ids: string[] };
   assert.equal(row.role, "manager");
   assert.deepEqual(row.location_ids, [t.dunmow.id]);
+  // the link in the email builds the shop's finished card
+  const claimToken = ctx.outbox[0].html.match(/business\/claim#([\w.-]+)/)![1];
+  const claim = await import("../app/api/tapcard/biz/claim/route");
+  assert.equal((await claim.POST(req("/api/biz/claim", { body: { token: claimToken } }))).status, 200);
+  const made = (await sql`SELECT address, card_kind FROM tapcard_cards WHERE org_id = ${t.org.id}`)[0] as { address: string; card_kind: string };
+  assert.equal(made.address, "16A High St, Great Dunmow, Dunmow CM6 1AG");
+  assert.equal(made.card_kind, "business");
   assert.equal((await admins.POST(req("/api/biz/admins", { body: { email, role: "manager", locationIds: [t.dunmow.id] } }))).status, 409, "already added");
   // change their shops, then remove them
   const id = ((await sql`SELECT id FROM tapcard_biz_admins WHERE email = ${email}`)[0] as { id: string }).id;
