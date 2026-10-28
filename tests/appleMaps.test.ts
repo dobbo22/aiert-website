@@ -212,3 +212,14 @@ test("Google's review link: found with an ID-only search near Apple's position, 
   assert.equal(googleCalls.length, 0);
   delete process.env.GOOGLE_PLACES_API_KEY;
 });
+
+test("a provider's phone number is dropped when it cannot be right", async () => {
+  const { sanePhone } = await import("../lib/placeProviders");
+  assert.equal(sanePhone("+441371872882"), "+441371872882");
+  assert.equal(sanePhone("+44 20 7266 9971"), "+44 20 7266 9971", "a London number");
+  assert.equal(sanePhone("+44207266997"), "", "a digit short");
+  assert.equal(sanePhone("020 7266 9971"), "020 7266 9971");
+  assert.equal(sanePhone("0207266997"), "", "a digit short");
+  assert.equal(sanePhone("+447720299576"), "+447720299576", "a mobile");
+  assert.equal(sanePhone(""), "");
+});

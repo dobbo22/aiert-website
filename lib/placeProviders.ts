@@ -6,6 +6,17 @@ import { postcodeOf } from "@/lib/siteLinks";
 export interface PlaceDetail { phone: string; website: string; hours: string; source: string }
 type Near = { lat: number; lng: number } | null | undefined;
 
+/// A phone number as the provider gave it, or "" when it cannot be right: a UK number has 9 or 10 digits after +44 (a provider's data can
+/// be a digit short, which would put a wrong number on a card).
+export function sanePhone(raw: string): string {
+  const v = (raw ?? "").trim();
+  const digits = v.replace(/\D/g, "");
+  if (!digits) return "";
+  if (v.startsWith("+44") || digits.startsWith("44")) return digits.length - 2 >= 9 && digits.length - 2 <= 10 ? v : "";
+  if (digits.startsWith("0")) return digits.length === 10 || digits.length === 11 ? v : "";
+  return digits.length >= 7 ? v : "";
+}
+
 const empty = (source: string): PlaceDetail => ({ phone: "", website: "", hours: "", source });
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
 const cleanUrl = (u: string) => {
@@ -35,7 +46,7 @@ export async function tomtomDetails(name: string, address: string, near?: Near):
     const j = (await res.json()) as { results?: { poi?: { name?: string; phone?: string; url?: string }; address?: { freeformAddress?: string; postalCode?: string } }[] };
     const hit = (j.results ?? []).find((r) => r.poi && samePlace(name, address, r.poi.name ?? "", `${r.address?.freeformAddress ?? ""} ${r.address?.postalCode ?? ""}`));
     if (!hit?.poi) return none;
-    return { phone: (hit.poi.phone ?? "").slice(0, 40), website: cleanUrl(hit.poi.url ?? "").slice(0, 200), hours: "", source: "tomtom" };
+    return { phone: sanePhone(hit.poi.phone ?? "").slice(0, 40), website: cleanUrl(hit.poi.url ?? "").slice(0, 200), hours: "", source: "tomtom" };
   } catch {
     return none;
   }
@@ -62,7 +73,7 @@ export async function hereDetails(name: string, address: string, at?: Near): Pro
     if (!hit) return none;
     const c = hit.contacts?.[0];
     const hours = (hit.openingHours?.[0]?.text ?? []).join("; ").replace(/\s*-\s*/g, "–").slice(0, 300);
-    return { phone: (c?.phone?.[0]?.value ?? "").slice(0, 40), website: ownSite((c?.www ?? []).map((w) => w.value ?? "")).slice(0, 200), hours, source: "here" };
+    return { phone: sanePhone((c?.phone ?? []).map((p) => p.value ?? "").find((p) => sanePhone(p)) ?? "").slice(0, 40), website: ownSite((c?.www ?? []).map((w) => w.value ?? "")).slice(0, 200), hours, source: "here" };
   } catch {
     return none;
   }
