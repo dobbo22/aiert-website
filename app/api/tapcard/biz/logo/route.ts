@@ -30,9 +30,11 @@ export async function POST(req: NextRequest) {
     body = file;
     contentType = file.type;
   } else {
-    const domain = websiteDomain(org.website);
+    // The website typed or found on the page (not saved yet) wins over the saved one, so Find your business can fetch the logo at once.
+    const given = await req.json().then((j: { website?: unknown }) => (typeof j?.website === "string" ? j.website : "")).catch(() => "");
+    const domain = websiteDomain(given || org.website);
     if (!domain) {
-      return NextResponse.json({ error: "Add your website above (and save) first." }, { status: 400 });
+      return NextResponse.json({ error: "Add your website above first." }, { status: 400 });
     }
     const logo = await findSiteLogo(domain).catch(() => null);
     if (!logo) {
