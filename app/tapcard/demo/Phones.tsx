@@ -46,8 +46,10 @@ function domainOf(website: string): string {
   try { return new URL(/^https?:\/\//i.test(website) ? website : `https://${website}`).hostname.replace(/^www\./, ""); } catch { return ""; }
 }
 
-export function CardFace({ name, kind, typed, stage, rows, socials, interactive, domain, onOpen }: {
+export function CardFace({ name, kind, typed, stage, rows, socials, interactive, domain, onOpen, logoSrc }: {
   name: string; kind: string; typed: string; stage: number; rows: Row[]; socials: Row[]; interactive: boolean; domain: string; onOpen: (r: Row) => void;
+  /** The logo already stored for the company: used in place of looking it up on the website again. */
+  logoSrc?: string | null;
 }) {
   // A tap opens inside the phone; a modified click (new tab) still goes to the real page.
   const tap = (r: Row) => (e: React.MouseEvent) => {
@@ -62,9 +64,9 @@ export function CardFace({ name, kind, typed, stage, rows, socials, interactive,
   return (
     <div className="pb-6 text-center">
       <div className="flex h-28 items-start justify-center bg-gradient-to-br from-[#2b2f77] to-[#111318] px-6 pt-3">
-        {domain && !logoFailed ? (
+        {(logoSrc || domain) && !logoFailed ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={`/api/logo?domain=${d}`} alt="" onLoad={() => setLogoLoaded(true)} onError={() => setLogoFailed(true)} className={`max-w-full rounded-md object-contain [animation:fadein_0.6s_ease] ${logoLoaded ? "max-h-20" : "max-h-14"}`} />
+          <img src={logoSrc || `/api/logo?domain=${d}`} alt="" onLoad={() => setLogoLoaded(true)} onError={() => setLogoFailed(true)} className={`max-w-full rounded-md object-contain [animation:fadein_0.6s_ease] ${logoLoaded ? "max-h-20" : "max-h-14"}`} />
         ) : null}
       </div>
       <div className="px-4">

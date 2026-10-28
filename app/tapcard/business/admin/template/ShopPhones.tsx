@@ -26,7 +26,7 @@ function tabLabel(s: Shop): string {
 
 /// The shops as the app shows them: a phone screen for each, in tabs. A found shop is previewed until it is added; an added shop can be
 /// edited until its manager makes the card (then the manager owns it). Built from the same lookup the apps use.
-const ShopPhones = forwardRef<ShopHandle, { initial: Shop[]; allowed: number; website: string; socials: Socials }>(function ShopPhones({ initial, allowed, website, socials }, ref) {
+const ShopPhones = forwardRef<ShopHandle, { initial: Shop[]; allowed: number; website: string; socials: Socials; logoUrl: string | null }>(function ShopPhones({ initial, allowed, website, socials, logoUrl }, ref) {
   const [shops, setShops] = useState<Shop[]>(initial);
   const [sel, setSel] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -120,7 +120,7 @@ const ShopPhones = forwardRef<ShopHandle, { initial: Shop[]; allowed: number; we
       </div>
       <div className="mt-4 flex flex-wrap items-start gap-8">
         <Phone label={shop.id ? (shop.claimed ? "Card made" : "Added, waiting for its manager") : "Found, not added yet"}>
-          <CardFace name={shop.name} kind="Business" typed="" stage={3} rows={rows.filter((r) => !r.social)} socials={rows.filter((r) => r.social)} interactive={false} domain={domain} onOpen={() => {}} />
+          <CardFace name={shop.name} kind="Business" typed="" stage={3} rows={rows.filter((r) => !r.social)} socials={rows.filter((r) => r.social)} interactive={false} domain={domain} onOpen={() => {}} logoSrc={logoUrl} />
         </Phone>
         <div className="min-w-[16rem] flex-1 space-y-3">
           {([["name", "Shop name"], ["address", "Address"], ["phone", "Phone"], ["email", "Email"]] as const).map(([k, label]) => (

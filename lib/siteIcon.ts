@@ -71,7 +71,9 @@ export async function findSiteLogo(
   domain: string,
   { iconFallback = true } = {}
 ): Promise<{ bytes: Buffer; contentType: string } | null> {
-  const page = await safeFetch(`https://${domain}/`);
+  // A site that answers some requests and refuses others (shared server addresses are sometimes turned away) gets one more try.
+  let page = await safeFetch(`https://${domain}/`);
+  if (!page) { await new Promise((r) => setTimeout(r, 700)); page = await safeFetch(`https://${domain}/`); }
   if (page && (page.res.headers.get("content-type") ?? "").includes("text/html")) {
     const html = await readLimited(page.res, MAX_HTML_BYTES);
     if (html) {

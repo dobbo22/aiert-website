@@ -200,7 +200,7 @@ export default function TemplateForm({ org, shops, allowed }: { org: BizOrg; sho
         </button>
       </div>
 
-      <ShopPhones ref={shopsRef} initial={shops} allowed={allowed} website={website} socials={{ linkedIn: linkedInURL, twitter: twitterURL, instagram: instagramURL, facebook: facebookURL, tiktok: tiktokURL }} />
+      <ShopPhones ref={shopsRef} initial={shops} allowed={allowed} website={website} logoUrl={logoURL} socials={{ linkedIn: linkedInURL, twitter: twitterURL, instagram: instagramURL, facebook: facebookURL, tiktok: tiktokURL }} />
 
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">Company details</h2>
