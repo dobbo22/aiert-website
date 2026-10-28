@@ -12,13 +12,18 @@ const fmt = (d: string) => new Date(d).toLocaleString("en-GB", { day: "numeric",
 // billing, show a banner, and every entry is logged below.
 export default async function CompaniesPage() {
   if (!(await isAdminRequest())) return null;
-  const [companies, log] = await Promise.all([listCompaniesForSupport().catch(() => []), recentSupportLog().catch(() => [])]);
+  let listError = "";
+  const [companies, log] = await Promise.all([
+    listCompaniesForSupport().catch((e: unknown) => { listError = e instanceof Error ? e.message : String(e); return []; }),
+    recentSupportLog().catch(() => []),
+  ]);
   const nameOf = new Map(companies.map((c) => [c.id, c.name]));
   return (
     <div className="text-cloud">
       <h2 style={{ fontWeight: 700, marginBottom: ".5rem" }}>Set a company up for them</h2>
       <CreateCompany />
       <h2 style={{ fontWeight: 700, margin: "1.5rem 0 .5rem" }}>Companies ({companies.length})</h2>
+      {listError && <p style={{ color: "#fca5a5", fontSize: 14 }}>Couldn&apos;t load the companies: {listError}</p>}
       <table style={{ width: "100%", fontSize: 14 }}>
         <thead><tr style={{ textAlign: "left" }}><th>Company</th><th>Plan</th><th>Cards</th><th>Admins</th><th>Support access</th><th></th></tr></thead>
         <tbody>

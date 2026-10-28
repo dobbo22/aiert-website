@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-const btn = { border: "1px solid rgba(255,255,255,.3)", borderRadius: 8, padding: "2px 10px", marginRight: 8 } as const;
-const input = { color: "#111", borderRadius: 6, padding: "4px 8px", marginRight: 8 } as const;
+const btn = { border: "1px solid rgba(255,255,255,.5)", borderRadius: 8, padding: "6px 14px", marginRight: 8 } as const;
+const input = { background: "#fff", color: "#111", border: "1px solid #9ca3af", borderRadius: 6, padding: "6px 10px", marginRight: 8, marginBottom: 8 } as const;
 
 async function call(body: Record<string, unknown>) {
   try {
