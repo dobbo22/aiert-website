@@ -90,6 +90,12 @@ export async function deleteLocation(orgId: string, id: string, allowClaimed = f
   return rows.length > 0;
 }
 
+/// The shop's card was removed: the shop is unclaimed again (its prepared details stay), ready for a new manager invite.
+export async function releaseShopCard(orgId: string, cardId: string): Promise<void> {
+  await ensureLocationSchema();
+  await sql`UPDATE tapcard_biz_locations SET claimed_card_id = NULL WHERE org_id = ${orgId} AND claimed_card_id = ${cardId}`;
+}
+
 /// True for the one caller that claims it (a location becomes one card).
 export async function markLocationClaimed(id: string, cardId: string): Promise<boolean> {
   await ensureLocationSchema();

@@ -103,9 +103,9 @@ const ShopPhones = forwardRef<ShopHandle, { initial: Shop[]; allowed: number; we
     if (!shop?.cardId || !window.confirm(`Remove the card for ${tabLabel(shop)}? Its link, QR code and Wallet pass will stop working, and its manager loses it.`)) return;
     setBusy(true);
     const res = await fetch(`/api/tapcard/biz/cards/${encodeURIComponent(shop.cardId)}`, { method: "DELETE" }).catch(() => null);
-    if (res?.ok && shop.id) await fetch(`/api/tapcard/biz/locations?id=${encodeURIComponent(shop.id)}`, { method: "DELETE" }).catch(() => null);
     setBusy(false);
-    if (res?.ok) { setShops((l) => l.filter((_, i) => i !== sel)); setSel(0); setNote("Card removed. You can add the shop again."); }
+    // The shop stays, waiting for its manager again: create a new invite link on the Locations tab.
+    if (res?.ok) { setShops((l) => l.map((s, i) => (i === sel ? { ...s, claimed: false, cardId: null } : s))); setNote("Card removed. The shop is waiting for its manager again: create a new link for it on the Locations tab."); }
     else setNote("Couldn't remove that card. Try again.");
   }
 

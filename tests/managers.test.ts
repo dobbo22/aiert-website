@@ -282,3 +282,24 @@ test("an admin can tag an existing staff card with its shop, so that shop's mana
   assert.equal((await patch(old, { locationId: t.dunmow.id })).status, 404);
   ctx.cookie = undefined;
 });
+
+test("removing a made shop card puts the shop back to waiting, ready for a new invite link", async () => {
+  const t = await setup();
+  const { createLocation } = await import("../lib/tapcardBizLocations");
+  const loc = await import("../app/api/tapcard/biz/locations/route");
+  const claim = await import("../app/api/tapcard/biz/claim/route");
+  const del = await import("../app/api/tapcard/biz/cards/[id]/route");
+  void createLocation;
+  t.asAdmin();
+  ctx.session = null;
+  const mk = async () => {
+    const inv = await json(await loc.POST(req("/x", { body: { invite: { locationId: t.dunmow.id, name: "M", email: "m@x.co" } } })));
+    return claim.POST(req("/x", { body: { token: inv.link.split("#")[1] } }));
+  };
+  assert.equal((await mk()).status, 200);
+  const cardId = ((await sql`SELECT id FROM tapcard_cards WHERE org_id = ${t.org.id} AND card_kind = 'business'`)[0] as { id: string }).id;
+  assert.equal((await loc.POST(req("/x", { body: { invite: { locationId: t.dunmow.id, name: "M", email: "m@x.co" } } }))).status, 409, "made: no second link");
+  assert.equal((await del.DELETE(req(`/x/${cardId}`, { method: "DELETE" }), { params: Promise.resolve({ id: cardId }) })).status, 200);
+  assert.equal((await mk()).status, 200, "a new link now builds a new card for the same shop");
+  ctx.cookie = undefined;
+});
