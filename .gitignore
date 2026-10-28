@@ -43,3 +43,7 @@ next-env.d.ts
 
 # dated diagnostic snapshots, not meant to accumulate in history
 reports/
+
+# private keys (Apple Maps, App Store Connect, Play)
+*.p8
+*.pem

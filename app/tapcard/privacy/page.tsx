@@ -58,6 +58,12 @@ export default function TapCardPrivacyPage() {
           If you use <strong>Find your business</strong>, the name you type is sent to our server, which asks Google Places
           for matching businesses and returns the list. We do not keep what you typed.
         </p>
+        <p>
+          When a company administrator builds shop cards on the website, a business&apos;s name and address are sent from our server to
+          Apple Maps, TomTom, HERE and, only if those have no website for it, Google Places, to find its phone number, website and opening
+          hours. Only public business details are sent, never anything about a person. We then read the business&apos;s own public website
+          for its links and opening hours.
+        </p>
       </section>
 
       <section>
