@@ -1,5 +1,6 @@
 import { requireBizSession } from "@/lib/tapcardBizSession";
 import { countOrgCards, getOrg, isOrgActive, orgStatusLabel } from "@/lib/tapcardBiz";
+import { listLocations } from "@/lib/tapcardBizLocations";
 
 export default async function BizAdminOverview() {
   const session = await requireBizSession();
@@ -8,6 +9,22 @@ export default async function BizAdminOverview() {
   if (!org) return null;
 
   const activeCards = await countOrgCards(org.id);
+  const locations = await listLocations(org.id).catch(() => []);
+  const allowed = org.seat_band === "locations" ? Math.max(org.locations, 1) : 1;
+  const claimed = locations.filter((l) => l.claimed_card_id).length;
+  const templateDone = !!org.website && !!org.logo_url;
+  const steps: { done: boolean; href: string; title: string; text: string }[] = [
+    { done: templateDone, href: "/business/admin/template", title: "Set up your company details",
+      text: "Find your business to fill in your website, logo, colour and social links in one go. Every shop's card uses them." },
+    { done: locations.length >= allowed, href: "/business/admin/locations", title: `Add your shops (${locations.length} of ${allowed})`,
+      text: "Find each shop the way the app does, or let us find your other shops automatically. Address, phone, hours and links are filled in." },
+    { done: locations.length > 0 && claimed >= locations.length, href: "/business/admin/locations", title: `Invite each manager (${claimed} of ${locations.length} cards made)`,
+      text: "Create a link for each shop's manager. They open it in the free TapCard app and their shop's card is ready to share." },
+    { done: false, href: "/business/admin/employees", title: "Invite staff cards (optional)",
+      text: "Each location includes up to 10 staff cards. Upload your staff list and send everyone their link." },
+    { done: false, href: "/business/admin/promote", title: "Post your first offer",
+      text: "A shop's manager posts from the app, or you post for any shop from Offers & numbers." },
+  ];
 
   return (
     <div className="space-y-6">
@@ -36,9 +53,16 @@ export default async function BizAdminOverview() {
 
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">Getting started</h2>
-        <ol className="mt-3 list-decimal space-y-2 pl-5 text-cloud">
-          <li>Set your company&apos;s card template — logo, colours, social links, and which fields employees can edit.</li>
-          <li>Choose your staff list on the Employees tab to create everyone&apos;s invite link — the list stays on your computer.</li>
+        <ol className="mt-3 space-y-3 text-cloud">
+          {steps.map((st, i) => (
+            <li key={i} className="flex gap-3">
+              <span className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-sm font-bold ${st.done ? "bg-teal text-black" : "bg-slate text-cloud"}`}>{st.done ? "✓" : i + 1}</span>
+              <span>
+                <a href={st.href} className="font-semibold text-gold underline">{st.title}</a>
+                <span className="block text-sm text-mist">{st.text}</span>
+              </span>
+            </li>
+          ))}
         </ol>
         <p className="mt-4 text-sm text-cloud">
           Step by step, with troubleshooting: <a href="/business/guide" className="text-gold underline">Admin guide</a>

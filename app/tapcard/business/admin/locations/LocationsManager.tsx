@@ -61,6 +61,27 @@ export default function LocationsManager({ initial, allowed, orgName }: { initia
     return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }
 
+  const [candidates, setCandidates] = useState<(Hit & { source: string })[] | null>(null);
+
+  async function discover() {
+    setBusy(true); setNote("Looking for your other shops on Google and your website…");
+    const res = await fetch("/api/tapcard/biz/locations/discover", { method: "POST" }).catch(() => null);
+    const data = (await res?.json().catch(() => null)) as { candidates?: (Hit & { source: string })[]; error?: string } | null;
+    setBusy(false);
+    if (!res?.ok) { setNote(data?.error ?? "Couldn't look just now. Try again."); return; }
+    setCandidates(data?.candidates ?? []);
+    setNote((data?.candidates ?? []).length ? null : "No other shops found. Add them by name and town above.");
+  }
+
+  async function addCandidate(c: Hit & { source: string }) {
+    setBusy(true);
+    const res = await fetch("/api/tapcard/biz/locations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ hit: c }) }).catch(() => null);
+    const data = (await res?.json().catch(() => null)) as { error?: string; location?: Loc } | null;
+    setBusy(false);
+    if (res?.ok && data?.location) { setLocations((l) => [...l, data.location!]); setCandidates((x) => (x ?? []).filter((y) => y.id !== c.id)); setNote(`Added ${data.location.name}.`); }
+    else setNote(data?.error ?? "Couldn't add that one.");
+  }
+
   const full = locations.length >= allowed;
   return (
     <div className="space-y-8">
@@ -90,6 +111,27 @@ export default function LocationsManager({ initial, allowed, orgName }: { initia
               </li>
             ))}
           </ul>
+        )}
+        {!full && (
+          <button type="button" onClick={() => void discover()} disabled={busy} className="mt-4 text-sm font-semibold text-gold underline disabled:opacity-60">
+            Find my other shops automatically
+          </button>
+        )}
+        {candidates && candidates.length > 0 && (
+          <div className="mt-3">
+            <p className="text-sm text-mist">Found for {orgName}. Tap one to add it:</p>
+            <ul className="mt-2 space-y-2">
+              {candidates.map((c) => (
+                <li key={c.id}>
+                  <button type="button" onClick={() => void addCandidate(c)} disabled={busy || locations.length >= allowed}
+                    className="w-full rounded-xl bg-slate/40 px-4 py-3 text-left text-cloud ring-1 ring-slate hover:ring-gold disabled:opacity-60">
+                    <span className="font-semibold">{c.name}</span>
+                    <span className="block text-sm text-mist">{[c.address, c.phone, `from ${c.source}`].filter(Boolean).join(" · ")}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
         {full && <p className="mt-3 text-sm text-gold">All {allowed} locations are set up. To add more, change the number of locations on the Billing tab.</p>}
         {note && <p className="mt-3 text-sm text-gold">{note}</p>}
