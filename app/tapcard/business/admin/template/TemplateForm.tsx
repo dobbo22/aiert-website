@@ -92,7 +92,7 @@ export default function TemplateForm({ org }: { org: BizOrg }) {
   async function pick(hit: { name: string; address: string; website: string; phone: string; hours: string }) {
     setName(hit.name);
     setHits([]);
-    if (hit.website) { setWebsite(hit.website); await fillFrom(hit.website, hit); }
+    if (hit.website) { const site = hit.website.replace(/^http:\/\//i, "https://"); setWebsite(site); await fillFrom(site, hit); }
     else setFindNote("That business has no website listed. Type it below and tap Fetch from my website.");
   }
 
