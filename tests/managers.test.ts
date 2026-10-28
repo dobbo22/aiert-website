@@ -187,6 +187,10 @@ test("a manager: QR sign for their shop, invites and removes their shop's staff 
   assert.match(home, /Great Dunmow/);
   assert.ok(!/Bardfield/.test(home));
   const qrPage = await import("../app/tapcard/business/admin/qr-sign/page");
+  const blocked = text(await show(() => Promise.resolve({ default: qrPage.default as never }), { searchParams: Promise.resolve({ shop: t.bardfield.id }) }));
+  assert.match(blocked, /Finish setting up your card/, "no sign before the shop's card exists");
+  const shopCard = ((await sql`SELECT id FROM tapcard_cards WHERE org_id = ${t.org.id} LIMIT 1`)[0] as { id: string }).id; // any real card stands in for the shop's
+  await sql`UPDATE tapcard_biz_locations SET claimed_card_id = ${shopCard} WHERE id = ${t.dunmow.id}`;
   const qr = text(await show(() => Promise.resolve({ default: qrPage.default as never }), { searchParams: Promise.resolve({ shop: t.bardfield.id }) }));
   assert.match(qr, /Dunmow/);
   assert.ok(!/Bardfield/.test(qr), "only their own shop's sign");

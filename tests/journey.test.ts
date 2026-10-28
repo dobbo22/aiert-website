@@ -83,9 +83,9 @@ test("a business signs up, goes through every tab, and finds nothing broken", as
   // 6. QR sign: a sample until the card is made, with the wording we set
   const qrPage = await import("../app/tapcard/business/admin/qr-sign/page");
   const qr = await show(() => Promise.resolve({ default: qrPage.default as never }), { searchParams: Promise.resolve({ shop: added.location.id }) });
-  assert.match(qr, /QR sign/);
-  assert.match(qr, /Scan to follow and receive news and offers/);
-  assert.match(qr, />Sample</, "no card yet, so the sign is a sample");
+  assert.match(qr, /Finish setting up your card before making a QR sign/, "blocked until the card is made");
+  assert.match(qr, /Journey Cafe is still waiting/);
+  assert.ok(!/Scan to follow/.test(qr), "no sign editor yet");
 
   // 7. The manager gets the link and makes the card
   const inv = await json(await locs.POST(req("/api/tapcard/biz/locations", { body: { invite: { locationId: added.location.id, name: "Mia", email: "mia@journeycafe.example" } } })));
@@ -93,6 +93,10 @@ test("a business signs up, goes through every tab, and finds nothing broken", as
   // (the claim comes from the phone: no admin cookie)
   const claimRes = await claim.POST(req("/api/biz/claim", { body: { token: inv.link.split("#")[1] } }));
   assert.equal(claimRes.status, 200);
+  await sql`UPDATE tapcard_biz_orgs SET website = COALESCE(NULLIF(website, ''), 'https://journeycafe.example'), logo_url = COALESCE(NULLIF(logo_url, ''), 'https://journeycafe.example/logo.png') WHERE id = ${orgId}`;
+  const qrAfter = await show(() => Promise.resolve({ default: qrPage.default as never }), { searchParams: Promise.resolve({ shop: added.location.id }) });
+  assert.match(qrAfter, /Scan to follow and receive news and offers/, "card made: the sign opens");
+  assert.ok(!/>Sample</.test(qrAfter));
   const made = await json(claimRes);
   assert.equal(made.card.orgID, orgId);
   const cardRow = (await sql`SELECT id, address, phone, card_kind FROM tapcard_cards WHERE org_id = ${orgId}`)[0] as Record<string, string>;
