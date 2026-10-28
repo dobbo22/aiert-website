@@ -20,7 +20,8 @@ export default function QrSignEditor({ shops, selected, company }: { shops: Shop
 
   const shop = shops.find((s) => s.id === id) ?? null;
   const sign = (id && signs[id]) || shops[0]?.sign || { headline: "Scan to follow and receive news and offers", line: "", footer: "Free TapCard app for iPhone and Android", showLogo: true, showSocials: false, showApp: true };
-  const target = shop?.cardUrl ?? (company.website ? (/^https?:\/\//i.test(company.website) ? company.website : `https://${company.website}`) : "https://tapcard.aiert.co.uk");
+  // A shop with no card yet: the QR leads to a page saying this is a sample (never to the website, which the TapCard app cannot read as a contact).
+  const target = shop?.cardUrl ?? "https://tapcard.aiert.co.uk/business/qr-sample";
   const sample = !shop?.cardUrl;
 
   useEffect(() => {
@@ -90,11 +91,11 @@ export default function QrSignEditor({ shops, selected, company }: { shops: Shop
             </label>
           ))}
           <div className="flex flex-wrap items-center gap-3 pt-2">
-            <button type="button" onClick={() => window.print()} className="btn-gold rounded-xl px-4 py-2 text-sm font-semibold">Print or save as PDF</button>
+            <button type="button" onClick={() => window.print()} disabled={sample} title={sample ? "Available once the shop's card has been made" : undefined} className="btn-gold rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-50">Print or save as PDF</button>
             <button type="button" onClick={() => void save()} disabled={saving} className="rounded-xl px-4 py-2 text-sm font-semibold text-cloud ring-1 ring-slate disabled:opacity-60">{saving ? "Saving…" : "Save wording"}</button>
           </div>
           {note && <p className="text-sm text-gold">{note}</p>}
-          {sample && <p className="text-sm text-gold">This is a sample: the shop&apos;s card doesn&apos;t exist yet, so the QR code points to your website. The real QR code appears here once its manager has made the card.</p>}
+          {sample && <p className="text-sm text-gold">This is a sample: the shop&apos;s card doesn&apos;t exist yet, so the QR code is not its real one (scanning it shows a &quot;sample&quot; page) and printing is switched off. The real QR code appears here once its manager has made the card.</p>}
           <p className="text-xs text-mist">In the print window choose A4, and turn off &quot;Headers and footers&quot; for the cleanest result.</p>
         </div>
 
