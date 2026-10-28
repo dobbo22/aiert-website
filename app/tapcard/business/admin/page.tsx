@@ -56,7 +56,7 @@ export default async function BizAdminOverview() {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
           <p className="text-sm text-mist">Billing</p>
-          <p className="mt-1 text-xl font-bold text-cloud capitalize">{isComplimentary(org) ? "Free access" : orgStatusLabel(org)}</p>
+          <p className="mt-1 text-xl font-bold text-cloud capitalize">{org.free_for_life ? "Free for life" : isComplimentary(org) ? "Free access" : orgStatusLabel(org)}</p>
         </div>
         <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
           <p className="text-sm text-mist">Active cards</p>

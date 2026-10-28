@@ -22,13 +22,13 @@ export default async function BizBillingPage() {
         <Row label="Cards allowed" value={String(org.seat_limit || "–")} />
         <Row
           label={org.seat_band === "trial" ? "Trial ends" : free ? "Cost" : "Renews"}
-          value={free ? "Nothing to pay" : (org.seat_band === "trial" ? trialEndsAt(org) : org.current_period_end ? new Date(org.current_period_end) : null)?.toLocaleDateString("en-GB") ?? "–"}
+          value={free ? (org.free_for_life ? "Free for life" : "Nothing to pay") : (org.seat_band === "trial" ? trialEndsAt(org) : org.current_period_end ? new Date(org.current_period_end) : null)?.toLocaleDateString("en-GB") ?? "–"}
         />
       </dl>
 
       {free ? (
         <p className="mt-6 text-cloud">
-          This company has free access, set up by AIERT. There is nothing to pay and nothing to set up here. To change the number of
+          {org.free_for_life ? "This company is free for life, a thank-you from AIERT for helping TapCard get started." : "This company has free access, set up by AIERT."} There is nothing to pay and nothing to set up here. To change the number of
           locations, or if you have any questions, email <a href="mailto:enquiries@aiert.co.uk" className="text-gold underline">enquiries@aiert.co.uk</a>.
         </p>
       ) : org.stripe_customer_id ? (

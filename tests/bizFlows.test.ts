@@ -442,3 +442,35 @@ test("AIERT can add a company admin and make them the owner", async () => {
   assert.equal((await add({ email: "x@y.co" })).status, 401);
   ctx.admin = true;
 });
+
+test("free for life: set by AIERT, never switched off or charged by any billing event", async () => {
+  const { createManagedCompany } = await import("../lib/tapcardBizSupport");
+  const { getOrg, isOrgActive, isComplimentary, setOrgBilling, orgCanProvision } = await import("../lib/tapcardBiz");
+  const { POST } = await import("../app/api/admin/tapcard/companies/route");
+  const org = await createManagedCompany({ name: "Founding Friend", adminEmail: "owner@friend.example", locations: 2 });
+  ctx.admin = true;
+  assert.equal((await POST(req("/x", { body: { action: "freeForLife", orgId: org.id } }))).status, 200);
+  let o = (await getOrg(org.id))!;
+  assert.equal(o.free_for_life, true);
+  assert.equal(isComplimentary(o), true);
+  // a Stripe event, a cancelled subscription, a trial clock: none of them changes it
+  await setOrgBilling(org.id, { billing_status: "canceled", seat_band: "trial", stripe_customer_id: "cus_x", stripe_subscription_id: "sub_x", current_period_end: new Date("2020-01-01") });
+  o = (await getOrg(org.id))!;
+  assert.equal(o.billing_status, "active");
+  assert.equal(o.seat_band, "locations");
+  assert.equal(o.stripe_subscription_id, null);
+  assert.equal(o.current_period_end, null);
+  assert.equal(isOrgActive(o), true);
+  assert.equal(orgCanProvision(o), true);
+  // even a row that has been damaged (as by an old bug or a hand edit) still counts as active
+  assert.equal(isOrgActive({ ...o, billing_status: "canceled", seat_band: "trial", current_period_end: "2020-01-01" } as never), true);
+  // AIERT can still change the number of locations
+  await setOrgBilling(org.id, { locations: 3, seat_limit: 33 });
+  assert.equal((await getOrg(org.id))!.locations, 3);
+  // only AIERT's admin login can set or remove it
+  ctx.admin = false;
+  assert.equal((await POST(req("/x", { body: { action: "freeForLife", orgId: org.id, on: false } }))).status, 401);
+  ctx.admin = true;
+  assert.equal((await POST(req("/x", { body: { action: "freeForLife", orgId: org.id, on: false } }))).status, 200);
+  assert.equal((await getOrg(org.id))!.free_for_life, false);
+});

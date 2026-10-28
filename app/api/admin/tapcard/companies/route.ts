@@ -32,6 +32,18 @@ export async function POST(req: NextRequest) {
   const orgId = body.orgId ?? "";
   const org = orgId ? await getOrg(orgId) : null;
   if (!org) return NextResponse.json({ error: "Company not found" }, { status: 404 });
+
+  // AIERT's own decision about its own pricing: no company consent window is involved, so no support access is needed.
+  if (body.action === "freeForLife") {
+    const on = (body as { on?: boolean }).on !== false;
+    await sql`UPDATE tapcard_biz_orgs SET free_for_life = ${on}, billing_status = CASE WHEN ${on} THEN 'active' ELSE billing_status END,
+              seat_band = CASE WHEN ${on} AND seat_band <> 'locations' THEN 'locations' ELSE seat_band END,
+              current_period_end = CASE WHEN ${on} THEN NULL ELSE current_period_end END,
+              locations = CASE WHEN ${on} AND locations < 1 THEN 1 ELSE locations END,
+              seat_limit = CASE WHEN ${on} AND seat_limit < 11 THEN 11 ELSE seat_limit END WHERE id = ${org.id}`;
+    await logSupport(org.id, SUPPORT_ACTOR, on ? "marked free for life" : "removed free for life");
+    return NextResponse.json({ ok: true });
+  }
   if (!(await supportAccessOpen(org.id))) {
     return NextResponse.json({ error: "This company has not allowed support access (or it has run out). Ask their admin to switch it on in their Admins tab." }, { status: 403 });
   }

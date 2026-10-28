@@ -16,6 +16,8 @@ import { del } from "@vercel/blob";
 
 export interface BizOrg {
   id: string;
+  /// Free for life: set by AIERT on the Companies page; billing changes never apply to it.
+  free_for_life?: boolean;
   name: string;
   domain: string;
   logo_url: string | null;
@@ -90,6 +92,8 @@ export function ensureSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS trial_reminded_at TIMESTAMPTZ`)
       .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS locations INTEGER NOT NULL DEFAULT 0`)
       .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS welcome_sent TEXT`)
+      // AIERT's decision that this company is free for ever (a founding partner): nothing may switch its billing off or ask it to pay.
+      .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS free_for_life BOOLEAN NOT NULL DEFAULT false`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS org_overrides TEXT NOT NULL DEFAULT '{}'`)
       // A manager (role 'manager') is limited to the shops listed here (tapcard_biz_locations ids); a staff card belongs to one shop.
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS org_location_id TEXT`)
@@ -254,7 +258,8 @@ export function orgCanProvision(org: Pick<BizOrg, "billing_status" | "seat_band"
 
 /// A company AIERT set up free of charge (the Companies page): locations on the paid-plan fields, active, with no Stripe subscription or
 /// customer and no renewal date. Nothing is ever charged, so the billing page says so instead of offering a plan.
-export function isComplimentary(org: Pick<BizOrg, "seat_band" | "billing_status" | "stripe_subscription_id" | "stripe_customer_id" | "current_period_end">): boolean {
+export function isComplimentary(org: Pick<BizOrg, "seat_band" | "billing_status" | "stripe_subscription_id" | "stripe_customer_id" | "current_period_end"> & { free_for_life?: boolean }): boolean {
+  if (org.free_for_life) return true;
   return org.seat_band === "locations" && org.billing_status === "active" && !org.stripe_subscription_id && !org.stripe_customer_id && !org.current_period_end;
 }
 
@@ -274,7 +279,8 @@ export function isTrialExpired(org: TrialFields): boolean {
 }
 
 /// Billing is active, and a free trial hasn't run out. The one check behind invites, Promote cover and the admin pages.
-export function isOrgActive(org: Pick<BizOrg, "billing_status"> & TrialFields): boolean {
+export function isOrgActive(org: Pick<BizOrg, "billing_status"> & TrialFields & { free_for_life?: boolean }): boolean {
+  if (org.free_for_life) return true;
   return org.billing_status === "active" && !isTrialExpired(org);
 }
 
@@ -322,6 +328,10 @@ export async function setOrgBilling(
   await ensureSchema();
   const current = await getOrg(id);
   if (!current) return;
+  // A company that is free for life is never switched off, put on a trial clock or attached to a subscription by a billing event.
+  if (current.free_for_life) {
+    fields = { seat_limit: fields.seat_limit, locations: fields.locations };
+  }
   await sql`
     UPDATE tapcard_biz_orgs
     SET billing_status = ${fields.billing_status ?? current.billing_status},

@@ -131,3 +131,24 @@ export function RemoveManager({ orgId, email }: { orgId: string; email: string }
     </>
   );
 }
+
+/// AIERT's "free for life" mark for a founding partner: the company is never charged, switched off or put on a trial clock.
+export function LifeToggle({ orgId, on }: { orgId: string; on: boolean }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  async function toggle() {
+    if (!confirm(on ? "Remove free for life from this company?" : "Mark this company FREE FOR LIFE? It will never be charged or switched off.")) return;
+    setBusy(true); setError("");
+    const r = await call({ action: "freeForLife", orgId, on: !on });
+    setBusy(false);
+    if (!r.ok) { setError(r.data.error ?? "That didn't work. Try again."); return; }
+    router.refresh();
+  }
+  return (
+    <div style={{ marginTop: 6 }}>
+      <Pill small disabled={busy} onClick={toggle}>{busy ? "Working…" : on ? "✓ Free for life (remove)" : "Mark free for life"}</Pill>
+      {error && <div style={{ color: "#fca5a5", fontSize: 12 }}>{error}</div>}
+    </div>
+  );
+}

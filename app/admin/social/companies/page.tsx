@@ -1,6 +1,6 @@
 import { isAdminRequest } from "@/lib/adminRequest";
 import { listCompaniesForSupport, recentSupportLog } from "@/lib/tapcardBizSupport";
-import { CompanyTools, CreateCompany, RemoveManager } from "./Tools";
+import { CompanyTools, CreateCompany, LifeToggle, RemoveManager } from "./Tools";
 import { capFor, providerUsage } from "@/lib/providerCaps";
 
 export const metadata = { title: "TapCard companies — Admin", robots: { index: false, follow: false } };
@@ -35,7 +35,7 @@ export default async function CompaniesPage() {
             return (
               <tr key={c.id} style={{ borderTop: "1px solid rgba(255,255,255,.15)" }}>
                 <td style={{ padding: "10px 14px 10px 0", verticalAlign: "top" }}>{c.name || c.id}<br /><span style={{ opacity: .7 }}>{fmt(c.created_at)}</span></td>
-                <td style={{ padding: "10px 14px 10px 0", verticalAlign: "top" }}>{c.seat_band === "trial" ? "Free trial" : c.seat_band === "locations" ? `${c.locations} locations` : c.seat_band || "-"}<br /><span style={{ opacity: .7 }}>{c.billing_status}</span></td>
+                <td style={{ padding: "10px 14px 10px 0", verticalAlign: "top" }}>{c.free_for_life ? "Free for life" : c.seat_band === "trial" ? "Free trial" : c.seat_band === "locations" ? `${c.locations} locations` : c.seat_band || "-"}<br /><span style={{ opacity: .7 }}>{c.billing_status}</span><LifeToggle orgId={c.id} on={!!c.free_for_life} /></td>
                 <td style={{ padding: "10px 14px 10px 0", verticalAlign: "top" }}>{c.cards}/{c.seat_limit}</td>
                 <td style={{ padding: "10px 14px 10px 0", verticalAlign: "top", lineHeight: 1.9 }}>
                   {(c.people ?? []).map((p) => (
