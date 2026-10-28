@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse, after } from "next/server";
-import { getOrg, orgCanProvision, setCardOverrides } from "@/lib/tapcardBiz";
+import { getOrg, listStaffForLocations, orgCanProvision, setCardOverrides } from "@/lib/tapcardBiz";
 import { getCard } from "@/lib/tapcardDb";
 import { refreshGoogleWalletPass } from "@/lib/googleWallet";
 import { pushToFollowers } from "@/lib/tapcardPush";
@@ -40,6 +40,8 @@ export async function PATCH(req: NextRequest) {
     const changed = await setCardOverrides(session.orgId, loc.claimed_card_id, patch);
     if (!changed) return NextResponse.json({ ok: false }, { status: 404 });
     await updateLocationDetails(session.orgId, loc.id, patch);
+    // The shop's staff cards carry its address and phone, so they follow when it moves or changes number.
+    for (const s of await listStaffForLocations(session.orgId, [loc.id]).catch(() => [])) await setCardOverrides(session.orgId, s.id, { address: patch.address, phone: patch.phone }).catch(() => {});
     const cardId = loc.claimed_card_id;
     after(async () => {
       const card = await getCard(cardId);

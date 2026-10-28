@@ -79,6 +79,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "this invite link was already used" }, { status: 409 });
   }
 
+  // A staff card for a shop carries the shop's address and phone, so staff can share where and how to reach it.
+  const staffShop = invite.s ? await getLocation(invite.s) : null;
+  const staffOf = staffShop && staffShop.org_id === org.id ? staffShop : null;
+
   // A location the admin prepared on the web: the card is built already, with its address, phone and links, as a shop / location.
   const loc = invite.l ? await getLocation(invite.l) : null;
   const location = loc && loc.org_id === org.id && !loc.claimed_card_id ? loc : null;
@@ -91,10 +95,10 @@ export async function POST(req: NextRequest) {
       name: location ? location.name : invite.n,
       title: location ? "" : invite.t,
       company: org.name,
-      phone: location?.phone ?? "",
+      phone: location?.phone ?? staffOf?.phone ?? "",
       email: location ? location.email : invite.e,
       website: org.website,
-      address: location?.address ?? "",
+      address: location?.address ?? staffOf?.address ?? "",
       linkedin_url: org.linkedin_url,
       twitter_url: org.twitter_url,
       instagram_url: org.instagram_url,

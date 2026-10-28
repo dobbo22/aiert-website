@@ -171,6 +171,9 @@ test("a manager: QR sign for their shop, invites and removes their shop's staff 
   assert.equal(claimed.status, 200);
   const staff = (await sql`SELECT id, org_location_id FROM tapcard_cards WHERE org_id = ${t.org.id} AND name = 'Sam Staff'`)[0] as { id: string; org_location_id: string };
   assert.equal(staff.org_location_id, t.dunmow.id);
+  const staffRow = (await sql`SELECT address, phone FROM tapcard_cards WHERE id = ${staff.id}`)[0] as { address: string; phone: string };
+  assert.equal(staffRow.address, "16A High St, Great Dunmow, Dunmow CM6 1AG", "a staff card carries the shop's address");
+  assert.equal(staffRow.phone, "01", "and its phone");
 
   // an invite for another company's shop does not tie to it
   const other = await setup();
