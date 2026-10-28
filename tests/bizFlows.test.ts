@@ -127,7 +127,7 @@ test("locations: add, limit, edit, invite, claim builds the finished shop card",
   assert.equal(card.phone, "+44 1371 811102");
   assert.equal(card.email, "bardfield@shops.example");
   assert.equal(card.card_kind, "business");
-  assert.deepEqual((card as never as { org_posts_for: string[] }).org_posts_for, [card.id]);
+  assert.deepEqual((card as never as { org_posts_for: string[] }).org_posts_for, [], "a manager cannot post offers unless an admin ticks it");
   assert.ok(JSON.parse(card.links).some((l: { kind: string }) => l.kind === "hours"));
 
   // a made location can no longer be removed as a prepared one, and cannot be invited again

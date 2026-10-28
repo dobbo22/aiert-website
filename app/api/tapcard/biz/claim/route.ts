@@ -94,8 +94,8 @@ export async function POST(req: NextRequest) {
   await attachCardToOrg(cardId, org.id, org.locked_fields);
   if (location) {
     await markLocationClaimed(location.id, cardId);
-    // The shop's own phone may post offers and news for the shop (the admin can change this on the Employees tab).
-    await sql`UPDATE tapcard_cards SET org_posts_for = ${[cardId]} WHERE id = ${cardId}`;
+    // Offers and news are for admins to post (from the web). A manager's phone cannot post for its shop unless an admin ticks it on the
+    // Employees tab, so nothing is ticked here.
   }
 
   const card = await getCard(cardId);

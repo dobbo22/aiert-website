@@ -50,9 +50,18 @@ export async function sendBizAdminInviteEmail(email: string, company: string, ad
     <p>Tap the link below to sign in. From then on you can sign in at tapcard.aiert.co.uk/business/admin with this email address.</p>
     <p><a href="${link}">${link}</a></p>
     <p>This link works once and expires in 15 minutes. If you weren't expecting it, ignore this email and no access is given.</p>
+    <p><strong>What an admin can do:</strong></p>
+    <ul>
+      <li><strong>Card template:</strong> find the business to fill in the logo, colour and social links, and see each shop's card as a phone screen.</li>
+      <li><strong>Locations:</strong> add shops, edit their details, and create each manager's invite link.</li>
+      <li><strong>Employees:</strong> invite staff cards and choose who may post offers and news.</li>
+      <li><strong>Offers &amp; numbers:</strong> post offers and news for any shop, and see views, saves, followers and claims.</li>
+      <li><strong>QR sign:</strong> print a window or till sign with each shop's QR code.</li>
+    </ul>
+    <p>The full <a href="https://tapcard.aiert.co.uk/business/guide">Admin guide</a> explains each step. Reply to this email if you need help.</p>
   `;
   await send(email, `You are now an admin of ${company} on TapCard for Business`, html,
-    `${addedBy} has made you an admin of ${company} on TapCard for Business.\n\nSign in: ${link}\n\nThis link works once and expires in 15 minutes. If you weren't expecting it, ignore this email and no access is given.`);
+    `${addedBy} has made you an admin of ${company} on TapCard for Business.\n\nSign in: ${link}\n\nThis link works once and expires in 15 minutes. If you weren't expecting it, ignore this email and no access is given.\n\nWhat an admin can do: Card template (find the business, see each shop's card), Locations (add shops, create manager links), Employees (invite staff, choose who may post offers), Offers & numbers (post offers and news, see results), QR sign (print each shop's sign). Full guide: https://tapcard.aiert.co.uk/business/guide`);
 }
 
 export async function sendBizTrialReminderEmail(email: string, company: string, endsOn: string): Promise<void> {
