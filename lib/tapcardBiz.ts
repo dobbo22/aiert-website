@@ -490,6 +490,17 @@ export async function getStaffCardInScope(orgId: string, cardId: string, locatio
   return rows[0] ? { found: true, photoUrl: rows[0].photo_url } : { found: false, photoUrl: null };
 }
 
+/// An admin tags an existing staff card with its shop (or clears it). Only a staff card of this company, and only a shop of this company.
+export async function assignStaffShop(orgId: string, cardId: string, locationId: string | null): Promise<boolean> {
+  await ensureSchema();
+  if (locationId) {
+    const shop = await sql`SELECT 1 FROM tapcard_biz_locations WHERE id = ${locationId} AND org_id = ${orgId}`;
+    if (!shop.length) return false;
+  }
+  const rows = await sql`UPDATE tapcard_cards SET org_location_id = ${locationId} WHERE id = ${cardId} AND org_id = ${orgId} AND card_kind <> 'business' RETURNING id`;
+  return rows.length > 0;
+}
+
 export async function setCardStaffLocation(cardId: string, locationId: string): Promise<void> {
   await ensureSchema();
   await sql`UPDATE tapcard_cards SET org_location_id = ${locationId} WHERE id = ${cardId}`;

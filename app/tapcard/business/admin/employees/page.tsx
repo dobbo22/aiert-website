@@ -4,6 +4,7 @@ import { listLocations } from "@/lib/tapcardBizLocations";
 import InvitePeople from "./InvitePeople";
 import PostControls from "./PostControls";
 import RemoveCardButton from "./RemoveCardButton";
+import StaffShop from "./StaffShop";
 
 // TapCard keeps no staff list (see lib/tapcardBizInvite.ts) — this page
 // only knows the cards people have actually activated.
@@ -69,6 +70,7 @@ export default async function BizEmployeesPage() {
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Title</th>
+              <th className="px-4 py-3">Shop</th>
               <th className="px-4 py-3">Offers and news</th>
               <th className="px-4 py-3" />
             </tr>
@@ -76,7 +78,7 @@ export default async function BizEmployeesPage() {
           <tbody>
             {cards.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-mist">
+                <td colSpan={6} className="px-4 py-6 text-mist">
                   No one has activated their card yet.
                 </td>
               </tr>
@@ -86,6 +88,7 @@ export default async function BizEmployeesPage() {
                 <td className="px-4 py-3">{c.name}</td>
                 <td className="px-4 py-3">{c.email}</td>
                 <td className="px-4 py-3">{c.title}</td>
+                <td className="px-4 py-3">{c.card_kind === "business" ? "" : <StaffShop cardId={c.id} shopId={c.org_location_id} shops={allShops.map((l) => ({ id: l.id, label: shopLabel(l.address, l.name) }))} />}</td>
                 <td className="px-4 py-3"><PostControls cardId={c.id} isLocationInitial={c.card_kind === "business"} postsForInitial={c.can_post && c.card_kind === "business" ? [...c.posts_for, c.id] : c.posts_for} locations={locations} /></td>
                 <td className="px-4 py-3 text-right">
                   <RemoveCardButton cardId={c.id} name={c.name} />

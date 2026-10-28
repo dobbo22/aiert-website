@@ -228,3 +228,47 @@ test("the navigation shows a manager only QR sign and Employees (and Overview)",
   const admin = text(renderToStaticMarkup(AdminNav({ role: "admin" }) as never));
   for (const shown of ["Card template", "Locations", "Offers & numbers", "Admins", "Billing", "QR sign", "Employees"]) assert.ok(admin.includes(shown), shown);
 });
+
+test("an admin can tag an existing staff card with its shop, so that shop's manager sees it", async () => {
+  const t = await setup();
+  const { addAdmin } = await import("../lib/tapcardBiz");
+  const cards = await import("../app/api/tapcard/biz/cards/[id]/route");
+  const { createCard } = await import("../lib/tapcardDb");
+  const { hashSecret } = await import("../lib/tapcardAuth");
+  const { attachCardToOrg } = await import("../lib/tapcardBiz");
+  const mkCard = async (name: string) => {
+    const id = await createCard({ label: "Work", grouping_id: "", name, title: "", company: "Mgr Co", phone: "", email: `${name}@x.co`, website: "", address: "", linkedin_url: "", twitter_url: "", instagram_url: "", facebook_url: "", facebook_is_page: false, tiktok_url: "", whatsapp_url: "", photo_url: null } as never, hashSecret("t".repeat(40)), "ip");
+    await attachCardToOrg(id, t.org.id, []);
+    return id;
+  };
+  const old = await mkCard("OldStaff");
+  const patch = (id: string, body: unknown) => cards.PATCH(req(`/x/${id}`, { method: "PATCH", body }), { params: Promise.resolve({ id }) });
+  await addAdmin(t.org.id, "mgr4@mgr.example", "manager", [t.dunmow.id]);
+
+  // a manager cannot tag cards
+  t.asManager("mgr4@mgr.example");
+  assert.equal((await patch(old, { locationId: t.dunmow.id })).status, 401);
+  assert.ok(!text(await show(() => import("../app/tapcard/business/admin/employees/page"))).includes("OldStaff"));
+
+  // an admin can, and then the manager sees the card
+  t.asAdmin();
+  assert.equal((await patch(old, { locationId: t.dunmow.id })).status, 200);
+  assert.equal((await patch(old, {})).status, 400);
+  assert.equal((await patch(old, { locationId: "not-a-shop" })).status, 404, "a shop that is not this company's");
+  const other = await setup();
+  assert.equal((await patch(old, { locationId: other.dunmow.id })).status, 404, "another company's shop");
+  const adminPage = text(await show(() => import("../app/tapcard/business/admin/employees/page")));
+  assert.match(adminPage, /OldStaff/);
+  t.asManager("mgr4@mgr.example");
+  assert.match(text(await show(() => import("../app/tapcard/business/admin/employees/page"))), /OldStaff/);
+
+  // clearing it takes it away from the manager again; a shop card cannot be tagged as staff
+  t.asAdmin();
+  assert.equal((await patch(old, { locationId: null })).status, 200);
+  t.asManager("mgr4@mgr.example");
+  assert.ok(!text(await show(() => import("../app/tapcard/business/admin/employees/page"))).includes("OldStaff"));
+  await sql`UPDATE tapcard_cards SET card_kind = 'business' WHERE id = ${old}`;
+  t.asAdmin();
+  assert.equal((await patch(old, { locationId: t.dunmow.id })).status, 404);
+  ctx.cookie = undefined;
+});
