@@ -163,14 +163,15 @@ export default function LocationsManager({ initial, allowed, orgName }: { initia
             </div>
             <span className={`rounded-full px-3 py-1 text-xs font-semibold ${l.claimed ? "bg-teal/20 text-teal" : "bg-gold/20 text-gold"}`}>{l.claimed ? "Card made" : "Waiting for its manager"}</span>
           </div>
-          {!l.claimed && (
+          {(
             <div className="mt-4">
+              {l.claimed && <p className="mb-3 text-sm text-cloud">Made the card yourself? Hand it to this shop's manager: they open the link in the TapCard app and take over the same card, with its QR code, followers and offers. You lose edit access on your phone.</p>}
               <div className="flex flex-wrap gap-3">
                 <input placeholder="Manager's name" value={people[l.id]?.name ?? ""} onChange={(e) => setPeople((m) => ({ ...m, [l.id]: { name: e.target.value, email: m[l.id]?.email ?? "" } }))}
                   className="min-w-0 flex-1 rounded-xl bg-slate/40 px-3 py-2 text-cloud ring-1 ring-slate" />
                 <input placeholder="Manager's email" value={people[l.id]?.email ?? ""} onChange={(e) => setPeople((m) => ({ ...m, [l.id]: { name: m[l.id]?.name ?? "", email: e.target.value } }))}
                   className="min-w-0 flex-1 rounded-xl bg-slate/40 px-3 py-2 text-cloud ring-1 ring-slate" />
-                <button type="button" onClick={() => void invite(l)} disabled={busy} className="btn-gold rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-60">Create link</button>
+                <button type="button" onClick={() => void invite(l)} disabled={busy} className="btn-gold rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-60">{l.claimed ? "Create hand-over link" : "Create link"}</button>
               </div>
               {links[l.id] && (
                 <div className="mt-3 space-y-2 text-sm text-cloud">
@@ -182,7 +183,7 @@ export default function LocationsManager({ initial, allowed, orgName }: { initia
                   <LinkQr link={links[l.id]} />
                 </div>
               )}
-              <button type="button" onClick={() => void remove(l)} className="mt-3 text-sm text-mist underline">Remove this location</button>
+              {!l.claimed && <button type="button" onClick={() => void remove(l)} className="mt-3 text-sm text-mist underline">Remove this location</button>}
             </div>
           )}
         </div>

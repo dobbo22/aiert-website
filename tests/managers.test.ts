@@ -300,7 +300,7 @@ test("removing a made shop card puts the shop back to waiting, ready for a new i
   };
   assert.equal((await mk()).status, 200);
   const cardId = ((await sql`SELECT id FROM tapcard_cards WHERE org_id = ${t.org.id} AND card_kind = 'business'`)[0] as { id: string }).id;
-  assert.equal((await loc.POST(req("/x", { body: { invite: { locationId: t.dunmow.id, name: "M", email: "m@x.co" } } }))).status, 409, "made: no second link");
+  assert.equal((await loc.POST(req("/x", { body: { invite: { locationId: t.dunmow.id, name: "M", email: "m@x.co" } } }))).status, 200, "made: the link hands the same card over");
   assert.equal((await del.DELETE(req(`/x/${cardId}`, { method: "DELETE" }), { params: Promise.resolve({ id: cardId }) })).status, 200);
   assert.equal((await mk()).status, 200, "a new link now builds a new card for the same shop");
   ctx.cookie = undefined;

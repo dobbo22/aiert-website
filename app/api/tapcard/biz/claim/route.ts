@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import { createCard, getCard, publicCardJSON } from "@/lib/tapcardDb";
+import { createCard, getCard, publicCardJSON, replaceEditToken } from "@/lib/tapcardDb";
 import { canEdit, hashSecret, readEditToken } from "@/lib/tapcardAuth";
 import { isPersonalCard } from "@/lib/tapcardPassStyle";
 import { attachCardToOrg, cardOrgId, countOrgCards, getOrg, orgCanProvision, spendInvite, wasRemovedByCompany } from "@/lib/tapcardBiz";
@@ -27,6 +27,21 @@ export async function POST(req: NextRequest) {
   if (!orgCanProvision(org)) {
     return NextResponse.json({ error: "billing isn't active for this account right now" }, { status: 402 });
   }
+  // Hand-over: an admin made this shop's card on their own phone; whoever opens the link takes it over (no new card, so no seat is used).
+  // The card keeps its link, QR code, followers and offers; the old phone's edit access ends.
+  if (invite.m) {
+    const shop = invite.l ? await getLocation(invite.l) : null;
+    const card = shop && shop.org_id === org.id && shop.claimed_card_id === invite.m ? await getCard(invite.m) : null;
+    if (!card) return NextResponse.json({ error: "this shop's card has changed since the link was made; ask your admin for a new one" }, { status: 409 });
+    if (!(await spendInvite(invite.j, org.id))) return NextResponse.json({ error: "this invite link was already used" }, { status: 409 });
+    const newToken = crypto.randomBytes(32).toString("base64url").replace(/=/g, "");
+    await replaceEditToken(card.id, hashSecret(newToken));
+    const handed = (await getCard(card.id)) ?? card;
+    return NextResponse.json({
+      card: { ...publicCardJSON(handed), orgID: org.id, orgLockedFields: org.locked_fields, orgPolicyVersion: org.policy_version, orgLogoURL: org.logo_url },
+      editToken: newToken,
+    });
+  }
   // Checked before spending, so a full plan doesn't burn the invite.
   if (org.seat_limit > 0 && (await countOrgCards(org.id)) >= org.seat_limit) {
     return NextResponse.json({ error: "your company has used all its TapCard seats — ask your admin" }, { status: 402 });
@@ -48,6 +63,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "this invite link was already used" }, { status: 409 });
     }
     await attachCardToOrg(existing.id, org.id, org.locked_fields);
+    // Opened from a shop's link: the person's own card becomes that shop's card.
+    const shopFor = invite.l ? await getLocation(invite.l) : null;
+    if (shopFor && shopFor.org_id === org.id && !shopFor.claimed_card_id) await markLocationClaimed(shopFor.id, existing.id);
     const joined = await getCard(existing.id);
     if (!joined) return NextResponse.json({ error: "something went wrong joining your card" }, { status: 500 });
     return NextResponse.json({

@@ -82,9 +82,9 @@ export async function POST(req: NextRequest) {
   if (body.invite) {
     const loc = body.invite.locationId ? await getLocation(body.invite.locationId) : null;
     if (!loc || loc.org_id !== org.id) return NextResponse.json({ error: "Location not found" }, { status: 404 });
-    if (loc.claimed_card_id) return NextResponse.json({ error: "This location already has its card." }, { status: 409 });
     const person = { name: String(body.invite.name ?? "").trim().slice(0, 200), email: String(body.invite.email ?? "").trim().slice(0, 200), title: "" };
-    return NextResponse.json({ link: inviteLink(signInvite(org, person, Date.now(), loc.id)) });
+    // A shop whose card an admin already made: the link hands that same card (QR code, followers, offers) to the manager who opens it.
+    return NextResponse.json({ link: inviteLink(signInvite(org, person, Date.now(), loc.id, undefined, loc.claimed_card_id ?? undefined)) });
   }
 
   const hit = body.hit;

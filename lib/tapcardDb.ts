@@ -174,6 +174,12 @@ export function newCardId(): string {
   return crypto.randomBytes(16).toString("base64url");
 }
 
+/// A new owner takes the card: the previous edit token (on the old phone) stops working.
+export async function replaceEditToken(cardId: string, editTokenHash: string): Promise<void> {
+  await ensureSchema();
+  await sql`UPDATE tapcard_cards SET edit_token_hash = ${editTokenHash}, updated_at = now() WHERE id = ${cardId}`;
+}
+
 export async function createCard(input: TapCardInput, editTokenHash: string, creatorIpHash: string): Promise<string> {
   await ensureSchema();
   const id = newCardId();

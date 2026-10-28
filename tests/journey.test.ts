@@ -108,6 +108,17 @@ test("a business signs up, goes through every tab, and finds nothing broken", as
   const qr2 = await show(() => Promise.resolve({ default: qrPage.default as never }), { searchParams: Promise.resolve({ shop: added.location.id }) });
   assert.ok(!/>Sample</.test(qr2), "the card exists, so the sign is the real one");
 
+  // 8b. Hand-over: a link for a shop that already has its card moves the same card to the manager, with a new edit token
+  const before = (await sql`SELECT id, edit_token_hash FROM tapcard_cards WHERE org_id = ${orgId} AND card_kind = 'business'`)[0] as { id: string; edit_token_hash: string };
+  const handLink = await json(await locs.POST(req("/api/tapcard/biz/locations", { body: { invite: { locationId: added.location.id, name: "Nina", email: "nina@journeycafe.example" } } })));
+  const handed = await json(await claim.POST(req("/api/biz/claim", { body: { token: handLink.link.split("#")[1] } })));
+  assert.equal(handed.card.id, before.id, "the same card, not a new one");
+  assert.ok(handed.editToken, "the new owner gets an edit token");
+  const after = (await sql`SELECT edit_token_hash FROM tapcard_cards WHERE id = ${before.id}`)[0] as { edit_token_hash: string };
+  assert.notEqual(after.edit_token_hash, before.edit_token_hash, "the old phone's access ends");
+  assert.equal(((await sql`SELECT COUNT(*)::int AS n FROM tapcard_cards WHERE org_id = ${orgId} AND card_kind = 'business'`)[0] as { n: number }).n, 1);
+  assert.equal((await claim.POST(req("/api/biz/claim", { body: { token: handLink.link.split("#")[1] } }))).status, 409, "single use");
+
   // 9. The admin moves the shop: the made card changes at once
   const patched = await locs.PATCH(req("/api/tapcard/biz/locations", { method: "PATCH", body: { id: added.location.id, name: "Journey Cafe", address: "Units 1 & 2, Craft Centre, Blake End", phone: "01371 222222", email: "hello@journeycafe.example" } }));
   assert.equal(patched.status, 200);

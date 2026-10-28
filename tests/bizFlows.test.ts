@@ -130,10 +130,11 @@ test("locations: add, limit, edit, invite, claim builds the finished shop card",
   assert.deepEqual((card as never as { org_posts_for: string[] }).org_posts_for, [], "a manager cannot post offers unless an admin ticks it");
   assert.ok(JSON.parse(card.links).some((l: { kind: string }) => l.kind === "hours"));
 
-  // a made location can no longer be removed as a prepared one, and cannot be invited again
+  // a made location can no longer be removed as a prepared one, and its invite is a hand-over of the same card
   assert.equal((await loc.DELETE(req(`/api/tapcard/biz/locations?id=${b.location.id}`, { method: "DELETE" }))).status, 404);
   const again = await loc.POST(req("/api/tapcard/biz/locations", { body: { invite: { locationId: b.location.id, name: "X", email: "x@x" } } }));
-  assert.equal(again.status, 409);
+  assert.equal(again.status, 200);
+  assert.equal(verifyInvite((await again.json()).link.split("#")[1])!.m, card.id);
   // an unclaimed one can be removed
   assert.equal((await loc.DELETE(req(`/api/tapcard/biz/locations?id=${a.location.id}`, { method: "DELETE" }))).status, 200);
   // another company cannot touch it

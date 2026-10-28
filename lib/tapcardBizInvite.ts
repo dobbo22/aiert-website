@@ -31,6 +31,8 @@ export interface InvitePayload {
   l?: string;
   /// A staff card for this shop (tapcard_biz_locations id): the new card belongs to that shop, so its manager can see and remove it.
   s?: string;
+  /// Hand over: the shop's card (id) that already exists, made by an admin, moves to whoever opens this link.
+  m?: string;
 }
 
 function secret(): string {
@@ -49,7 +51,8 @@ export function signInvite(
   person: { name: string; email: string; title: string },
   now = Date.now(),
   locationId?: string,
-  staffLocationId?: string
+  staffLocationId?: string,
+  transferCardId?: string
 ): string {
   const payload: InvitePayload = {
     v: 1,
@@ -62,6 +65,7 @@ export function signInvite(
     j: crypto.randomBytes(16).toString("base64url"),
     ...(locationId ? { l: locationId } : {}),
     ...(staffLocationId ? { s: staffLocationId } : {}),
+    ...(transferCardId ? { m: transferCardId } : {}),
   };
   const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
   return `${body}.${signature(body).toString("base64url")}`;
