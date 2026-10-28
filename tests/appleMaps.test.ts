@@ -260,3 +260,31 @@ test("each free provider has a daily limit below its free tier: over it, the pro
   delete process.env.PROVIDER_CAP_TOMTOM_DAY; delete process.env.PROVIDER_CAP_HERE_DAY; delete process.env.PROVIDER_CAP_APPLE_DAY;
   delete process.env.TOMTOM_API_KEY; delete process.env.HERE_API_KEY;
 });
+
+test("a company's own website lists its other shops, even a new address with no postcode", async () => {
+  const { textBranches, sameShopAddress } = await import("../lib/siteLinks");
+  // The shape of The Rose Garden's contact page: two shops, one with a postcode, one headed by its place name with none.
+  const html = `<html><body><h1>Contact The Rose Garden Florists | Great Dunmow &amp; Great Bardfield</h1>
+    <p>For all enquiries please telephone or email us using the details provided below:</p>
+    <h3>The Rose Garden Florists Great Dunmow</h3><p>16a High Street<br>Great Dunmow<br>CM6 1AG</p><p>01371 872882</p>
+    <h4>Opening Hours</h4><p>Mon-Fri: 9.30am-5pm</p><p>Sat: 9.30am-3pm</p>
+    <h3>The Rose Garden Florists Blake End</h3><p>The Rose Garden Florists, Unit 15ab</p><p>Blake End</p><p>01371 872882</p>
+    <h4>Opening Hours</h4><p>Mon: Closed</p><p>Tues-Sat: 9.30am-4.30pm</p>
+    <p>Latest news</p></body></html>`;
+  const found = textBranches(html, "The Rose Garden");
+  const blake = found.find((p) => /blake/i.test(p.addressText))!;
+  assert.ok(blake, "the postcode-less shop is found by its heading");
+  assert.equal(blake.addressText, "Unit 15ab, Blake End");
+  assert.equal(blake.phone, "01371 872882");
+  assert.equal(blake.hoursText, "Mon: Closed; Tues–Sat: 9.30am–4.30pm");
+  // the page title line is not a shop
+  assert.ok(!found.some((p) => /contact/i.test(p.label)));
+  // nothing is invented for a page that does not list shops
+  assert.deepEqual(textBranches("<html><body><h1>The Rose Garden</h1><p>Welcome to our shop</p></body></html>", "The Rose Garden"), []);
+
+  // already-added shops are recognised however the address is written
+  assert.equal(sameShopAddress("Units 15A & 15B, Blake House Craft Centre, Blake End", "Unit 15ab, Blake End, Essex, CM77 6SH"), true);
+  assert.equal(sameShopAddress("16A High Street, Great Dunmow, Dunmow CM6 1AG", "16a High Street, Great Dunmow, Essex, CM6 1AG"), true);
+  assert.equal(sameShopAddress("16A High Street, Great Dunmow, CM6 1AG", "Braintree Road, Great Bardfield, CM7 4PY"), false);
+  assert.equal(sameShopAddress("12 High Street, Maldon", "5 Mill Lane, Thaxted"), false, "'High Street' alone is not enough");
+});

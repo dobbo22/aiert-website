@@ -4,13 +4,14 @@ import { requireBizSession } from "@/lib/tapcardBizSession";
 import { listLocations } from "@/lib/tapcardBizLocations";
 import { searchBusinesses } from "@/lib/tapcardBusinessSearch";
 import { appleSearch, appleMapsConfigured, type ApplePlace } from "@/lib/appleMaps";
-import { addressKey, findSiteLinks, postcodeOf } from "@/lib/siteLinks";
+import { findSiteBranches, postcodeOf, sameShopAddress } from "@/lib/siteLinks";
 import { rateLimited } from "@/lib/rateLimit";
 
-// "Find my other shops": the company's other locations, so they need not be typed one by one. Sources, cheapest first:
-//  1. Apple Maps (free): places with the company's name within about 40 km of a shop it already has. Apple gives no website, so
+// "Find my other shops": the company's other locations, so they need not be typed one by one. Sources, in order:
+//  1. The company's own website: its structured data, address blocks and headed shop blocks (see findSiteBranches). Free, and the only
+//     source with a shop's newest address. A site that lists two or more shops is trusted and nothing else is searched.
+//  2. Apple Maps (free): places with the company's name within about 40 km of a shop it already has. Apple gives no website, so
 //     the phone, website and hours are filled in by one Google lookup only when the admin adds a shop.
-//  2. The branches the company's own website lists (its schema.org data).
 //  3. Google listings that share the company's website, only when Apple is not set up or found nothing.
 // Anything already added is left out.
 const km = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) => {
@@ -30,18 +31,26 @@ export async function POST(req: NextRequest) {
   const host = (v: string) => { try { return new URL(/^[a-z]+:\/\//i.test(v) ? v : `https://${v}`).hostname.replace(/^www\./i, "").toLowerCase(); } catch { return ""; } };
   const domain = host(org.website);
   const have = await listLocations(org.id);
-  const seen = new Set<string>();
-  const keyOf = (address: string, phone: string) => postcodeOf(address) || addressKey(address) || phone.replace(/\D/g, "");
-  for (const l of have) seen.add(keyOf(l.address, l.phone));
+  const known: string[] = have.map((l) => l.address);
 
   type Candidate = { id: string; name: string; address: string; website: string; phone: string; type: string; hours: string; source: string };
   const out: Candidate[] = [];
   const add = (c: Candidate) => {
-    const k = keyOf(c.address, c.phone);
-    if (!k || seen.has(k)) return;
-    seen.add(k);
+    if (!c.address || known.some((a) => sameShopAddress(a, c.address))) return;
+    known.push(c.address);
     out.push(c);
   };
+
+  // 1. The company's own website: the most reliable list, and the only one that has a shop's newest address.
+  let siteFound = false;
+  if (org.website) {
+    const listed = await findSiteBranches(org.website, org.name).catch(() => []);
+    // A website that lists its shops is trusted: nothing else is searched, even if all of them are already added.
+    if (listed.length >= 2) siteFound = true;
+    for (const b of listed) {
+      add({ id: `site:${b.address || b.name}`, name: org.name, address: b.address || b.name, website: org.website, phone: b.phone, type: "", hours: b.hours, source: "Website" });
+    }
+  }
 
   const ipNear = req.headers.get("x-vercel-ip-latitude") && req.headers.get("x-vercel-ip-longitude")
     ? { lat: Number(req.headers.get("x-vercel-ip-latitude")), lng: Number(req.headers.get("x-vercel-ip-longitude")) } : null;
@@ -49,7 +58,7 @@ export async function POST(req: NextRequest) {
 
   // 1. Apple: find where an existing shop is, then the company's name nearby.
   let appleFound = false;
-  if (appleMapsConfigured() && org.name.trim().length >= 3) {
+  if (appleMapsConfigured() && org.name.trim().length >= 3 && !siteFound) {
     let centre: { lat: number; lng: number } | null = ipNear;
     let myType = "";
     if (have[0]) {
@@ -72,7 +81,7 @@ export async function POST(req: NextRequest) {
   }
 
   // 3. Google, only when Apple gave nothing: listings under the company's name whose website is the company's own.
-  if (!appleFound) {
+  if (!appleFound && !siteFound) {
     const queries = [...new Set([org.name, ...(have[0] ? [`${org.name} ${townOf(have[0].address)}`] : [])].filter((q) => q.trim().length >= 3))];
     for (const q of queries) {
       for (const h of await searchBusinesses(q, ipNear, false, `biz-${session.orgId}`).catch(() => [])) {
@@ -81,12 +90,5 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 2. The website's own list of branches.
-  if (org.website) {
-    const site = await findSiteLinks(org.website).catch(() => null);
-    for (const b of site?.branches ?? []) {
-      add({ id: `site:${b.address}`, name: b.name || org.name, address: b.address, website: org.website, phone: b.phone, type: "", hours: b.hours, source: "Website" });
-    }
-  }
   return NextResponse.json({ candidates: out });
 }

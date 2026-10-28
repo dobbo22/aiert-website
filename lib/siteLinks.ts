@@ -456,3 +456,107 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
   }
   return { links: sanitizeLinks([...[...found].map(([kind, value]) => ({ kind, label: "", value })), ...extras]), details, branches };
 }
+
+// ---- Finding a company's other shops from its own website ----------------------------------------------------------------------------
+
+const BRAND_STOP = new Set(["the", "and", "ltd", "limited", "plc", "co", "company", "of"]);
+const HEADING_GENERIC = new Set(["florist", "florists", "flowers", "flower", "shop", "shops", "store", "stores", "branch", "contact", "us", "find", "visit", "opening", "hours", "times", "our", "about", "home", "welcome"]);
+const words = (t: string) => t.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(Boolean);
+
+/// Shop blocks that are introduced by a heading with the business's name plus a place ("The Rose Garden Florists Blake End"), followed by
+/// that shop's address, phone and opening hours, even when the address has no postcode. Only blocks with a phone or hours count.
+export function textBranches(html: string, brand: string): HoursPlace[] {
+  const lines = pageLines(html);
+  const brandWords = words(brand).filter((w) => !BRAND_STOP.has(w));
+  if (!brandWords.length) return [];
+  const isHeading = (l: string): boolean => {
+    if (l.length > 80 || l.includes("|") || PHONE_RE.test(l) || /[:@]/.test(l)) return false;
+    const w = words(l);
+    if (!brandWords.every((b) => w.includes(b))) return false;
+    const extra = w.filter((x) => !brandWords.includes(x) && !BRAND_STOP.has(x) && !HEADING_GENERIC.has(x));
+    return extra.length >= 1 && extra.length <= 4 && !/^(contact|about|find|visit|welcome|opening)/i.test(l);
+  };
+  const out: HoursPlace[] = [];
+  const seen = new Set<string>();
+  lines.forEach((line, i) => {
+    if (!isHeading(line)) return;
+    const block: string[] = [];
+    for (let k = i + 1; k < Math.min(lines.length, i + 12); k++) {
+      if (isHeading(lines[k]) && k > i + 1) break;
+      block.push(lines[k]);
+    }
+    const phoneIdx = block.findIndex((l) => PHONE_RE.test(l));
+    const hoursIdx = block.findIndex((l) => /^opening (hours|times)/i.test(l));
+    if (phoneIdx < 0 && hoursIdx < 0) return;
+    const cut = [phoneIdx, hoursIdx].filter((x) => x >= 0).reduce((a, b) => Math.min(a, b), block.length);
+    const brandRe = new RegExp(`^${brandWords.map((w) => w).join("[^a-z0-9]+")}`, "i");
+    const addr = block.slice(0, cut).map((l) => l.replace(/^the\s+/i, "").replace(new RegExp(`^${brandWords.join("\\W+")}\\W*(florists?|flowers?|shop)?\\W*`, "i"), "").trim()).filter((l) => l && l.length < 70 && !/^(contact|address|find us|tel|telephone|phone)\s*:?$/i.test(l) && !brandRe.test(l));
+    if (!addr.length) return;
+    const phone = (PHONE_RE.exec(block[phoneIdx >= 0 ? phoneIdx : 0] ?? "")?.[0] ?? "").replace(/\s+/g, " ").trim().slice(0, 40);
+    const hoursLines: string[] = [];
+    if (hoursIdx >= 0) for (let k = hoursIdx + 1; k < Math.min(block.length, hoursIdx + 9); k++) {
+      if (DAY_WORDS.test(block[k]) && (TIME.test(block[k]) || /closed/i.test(block[k])) && block[k].length < 70) hoursLines.push(tidyHoursLine(block[k]));
+      else if (hoursLines.length) break;
+    }
+    const addressText = addr.join(", ");
+    const key = addressText.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push({ postcode: postcodeOf(addressText), street: "", name: "", phone, addressText: tidyAddress(addressText), label: line, specs: [], hoursText: hoursLines.length ? hoursLines.join("; ") : undefined });
+  });
+  return out;
+}
+
+/// The other shops a company's own website lists: from its structured data, its address blocks with a postcode, and headed shop blocks
+/// (textBranches), across the home page and up to four contact / shops / locations pages. Used to offer the company's other shops.
+export async function findSiteBranches(website: string, brand: string): Promise<SiteBranch[]> {
+  let host = website.trim();
+  try { host = new URL(/^[a-z]+:\/\//i.test(host) ? host : `https://${host}`).hostname; } catch { return []; }
+  const domain = normalizeDomain(host);
+  if (!domain) return [];
+  const page = await fetchHomePage(domain);
+  if (!page || !(page.res.headers.get("content-type") ?? "").includes("text/html")) return [];
+  const buf = await readLimited(page.res, MAX_HTML);
+  if (!buf) return [];
+  const homeHtml = buf.toString("utf8");
+  const base = page.url;
+  const siteHost = base.hostname.replace(/^www\./, "");
+  const links = anchors(homeHtml, base)
+    .filter(({ href, text }) => href.hostname.replace(/^www\./, "") === siteHost && /(locations?|shops?|stores?|branches|find[- ]us|contact|visit|our-)/i.test(`${text} ${href.pathname}`))
+    .map(({ href }) => { href.hash = ""; return href.toString(); }).filter((u, i, a) => a.indexOf(u) === i).slice(0, 4);
+  const htmls = [homeHtml];
+  for (const u of links) {
+    const more = await safeFetch(u);
+    if (!more || !(more.res.headers.get("content-type") ?? "").includes("text/html")) continue;
+    const b = await readLimited(more.res, MAX_HTML);
+    if (b) htmls.push(b.toString("utf8"));
+  }
+  const places: HoursPlace[] = [];
+  const add = (p: HoursPlace) => {
+    if (!(p.addressText || p.label)) return;
+    const pc = p.postcode;
+    const same = places.find((x) => (pc && x.postcode === pc) || (x.addressText && p.addressText && addressKey(x.addressText) === addressKey(p.addressText)));
+    if (same) { same.phone ||= p.phone; same.hoursText ||= p.hoursText; same.label ||= p.label; return; }
+    places.push(p);
+  };
+  for (const h of htmls) {
+    jsonLdUrls(h).places.forEach(add);
+    textBranches(h, brand).forEach(add);
+    textPlaces(h).forEach(add);
+  }
+  // A postcode-less headed block that is the same shop as a postcode block (same phone and hours) is not listed twice: the headed one wins.
+  return places.slice(0, 40).map((p) => ({ name: p.label || p.addressText, address: p.label ? p.addressText : "", phone: p.phone, hours: placeHours(p) }));
+}
+
+const ADDRESS_GENERIC = new Set(["unit", "units", "the", "and", "street", "road", "lane", "house", "centre", "center", "craft", "england", "uk", "united", "kingdom", "essex", "london"]);
+/// Are these two addresses the same shop? The same postcode, or at least two distinctive words in common ("Blake End" in both, whichever
+/// way the unit is written), so a shop the company already has is not offered again.
+export function sameShopAddress(a: string, b: string): boolean {
+  const pa = postcodeOf(a), pb = postcodeOf(b);
+  if (pa && pb) return pa === pb;
+  const tokens = (t: string) => new Set(addressKey(t).split(" ").filter((w) => w.length >= 3 && !ADDRESS_GENERIC.has(w) && !/^\d+[a-z]?$/.test(w)));
+  const ta = tokens(a), tb = tokens(b);
+  let common = 0;
+  ta.forEach((w) => { if (tb.has(w)) common++; });
+  return common >= 2;
+}
