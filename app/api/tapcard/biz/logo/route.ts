@@ -36,7 +36,11 @@ export async function POST(req: NextRequest) {
     if (!domain) {
       return NextResponse.json({ error: "Add your website above first." }, { status: 400 });
     }
-    const logo = await findSiteLogo(domain).catch(() => null);
+    // The wide logo the site declares (the same one the card and the Wallet pass show), never its small favicon: a shopping basket
+    // icon is not a company logo. Tried on the domain given, then with www. added or removed.
+    const alternate = domain.startsWith("www.") ? domain.slice(4) : `www.${domain}`;
+    let logo = await findSiteLogo(domain, { iconFallback: false }).catch(() => null);
+    if (!logo) logo = await findSiteLogo(alternate, { iconFallback: false }).catch(() => null);
     if (!logo) {
       return NextResponse.json({ error: `Couldn't find a logo on ${domain} — upload one instead.` }, { status: 404 });
     }
