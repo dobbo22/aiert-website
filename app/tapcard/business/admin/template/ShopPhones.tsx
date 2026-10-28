@@ -127,7 +127,7 @@ const ShopPhones = forwardRef<ShopHandle, { initial: Shop[]; allowed: number; we
   return (
     <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
       <h2 className="text-lg font-bold text-cloud">Your shops</h2>
-      <div className="mt-3 flex gap-2 overflow-x-auto pb-2">
+      <div className="mt-3 flex gap-3 overflow-x-auto px-1 py-2">
         {shops.map((s, i) => (
           <button key={s.key} type="button" onClick={() => { setSel(i); setNote(null); }}
             className={`shrink-0 rounded-xl px-3 py-2 text-sm font-semibold ${i === sel ? "bg-gold text-black" : "text-cloud ring-1 ring-slate"} ${s.id ? "" : "border border-dashed border-mist"}`}>
