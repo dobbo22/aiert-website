@@ -18,7 +18,7 @@ const FIELD_LABELS: Record<(typeof LOCKABLE_FIELDS)[number], string> = {
   whatsAppURL: "WhatsApp",
 };
 
-export default function TemplateForm({ org }: { org: BizOrg }) {
+export default function TemplateForm({ org, locationCount = 0 }: { org: BizOrg; locationCount?: number }) {
   const [name, setName] = useState(org.name);
   const [website, setWebsite] = useState(org.website);
   const [brandColor, setBrandColor] = useState(org.brand_color);
@@ -40,6 +40,7 @@ export default function TemplateForm({ org }: { org: BizOrg }) {
   const [finding, setFinding] = useState(false);
   const [findNote, setFindNote] = useState<string | null>(null);
   const [found, setFound] = useState<string[]>([]);
+  const [firstAdded, setFirstAdded] = useState(false);
 
   async function search() {
     const q = query.trim();
@@ -94,6 +95,12 @@ export default function TemplateForm({ org }: { org: BizOrg }) {
     setHits([]);
     if (hit.website) { const site = hit.website.replace(/^http:\/\//i, "https://"); setWebsite(site); await fillFrom(site, hit); }
     else setFindNote("That business has no website listed. Type it below and tap Fetch from my website.");
+    // The business picked here is the company's first location: it is added on the Locations tab with its address, phone, hours and links,
+    // ready for a manager's invite. Only when there are no locations yet.
+    if (locationCount === 0 && !firstAdded) {
+      const res = await fetch("/api/tapcard/biz/locations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ hit }) }).catch(() => null);
+      if (res?.ok) { setFirstAdded(true); setFound((f) => [...f, `Added ${hit.name} as your first location. Add your other shops, and invite each manager, on the Locations tab.`]); }
+    }
   }
 
   const [saving, setSaving] = useState(false);
