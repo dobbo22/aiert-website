@@ -168,7 +168,7 @@ export default function TemplateForm({ org }: { org: BizOrg }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void search(); } }}
-            placeholder="e.g. The Rose Garden Dunmow"
+            placeholder={org.name ? `${org.name} and your town` : "Your business name and town"}
             className="min-w-0 flex-1 rounded-xl bg-slate/40 px-3 py-2 text-cloud ring-1 ring-slate"
           />
           <button type="button" onClick={() => void search()} disabled={finding || query.trim().length < 3}
