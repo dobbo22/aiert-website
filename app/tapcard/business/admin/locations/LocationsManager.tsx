@@ -48,6 +48,14 @@ export default function LocationsManager({ initial, allowed, orgName }: { initia
     else setNote(data?.error ?? "Couldn't create the link. Try again.");
   }
 
+  async function emailAll() {
+    setBusy(true); setNote(null);
+    const res = await fetch("/api/tapcard/biz/locations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ emailLinks: true }) }).catch(() => null);
+    const data = (await res?.json().catch(() => null)) as { error?: string; sent?: number; to?: string } | null;
+    setBusy(false);
+    setNote(res?.ok ? `Sent ${data?.sent} shop card link${data?.sent === 1 ? "" : "s"} to ${data?.to}. Forward each to its manager, or open it on a phone.` : data?.error ?? "Couldn't send. Try again.");
+  }
+
   async function remove(l: Loc) {
     if (!window.confirm(`Remove ${l.name}? You can add it again.`)) return;
     const res = await fetch(`/api/tapcard/biz/locations?id=${encodeURIComponent(l.id)}`, { method: "DELETE" }).catch(() => null);
@@ -137,6 +145,13 @@ export default function LocationsManager({ initial, allowed, orgName }: { initia
         {full && <p className="mt-3 text-sm text-gold">All {allowed} locations are set up. To add more, change the number of locations on the Billing tab.</p>}
         {note && <p className="mt-3 text-sm text-gold">{note}</p>}
       </div>
+
+      {locations.some((l) => !l.claimed) && (
+        <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
+          <p className="text-sm text-mist">Want every waiting shop&apos;s card link in one email to yourself? Open them on a phone, or forward each to its manager.</p>
+          <button type="button" onClick={() => void emailAll()} disabled={busy} className="btn-gold mt-3 rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-60">Email me the shop card links</button>
+        </div>
+      )}
 
       {locations.map((l) => (
         <div key={l.id} className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">

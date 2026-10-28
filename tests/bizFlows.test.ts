@@ -356,3 +356,33 @@ test("AIERT can remove a shop manager (never an admin) from a company that allow
   assert.equal((await rm("again@removeco.example")).status, 401);
   ctx.admin = true;
 });
+
+test("the trial welcome email carries the admin's own card link, and an admin can email themselves every waiting shop's link", async () => {
+  const { verifyInvite } = await import("../lib/tapcardBizInvite");
+  const trial = await import("../app/api/tapcard/biz/trial/route");
+  const loc = await import("../app/api/tapcard/biz/locations/route");
+  ctx.outbox.length = 0;
+  const signup = await trial.POST(req("/api/tapcard/biz/trial", { body: { companyName: "Link Welcome Co", email: "boss@linkwelcome.example", name: "Bo Boss" } }));
+  assert.equal(signup.status, 200);
+  const welcome = ctx.outbox.find((m) => /Welcome/.test(m.subject))!;
+  assert.match(welcome.html, /Make your own card now/);
+  const token = welcome.html.match(/business\/claim#([\w.-]+)/)![1];
+  const payload = verifyInvite(token)!;
+  assert.equal(payload.n, "Bo Boss");
+  assert.equal(payload.e, "boss@linkwelcome.example");
+  assert.match(welcome.text, /store and your card sets itself up/);
+
+  const orgId = ((await sql`SELECT id FROM tapcard_biz_orgs WHERE name = 'Link Welcome Co'`)[0] as { id: string }).id;
+  ctx.session = { orgId, email: "boss@linkwelcome.example" };
+  const none = await loc.POST(req("/x", { body: { emailLinks: true } }));
+  assert.equal(none.status, 409, "no shops yet");
+  await loc.POST(req("/x", { body: { hit: { name: "Link Welcome Co", address: "1 High St, Dunmow, CM6 1AG", phone: "01", website: "", hours: "" } } }));
+  ctx.outbox.length = 0;
+  const sent = await json(await loc.POST(req("/x", { body: { emailLinks: true } })));
+  assert.equal(sent.sent, 1);
+  assert.equal(ctx.outbox[0].to, "boss@linkwelcome.example");
+  assert.match(ctx.outbox[0].html, /business\/claim#/);
+  ctx.session = { orgId, email: "boss@linkwelcome.example", support: true };
+  assert.equal((await loc.POST(req("/x", { body: { emailLinks: true } }))).status, 403, "support cannot trigger it");
+  ctx.session = null;
+});

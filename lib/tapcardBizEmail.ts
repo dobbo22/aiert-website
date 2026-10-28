@@ -88,7 +88,7 @@ export async function sendBizWelcomeEmail(email: string, company: string, opts: 
   await send(email, m.subject, m.html, m.text);
 }
 
-export type BizWelcomeOpts = ({ kind: "trial"; endsOn: string } | { kind: "paid"; locations: number }) & { name?: string };
+export type BizWelcomeOpts = ({ kind: "trial"; endsOn: string } | { kind: "paid"; locations: number }) & { name?: string; cardLink?: string };
 
 export function buildBizWelcomeEmail(email: string, company: string, opts: BizWelcomeOpts): { subject: string; html: string; text: string } {
   // Addressed by the first name they gave (never guessed from the email address).
@@ -151,6 +151,7 @@ export function buildBizWelcomeEmail(email: string, company: string, opts: BizWe
       <p style="font-size:18px"><strong>Welcome to TapCard for Business</strong></p>
       <p>${hello}</p>
       <p>Thank you for choosing TapCard for ${name}. ${intro}</p>
+      ${opts.cardLink ? `<p><strong>Make your own card now.</strong> Install the free TapCard app (iPhone or Android) and open this link on your phone. If the app isn't installed yet, the link takes you to the store and your card sets itself up when you open the app. The link works once and lasts 30 days.</p><p><a href="${opts.cardLink}">${opts.cardLink}</a></p>` : ""}
       <p>This is everything you need to get going. It is also in the full <a href="${guide}">Admin Guide</a>, which has pictures and answers to common questions.</p>
       <p>Your admin area: <a href="${admin}">${admin}</a> (sign in with ${esc(email)})</p>
       <h3 style="margin:22px 0 6px">Getting started</h3>
@@ -170,6 +171,7 @@ export function buildBizWelcomeEmail(email: string, company: string, opts: BizWe
     helloText,
     "",
     `Thank you for choosing TapCard for ${company || "your company"}. ${introText}`,
+    ...(opts.cardLink ? ["", `Make your own card now. Install the free TapCard app (iPhone or Android) and open this link on your phone. If the app isn't installed yet, the link takes you to the store and your card sets itself up when you open the app. The link works once and lasts 30 days: ${opts.cardLink}`] : []),
     "",
     `Your admin area: ${admin} (sign in with ${email})`,
     `Full Admin Guide: ${guide}`,
@@ -211,4 +213,15 @@ export async function sendBizManagerInviteEmail(email: string, company: string, 
   `;
   await send(email, `You are now a manager at ${company} on TapCard for Business`, html,
     `${addedBy} has made you a manager at ${company} on TapCard for Business, for ${shopList}.\n\nSign in: ${link}\n\nThis link works once and expires in 15 minutes. If you weren't expecting it, ignore this email and no access is given.\n\n${cardLinks.length ? `\n\nMake your shop's card in the TapCard app (install the free app, then open the link on your phone; each link works once and lasts 30 days):\n${cardLinks.map((c) => `${c.shop}: ${c.link}`).join("\n")}` : ""}\n\nWhat you can do as a manager on the web: QR sign (print your shop's sign and change its wording) and Employees (create invite links for your shop's staff, remove a card when someone leaves). Offers and news are posted by the company's admins.`);
+}
+
+/// All of a company's waiting shop card links in one email to an admin (to open on a phone, forward to a manager, or show as a QR code).
+export async function sendBizShopLinksEmail(email: string, company: string, links: { shop: string; link: string }[]): Promise<void> {
+  const html = `
+    <p>Here are the card links for the shops at <strong>${esc(company)}</strong> that are waiting for their manager.</p>
+    <p>Open a link on a phone with the TapCard app (or without it: the link takes you to the store and the card sets itself up when the app opens). Each link works once and lasts 30 days. Forward each one to the manager of that shop.</p>
+    <ul>${links.map((c) => `<li><strong>${esc(c.shop)}:</strong> <a href="${c.link}">${c.link}</a></li>`).join("")}</ul>
+  `;
+  await send(email, `Shop card links for ${company}`, html,
+    `Card links for the shops at ${company} that are waiting for their manager. Open on a phone with the TapCard app (or without it: the link takes you to the store and the card sets itself up when the app opens). Each link works once and lasts 30 days.\n\n${links.map((c) => `${c.shop}: ${c.link}`).join("\n")}`);
 }

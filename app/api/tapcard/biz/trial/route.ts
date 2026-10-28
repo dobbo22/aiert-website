@@ -3,6 +3,7 @@ import { addAdmin, claimWelcomeEmail, createOrg, domainHasUsedTrial, domainOf, e
 import { isFreeMailDomain } from "@/lib/tapcardDomain";
 import { createLoginToken } from "@/lib/tapcardBizAuth";
 import { sendBizLoginEmail, sendBizWelcomeEmail } from "@/lib/tapcardBizEmail";
+import { inviteLink, signInvite } from "@/lib/tapcardBizInvite";
 import { TRIAL_DAYS, TRIAL_SEAT_LIMIT } from "@/lib/tapcardBizBilling";
 
 interface Body {
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
   // The how-to-use email, once: the sign-in link above works for 15 minutes; this one is the reference to keep.
   if (await claimWelcomeEmail(org.id, "trial").catch(() => false)) {
     const endsOn = new Date(Date.now() + TRIAL_DAYS * 86_400_000).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-    await sendBizWelcomeEmail(email, companyName, { kind: "trial", endsOn, name }).catch((e) => console.error("tapcard biz welcome email failed:", e));
+    await sendBizWelcomeEmail(email, companyName, { kind: "trial", endsOn, name, cardLink: inviteLink(signInvite(org, { name, email, title: "" })) }).catch((e) => console.error("tapcard biz welcome email failed:", e));
   }
 
   return NextResponse.json({ ok: true });

@@ -4,8 +4,10 @@ import { getCard } from "@/lib/tapcardDb";
 import { refreshGoogleWalletPass } from "@/lib/googleWallet";
 import { pushToFollowers } from "@/lib/tapcardPush";
 import { requireBizSession } from "@/lib/tapcardBizSession";
+import { sendBizShopLinksEmail } from "@/lib/tapcardBizEmail";
 import { createLocation, deleteLocation, getLocation, listLocations, updateLocation, updateLocationDetails, type BizLocation } from "@/lib/tapcardBizLocations";
 import { findSiteLinks, tidyAddress } from "@/lib/siteLinks";
+import { shopCardLinks } from "@/lib/tapcardBizLocations";
 import { inviteLink, signInvite } from "@/lib/tapcardBizInvite";
 import { rateLimited } from "@/lib/rateLimit";
 import { parseStoredLinks, type CardLink } from "@/lib/tapcardLinks";
@@ -61,10 +63,21 @@ export async function POST(req: NextRequest) {
   if (!orgCanProvision(org)) return NextResponse.json({ error: "Billing isn't active, so locations can't be added right now." }, { status: 402 });
   if (rateLimited(req, "biz-locations", 30)) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   const body = (await req.json().catch(() => null)) as {
+    emailLinks?: boolean;
     invite?: { locationId?: string; name?: string; email?: string };
     hit?: { name?: string; address?: string; phone?: string; website?: string; hours?: string };
   } | null;
   if (!body) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+
+  // "Email me the links": every waiting shop's card link, to this admin's own address.
+  if (body.emailLinks) {
+    if (session.support) return NextResponse.json({ error: "support access cannot send these" }, { status: 403 });
+    const waiting = (await listLocations(org.id)).filter((l) => !l.claimed_card_id);
+    if (!waiting.length) return NextResponse.json({ error: "Every shop already has its card." }, { status: 409 });
+    const links = await shopCardLinks(org, waiting.map((l) => l.id), session.email);
+    await sendBizShopLinksEmail(session.email, org.name, links);
+    return NextResponse.json({ ok: true, sent: links.length, to: session.email });
+  }
 
   if (body.invite) {
     const loc = body.invite.locationId ? await getLocation(body.invite.locationId) : null;
