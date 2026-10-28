@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+const MANAGER_TABS = ["/business/admin", "/business/admin/qr-sign", "/business/admin/employees"];
 const TABS = [
   { href: "/business/admin", label: "Overview" },
   { href: "/business/admin/template", label: "Card template" },
@@ -14,11 +15,11 @@ const TABS = [
   { href: "/business/admin/billing", label: "Billing" },
 ];
 
-export default function AdminNav() {
+export default function AdminNav({ role = "admin" }: { role?: "admin" | "manager" }) {
   const pathname = usePathname();
   return (
     <nav className="mt-6 flex gap-2 border-b border-slate pb-2">
-      {TABS.map((tab) => {
+      {TABS.filter((t) => role === "admin" || MANAGER_TABS.includes(t.href)).map((tab) => {
         const active = pathname === tab.href;
         return (
           <Link

@@ -3,17 +3,26 @@ import sql from "@/lib/db";
 import { COOKIE_NAME, verifySessionCookie } from "@/lib/tapcardBizAuth";
 import { isSupportEmail, supportAccessOpen } from "@/lib/tapcardBizSupport";
 
-/// Reads and verifies the admin session cookie from the current request —
-/// the one place route handlers and server components should check "is
-/// someone signed in, and to which org" rather than touching the cookie
-/// jar directly.
-export async function requireBizSession(): Promise<{ orgId: string; email: string; support?: boolean } | null> {
+export interface BizSession { orgId: string; email: string; support?: boolean; role: "admin" | "manager"; locationIds: string[] }
+
+/// Reads and verifies the admin session cookie from the current request, for ANY signed-in person (an admin or a shop manager).
+/// Only the few places a manager may use call this directly (QR sign, their shops' staff); everything else uses requireBizSession.
+export async function requireBizUser(): Promise<BizSession | null> {
   const value = (await cookies()).get(COOKIE_NAME)?.value;
   const session = verifySessionCookie(value);
   if (!session) return null;
   // AIERT support (signed cookie, two hours): only while the company's own support-access window is open, re-checked on every request.
-  if (isSupportEmail(session.email)) return (await supportAccessOpen(session.orgId)) ? { ...session, support: true } : null;
-  // The cookie lasts 30 days, so re-check the person is still an admin of that company (removed admins lose access at once).
-  const rows = await sql`SELECT 1 FROM tapcard_biz_admins WHERE org_id = ${session.orgId} AND email = ${session.email} LIMIT 1`;
-  return rows.length ? session : null;
+  if (isSupportEmail(session.email)) return (await supportAccessOpen(session.orgId)) ? { ...session, support: true, role: "admin", locationIds: [] } : null;
+  // The cookie lasts 30 days, so re-check the person is still on the company's list (removed people lose access at once), and read
+  // their role and shops from it.
+  const rows = (await sql`SELECT role, location_ids FROM tapcard_biz_admins WHERE org_id = ${session.orgId} AND email = ${session.email} LIMIT 1`) as { role: string; location_ids: string[] | null }[];
+  if (!rows.length) return null;
+  return { ...session, role: rows[0].role === "manager" ? "manager" : "admin", locationIds: rows[0].location_ids ?? [] };
+}
+
+/// An ADMIN's session (or AIERT support). A manager is refused everywhere this is used, so a new admin page or route is closed to
+/// managers by default; the few things a manager may do use requireBizUser.
+export async function requireBizSession(): Promise<(BizSession & { role: "admin" }) | null> {
+  const s = await requireBizUser();
+  return s && s.role === "admin" ? (s as BizSession & { role: "admin" }) : null;
 }

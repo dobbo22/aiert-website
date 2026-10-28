@@ -1,4 +1,4 @@
-import { requireBizSession } from "@/lib/tapcardBizSession";
+import { requireBizUser } from "@/lib/tapcardBizSession";
 import { getOrg } from "@/lib/tapcardBiz";
 import LoginForm from "./LoginForm";
 import AdminNav from "./AdminNav";
@@ -12,7 +12,7 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function BizAdminLayout({ children }: { children: React.ReactNode }) {
-  const session = await requireBizSession();
+  const session = await requireBizUser();
   if (!session) return <LoginForm />;
 
   const org = await getOrg(session.orgId);
@@ -33,7 +33,7 @@ export default async function BizAdminLayout({ children }: { children: React.Rea
           </div>
           <LogoutButton />
         </header>
-        <AdminNav />
+        <AdminNav role={session.role} />
         <div className="mt-8">{children}</div>
         <footer className="mt-12 border-t border-slate pt-6 text-sm text-mist">
           <a href="/business/guide" className="text-gold underline">Admin guide</a> ·{" "}

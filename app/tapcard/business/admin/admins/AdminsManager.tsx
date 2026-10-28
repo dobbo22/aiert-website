@@ -6,7 +6,40 @@ import { useRouter } from "next/navigation";
 export interface AdminRowData { id: string; email: string; owner: boolean; confirmed: boolean; you: boolean }
 
 /// Add another admin by email (they are emailed a sign-in link) and remove admins other than yourself and the owner.
-export default function AdminsManager({ admins, max }: { admins: AdminRowData[]; max: number }) {
+export interface ManagerRowData { id: string; email: string; confirmed: boolean; locationIds: string[] }
+export interface ShopOption { id: string; label: string }
+
+export default function AdminsManager({ admins, max, managers, maxManagers, shops }: { admins: AdminRowData[]; max: number; managers: ManagerRowData[]; maxManagers: number; shops: ShopOption[] }) {
+  const [mEmail, setMEmail] = useState("");
+  const [mShops, setMShops] = useState<string[]>([]);
+  const [mMessage, setMMessage] = useState<{ text: string; ok: boolean } | null>(null);
+
+  async function addManager(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true); setMMessage(null);
+    const res = await fetch("/api/tapcard/biz/admins", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: mEmail, role: "manager", locationIds: mShops }) }).catch(() => null);
+    const data = (await res?.json().catch(() => null)) as { error?: string } | null;
+    setBusy(false);
+    if (res?.ok) { setMMessage({ text: `Added. We've emailed ${mEmail.trim()} what they can do and a sign-in link.`, ok: true }); setMEmail(""); setMShops([]); router.refresh(); }
+    else setMMessage({ text: data?.error ?? "Couldn't add the manager. Try again.", ok: false });
+  }
+
+  async function changeShops(m: ManagerRowData, ids: string[]) {
+    if (!ids.length) { window.alert("A manager needs at least one shop."); return; }
+    setBusy(true);
+    await fetch("/api/tapcard/biz/admins", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: m.id, locationIds: ids }) }).catch(() => null);
+    setBusy(false);
+    router.refresh();
+  }
+
+  async function removeManager(m: ManagerRowData) {
+    if (!window.confirm(`Remove ${m.email} as a manager? They will be signed out straight away.`)) return;
+    setBusy(true);
+    await fetch(`/api/tapcard/biz/admins?id=${encodeURIComponent(m.id)}`, { method: "DELETE" }).catch(() => null);
+    setBusy(false);
+    router.refresh();
+  }
+
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
@@ -61,6 +94,59 @@ export default function AdminsManager({ admins, max }: { admins: AdminRowData[];
             </li>
           ))}
         </ul>
+      </div>
+
+      <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
+        <h2 className="text-lg font-bold text-cloud">Managers</h2>
+        <p className="mt-1 text-sm text-mist">
+          A manager looks after one or more shops. They sign in with an emailed link and can print their shop&apos;s QR sign and create or remove
+          their shop&apos;s staff cards. They can&apos;t post offers or news, and never see billing, the template, locations or other admins.
+        </p>
+        {managers.length > 0 && (
+          <ul className="mt-4 divide-y divide-slate/50">
+            {managers.map((m) => (
+              <li key={m.id} className="py-3 text-cloud">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div>{m.email}</div>
+                    <div className="text-sm text-mist">Manager{m.confirmed ? "" : " · hasn't signed in yet"}</div>
+                  </div>
+                  <button type="button" onClick={() => removeManager(m)} disabled={busy} className="text-sm text-mist underline">Remove</button>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-3 text-sm">
+                  {shops.map((sh) => (
+                    <label key={sh.id} className="flex items-center gap-1.5">
+                      <input type="checkbox" checked={m.locationIds.includes(sh.id)} disabled={busy}
+                        onChange={(e) => changeShops(m, e.target.checked ? [...m.locationIds, sh.id] : m.locationIds.filter((x) => x !== sh.id))} />
+                      {sh.label}
+                    </label>
+                  ))}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+        <form onSubmit={addManager} className="mt-4">
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input type="email" required value={mEmail} onChange={(e) => setMEmail(e.target.value)} placeholder="manager@yourcompany.com"
+              className="min-w-0 flex-1 rounded-xl bg-slate/40 px-3 py-2 text-cloud" aria-label="Email address of the new manager" />
+            <button type="submit" disabled={busy || !mEmail.trim() || mShops.length === 0 || managers.length >= maxManagers} className="btn-gold rounded-xl px-4 py-2 font-semibold disabled:opacity-50">Add manager</button>
+          </div>
+          {shops.length === 0 ? (
+            <p className="mt-3 text-sm text-gold">Add your shops first (Card template or Locations tab), then choose which ones this manager looks after.</p>
+          ) : (
+            <div className="mt-3 flex flex-wrap gap-3 text-sm text-cloud">
+              <span className="text-mist">Looks after:</span>
+              {shops.map((sh) => (
+                <label key={sh.id} className="flex items-center gap-1.5">
+                  <input type="checkbox" checked={mShops.includes(sh.id)} onChange={(e) => setMShops((l) => (e.target.checked ? [...l, sh.id] : l.filter((x) => x !== sh.id)))} />
+                  {sh.label}
+                </label>
+              ))}
+            </div>
+          )}
+          {mMessage && <p className={`mt-3 text-sm ${mMessage.ok ? "text-cloud" : "text-gold"}`} role="status">{mMessage.text}</p>}
+        </form>
       </div>
 
       <form onSubmit={add} className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">

@@ -191,3 +191,22 @@ export function buildBizWelcomeEmail(email: string, company: string, opts: BizWe
 
   return { subject: `Welcome to TapCard for Business: how to get started with ${company || "your company"}`, html, text };
 }
+
+/// A shop manager's invitation: what they can do on the web (their shop's QR sign and staff), with the one-use sign-in link.
+export async function sendBizManagerInviteEmail(email: string, company: string, addedBy: string, link: string, shops: string[]): Promise<void> {
+  const shopList = shops.length ? shops.join(", ") : "your shop";
+  const html = `
+    <p><strong>${esc(addedBy)}</strong> has made you a manager at <strong>${esc(company)}</strong> on TapCard for Business, for <strong>${esc(shopList)}</strong>.</p>
+    <p>Tap the link below to sign in. From then on you can sign in at tapcard.aiert.co.uk/business/admin with this email address (we email you a sign-in link each time, so there is no password).</p>
+    <p><a href="${link}">${link}</a></p>
+    <p>This link works once and expires in 15 minutes. If you weren't expecting it, ignore this email and no access is given.</p>
+    <p><strong>What you can do as a manager:</strong></p>
+    <ul>
+      <li><strong>QR sign:</strong> print a window or till sign with your shop's QR code, and change its wording.</li>
+      <li><strong>Employees:</strong> create invite links for your shop's staff, and remove a staff card when someone leaves. Each person installs the free TapCard app and opens their link.</li>
+    </ul>
+    <p>Offers and news are posted by the company's admins, so they are not part of your access. Ask ${esc(addedBy)} if you want one posted. Reply to this email if you need help.</p>
+  `;
+  await send(email, `You are now a manager at ${company} on TapCard for Business`, html,
+    `${addedBy} has made you a manager at ${company} on TapCard for Business, for ${shopList}.\n\nSign in: ${link}\n\nThis link works once and expires in 15 minutes. If you weren't expecting it, ignore this email and no access is given.\n\nWhat you can do as a manager: QR sign (print your shop's sign and change its wording) and Employees (create invite links for your shop's staff, remove a card when someone leaves). Offers and news are posted by the company's admins.`);
+}

@@ -11,7 +11,7 @@ test("a company admin's session needs them to still be an admin", async () => {
   const { requireBizSession } = await import("../lib/tapcardBizSession");
   const org = await createManagedCompany({ name: "Session Co", adminEmail: "boss@session.example", locations: 2 });
   ctx.cookie = createSessionCookie(org.id, "boss@session.example");
-  assert.deepEqual(await requireBizSession(), { orgId: org.id, email: "boss@session.example" });
+  assert.deepEqual(await requireBizSession(), { orgId: org.id, email: "boss@session.example", role: "admin", locationIds: [] });
   ctx.cookie = createSessionCookie(org.id, "stranger@session.example");
   assert.equal(await requireBizSession(), null, "not an admin of this company");
   ctx.cookie = createSessionCookie("another-org", "boss@session.example");

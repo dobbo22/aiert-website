@@ -29,6 +29,8 @@ export interface InvitePayload {
   j: string;
   /// A location the admin prepared (lib/tapcardBizLocations): the card is built with its address, phone and links.
   l?: string;
+  /// A staff card for this shop (tapcard_biz_locations id): the new card belongs to that shop, so its manager can see and remove it.
+  s?: string;
 }
 
 function secret(): string {
@@ -46,7 +48,8 @@ export function signInvite(
   org: { id: string; name: string },
   person: { name: string; email: string; title: string },
   now = Date.now(),
-  locationId?: string
+  locationId?: string,
+  staffLocationId?: string
 ): string {
   const payload: InvitePayload = {
     v: 1,
@@ -58,6 +61,7 @@ export function signInvite(
     x: now + INVITE_TTL_MS,
     j: crypto.randomBytes(16).toString("base64url"),
     ...(locationId ? { l: locationId } : {}),
+    ...(staffLocationId ? { s: staffLocationId } : {}),
   };
   const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
   return `${body}.${signature(body).toString("base64url")}`;

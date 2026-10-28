@@ -74,7 +74,11 @@ type Row = Person & { key: number; emailEdited: boolean };
 let rowKey = 1;
 const newRow = (): Row => ({ key: rowKey++, name: "", email: "", title: "", emailEdited: false });
 
-export default function InvitePeople({ billingActive, orgName, domain }: { billingActive: boolean; orgName: string; domain: string }) {
+export interface ShopChoice { id: string; label: string }
+
+/// `shops`: the shops these staff can belong to. A manager's list is their own shops (one is always chosen); an admin may leave it on "No shop".
+export default function InvitePeople({ billingActive, orgName, domain, shops = [], shopRequired = false }: { billingActive: boolean; orgName: string; domain: string; shops?: ShopChoice[]; shopRequired?: boolean }) {
+  const [shopId, setShopId] = useState(shopRequired ? shops[0]?.id ?? "" : "");
   const [rows, setRows] = useState<Row[]>([newRow()]);
   const [pattern, setPattern] = useState<Pattern>("first.last");
   const [learned, setLearned] = useState(false);
@@ -143,7 +147,7 @@ export default function InvitePeople({ billingActive, orgName, domain }: { billi
       const res = await fetch("/api/tapcard/biz/invites", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ people }),
+        body: JSON.stringify({ people, locationId: shopId || undefined }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -180,6 +184,15 @@ export default function InvitePeople({ billingActive, orgName, domain }: { billi
   return (
     <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
       <h2 className="text-lg font-bold text-cloud">Invite people</h2>
+      {shops.length > 0 && (
+        <label className="mb-4 flex flex-wrap items-center gap-3 text-cloud">
+          <span className="text-sm text-mist">These staff work at</span>
+          <select value={shopId} onChange={(e) => setShopId(e.target.value)} className="rounded-xl bg-slate/40 px-3 py-2 text-cloud ring-1 ring-slate">
+            {!shopRequired && <option value="">No particular shop</option>}
+            {shops.map((sh) => <option key={sh.id} value={sh.id}>{sh.label}</option>)}
+          </select>
+        </label>
+      )}
       <p className="mt-1 text-sm text-mist">
         Type each person&apos;s name and we fill in the email{domain ? ` (@${domain})` : ""}. Change the first one if your company
         uses a different format, for example j.smith, and the rest follow it. You get one invite link per person to send from

@@ -91,6 +91,8 @@ export function ensureSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS locations INTEGER NOT NULL DEFAULT 0`)
       .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS welcome_sent TEXT`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS org_overrides TEXT NOT NULL DEFAULT '{}'`)
+      // A manager (role 'manager') is limited to the shops listed here (tapcard_biz_locations ids); a staff card belongs to one shop.
+      .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS org_location_id TEXT`)
 
       .then(() => sql`
         CREATE TABLE IF NOT EXISTS tapcard_biz_admins (
@@ -104,6 +106,7 @@ export function ensureSchema(): Promise<unknown> {
       `)
       // Set when the admin opens the sign-in link emailed to this address: proof they control the mailbox.
       .then(() => sql`ALTER TABLE tapcard_biz_admins ADD COLUMN IF NOT EXISTS confirmed_at TIMESTAMPTZ`)
+      .then(() => sql`ALTER TABLE tapcard_biz_admins ADD COLUMN IF NOT EXISTS location_ids TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]`)
       .then(() => sql`
         CREATE TABLE IF NOT EXISTS tapcard_biz_login_tokens (
           token_hash TEXT PRIMARY KEY,
@@ -218,7 +221,8 @@ export function adminsConfirmDomain(admins: { email: string; confirmed_at: strin
 /// owns the domain (the same standard as verifying a single card with an emailed code).
 export async function orgHasConfirmedAdminOnDomain(orgId: string, domain: string): Promise<boolean> {
   if (!domain) return false;
-  return adminsConfirmDomain(await listAdmins(orgId), domain);
+  // Only admins prove the company owns its domain, never a shop manager.
+  return adminsConfirmDomain((await listAdmins(orgId)).filter((a) => a.role !== "manager"), domain);
 }
 
 /// Claims the right to send a company its welcome email ("trial" once at sign-up, "paid" once when a plan starts), so a repeated
@@ -360,11 +364,11 @@ export async function getOrgByStripeSubscriptionId(stripeSubscriptionId: string)
   return rows[0] ?? null;
 }
 
-export async function addAdmin(orgId: string, email: string, role = "admin"): Promise<void> {
+export async function addAdmin(orgId: string, email: string, role = "admin", locationIds: string[] = []): Promise<void> {
   await ensureSchema();
   await sql`
-    INSERT INTO tapcard_biz_admins (id, org_id, email, role)
-    VALUES (${newId()}, ${orgId}, ${email.toLowerCase().trim()}, ${role})
+    INSERT INTO tapcard_biz_admins (id, org_id, email, role, location_ids)
+    VALUES (${newId()}, ${orgId}, ${email.toLowerCase().trim()}, ${role}, ${locationIds})
     ON CONFLICT (org_id, email) DO NOTHING
   `;
 }
@@ -372,13 +376,17 @@ export async function addAdmin(orgId: string, email: string, role = "admin"): Pr
 /// A company may have up to this many admins.
 export const MAX_ADMINS = 5;
 
-export interface BizAdminRow { id: string; email: string; role: string; created_at: string; confirmed_at: string | null }
+export interface BizAdminRow { id: string; email: string; role: string; created_at: string; confirmed_at: string | null; location_ids: string[] }
 
 /// The company's admins, first (the owner) to last.
 export async function listAdmins(orgId: string): Promise<BizAdminRow[]> {
   await ensureSchema();
-  return (await sql`SELECT id, email, role, created_at, confirmed_at FROM tapcard_biz_admins WHERE org_id = ${orgId} ORDER BY created_at, id`) as BizAdminRow[];
+  return (await sql`SELECT id, email, role, created_at, confirmed_at, location_ids FROM tapcard_biz_admins WHERE org_id = ${orgId} ORDER BY created_at, id`) as BizAdminRow[];
 }
+
+/// Managers: people who run one or more shops. They sign in with an emailed link like an admin, but only see their own shops' QR sign
+/// and staff. They never see offers, billing, the template, locations or other admins. A company may have up to this many.
+export const MAX_MANAGERS = 50;
 
 export async function removeAdminById(orgId: string, adminId: string): Promise<void> {
   await ensureSchema();
@@ -451,13 +459,40 @@ export interface OrgCard {
   card_kind: string;
   /// Ids of the locations this card's owner may post offers and news for.
   posts_for: string[];
+  /// The shop (tapcard_biz_locations id) a staff card belongs to, or null.
+  org_location_id: string | null;
 }
 
 export async function listOrgCards(orgId: string): Promise<OrgCard[]> {
   await ensureSchema();
   return (await sql`
-    SELECT id, name, title, email, created_at, org_can_post AS can_post, card_kind, org_posts_for AS posts_for FROM tapcard_cards WHERE org_id = ${orgId} ORDER BY created_at DESC
+    SELECT id, name, title, email, created_at, org_can_post AS can_post, card_kind, org_posts_for AS posts_for, org_location_id FROM tapcard_cards WHERE org_id = ${orgId} ORDER BY created_at DESC
   `) as OrgCard[];
+}
+
+/// The staff cards (people, not shops) of the given shops: what a manager sees and may remove.
+export async function listStaffForLocations(orgId: string, locationIds: string[]): Promise<OrgCard[]> {
+  await ensureSchema();
+  if (!locationIds.length) return [];
+  return (await sql`
+    SELECT id, name, title, email, created_at, org_can_post AS can_post, card_kind, org_posts_for AS posts_for, org_location_id
+    FROM tapcard_cards WHERE org_id = ${orgId} AND org_location_id = ANY(${locationIds}) AND card_kind <> 'business' ORDER BY created_at DESC
+  `) as OrgCard[];
+}
+
+/// A staff card the manager may remove: in their company, belonging to one of their shops, and not a shop card.
+export async function getStaffCardInScope(orgId: string, cardId: string, locationIds: string[]): Promise<{ found: boolean; photoUrl: string | null }> {
+  await ensureSchema();
+  if (!locationIds.length) return { found: false, photoUrl: null };
+  const rows = (await sql`
+    SELECT photo_url FROM tapcard_cards WHERE id = ${cardId} AND org_id = ${orgId} AND org_location_id = ANY(${locationIds}) AND card_kind <> 'business'
+  `) as { photo_url: string | null }[];
+  return rows[0] ? { found: true, photoUrl: rows[0].photo_url } : { found: false, photoUrl: null };
+}
+
+export async function setCardStaffLocation(cardId: string, locationId: string): Promise<void> {
+  await ensureSchema();
+  await sql`UPDATE tapcard_cards SET org_location_id = ${locationId} WHERE id = ${cardId}`;
 }
 
 export async function countOrgCards(orgId: string): Promise<number> {

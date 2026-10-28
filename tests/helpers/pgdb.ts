@@ -40,7 +40,7 @@ export function installStubs(opts: { realSession?: boolean } = {}) {
     if (request === "@/lib/adminRequest" || request.endsWith("/lib/adminRequest")) return { isAdminRequest: async () => ctx.admin };
     if (request === "next/headers") return { cookies: async () => ({ get: () => (ctx.cookie ? { value: ctx.cookie } : undefined) }) };
     if (!opts.realSession && (request === "@/lib/tapcardBizSession" || request.endsWith("/lib/tapcardBizSession"))) {
-      return { requireBizSession: async () => ctx.session };
+      return { requireBizSession: async () => (ctx.session ? { role: "admin", locationIds: [], ...ctx.session } : null), requireBizUser: async () => (ctx.session ? { role: "admin", locationIds: [], ...ctx.session } : null) };
     }
     return realLoad.call(this, request, ...rest);
   };

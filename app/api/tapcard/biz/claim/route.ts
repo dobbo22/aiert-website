@@ -6,6 +6,7 @@ import { isPersonalCard } from "@/lib/tapcardPassStyle";
 import { attachCardToOrg, cardOrgId, countOrgCards, getOrg, orgCanProvision, spendInvite, wasRemovedByCompany } from "@/lib/tapcardBiz";
 import { verifyInvite } from "@/lib/tapcardBizInvite";
 import { getLocation, markLocationClaimed } from "@/lib/tapcardBizLocations";
+import { setCardStaffLocation } from "@/lib/tapcardBiz";
 import sql from "@/lib/db";
 
 // The app calls this once, right after the employee taps their invite link
@@ -92,6 +93,11 @@ export async function POST(req: NextRequest) {
     hashSecret(`biz-claim:${org.id}`)
   );
   await attachCardToOrg(cardId, org.id, org.locked_fields);
+  if (!location && invite.s) {
+    // A staff card made from a shop manager's invite belongs to that shop (only if the shop is really this company's).
+    const shop = await getLocation(invite.s);
+    if (shop && shop.org_id === org.id) await setCardStaffLocation(cardId, shop.id);
+  }
   if (location) {
     await markLocationClaimed(location.id, cardId);
     // Offers and news are for admins to post (from the web). A manager's phone cannot post for its shop unless an admin ticks it on the
