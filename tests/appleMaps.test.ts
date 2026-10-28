@@ -99,3 +99,66 @@ test("finding other shops: Apple places with the company's name nearby, not far 
   assert.ok(res.candidates.every((c: { website: string }) => c.website === ""), "details are filled in only when a shop is added");
   ctx.session = null;
 });
+
+test("a picked shop's details come from TomTom, then HERE, filling in what is missing; only the same shop counts", async () => {
+  process.env.TOMTOM_API_KEY = "tt-key"; process.env.HERE_API_KEY = "here-key";
+  const { createManagedCompany } = await import("../lib/tapcardBizSupport");
+  const places = await import("../app/api/tapcard/biz/places/route");
+  const org = await createManagedCompany({ name: "Providers Co", adminEmail: "a@prov.example", locations: 2 });
+  ctx.session = { orgId: org.id, email: "a@prov.example" };
+  const used: string[] = [];
+  const tomtom = (poi: unknown) => ({ results: poi ? [poi] : [] });
+  const setup = (tt: unknown, here: unknown) => {
+    used.length = 0;
+    (globalThis as { fetch: unknown }).fetch = async (input: string | URL) => {
+      const url = String(input);
+      if (url.includes("api.tomtom.com")) { used.push("tomtom"); return new Response(JSON.stringify(tomtom(tt)), { status: 200 }); }
+      if (url.includes("hereapi.com")) { used.push("here"); return new Response(JSON.stringify({ items: here ? [here] : [] }), { status: 200 }); }
+      return new Response("{}", { status: 404 });
+    };
+  };
+  const ask = async () => json(await places.POST(req("/x", { method: "POST", body: { name: "The Rose Garden", address: "16A High Street, Dunmow, CM6 1AG" } })));
+  const ttPlace = { poi: { name: "The Rose Garden", phone: "+44 1371 872882", url: "www.therosegardenflorists.co.uk" }, address: { freeformAddress: "16A High Street, Dunmow", postalCode: "CM6 1AG" } };
+  const herePlace = { title: "The Rose Garden", address: { label: "16A High St, Dunmow, CM6 1AG", postalCode: "CM6 1AG" }, contacts: [{ phone: [{ value: "+44 1371 872882" }], www: [{ value: "https://www.therosegardenflorists.co.uk" }] }], openingHours: [{ text: ["Mon-Fri: 09:30 - 17:00", "Sat: 09:30 - 15:00"] }] };
+
+  // TomTom has everything we need: HERE and Google are not asked
+  setup(ttPlace, herePlace);
+  let r = await ask();
+  assert.equal(r.found, true);
+  assert.equal(r.hit.website, "https://www.therosegardenflorists.co.uk");
+  assert.equal(r.hit.phone, "+44 1371 872882");
+  assert.equal(r.hit.source, "tomtom");
+  assert.deepEqual(used, ["tomtom"]);
+
+  // TomTom has a phone but no website: HERE fills in the website and the hours
+  setup({ ...ttPlace, poi: { ...ttPlace.poi, url: "" } }, herePlace);
+  r = await ask();
+  assert.equal(r.hit.source, "tomtom+here");
+  assert.equal(r.hit.website, "https://www.therosegardenflorists.co.uk");
+  assert.equal(r.hit.hours, "Mon–Fri: 09:30–17:00; Sat: 09:30–15:00");
+  assert.deepEqual(used, ["tomtom", "here"]);
+
+  // TomTom finds another place at a different postcode: not our shop, so HERE is used
+  setup({ ...ttPlace, address: { freeformAddress: "1 Other Rd, Elsewhere", postalCode: "BS1 5AA" } }, herePlace);
+  r = await ask();
+  assert.equal(r.hit.source, "here");
+
+  // neither knows it (and there is no Google key here): nothing found, not an error
+  setup(null, null);
+  r = await ask();
+  assert.equal(r.found, false);
+  assert.deepEqual(used, ["tomtom", "here"]);
+
+  // a failing provider is skipped
+  (globalThis as { fetch: unknown }).fetch = async (input: string | URL) => { if (String(input).includes("tomtom")) throw new Error("down"); return new Response(JSON.stringify({ items: [herePlace] }), { status: 200 }); };
+  r = await ask();
+  assert.equal(r.hit.source, "here");
+
+  // without keys they are skipped silently
+  delete process.env.TOMTOM_API_KEY; delete process.env.HERE_API_KEY;
+  setup(ttPlace, herePlace);
+  r = await ask();
+  assert.equal(r.found, false);
+  assert.deepEqual(used, []);
+  ctx.session = null;
+});
