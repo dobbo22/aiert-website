@@ -410,6 +410,13 @@ export async function attachCardToOrg(cardId: string, orgId: string, lockedField
   `;
 }
 
+/// The company a card already belongs to, or null for an ordinary card.
+export async function cardOrgId(cardId: string): Promise<string | null> {
+  await ensureSchema();
+  const rows = (await sql`SELECT org_id FROM tapcard_cards WHERE id = ${cardId}`) as { org_id: string | null }[];
+  return rows[0]?.org_id ?? null;
+}
+
 /// Marks an invite id as used. Atomic: true only for the one request that
 /// spends it, so two taps on the same link can't both create a card.
 export async function spendInvite(jti: string, orgId: string): Promise<boolean> {
