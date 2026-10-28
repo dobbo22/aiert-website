@@ -90,6 +90,7 @@ export function ensureSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS trial_reminded_at TIMESTAMPTZ`)
       .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS locations INTEGER NOT NULL DEFAULT 0`)
       .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS welcome_sent TEXT`)
+      .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS org_overrides TEXT NOT NULL DEFAULT '{}'`)
 
       .then(() => sql`
         CREATE TABLE IF NOT EXISTS tapcard_biz_admins (
@@ -517,7 +518,40 @@ export async function applyOrgLocks<T extends Record<string, unknown>>(
     if (!columns || !(columns.card in locked)) continue;
     locked[columns.card] = columns.template ? (org[columns.template] ?? "") : (existing[columns.card] ?? "");
   }
+  // What the company's admin has set for this card (its address, phone, email or name changed from the web) wins over a phone's older copy.
+  try {
+    const overrides = JSON.parse(typeof existing.org_overrides === "string" ? existing.org_overrides : "{}") as Record<string, string>;
+    for (const k of OVERRIDE_FIELDS) if (k in locked && typeof overrides[k] === "string") locked[k] = overrides[k];
+  } catch { /* an unreadable value is ignored */ }
   return locked as T;
+}
+
+/// The details a company admin may change on a card that has been made (a shop moving, a new number).
+export const OVERRIDE_FIELDS = ["name", "address", "phone", "email"] as const;
+
+/// The admin changes a made company card: the card itself changes at once (what customers, the web page and Wallet show), and the
+/// change is remembered so a phone's older copy can never put it back (applyOrgLocks), until the person's app picks it up.
+export async function setCardOverrides(orgId: string, cardId: string, patch: Partial<Record<(typeof OVERRIDE_FIELDS)[number], string>>): Promise<{ before: Record<string, string>; after: Record<string, string> } | null> {
+  await ensureSchema();
+  const rows = (await sql`SELECT name, address, phone, email, org_overrides FROM tapcard_cards WHERE id = ${cardId} AND org_id = ${orgId}`) as (Record<string, string>)[];
+  const row = rows[0];
+  if (!row) return null;
+  let overrides: Record<string, string> = {};
+  try { overrides = JSON.parse(row.org_overrides || "{}"); } catch { /* start fresh */ }
+  const next = { name: row.name, address: row.address, phone: row.phone, email: row.email };
+  for (const k of OVERRIDE_FIELDS) {
+    const v = patch[k];
+    if (typeof v === "string") { next[k] = v.trim().slice(0, k === "address" ? 300 : 200); overrides[k] = next[k]; }
+  }
+  await sql`UPDATE tapcard_cards SET name = ${next.name}, address = ${next.address}, phone = ${next.phone}, email = ${next.email}, org_overrides = ${JSON.stringify(overrides)}, updated_at = now() WHERE id = ${cardId} AND org_id = ${orgId}`;
+  return { before: { name: row.name, address: row.address, phone: row.phone, email: row.email }, after: next };
+}
+
+/// What the admin has set for a card, for the owner's app to pick up (the app proves it holds the card with its edit token).
+export async function getCardOverrides(cardId: string): Promise<Record<string, string>> {
+  await ensureSchema();
+  const rows = (await sql`SELECT org_overrides FROM tapcard_cards WHERE id = ${cardId} AND org_id IS NOT NULL`) as { org_overrides: string }[];
+  try { return JSON.parse(rows[0]?.org_overrides || "{}"); } catch { return {}; }
 }
 
 /// The uploaded company logo of the org a card belongs to (template page,

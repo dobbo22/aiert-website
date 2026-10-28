@@ -8,7 +8,7 @@ import { rowsFor } from "../../../demo/DemoBuilder";
 export interface ShopLink { kind: string; label: string; value: string }
 export interface Shop {
   key: string; id?: string; name: string; address: string; phone: string; email: string; website: string; hours: string;
-  links: ShopLink[]; claimed: boolean; source?: string;
+  links: ShopLink[]; claimed: boolean; cardId?: string | null; source?: string;
 }
 export interface Socials { linkedIn: string; twitter: string; instagram: string; facebook: string; tiktok: string }
 export interface Hit { id: string; name: string; address: string; website: string; phone: string; type?: string; hours: string }
@@ -88,7 +88,7 @@ const ShopPhones = forwardRef<ShopHandle, { initial: Shop[]; allowed: number; we
     setBusy(true); setNote(null);
     const res = await fetch("/api/tapcard/biz/locations", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: shop.id, name: shop.name, address: shop.address, phone: shop.phone, email: shop.email }) }).catch(() => null);
     setBusy(false);
-    setNote(res?.ok ? "Saved." : "Couldn't save that. Its card may already have been made.");
+    setNote(res?.ok ? (shop.claimed ? "Saved. The card is updated now for customers; the manager's app picks it up too." : "Saved.") : "Couldn't save that. Try again.");
   }
 
   async function addThis() {
@@ -97,6 +97,16 @@ const ShopPhones = forwardRef<ShopHandle, { initial: Shop[]; allowed: number; we
     const made = await save(shop);
     if (made) setShops((l) => l.map((s, i) => (i === sel ? made : s)));
     setBusy(false);
+  }
+
+  async function removeCard() {
+    if (!shop?.cardId || !window.confirm(`Remove the card for ${tabLabel(shop)}? Its link, QR code and Wallet pass will stop working, and its manager loses it.`)) return;
+    setBusy(true);
+    const res = await fetch(`/api/tapcard/biz/cards/${encodeURIComponent(shop.cardId)}`, { method: "DELETE" }).catch(() => null);
+    if (res?.ok && shop.id) await fetch(`/api/tapcard/biz/locations?id=${encodeURIComponent(shop.id)}`, { method: "DELETE" }).catch(() => null);
+    setBusy(false);
+    if (res?.ok) { setShops((l) => l.filter((_, i) => i !== sel)); setSel(0); setNote("Card removed. You can add the shop again."); }
+    else setNote("Couldn't remove that card. Try again.");
   }
 
   async function removeThis() {
@@ -155,15 +165,16 @@ const ShopPhones = forwardRef<ShopHandle, { initial: Shop[]; allowed: number; we
           {([["name", "Shop name"], ["address", "Address"], ["phone", "Phone"], ["email", "Email"]] as const).map(([k, label]) => (
             <label key={k} className="block">
               <span className="text-sm text-mist">{label}</span>
-              <input value={shop[k]} onChange={(e) => patch({ [k]: e.target.value })} disabled={shop.claimed}
-                className="mt-1 w-full rounded-xl bg-slate/40 px-3 py-2 text-cloud ring-1 ring-slate disabled:opacity-60" />
+              <input value={shop[k]} onChange={(e) => patch({ [k]: e.target.value })} 
+                className="mt-1 w-full rounded-xl bg-slate/40 px-3 py-2 text-cloud ring-1 ring-slate" />
             </label>
           ))}
           <div className="flex flex-wrap items-center gap-3 pt-1">
             {!shop.id && <button type="button" onClick={() => void addThis()} disabled={busy || savedCount(shops) >= allowed} className="btn-gold rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-60">Add this shop</button>}
-            {shop.id && !shop.claimed && <button type="button" onClick={() => void saveEdits()} disabled={busy} className="btn-gold rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-60">Save changes</button>}
+            {shop.id && <button type="button" onClick={() => void saveEdits()} disabled={busy} className="btn-gold rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-60">Save changes</button>}
             {shop.id && !shop.claimed && <button type="button" onClick={() => void removeThis()} className="text-sm text-mist underline">Remove</button>}
-            {shop.id && <a href="/business/admin/locations" className="text-sm font-semibold text-gold underline">Invite its manager</a>}
+            {shop.claimed && shop.cardId && <button type="button" onClick={() => void removeCard()} className="text-sm text-mist underline">Remove this card</button>}
+            {shop.id && !shop.claimed && <a href="/business/admin/locations" className="text-sm font-semibold text-gold underline">Invite its manager</a>}
           </div>
           {!shop.id && savedCount(shops) >= allowed && <p className="text-sm text-gold">Your plan has {allowed} location{allowed === 1 ? "" : "s"}, all added. Change the number on the Billing tab to add more.</p>}
           {note && <p className="text-sm text-gold">{note}</p>}

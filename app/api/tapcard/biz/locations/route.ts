@@ -1,10 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getOrg, orgCanProvision } from "@/lib/tapcardBiz";
+import { NextRequest, NextResponse, after } from "next/server";
+import { getOrg, orgCanProvision, setCardOverrides } from "@/lib/tapcardBiz";
+import { getCard } from "@/lib/tapcardDb";
+import { refreshGoogleWalletPass } from "@/lib/googleWallet";
+import { pushToFollowers } from "@/lib/tapcardPush";
 import { requireBizSession } from "@/lib/tapcardBizSession";
-import { createLocation, deleteLocation, listLocations, updateLocation, type BizLocation } from "@/lib/tapcardBizLocations";
+import { createLocation, deleteLocation, getLocation, listLocations, updateLocation, updateLocationDetails, type BizLocation } from "@/lib/tapcardBizLocations";
 import { findSiteLinks, tidyAddress } from "@/lib/siteLinks";
 import { inviteLink, signInvite } from "@/lib/tapcardBizInvite";
-import { getLocation } from "@/lib/tapcardBizLocations";
 import { rateLimited } from "@/lib/rateLimit";
 import { parseStoredLinks, type CardLink } from "@/lib/tapcardLinks";
 
@@ -20,7 +22,7 @@ export async function GET() {
 
 /// What the web preview needs for one prepared location.
 function shape(l: BizLocation) {
-  return { id: l.id, name: l.name, address: l.address, phone: l.phone, email: l.email, website: l.website, links: parseStoredLinks(l.links), claimed: !!l.claimed_card_id };
+  return { id: l.id, name: l.name, address: l.address, phone: l.phone, email: l.email, website: l.website, links: parseStoredLinks(l.links), claimed: !!l.claimed_card_id, cardId: l.claimed_card_id };
 }
 
 // Edit a prepared location's name, address, phone and email before its manager claims it.
@@ -29,6 +31,24 @@ export async function PATCH(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const b = (await req.json().catch(() => null)) as { id?: string; name?: string; address?: string; phone?: string; email?: string } | null;
   if (!b?.id || !String(b.name ?? "").trim()) return NextResponse.json({ error: "A name is required." }, { status: 400 });
+  // A shop whose manager has made the card: the card itself is changed, so customers see it at once and the phone's older copy cannot put it back.
+  const loc = await getLocation(b.id);
+  if (loc && loc.org_id === session.orgId && loc.claimed_card_id) {
+    const patch = { name: String(b.name).trim(), address: String(b.address ?? "").trim(), phone: String(b.phone ?? "").trim(), email: String(b.email ?? "").trim() };
+    const changed = await setCardOverrides(session.orgId, loc.claimed_card_id, patch);
+    if (!changed) return NextResponse.json({ ok: false }, { status: 404 });
+    await updateLocationDetails(session.orgId, loc.id, patch);
+    const cardId = loc.claimed_card_id;
+    after(async () => {
+      const card = await getCard(cardId);
+      if (!card) return;
+      await refreshGoogleWalletPass(card, `https://tapcard.aiert.co.uk/s/${card.id}`).catch(() => {});
+      if (changed.before.address !== changed.after.address) {
+        await pushToFollowers(card.id, "changes", { title: card.company || card.name, body: "Opening hours, menu or address updated", ref: `admin-${Date.now()}` }).catch(() => {});
+      }
+    });
+    return NextResponse.json({ ok: true, card: true });
+  }
   const ok = await updateLocation(session.orgId, b.id, { name: String(b.name).trim(), address: String(b.address ?? "").trim(), phone: String(b.phone ?? "").trim(), email: String(b.email ?? "").trim() });
   return NextResponse.json({ ok }, { status: ok ? 200 : 409 });
 }
@@ -78,6 +98,10 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const session = await requireBizSession();
   if (!session) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  const ok = await deleteLocation(session.orgId, req.nextUrl.searchParams.get("id") ?? "");
+  const id = req.nextUrl.searchParams.get("id") ?? "";
+  // A location whose card has been removed (Employees tab or the Remove card button) can be cleared away too.
+  const loc = await getLocation(id);
+  const cardGone = !!loc?.claimed_card_id && !(await getCard(loc.claimed_card_id));
+  const ok = await deleteLocation(session.orgId, id, cardGone);
   return NextResponse.json({ ok }, { status: ok ? 200 : 404 });
 }
