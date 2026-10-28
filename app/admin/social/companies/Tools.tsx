@@ -21,6 +21,7 @@ export function CompanyTools({ orgId, open, locations }: { orgId: string; open: 
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
   const [n, setN] = useState(String(locations));
+  const [mgr, setMgr] = useState("");
   async function run(body: Record<string, unknown>, then?: (url?: string) => void) {
     setBusy(true); setNote("");
     const r = await call({ ...body, orgId });
@@ -34,7 +35,10 @@ export function CompanyTools({ orgId, open, locations }: { orgId: string; open: 
       <button type="button" style={btn} disabled={busy} onClick={() => run({ action: "open" }, (url) => url && window.open(url, "_blank", "noopener"))}>Open admin (support)</button>
       <input style={{ ...input, width: 54 }} value={n} onChange={(e) => setN(e.target.value)} inputMode="numeric" aria-label="Locations" />
       <button type="button" style={btn} disabled={busy} onClick={() => confirm(`Make this company free for ${n} locations?`) && run({ action: "free", locations: Number(n) })}>Make free</button>
-      {note && <span style={{ color: "#fca5a5" }}>{note}</span>}
+      <br />
+      <input style={{ ...input, width: 220, marginTop: 6 }} placeholder="Manager's email (all shops)" value={mgr} onChange={(e) => setMgr(e.target.value)} />
+      <button type="button" style={btn} disabled={busy || !mgr.includes("@")} onClick={() => run({ action: "manager", email: mgr }, () => { setNote(`Manager added: ${mgr}. They have been emailed.`); setMgr(""); })}>Add manager</button>
+      {note && <span style={{ color: note.startsWith("Manager added") ? "inherit" : "#fca5a5" }}>{note}</span>}
     </span>
   );
 }

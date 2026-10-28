@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAdminRequest } from "@/lib/adminRequest";
 import { getOrg } from "@/lib/tapcardBiz";
 import { createLoginToken } from "@/lib/tapcardBizAuth";
-import { sendBizLoginEmail, sendBizWelcomeEmail } from "@/lib/tapcardBizEmail";
+import { addAdmin, findAdminOrgsByEmail, listAdmins, MAX_MANAGERS } from "@/lib/tapcardBiz";
+import { listLocations } from "@/lib/tapcardBizLocations";
+import { sendBizLoginEmail, sendBizManagerInviteEmail, sendBizWelcomeEmail } from "@/lib/tapcardBizEmail";
 import { cardAllowance } from "@/lib/tapcardBizPricing";
 import { createManagedCompany, logSupport, supportAccessOpen, SUPPORT_ACTOR, SUPPORT_PREFIX } from "@/lib/tapcardBizSupport";
 import sql from "@/lib/db";
@@ -12,7 +14,7 @@ import sql from "@/lib/db";
 // up and the 30 days have not passed).
 export async function POST(req: NextRequest) {
   if (!(await isAdminRequest())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const body = (await req.json().catch(() => null)) as { action?: string; orgId?: string; name?: string; adminEmail?: string; locations?: number; sendEmail?: boolean } | null;
+  const body = (await req.json().catch(() => null)) as { action?: string; orgId?: string; name?: string; adminEmail?: string; locations?: number; sendEmail?: boolean; email?: string } | null;
   if (!body) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
 
   if (body.action === "create") {
@@ -37,6 +39,24 @@ export async function POST(req: NextRequest) {
   if (body.action === "open") {
     const token = await createLoginToken(SUPPORT_PREFIX + SUPPORT_ACTOR, org.id);
     return NextResponse.json({ url: `https://tapcard.aiert.co.uk/api/biz/login/${token}` });
+  }
+
+  // Adds a shop manager (all of the company's shops) on the company's behalf, e.g. to test the manager's view. Needs the support window
+  // like everything else here; the manager is emailed what they can do and a sign-in link.
+  if (body.action === "manager") {
+    const email = (body.email ?? "").trim().toLowerCase();
+    if (!/^\S+@\S+\.\S+$/.test(email)) return NextResponse.json({ error: "Enter the manager's full email address." }, { status: 400 });
+    const shops = await listLocations(org.id);
+    if (!shops.length) return NextResponse.json({ error: "Add the company's shops first." }, { status: 400 });
+    const people = await listAdmins(org.id);
+    if (people.some((p) => p.email === email)) return NextResponse.json({ error: "That address is already on this company." }, { status: 409 });
+    if (people.filter((p) => p.role === "manager").length >= MAX_MANAGERS) return NextResponse.json({ error: "This company has all its managers." }, { status: 409 });
+    if ((await findAdminOrgsByEmail(email)).length > 0) return NextResponse.json({ error: "That address already runs another TapCard for Business account." }, { status: 409 });
+    await addAdmin(org.id, email, "manager", shops.map((l) => l.id));
+    await logSupport(org.id, SUPPORT_ACTOR, "added a manager", email);
+    const token = await createLoginToken(email, org.id);
+    await sendBizManagerInviteEmail(email, org.name, "AIERT support", `https://tapcard.aiert.co.uk/api/biz/login/${token}`, shops.map((l) => `${l.name}, ${l.address.split(",").slice(-3, -1).join(" ").trim()}`)).catch((e) => console.error("support manager email failed", e));
+    return NextResponse.json({ ok: true, shops: shops.length });
   }
 
   if (body.action === "free") {

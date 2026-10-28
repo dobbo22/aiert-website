@@ -300,3 +300,30 @@ test("QR sign: wording is saved per shop, cleaned, and only by that company", as
   ctx.session = null;
   assert.equal((await put({ id, sign: { headline: "x" } })).status, 401);
 });
+
+test("AIERT can add a shop manager to a company that allows support access", async () => {
+  const { createManagedCompany, setSupportAccess } = await import("../lib/tapcardBizSupport");
+  const { createLocation } = await import("../lib/tapcardBizLocations");
+  const { listAdmins } = await import("../lib/tapcardBiz");
+  const { POST } = await import("../app/api/admin/tapcard/companies/route");
+  const org = await createManagedCompany({ name: "Mgr Add Co", adminEmail: "a@mgradd.example", locations: 2 });
+  const add = (email: string) => POST(req("/api/admin/tapcard/companies", { body: { action: "manager", orgId: org.id, email } }));
+  ctx.admin = true;
+  assert.equal((await add("martin@aiert.co.uk")).status, 400, "needs a shop first");
+  const shop = await createLocation(org.id, { name: "Shop", address: "1 St, Town, AB1 2CD", phone: "", email: "", website: "", links: [] });
+  ctx.outbox.length = 0;
+  assert.equal((await add("martin@aiert.co.uk")).status, 200);
+  assert.equal(ctx.outbox.length, 1);
+  assert.match(ctx.outbox[0].subject, /manager at Mgr Add Co/);
+  const m = (await listAdmins(org.id)).find((a) => a.email === "martin@aiert.co.uk")!;
+  assert.equal(m.role, "manager");
+  assert.deepEqual(m.location_ids, [shop.id]);
+  assert.equal((await add("martin@aiert.co.uk")).status, 409);
+  assert.equal((await add("not an email")).status, 400);
+  // the company turns support access off: refused
+  await setSupportAccess(org.id, null, "company");
+  assert.equal((await add("other@aiert.co.uk")).status, 403);
+  ctx.admin = false;
+  assert.equal((await add("other@aiert.co.uk")).status, 401);
+  ctx.admin = true;
+});
