@@ -45,6 +45,14 @@ export async function createLocation(orgId: string, d: { name: string; address: 
   return rows[0];
 }
 
+export async function updateLocation(orgId: string, id: string, d: { name: string; address: string; phone: string; email: string }): Promise<boolean> {
+  await ensureLocationSchema();
+  const rows = await sql`
+    UPDATE tapcard_biz_locations SET name = ${d.name.slice(0, 200)}, address = ${d.address.slice(0, 300)}, phone = ${d.phone.slice(0, 40)}, email = ${d.email.slice(0, 200)}
+    WHERE id = ${id} AND org_id = ${orgId} AND claimed_card_id IS NULL RETURNING id`;
+  return rows.length > 0;
+}
+
 export async function deleteLocation(orgId: string, id: string): Promise<boolean> {
   await ensureLocationSchema();
   const rows = await sql`DELETE FROM tapcard_biz_locations WHERE id = ${id} AND org_id = ${orgId} AND claimed_card_id IS NULL RETURNING id`;

@@ -6,7 +6,7 @@ import Phones from "./Phones";
 import { DEMO_KINDS } from "./demoOffers";
 
 interface Link { kind: string; label: string; value: string }
-interface Card {
+export interface Card {
   name: string; website: string; address: string; phone: string; links: Link[];
   facebookUrl: string; instagramUrl: string; twitterUrl: string; linkedInUrl: string; tiktokUrl: string; branchCount: number;
 }
@@ -39,7 +39,7 @@ const ICONS: Record<string, ContactIconName> = {
   book_table: "calendar", book_room: "calendar", appointment: "calendar", custom: "link",
 };
 
-function rowsFor(card: Card): Row[] {
+export function rowsFor(card: Card): Row[] {
   const rows: Row[] = [];
   if (card.phone) rows.push({ key: "phone", id: "phone", title: "Call us", detail: card.phone, color: "#22C55E", icon: "phone", href: `tel:${card.phone.replace(/\s+/g, "")}` });
   if (card.website) rows.push({ key: "web", id: "website", title: "Visit our site", detail: card.website.replace(/^https?:\/\//, "").replace(/\/$/, ""), color: "#3B82F6", icon: "globe", href: webUrl(card.website), linkOnly: true });

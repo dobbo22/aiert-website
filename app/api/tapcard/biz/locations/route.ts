@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOrg, orgCanProvision } from "@/lib/tapcardBiz";
 import { requireBizSession } from "@/lib/tapcardBizSession";
-import { createLocation, deleteLocation, listLocations } from "@/lib/tapcardBizLocations";
+import { createLocation, deleteLocation, listLocations, updateLocation, type BizLocation } from "@/lib/tapcardBizLocations";
 import { findSiteLinks, tidyAddress } from "@/lib/siteLinks";
 import { inviteLink, signInvite } from "@/lib/tapcardBizInvite";
 import { getLocation } from "@/lib/tapcardBizLocations";
 import { rateLimited } from "@/lib/rateLimit";
-import type { CardLink } from "@/lib/tapcardLinks";
+import { parseStoredLinks, type CardLink } from "@/lib/tapcardLinks";
 
 // Locations prepared on the web (see lib/tapcardBizLocations.ts). GET lists them; POST adds one from a business the admin picked
 // (the card is built as the apps do: address, phone, hours, links from its website), or, with `invite`, signs a claim link for a
@@ -15,7 +15,22 @@ export async function GET() {
   const session = await requireBizSession();
   if (!session) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const locations = await listLocations(session.orgId);
-  return NextResponse.json({ locations: locations.map((l) => ({ id: l.id, name: l.name, address: l.address, phone: l.phone, claimed: !!l.claimed_card_id })) });
+  return NextResponse.json({ locations: locations.map(shape) });
+}
+
+/// What the web preview needs for one prepared location.
+function shape(l: BizLocation) {
+  return { id: l.id, name: l.name, address: l.address, phone: l.phone, email: l.email, website: l.website, links: parseStoredLinks(l.links), claimed: !!l.claimed_card_id };
+}
+
+// Edit a prepared location's name, address, phone and email before its manager claims it.
+export async function PATCH(req: NextRequest) {
+  const session = await requireBizSession();
+  if (!session) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  const b = (await req.json().catch(() => null)) as { id?: string; name?: string; address?: string; phone?: string; email?: string } | null;
+  if (!b?.id || !String(b.name ?? "").trim()) return NextResponse.json({ error: "A name is required." }, { status: 400 });
+  const ok = await updateLocation(session.orgId, b.id, { name: String(b.name).trim(), address: String(b.address ?? "").trim(), phone: String(b.phone ?? "").trim(), email: String(b.email ?? "").trim() });
+  return NextResponse.json({ ok }, { status: ok ? 200 : 409 });
 }
 
 export async function POST(req: NextRequest) {
@@ -57,7 +72,7 @@ export async function POST(req: NextRequest) {
     name, address: address || site?.details.address || "", phone: String(hit.phone ?? site?.details.phone ?? "").slice(0, 40),
     email: site?.details.email ?? "", website: org.website || website, links,
   });
-  return NextResponse.json({ location: { id: loc.id, name: loc.name, address: loc.address, phone: loc.phone, claimed: false } });
+  return NextResponse.json({ location: shape(loc) });
 }
 
 export async function DELETE(req: NextRequest) {

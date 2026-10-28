@@ -25,7 +25,7 @@ function TabBar({ active }: { active: "cards" | "contacts" }) {
   );
 }
 
-function Phone({ label, children, overlay, tab }: { label: string; children: React.ReactNode; overlay?: React.ReactNode; tab?: "cards" | "contacts" }) {
+export function Phone({ label, children, overlay, tab }: { label: string; children: React.ReactNode; overlay?: React.ReactNode; tab?: "cards" | "contacts" }) {
   return (
     <div className="w-full max-w-[17rem]">
       <p className="mb-2 text-center text-sm font-semibold text-cloud">{label}</p>
@@ -46,7 +46,7 @@ function domainOf(website: string): string {
   try { return new URL(/^https?:\/\//i.test(website) ? website : `https://${website}`).hostname.replace(/^www\./, ""); } catch { return ""; }
 }
 
-function CardFace({ name, kind, typed, stage, rows, socials, interactive, domain, onOpen }: {
+export function CardFace({ name, kind, typed, stage, rows, socials, interactive, domain, onOpen }: {
   name: string; kind: string; typed: string; stage: number; rows: Row[]; socials: Row[]; interactive: boolean; domain: string; onOpen: (r: Row) => void;
 }) {
   // A tap opens inside the phone; a modified click (new tab) still goes to the real page.
