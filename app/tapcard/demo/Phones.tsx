@@ -84,10 +84,15 @@ export function CardFace({ name, kind, typed, stage, rows, socials, interactive,
   const d = encodeURIComponent(domain);
   return (
     <div className="pb-6 text-center">
-      <div className={`flex h-28 items-start justify-center px-6 pt-3 ${brandColor ? "" : "bg-gradient-to-br from-[#2b2f77] to-[#111318]"}`} style={brandColor ? { background: `linear-gradient(to bottom right, ${paletteFor(brandColor).gradStart}, ${paletteFor(brandColor).gradEnd})` } : undefined}>
+      {/* The banner as in the apps: the brand gradient fading into the card, the logo on a light plate, and the small label when there is no logo. */}
+      <div className={`relative flex h-28 items-start justify-center px-6 pt-3 ${brandColor ? "" : "bg-gradient-to-br from-[#2b2f77] to-[#111318]"}`} style={brandColor ? { background: `linear-gradient(to bottom right, ${paletteFor(brandColor).gradStart}, ${paletteFor(brandColor).gradEnd})` } : undefined}>
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent to-[#111318]" />
+        {!logoLoaded ? (
+          <span className="absolute left-3 top-3 rounded-full bg-black/40 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white">Business</span>
+        ) : null}
         {(logoSrc || domain) && !logoFailed ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={logoSrc || `/api/logo?domain=${d}`} alt="" onLoad={() => setLogoLoaded(true)} onError={() => setLogoFailed(true)} className={`max-w-full rounded-md object-contain [animation:fadein_0.6s_ease] ${logoLoaded ? "max-h-20" : "max-h-14"}`} />
+          <img src={logoSrc || `/api/logo?domain=${d}`} alt="" onLoad={() => setLogoLoaded(true)} onError={() => setLogoFailed(true)} className={`relative max-w-full rounded-lg bg-white object-contain px-3 py-1.5 ring-1 ring-white/20 [animation:fadein_0.6s_ease] ${logoLoaded ? "max-h-20" : "max-h-14 opacity-0"}`} />
         ) : null}
       </div>
       <div className="px-4">
