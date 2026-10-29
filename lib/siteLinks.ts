@@ -13,7 +13,7 @@ const ROOM_HOSTS = /(^|\.)(booking\.com|synxis\.com|littlehotelier\.com|thebooki
 const APPT_HOSTS = /(^|\.)(fresha\.com|treatwell\.[a-z.]+|calendly\.com|setmore\.com|square\.site|acuityscheduling\.com|simplybook\.me)$/i;
 const ORDER_HOSTS = /(^|\.)(deliveroo\.[a-z.]+|ubereats\.com|just-eat\.[a-z.]+|justeat\.[a-z.]+|toasttab\.com|order\.online|orderyoyo\.com|foodhub\.[a-z.]+)$/i;
 
-interface Anchor { href: URL; text: string }
+interface Anchor { href: URL; text: string; /** Where the link is in the page, to tell which branch's section it belongs to. */ at: number }
 
 function anchors(html: string, base: URL): Anchor[] {
   const out: Anchor[] = [];
@@ -25,10 +25,10 @@ function anchors(html: string, base: URL): Anchor[] {
     // "instagram.com/name" with no https:// would otherwise be read as a page on the business's own site.
     const fixed = /^(www\.)?(facebook|instagram|twitter|x|linkedin|tiktok)\.(com|co\.uk)\//i.test(raw) ? `https://${raw}` : raw;
     let href: URL;
-    try { href = new URL(fixed.replace(/&amp;/g, "&"), base); } catch { continue; }
+    try { href = new URL(fixed.replace(/&(amp|#0*38);/g, "&"), base); } catch { continue; }
     if (href.protocol !== "https:" && href.protocol !== "http:") continue;
     const text = m[3].replace(/<[^>]*>/g, " ").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
-    out.push({ href, text });
+    out.push({ href, text, at: m.index });
   }
   return out;
 }
@@ -359,7 +359,19 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
   const addSocial = (u: URL) => { const f = socialOf(u); if (f && !social[f.kind]) social[f.kind] = f.url; };
   for (const s of ld.sameAs) { try { addSocial(new URL(s)); } catch { /* ignore */ } }
 
-  for (const { href, text } of anchors(html, base)) {
+  // A page that shows several branches (each section starts with its own address): an ordering, booking or review link belongs to the branch
+  // whose address comes just before it. A link in another branch's section is not this one's (Chakra Hayes's Deliveroo is not Little Venice's).
+  const spots = [...html.matchAll(/\b([A-Z]{1,2}\d[A-Z\d]?)\s*(\d[A-Z]{2})\b/gi)].map((m) => ({ at: m.index ?? 0, pc: `${m[1]}${m[2]}`.toUpperCase() }));
+  const wantPc = postcodeOf(address);
+  const manyBranches = !!wantPc && new Set(spots.map((s) => s.pc)).size >= 2 && spots.some((s) => s.pc === wantPc);
+  const inOtherBranch = (at: number) => {
+    if (!manyBranches) return false;
+    let before: { pc: string } | null = null;
+    for (const s of spots) { if (s.at <= at) before = s; else break; }
+    return !!before && before.pc !== wantPc;
+  };
+
+  for (const { href, text, at } of anchors(html, base)) {
     addSocial(href);
     const h = href.hostname.replace(/^www\./, "");
     const path = href.pathname.toLowerCase();
@@ -367,6 +379,8 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
     const same = h === siteHost;
     // A link back to the homepage itself (or a section of it) is not a menu or booking page.
     if (same && (path === "/" || path === "")) continue;
+    const thirdParty = /(^|\.)tripadvisor\./i.test(h) || BOOK_HOSTS.test(h) || ROOM_HOSTS.test(h) || APPT_HOSTS.test(h) || ORDER_HOSTS.test(h);
+    if (thirdParty && inOtherBranch(at)) continue;
     if (/(^|\.)tripadvisor\./i.test(h)) pick(found, "tripadvisor", href);
     else if (/(^|\.)g\.page$/i.test(h) || (/(^|\.)google\.[a-z.]+$/i.test(h) && /\/(maps\/.*review|local\/writereview)/.test(path))) pick(found, "google_review", href);
     else if (BOOK_HOSTS.test(h)) pick(found, "book_table", href);
@@ -420,7 +434,8 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
   if (hours) found.set("hours", hours);
   const details: SiteDetails = { ...social };
   if (place && (hours || place.addressText)) {
-    if (place.addressText) details.address = place.addressText;
+    // A heading read in front of the address ("LOCATIONS, Little Venice, 14 Formosa St") is not part of it.
+    if (place.addressText) details.address = place.addressText.replace(/^\s*(locations?|contact( us)?|find us|visit us|address|where to find us|our (restaurants?|shops?|branches))\s*[,:\-–]\s*/i, "");
     if (place.phone) details.phone = place.phone;
   }
 
