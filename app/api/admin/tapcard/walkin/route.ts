@@ -4,6 +4,7 @@ import { rateLimited } from "@/lib/rateLimit";
 import { appleSearch } from "@/lib/appleMaps";
 import { searchBusinesses, type BusinessHit } from "@/lib/tapcardBusinessSearch";
 import { fillPlaceDetails, type PlaceHit } from "@/lib/placeDetails";
+import { postcodeOf } from "@/lib/siteLinks";
 import { buildPrebuiltCard, getPrebuilt, storePrebuilt } from "@/lib/tapcardPrebuilt";
 import { sendPrebuiltEmail } from "@/lib/tapcardPrebuiltEmail";
 import { resolveSiteBranding } from "@/lib/siteBrandColor";
@@ -45,13 +46,20 @@ export async function POST(req: NextRequest) {
   const spot = Number.isFinite(b?.lat) && Number.isFinite(b?.lng) && b?.lat !== 0 ? { lat: Number(b!.lat), lng: Number(b!.lng) } : null;
   // The place listing first (phone, website, hours), then the website itself for every link: the same as the business admin's builder.
   const place = await fillPlaceDetails(name, address, spot ?? nearOf(req), "walkin").catch(() => null);
-  const website = String(b?.website ?? "").trim().slice(0, 200) || place?.hit.website || "";
+  // The website is what the logo, brand colour, links and socials all come from, so it has to be the right one. The apps take it from Google,
+  // which is right far more often than the free listings, so a walk-in does the same (one lookup, for an admin only) and keeps the
+  // free listings as the fallback.
+  const found = await searchBusinesses(`${name} ${address}`, spot ?? nearOf(req), true, "walkin").catch((): BusinessHit[] => []);
+  const pc = postcodeOf(address);
+  const google = (pc ? found.find((h) => postcodeOf(h.address) === pc) : undefined) ?? (pc ? undefined : found[0]);
+  const website = String(b?.website ?? "").trim().slice(0, 200) || google?.website || place?.hit.website || "";
   const built = await buildPrebuiltCard(name, website, address);
   const card = built.card;
   // What the website did not say, the listing may: address, phone, opening hours.
   if (!card.address) card.address = address;
-  if (!card.phone && place?.hit.phone) card.phone = place.hit.phone;
-  if (place?.hit.hours && !card.links.some((l) => l.kind === "hours")) card.links = [...card.links, { kind: "hours" as const, label: "Opening hours", value: place.hit.hours }].slice(0, 10);
+  if (!card.phone) card.phone = google?.phone || place?.hit.phone || "";
+  const hours = google?.hours || place?.hit.hours;
+  if (hours && !card.links.some((l) => l.kind === "hours")) card.links = [...card.links, { kind: "hours" as const, label: "Opening hours", value: hours }].slice(0, 10);
   const token = await storePrebuilt(WALK_IN_OWNER, name, website, card, null, "");
   // What the apps show on the card besides the links: the banner in the brand colour of the website, and the Google rating.
   const [branding, rating] = await Promise.all([
