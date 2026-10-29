@@ -157,12 +157,13 @@ export class PromoteLimitError extends Error {
 const MOVE_COOLDOWN_DAYS = 30;
 
 /// The 3-month free trial belongs to an Apple ID (or Google account), not to a business, so a business could otherwise start a new trial
-/// with each new account. It is therefore remembered per business: by the domain it verified, and by its website's domain. A trial that
+/// with each new account. It is therefore remembered per business: by the domain it verified, by its website's domain, and by the email
+/// address on the card. A trial that
 /// arrives for a business that already had one on a DIFFERENT subscription is refused; the same subscription renewing is fine, and a paid
 /// (non-trial) purchase is never affected.
 export class TrialUsedError extends Error {
   constructor() {
-    super("This business has already had its 3 months free, on another Apple ID or Google account, so the free trial can't be used again. Promote starts when your first payment is taken, or you can sign in with the account you first used.");
+    super("This business, or this email address, has already had its 3 months free on another Apple ID or Google account, so the free trial can't be used again. Promote starts when your first payment is taken, or you can sign in with the account you first used.");
   }
 }
 
@@ -187,8 +188,9 @@ function ensureTrialSchema(): Promise<unknown> {
 
 async function claimTrial(cardId: string, v: Verified): Promise<void> {
   await ensureTrialSchema();
-  const row = ((await sql`SELECT website, verified_domain FROM tapcard_cards WHERE id = ${cardId}`) as { website: string; verified_domain: string }[])[0];
-  const keys = [...new Set([row?.verified_domain ?? "", businessDomain(row?.website ?? "")].filter(Boolean))];
+  const row = ((await sql`SELECT website, verified_domain, email FROM tapcard_cards WHERE id = ${cardId}`) as { website: string; verified_domain: string; email: string }[])[0];
+  const email = (row?.email ?? "").trim().toLowerCase();
+  const keys = [...new Set([row?.verified_domain ?? "", businessDomain(row?.website ?? ""), /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? `email:${email}` : ""].filter(Boolean))];
   // A business with no domain of its own can only be held to its own card.
   if (!keys.length) keys.push(`card:${cardId}`);
   const seen = (await sql`SELECT business_key, original_id FROM tapcard_promote_trials WHERE business_key = ANY(${keys})`) as { business_key: string; original_id: string }[];
