@@ -25,13 +25,13 @@ function TabBar({ active }: { active: "cards" | "contacts" }) {
   );
 }
 
-export function Phone({ label, children, overlay, tab, large }: { label: string; children: React.ReactNode; overlay?: React.ReactNode; tab?: "cards" | "contacts"; large?: boolean }) {
+export function Phone({ label, children, overlay, tab, large, fill }: { label: string; children: React.ReactNode; overlay?: React.ReactNode; tab?: "cards" | "contacts"; large?: boolean; fill?: boolean }) {
   return (
-    <div className={`w-full ${large ? "max-w-[23rem]" : "max-w-[17rem]"}`}>
+    <div className={`w-full ${fill ? "max-w-[26rem]" : large ? "max-w-[23rem]" : "max-w-[17rem]"}`}>
       <p className="mb-2 text-center text-sm font-semibold text-cloud">{label}</p>
       <div className="rounded-[2.2rem] bg-black p-2.5 shadow-2xl ring-1 ring-white/20">
         {/* Fixed height: the screen scrolls, it never grows. A tapped link opens over the screen, like an in-app browser. */}
-        <div className={`relative ${large ? "h-[50rem]" : "h-[34rem]"} overflow-hidden rounded-[1.8rem] bg-[#111318] text-white`}>
+        <div className={`relative ${fill ? "h-[62dvh] min-h-[28rem]" : large ? "h-[50rem]" : "h-[34rem]"} overflow-hidden rounded-[1.8rem] bg-[#111318] text-white`}>
           <div className={`h-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${tab ? "pb-20" : ""}`}>{children}</div>
           {tab ? <TabBar active={tab} /> : null}
           {overlay}
@@ -228,10 +228,12 @@ function Tick({ label, sub }: { label: string; sub?: string }) {
   );
 }
 
-export default function Phones({ name, website, kind, built, stage, typed, rows, socials, buildSpinner, idleText, view = "both" }: {
+export default function Phones({ name, website, kind, built, stage, typed, rows, socials, buildSpinner, idleText, view = "both", fill = false }: {
   name: string; website: string; kind: string; built: boolean; stage: number; typed: string; rows: Row[]; socials: Row[]; buildSpinner: boolean; idleText: string;
   /** Which phone to show: both, or only the owner's or the customer's (the story still plays across both). */
   view?: "both" | "owner" | "customer";
+  /** Fill a phone-sized screen (the full-screen view) instead of the small desktop mock-ups. */
+  fill?: boolean;
 }) {
   const domain = domainOf(website);
   const [caption, setCaption] = useState<{ step: number; text: string } | null>(null);
@@ -603,8 +605,8 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
         </div>
       </div>
       <div className="flex flex-wrap justify-center gap-6">
-        <div className={view === "customer" ? "hidden" : ""}><Phone label="Your business" tab={built && ["card", "saved", "offerLive"].includes(aView) ? "cards" : undefined} overlay={browseA ? <InPhoneBrowser row={browseA} name={name} website={website} onClose={() => setBrowseA(null)} /> : null}>{showPhoneA()}</Phone></div>
-        <div className={view === "owner" ? "hidden" : ""}><Phone label="Alex Morgan, a customer" tab={bView === "contacts" ? "contacts" : undefined} overlay={browseB ? <InPhoneBrowser row={browseB} name={name} website={website} onClose={() => setBrowseB(null)} /> : null}>{showPhoneB()}</Phone></div>
+        <div className={view === "customer" ? "hidden" : ""}><Phone fill={fill} label="Your business" tab={built && ["card", "saved", "offerLive"].includes(aView) ? "cards" : undefined} overlay={browseA ? <InPhoneBrowser row={browseA} name={name} website={website} onClose={() => setBrowseA(null)} /> : null}>{showPhoneA()}</Phone></div>
+        <div className={view === "owner" ? "hidden" : ""}><Phone fill={fill} label="Alex Morgan, a customer" tab={bView === "contacts" ? "contacts" : undefined} overlay={browseB ? <InPhoneBrowser row={browseB} name={name} website={website} onClose={() => setBrowseB(null)} /> : null}>{showPhoneB()}</Phone></div>
       </div>
       <style>{`
         @keyframes scan { 0% { top: 8px; } 50% { top: calc(100% - 10px); } 100% { top: 8px; } }

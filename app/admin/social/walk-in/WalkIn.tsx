@@ -33,6 +33,8 @@ export default function WalkIn() {
   const [email, setEmail] = useState("");
   const [note, setNote] = useState<{ text: string; ok: boolean } | null>(null);
   const [sending, setSending] = useState(false);
+  const [full, setFull] = useState(false);
+  const [touch, setTouch] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     if (!built) { setQr(""); return; }
@@ -127,16 +129,33 @@ export default function WalkIn() {
               <button type="button" onClick={() => { setBuilt(null); setQ(""); setNote(null); }} className="mt-5 text-gold underline">Another business</button>
             </div>
 
-            <div className="min-w-0">
-              <div role="tablist" className="mb-4 flex gap-2">
-                {([["owner", "Owner"], ["customer", "Customer"]] as const).map(([id, label]) => (
-                  <button key={id} role="tab" aria-selected={tab === id} type="button" onClick={() => setTab(id)}
-                    className={`rounded-xl px-5 py-2 text-lg font-bold ${tab === id ? "btn-gold" : "bg-white/10 text-cloud"}`}>{label}</button>
-                ))}
+            {/* The same element in both modes, so the story keeps its place when going full screen: on a phone it fills the screen and a swipe
+                left or right switches between the owner and the customer. */}
+            <div
+              className={full ? "fixed inset-0 z-50 overflow-y-auto bg-[#0b0d12] p-3" : "min-w-0"}
+              onTouchStart={full ? (e) => setTouch({ x: e.touches[0].clientX, y: e.touches[0].clientY }) : undefined}
+              onTouchEnd={full ? (e) => {
+                if (!touch) return;
+                const dx = e.changedTouches[0].clientX - touch.x, dy = e.changedTouches[0].clientY - touch.y;
+                setTouch(null);
+                if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 2) setTab(dx < 0 ? "customer" : "owner");
+              } : undefined}
+            >
+              <div className="mb-4 flex items-center gap-2">
+                <div role="tablist" className="flex gap-2">
+                  {([["owner", "Owner"], ["customer", "Customer"]] as const).map(([id, label]) => (
+                    <button key={id} role="tab" aria-selected={tab === id} type="button" onClick={() => setTab(id)}
+                      className={`rounded-xl px-5 py-2 text-lg font-bold ${tab === id ? "btn-gold" : "bg-white/10 text-cloud"}`}>{label}</button>
+                  ))}
+                </div>
+                <button type="button" onClick={() => setFull((v) => !v)} className="ml-auto rounded-xl bg-white/10 px-4 py-2 text-lg font-bold text-cloud">
+                  {full ? "Close ✕" : "Full screen"}
+                </button>
               </div>
+              {full && <p className="mb-3 text-center text-sm text-cloud">Swipe left or right to switch between the owner and the customer.</p>}
               <Phones
                 name={built.card.name} website={built.card.website} kind={kind} built stage={4} typed={built.card.name}
-                rows={rows.filter((r) => !r.social)} socials={rows.filter((r) => r.social)} buildSpinner={false} idleText="" view={tab}
+                rows={rows.filter((r) => !r.social)} socials={rows.filter((r) => r.social)} buildSpinner={false} idleText="" view={tab} fill={full}
               />
             </div>
           </div>
