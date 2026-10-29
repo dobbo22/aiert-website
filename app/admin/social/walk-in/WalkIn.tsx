@@ -234,10 +234,10 @@ export default function WalkIn() {
                 <div role="tablist" className="flex gap-2">
                   {([["owner", "Owner"], ["customer", "Customer"], ["demo", "Demo"]] as const).map(([id, label]) => (
                     <button key={id} role="tab" aria-selected={tab === id} type="button" onClick={() => setTab(id)}
-                      className={`rounded-xl px-4 py-2 text-base font-bold sm:px-5 sm:text-lg ${tab === id ? "btn-gold" : "bg-white/10 text-cloud"}`}>{label}</button>
+                      className={`rounded-xl px-3 py-2 text-sm font-bold sm:px-5 sm:text-lg ${tab === id ? "btn-gold" : "bg-white/10 text-cloud"}`}>{label}</button>
                   ))}
                 </div>
-                <button type="button" onClick={() => setFull((v) => !v)} aria-label={full ? "Close full screen" : "Full screen"} className="ml-auto whitespace-nowrap rounded-xl bg-white/10 px-4 py-2 text-base font-bold text-cloud sm:text-lg">
+                <button type="button" onClick={() => setFull((v) => !v)} aria-label={full ? "Close full screen" : "Full screen"} className="ml-auto whitespace-nowrap rounded-xl bg-white/10 px-3 py-2 text-sm font-bold text-cloud sm:px-4 sm:text-lg">
                   {full ? "✕" : "Full screen"}
                 </button>
               </div>

@@ -677,9 +677,9 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
           <datalist id="offer-ideas">{suggestions.map((o) => <option key={o} value={o} />)}</datalist>
         </div>
       </div>}
-      <div className="flex flex-wrap justify-center gap-6">
-        <div className={view === "customer" ? "hidden" : ""}><Phone fill={fill} label="Your business" tab={built && ["card", "saved", "offerLive"].includes(aView) ? "cards" : undefined} overlay={browseA ? <InPhoneBrowser row={browseA} name={name} website={website} onClose={() => setBrowseA(null)} /> : null}>{showPhoneA()}</Phone></div>
-        <div className={view === "owner" ? "hidden" : ""}><Phone fill={fill} label="Alex Morgan, a customer" tab={bView === "contacts" ? "contacts" : undefined} overlay={browseB ? <InPhoneBrowser row={browseB} name={name} website={website} onClose={() => setBrowseB(null)} /> : null}>{showPhoneB()}</Phone></div>
+      <div className={`flex flex-wrap justify-center gap-6 ${fill ? "w-full" : ""}`}>
+        <div className={`${view === "customer" ? "hidden" : ""} ${fill ? "w-full min-w-0" : ""}`}><Phone fill={fill} label="Your business" tab={built && ["card", "saved", "offerLive"].includes(aView) ? "cards" : undefined} overlay={browseA ? <InPhoneBrowser row={browseA} name={name} website={website} onClose={() => setBrowseA(null)} /> : null}>{showPhoneA()}</Phone></div>
+        <div className={`${view === "owner" ? "hidden" : ""} ${fill ? "w-full min-w-0" : ""}`}><Phone fill={fill} label="Alex Morgan, a customer" tab={bView === "contacts" ? "contacts" : undefined} overlay={browseB ? <InPhoneBrowser row={browseB} name={name} website={website} onClose={() => setBrowseB(null)} /> : null}>{showPhoneB()}</Phone></div>
       </div>
       <style>{`
         @keyframes scan { 0% { top: 8px; } 50% { top: calc(100% - 10px); } 100% { top: 8px; } }
