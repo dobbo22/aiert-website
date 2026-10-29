@@ -1,3 +1,4 @@
+import { appleMapsQuery } from "@/lib/mapsQuery";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import sql from "@/lib/db";
@@ -34,7 +35,7 @@ function mapsUrl(address: string, ua: string, place = ""): string {
   const a = address.trim();
   const named = place.trim() && !a.toLowerCase().includes(place.trim().toLowerCase()) ? `${place.trim()}, ${a}` : a;
   const q = encodeURIComponent(/^[A-Za-z]{1,2}\d[A-Za-z\d]?\s*\d[A-Za-z]{2}$/.test(a) ? `${a}, UK` : named);
-  if (/iPhone|iPad|iPod/i.test(ua)) return `https://maps.apple.com/?q=${q}`;
+  if (/iPhone|iPad|iPod/i.test(ua)) return `https://maps.apple.com/?q=${encodeURIComponent(appleMapsQuery(a, place))}`;
   return `https://www.google.com/maps/search/?api=1&query=${q}`;
 }
 

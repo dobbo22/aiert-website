@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import ContactIcon, { type ContactIconName } from "../ContactIcon";
 import Phones from "./Phones";
 import { DEMO_KINDS } from "./demoOffers";
+import { appleMapsQuery } from "@/lib/mapsQuery";
 import { PROMOTE_NOTE, PROMOTE_NOTE_TITLE } from "../promoteNote";
 
 interface Link { kind: string; label: string; value: string }
@@ -36,12 +37,11 @@ function emailFix(email: string): string | null {
 
 // Directions open in Apple Maps on an iPhone, iPad or Mac, and in Google Maps everywhere else.
 const appleDevice = () => typeof navigator !== "undefined" && /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);
-// The business name goes in too, so the map app finds the place itself: the address alone can land on another business at the same
-// street number (the Prince Alfred's 5A Formosa St opened on a neighbour).
+// The business name goes in too, so the map app finds the place itself (see lib/mapsQuery.ts).
 export const mapsHref = (address: string, place = "") => {
   const a = address.trim(), p = place.trim();
-  const q = encodeURIComponent(p && !a.toLowerCase().includes(p.toLowerCase()) ? `${p}, ${a}` : a);
-  return appleDevice() ? `https://maps.apple.com/?q=${q}` : `https://www.google.com/maps/search/?api=1&query=${q}`;
+  const named = encodeURIComponent(p && !a.toLowerCase().includes(p.toLowerCase()) ? `${p}, ${a}` : a);
+  return appleDevice() ? `https://maps.apple.com/?q=${encodeURIComponent(appleMapsQuery(a, p))}` : `https://www.google.com/maps/search/?api=1&query=${named}`;
 };
 
 const webUrl = (v: string) => (/^https?:\/\//i.test(v) ? v : `https://${v}`);
