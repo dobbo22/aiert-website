@@ -36,7 +36,13 @@ function emailFix(email: string): string | null {
 
 // Directions open in Apple Maps on an iPhone, iPad or Mac, and in Google Maps everywhere else.
 const appleDevice = () => typeof navigator !== "undefined" && /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);
-export const mapsHref = (address: string) => appleDevice() ? `https://maps.apple.com/?q=${encodeURIComponent(address)}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+// The business name goes in too, so the map app finds the place itself: the address alone can land on another business at the same
+// street number (the Prince Alfred's 5A Formosa St opened on a neighbour).
+export const mapsHref = (address: string, place = "") => {
+  const a = address.trim(), p = place.trim();
+  const q = encodeURIComponent(p && !a.toLowerCase().includes(p.toLowerCase()) ? `${p}, ${a}` : a);
+  return appleDevice() ? `https://maps.apple.com/?q=${q}` : `https://www.google.com/maps/search/?api=1&query=${q}`;
+};
 
 const webUrl = (v: string) => (/^https?:\/\//i.test(v) ? v : `https://${v}`);
 const ICONS: Record<string, ContactIconName> = {
@@ -48,7 +54,7 @@ export function rowsFor(card: Card): Row[] {
   const rows: Row[] = [];
   if (card.phone) rows.push({ key: "phone", id: "phone", title: "Call us", detail: card.phone, color: "#22C55E", icon: "phone", href: `tel:${card.phone.replace(/\s+/g, "")}` });
   if (card.website) rows.push({ key: "web", id: "website", title: "Visit our site", detail: card.website.replace(/^https?:\/\//, "").replace(/\/$/, ""), color: "#3B82F6", icon: "globe", href: webUrl(card.website), linkOnly: true });
-  if (card.address) rows.push({ key: "addr", id: "address", title: "Find us", detail: card.address, color: "#F97316", icon: "mapPin", href: mapsHref(card.address) });
+  if (card.address) rows.push({ key: "addr", id: "address", title: "Find us", detail: card.address, color: "#F97316", icon: "mapPin", href: mapsHref(card.address, card.name) });
   for (const l of card.links) rows.push({
     key: `l-${l.kind}-${l.value}`, id: `link:${l.kind}`, title: l.label,
     detail: l.kind === "hours" ? l.value : l.value.replace(/^https?:\/\/(www\.)?/, ""),
