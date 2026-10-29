@@ -93,6 +93,8 @@ export default function WalkIn() {
   const [building, setBuilding] = useState(false);
   const [built, setBuilt] = useState<Built | null>(null);
   const [kind, setKind] = useState("Something else");
+  // "Custom": the type is typed in (the example offers are then the general ones).
+  const [customKind, setCustomKind] = useState(false);
   const [tab, setTab] = useState<"owner" | "customer" | "demo">("owner");
   const [qr, setQr] = useState("");
   const [email, setEmail] = useState("");
@@ -148,7 +150,7 @@ export default function WalkIn() {
     setBuilding(false);
     if (!res?.ok || !data?.card) { setNote({ text: data?.error ?? "Couldn't build the card. Try again.", ok: false }); return; }
     setBuilt({ card: data.card, token: data.token, link: data.link, brandColor: data.brandColor ?? null, rating: data.rating ?? null });
-    setKind(guessKind(h.type));
+    setKind(guessKind(h.type)); setCustomKind(false);
     if (data.wrongSite) setNote({ text: "The website on the map listing only shows other branches, so it was left off this card. Add the right one if there is one.", ok: false });
     setTab("owner"); setHits([]); setEmail("");
   }
@@ -214,9 +216,11 @@ export default function WalkIn() {
               </form>
               {note && <p role="alert" className={`mt-3 rounded-xl px-4 py-3 text-sm font-semibold ${note.ok ? "bg-teal text-black" : "bg-red-600 text-white"}`}>{note.text}</p>}
               <label className="mt-5 block text-sm font-semibold text-cloud" htmlFor="wk">Type of business <span className="font-normal">(so the example offers suit them)</span></label>
-              <select id="wk" value={kind} onChange={(e) => setKind(e.target.value)} className={`mt-1 ${field}`}>
+              <select id="wk" value={customKind ? "__custom__" : kind} onChange={(e) => { if (e.target.value === "__custom__") { setCustomKind(true); setKind(""); } else { setCustomKind(false); setKind(e.target.value); } }} className={`mt-1 ${field}`}>
                 {DEMO_KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
+                <option value="__custom__">Custom (type it in)</option>
               </select>
+              {customKind && <input type="text" aria-label="Type of business" value={kind} onChange={(e) => setKind(e.target.value.slice(0, 40))} className={`mt-2 ${field}`} placeholder="e.g. Fishmonger" autoFocus />}
               <button type="button" onClick={() => { setBuilt(null); setQ(""); setNote(null); }} className="mt-5 text-gold underline">Another business</button>
             </div>
 
