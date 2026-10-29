@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { paletteFor } from "@/lib/brandPalette";
+import { probePlate } from "@/lib/logoBackdrop";
 import ContactIcon from "../ContactIcon";
 import type { Row } from "./DemoBuilder";
 import { offersFor } from "./demoOffers";
@@ -84,6 +85,10 @@ export function CardFace({ name, kind, typed, stage, rows, socials, interactive,
   // A stored company logo is the picture: no round avatar or shop icon beside it.
   const logoLoaded = logoLoadedState || (!!logoSrc && !logoFailed);
   const d = encodeURIComponent(domain);
+  // The plate behind the logo, chosen from the logo's own colours, as in the apps: a light logo gets a dark plate so it does not vanish.
+  const logoUrl = logoSrc || (domain ? `/api/tapcard/logo?domain=${d}` : "");
+  const [plate, setPlate] = useState<string | null>(null);
+  useEffect(() => { setPlate(null); if (logoUrl) probePlate(logoUrl, setPlate); }, [logoUrl]);
   return (
     <div className="pb-6 text-center">
       {/* The banner as in the apps: the brand gradient fading into the card, the logo on a light plate, and the small label when there is no logo. */}
@@ -94,7 +99,7 @@ export function CardFace({ name, kind, typed, stage, rows, socials, interactive,
         ) : null}
         {(logoSrc || domain) && !logoFailed ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={logoSrc || `/api/tapcard/logo?domain=${d}`} alt="" onLoad={() => setLogoLoaded(true)} onError={() => setLogoFailed(true)} className={`relative max-w-full rounded-lg bg-white object-contain px-3 py-1.5 ring-1 ring-white/20 [animation:fadein_0.6s_ease] ${logoLoaded ? "max-h-20" : "max-h-14 opacity-0"}`} />
+          <img src={logoUrl} alt="" style={{ backgroundColor: plate ?? "#ffffff" }} onLoad={() => setLogoLoaded(true)} onError={() => setLogoFailed(true)} className={`relative max-w-full rounded-lg object-contain px-3 py-1.5 ring-1 ring-white/20 [animation:fadein_0.6s_ease] ${logoLoaded ? "max-h-20" : "max-h-14 opacity-0"}`} />
         ) : null}
       </div>
       <div className="px-4">
