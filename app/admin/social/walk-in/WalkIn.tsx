@@ -99,6 +99,25 @@ export default function WalkIn() {
   const [sending, setSending] = useState(false);
   const [full, setFull] = useState(false);
   const [touch, setTouch] = useState<{ x: number; y: number } | null>(null);
+  // Full screen is sized from the visible screen in pixels (not CSS viewport units, which iOS gets wrong behind its toolbars and in a web app),
+  // follows a rotation, and stops the page behind from scrolling.
+  const [vh, setVh] = useState(0);
+  useEffect(() => {
+    if (!full) return;
+    const set = () => setVh(Math.round(window.visualViewport?.height ?? window.innerHeight));
+    set();
+    window.visualViewport?.addEventListener("resize", set);
+    window.addEventListener("resize", set);
+    window.addEventListener("orientationchange", set);
+    const before = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.visualViewport?.removeEventListener("resize", set);
+      window.removeEventListener("resize", set);
+      window.removeEventListener("orientationchange", set);
+      document.body.style.overflow = before;
+    };
+  }, [full]);
 
   useEffect(() => {
     if (!built) { setQr(""); return; }
@@ -198,7 +217,8 @@ export default function WalkIn() {
             {/* The same element in both modes, so the story keeps its place when going full screen: on a phone it fills the screen and a swipe
                 left or right switches between the owner and the customer. */}
             <div
-              className={full ? "fixed inset-0 z-50 overflow-y-auto bg-[#0b0d12] p-2" : "min-w-0"}
+              className={full ? "fixed left-0 right-0 top-0 z-50 overflow-y-auto overflow-x-hidden bg-[#0b0d12] p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-[max(0.5rem,env(safe-area-inset-top))]" : "min-w-0"}
+              style={full && vh ? ({ height: `${vh}px`, "--vh": `${vh}px` } as React.CSSProperties) : undefined}
               onTouchStart={full ? (e) => setTouch({ x: e.touches[0].clientX, y: e.touches[0].clientY }) : undefined}
               onTouchEnd={full ? (e) => {
                 if (!touch) return;

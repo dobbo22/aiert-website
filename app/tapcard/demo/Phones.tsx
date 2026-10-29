@@ -33,7 +33,7 @@ export function Phone({ label, children, overlay, tab, large, fill }: { label: s
   if (fill) {
     return (
       <div className="mx-auto w-full max-w-[30rem]">
-        <div className="relative h-[calc(100dvh-4.75rem)] overflow-hidden rounded-2xl bg-[#111318] text-white ring-1 ring-white/15">
+        <div className="relative h-[calc(var(--vh,100dvh)-4.75rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] min-h-[20rem] overflow-hidden rounded-2xl bg-[#111318] text-white ring-1 ring-white/15">
           <div className={`h-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${tab ? "pb-20" : ""}`}>{children}</div>
           {tab ? <TabBar active={tab} /> : null}
           {overlay}
