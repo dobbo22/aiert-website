@@ -14,8 +14,8 @@ import { PROMOTE_NOTE } from "../promoteNote";
 // phone. After the card is built, buttons play the story: share the card, send an offer, use the offer.
 
 
-type AView = "card" | "qr" | "saved" | "offerForm" | "offerLive" | "staff" | "used" | "sign" | "stats" | "cta";
-type BView = "idle" | "scanning" | "received" | "saved" | "follow" | "contacts" | "push" | "offer" | "claimed" | "used";
+type AView = "card" | "qr" | "saved" | "offerForm" | "offerLive" | "staff" | "used" | "sign" | "stats" | "cta" | "hook";
+type BView = "idle" | "scanning" | "received" | "saved" | "follow" | "contacts" | "push" | "offer" | "claimed" | "used" | "stamps";
 
 function TabBar({ active }: { active: "cards" | "contacts" }) {
   const tab = (id: "cards" | "contacts", text: string, icon: React.ReactNode) => (
@@ -29,7 +29,7 @@ function TabBar({ active }: { active: "cards" | "contacts" }) {
   );
 }
 
-export function Phone({ label, children, overlay, tab, large, fill, short, hud }: { label: string; children: React.ReactNode; overlay?: React.ReactNode; tab?: "cards" | "contacts"; large?: boolean; fill?: boolean; short?: boolean; hud?: React.ReactNode }) {
+export function Phone({ label, children, overlay, tab, large, fill, short, hud, fx }: { label: string; children: React.ReactNode; overlay?: React.ReactNode; tab?: "cards" | "contacts"; large?: boolean; fill?: boolean; short?: boolean; hud?: React.ReactNode; fx?: React.ReactNode }) {
   // Full screen: no phone frame or caption, just the app screen using the whole display.
   if (fill) {
     return (
@@ -38,6 +38,7 @@ export function Phone({ label, children, overlay, tab, large, fill, short, hud }
           <div className={`h-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${tab ? "pb-20" : ""}`}>{children}</div>
           {tab ? <TabBar active={tab} /> : null}
           {overlay}
+          {fx}
           {hud}
         </div>
       </div>
@@ -52,6 +53,7 @@ export function Phone({ label, children, overlay, tab, large, fill, short, hud }
           <div className={`h-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${tab ? "pb-20" : ""}`}>{children}</div>
           {tab ? <TabBar active={tab} /> : null}
           {overlay}
+          {fx}
         </div>
       </div>
     </div>
@@ -243,6 +245,19 @@ function InPhoneBrowser({ row, name, website, onClose }: { row: Row; name: strin
   );
 }
 
+// A burst of confetti over the phone for the moments worth celebrating: a new follower, an offer used, a reward unlocked.
+function Confetti() {
+  const colors = ["#EAB308", "#22C55E", "#3B82F6", "#EC4899", "#A855F7", "#F97316"];
+  return (
+    <div className="pointer-events-none absolute inset-0 z-40 overflow-hidden" aria-hidden="true">
+      {Array.from({ length: 30 }, (_, i) => (
+        <span key={i} className="absolute top-0 block h-2.5 w-1.5 rounded-sm"
+          style={{ left: `${(i * 37) % 100}%`, background: colors[i % colors.length], animation: `confettifall ${1.8 + (i % 5) * 0.25}s ease-in ${(i % 7) * 0.12}s both` }} />
+      ))}
+    </div>
+  );
+}
+
 // A caption is "Headline|detail": the headline is large and gold, the detail beneath it.
 function CaptionText({ text }: { text: string }) {
   const [head, ...rest] = text.split("|");
@@ -375,12 +390,14 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
     return () => clearTimeout(t);
   }, [caption]);
   const [completed, setCompleted] = useState(0); // stories finished: 1 share, 2 offer, 3 use
-  const revealed = built ? Math.min(4, completed + 1) : 0; // the furthest story that can be played now
+  const revealed = built ? Math.min(5, completed + 1) : 0; // the furthest story that can be played now
   const [running, setRunning] = useState(false);
   const suggestions = offersFor(kind);
   const [offerOverride, setOffer] = useState<string | null>(null);
   const offer = offerOverride ?? suggestions[0];
   const [typedOffer, setTypedOffer] = useState("");
+  const [stamps, setStamps] = useState(0);
+  const [burst, setBurst] = useState(0);
   const [pin, setPin] = useState("");
   const [code] = useState(() => Array.from({ length: 10 }, () => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 32)]).join(""));
   const [codeQr, setCodeQr] = useState("");
@@ -413,7 +430,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
     runRef.current += 1;
     setRunning(false); setReady(false); setScene(null); setCaption(null); setHint(null);
     setAView("card"); setBView("idle"); setBrowseA(null); setBrowseB(null); setFocus("owner");
-    setCompleted(0); setTypedOffer(""); setPin("");
+    setCompleted(0); setTypedOffer(""); setPin(""); setStamps(0); setBurst(0);
   }
 
   // Switching between the Owner, Customer and Demo tabs starts clean: nothing the story did carries over to the plain cards.
@@ -458,12 +475,13 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
   }
 
   const share = () => runScenes([
+    { run: () => { setBView("idle"); setAView("hook"); }, step: 1, settle: 2200, text: "The problem|Customers walk in, buy, and leave. You never get their name, their number or a way to bring them back." },
     { run: () => { setBView("idle"); setAView("qr"); }, step: 1, text: "Turn every visitor into a customer you keep|Customers scan your card's QR code from your phone, or from a printed TapCard sign in your window or at reception. They need the free TapCard app." },
     { run: () => setBView("scanning"), settle: 2300, step: 1, text: `Two seconds. No typing.|Alex Morgan, a ${kind ? kind.toLowerCase() : "business"} customer with TapCard installed, scans your QR code…` },
     { run: () => setBView("received"), step: 1, text: "Your whole business, in their pocket|Alex sees your card at once, with your links ready to tap: call, directions, menu, booking, reviews. Alex chooses Save & send my card." },
     { run: () => setBView("saved"), step: 1, text: "A handshake, not a handout|Alex's own card is sent back to you, so you each have the other's details." },
     { run: () => setBView("follow"), step: 1, text: "They opt in. You stay in control.|Alex is asked once: do you want offers and news from this business? You can't send anyone offers unless they say yes." },
-    { run: () => { setBView("contacts"); setAView("saved"); }, step: 1, text: "A customer you can reach directly|Alex now follows you. Your phone shows the new follower. Next: send them an offer." },
+    { run: () => { setBView("contacts"); setAView("saved"); setBurst((b) => b + 1); }, step: 1, text: "A customer you can reach directly|Alex now follows you. Your phone shows the new follower. Next: send them an offer." },
   ], () => setCompleted((c) => Math.max(c, 1)));
 
   const sendOffer = () => {
@@ -484,15 +502,26 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
     { run: () => setBView("claimed"), step: 3, text: "Their own one-off code|…and gets a QR code to show in your shop." },
     { run: () => { setAView("staff"); setPin(""); }, step: 3, text: "Your staff check it in seconds|They scan it. The screen checks the offer is valid and asks for your PIN.", hold: 5000 },
     { run: () => setPin("4"), hold: 450 }, { run: () => setPin("43"), hold: 450 }, { run: () => setPin("432"), hold: 450 }, { run: () => setPin("4321"), hold: 900 },
-    { run: () => { setAView("used"); setBView("used"); }, step: 3, text: "Used once. Never twice.|A big tick for your staff, and Alex's phone shows the offer as used." },
-    { run: () => setAView("offerLive"), step: 3, text: "That's the loop|Scan, follow, offer, visit. Next: see what it adds up to." },
+    { run: () => { setAView("used"); setBView("used"); setBurst((b) => b + 1); }, step: 3, text: "Used once. Never twice.|A big tick for your staff, and Alex's phone shows the offer as used." },
+    { run: () => setAView("offerLive"), step: 3, text: "That's the loop|Scan, follow, offer, visit. Next: turn it into repeat visits." },
   ], () => setCompleted((c) => Math.max(c, 3)));
 
+  const stampCard = () => {
+    setStamps(0);
+    void runScenes([
+      { run: () => { setBView("idle"); setAView("offerLive"); }, step: 4, hold: 600 },
+      { run: () => { setBView("stamps"); setStamps(0); }, settle: 1500, step: 4, text: "Replace the paper loyalty card|Choose Stamp card, say how many stamps and what the reward is. Nothing to print, nothing to lose in a wallet." },
+      { run: () => setStamps(1), step: 4, text: "Every visit, a stamp|Staff scan Alex's code and enter the PIN, and a stamp appears. Alex has a reason to come back." },
+      { run: () => setStamps(2), hold: 800 }, { run: () => setStamps(3), hold: 800 }, { run: () => setStamps(4), hold: 800 },
+      { run: () => { setStamps(5); setBurst((b) => b + 1); }, step: 4, text: "Reward unlocked|Five stamps and Alex's reward is ready to claim. Customers who collect stamps come back to finish the card." },
+    ], () => setCompleted((c) => Math.max(c, 4)));
+  };
+
   const results = () => runScenes([
-    { run: () => { setBView("idle"); setAView("sign"); }, step: 4, text: "Your shop window becomes a sign-up form|Print a TapCard sign from the app for your window or till. Every scan is a customer who can follow you." },
-    { run: () => setAView("stats"), settle: 2200, step: 4, text: "See exactly what is working|Card views, QR scans, saves, followers and offers used, counted for you. These are example numbers; yours fill in as customers use your card." },
-    { run: () => setAView("cta"), step: 4, text: "Your turn|Scan to start your own card, built from your website. Free to install and to build." },
-  ], () => setCompleted((c) => Math.max(c, 4)));
+    { run: () => { setBView("idle"); setAView("sign"); }, step: 5, text: "Your shop window becomes a sign-up form|Print a TapCard sign from the app for your window or till. Every scan is a customer who can follow you." },
+    { run: () => setAView("stats"), settle: 2200, step: 5, text: "See exactly what is working|Card views, QR scans, saves, followers and offers used, counted for you. These are example numbers; yours fill in as customers use your card." },
+    { run: () => setAView("cta"), step: 5, text: "Your turn|Scan to start your own card, built from your website. Free to install and to build." },
+  ], () => setCompleted((c) => Math.max(c, 5)));
 
   const showPhoneA = () => {
     if (!built && stage < 1) {
@@ -518,6 +547,13 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
               <p className="mt-2 text-xs leading-snug text-white/80">Customers scan this from your phone, or from a printed TapCard sign in your shop window or on your reception desk.</p>
               <p className="mt-2 text-xs leading-snug text-white/80">They need TapCard on their phone (it&apos;s free). Scanning is instant: your card and offers land straight in their app.</p>
             </div>
+          </div>
+        );
+      case "hook":
+        return (
+          <div className="flex min-h-[30rem] flex-col items-center justify-center px-6 text-center">
+            <p className="text-3xl font-black leading-tight [animation:fadein_0.6s_ease]">They walked in.<br />They left.</p>
+            <p className="mt-5 text-xl font-bold text-gold [animation:fadein_1.6s_ease]">And you never saw them again.</p>
           </div>
         );
       case "sign":
@@ -634,6 +670,23 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
       </div>
     );
     switch (bView) {
+      case "stamps":
+        return (
+          <div>
+            <AppBar title={name} />
+            <div className="mx-3 mt-2 rounded-2xl bg-white/10 p-3 text-center">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-300">Stamp card</p>
+              <p className="mt-1 text-lg font-bold">Buy 5, get the 6th free</p>
+              <div className="mt-3 flex justify-center gap-2">
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <span key={i} className={`flex h-9 w-9 items-center justify-center rounded-full text-lg font-black ${i < stamps ? "bg-gold text-[#111318] [animation:pop_0.4s_ease]" : "bg-white/10 text-white/40"}`}>{i < stamps ? "\u2713" : i + 1}</span>
+                ))}
+              </div>
+              <p className="mt-3 text-sm font-semibold">{stamps >= 5 ? "Reward ready. Show this to claim it." : `${stamps} of 5 stamps`}</p>
+            </div>
+            <CardFace brandColor={brandColor} rating={rating} name={name} kind={kind} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openB} />
+          </div>
+        );
       case "scanning":
         return (
           <div className="flex min-h-[30rem] flex-col items-center justify-center bg-black">
@@ -736,7 +789,8 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
     1: "Share my card: your customer scans your QR code, saves your card, and says yes to hearing about your offers.",
     2: `Send an offer: you type an offer (for example "${suggestions[0]}"), press post, and the customer's phone gets a notification.`,
     3: "Use the offer: the customer claims a one-off QR code, your staff scan it and enter the PIN, and it's marked as used.",
-    4: "See the results: a printed window sign, your numbers counting up, and how to start your own.",
+    4: "Loyalty stamps: a stamp card on the customer's phone fills up with each visit until the reward is ready.",
+    5: "See the results: a printed window sign, your numbers counting up, and how to start your own.",
     0: "New business: clears this page so you can build a different card.",
   };
   const bind = (n: number) => ({
@@ -751,8 +805,8 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
 
   // The one button that starts each story, then becomes Next (grey, then green when the screen is ready).
   const storyButton = (base: string) => {
-            const labels = ["1. Share my card", "2. Send an offer", "3. Use the offer", "4. See the results"];
-            const plays = [share, sendOffer, useOffer, results];
+            const labels = ["1. Share my card", "2. Send an offer", "3. Use the offer", "4. Loyalty stamps", "5. See the results"];
+            const plays = [share, sendOffer, useOffer, stampCard, results];
             if (running) {
               return (
                 <button type="button" onClick={() => { skipRef.current = true; }} disabled={!ready}
@@ -761,7 +815,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
                 </button>
               );
             }
-            if (completed >= 4) {
+            if (completed >= 5) {
               return <button type="button" onClick={resetStory} {...bind(0)} className={`${base} btn-gold`}>↻ Watch again</button>;
             }
             return <button type="button" onClick={plays[completed]} {...bind(completed + 1)} className={`${base} btn-gold`}>▶ {labels[completed]}</button>;
@@ -799,8 +853,8 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
             <button type="button" disabled={running} onClick={() => { resetStory(); setPanelOpen(false); }} className="font-semibold text-gold underline disabled:opacity-40">Start again</button>
-            {[1, 2, 3, 4].map((n) => (completed >= n ? (
-              <button key={n} type="button" disabled={running} onClick={() => { setPanelOpen(false); [share, sendOffer, useOffer, results][n - 1](); }} className="font-semibold text-gold underline disabled:opacity-40">Replay {n}</button>
+            {[1, 2, 3, 4, 5].map((n) => (completed >= n ? (
+              <button key={n} type="button" disabled={running} onClick={() => { setPanelOpen(false); [share, sendOffer, useOffer, stampCard, results][n - 1](); }} className="font-semibold text-gold underline disabled:opacity-40">Replay {n}</button>
             ) : null))}
             <button type="button" onClick={() => window.location.reload()} className="font-semibold text-gold underline">New business</button>
           </div>
@@ -842,8 +896,8 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
           <span className="min-w-[6.5rem]">{running && scene ? `Scene ${scene.i} of ${scene.n}` : ""}</span>
           <span className="ml-auto flex items-center gap-3">
             <button type="button" disabled={running} onClick={resetStory} className="font-semibold text-gold underline disabled:opacity-40">Start again</button>
-            {[1, 2, 3, 4].map((n) => (completed >= n ? (
-              <button key={n} type="button" disabled={running} onClick={[share, sendOffer, useOffer, results][n - 1]} {...bind(n)} className="font-semibold text-gold underline disabled:opacity-40">Replay {n}</button>
+            {[1, 2, 3, 4, 5].map((n) => (completed >= n ? (
+              <button key={n} type="button" disabled={running} onClick={[share, sendOffer, useOffer, stampCard, results][n - 1]} {...bind(n)} className="font-semibold text-gold underline disabled:opacity-40">Replay {n}</button>
             ) : null))}
             <button type="button" onClick={() => window.location.reload()} {...bind(0)} className="font-semibold text-gold underline">New business</button>
           </span>
@@ -865,11 +919,13 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
         </div>
       </div>}
       <div className={`flex flex-wrap justify-center gap-6 ${fill ? "w-full" : ""}`}>
-        <div className={`${view === "customer" ? "hidden" : follow && focus === "customer" ? (fill ? "hidden lg:block" : "hidden sm:block") : ""} ${fill ? "w-full min-w-0" : ""}`}><Phone fill={fill} short={fill && follow && !present} hud={hud} label="Your business" tab={built && ["card", "saved", "offerLive"].includes(aView) ? "cards" : undefined} overlay={browseA ? <InPhoneBrowser row={browseA} name={name} website={website} onClose={() => setBrowseA(null)} /> : null}>{showPhoneA()}</Phone></div>
-        <div className={`${view === "owner" ? "hidden" : follow && focus === "owner" ? (fill ? "hidden lg:block" : "hidden sm:block") : ""} ${fill ? "w-full min-w-0" : ""}`}><Phone fill={fill} short={fill && follow && !present} hud={hud} label="Alex Morgan, a customer" tab={bView === "contacts" ? "contacts" : undefined} overlay={browseB ? <InPhoneBrowser row={browseB} name={name} website={website} onClose={() => setBrowseB(null)} /> : null}>{showPhoneB()}</Phone></div>
+        <div className={`${view === "customer" ? "hidden" : follow && focus === "customer" ? (fill ? "hidden lg:block" : "hidden sm:block") : ""} ${fill ? "w-full min-w-0" : ""}`}><Phone fill={fill} short={fill && follow && !present} hud={hud} fx={burst ? <Confetti key={burst} /> : null} label="Your business" tab={built && ["card", "saved", "offerLive"].includes(aView) ? "cards" : undefined} overlay={browseA ? <InPhoneBrowser row={browseA} name={name} website={website} onClose={() => setBrowseA(null)} /> : null}>{showPhoneA()}</Phone></div>
+        <div className={`${view === "owner" ? "hidden" : follow && focus === "owner" ? (fill ? "hidden lg:block" : "hidden sm:block") : ""} ${fill ? "w-full min-w-0" : ""}`}><Phone fill={fill} short={fill && follow && !present} hud={hud} fx={burst ? <Confetti key={burst} /> : null} label="Alex Morgan, a customer" tab={bView === "contacts" ? "contacts" : undefined} overlay={browseB ? <InPhoneBrowser row={browseB} name={name} website={website} onClose={() => setBrowseB(null)} /> : null}>{showPhoneB()}</Phone></div>
       </div>
       <style>{`
         @keyframes scan { 0% { top: 8px; } 50% { top: calc(100% - 10px); } 100% { top: 8px; } }
+        @keyframes confettifall { from { transform: translateY(-12px) rotate(0deg); opacity: 1; } to { transform: translateY(34rem) rotate(540deg); opacity: 0; } }
+        @keyframes pop { 0% { transform: scale(0.3); } 70% { transform: scale(1.25); } 100% { transform: scale(1); } }
         @keyframes slidedown { from { opacity: 0; transform: translateY(-24px); } to { opacity: 1; transform: none; } }
       `}</style>
     </div>
