@@ -92,7 +92,7 @@ export function CardFace({ name, kind, typed, stage, rows, socials, interactive,
         ) : null}
         {(logoSrc || domain) && !logoFailed ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={logoSrc || `/api/logo?domain=${d}`} alt="" onLoad={() => setLogoLoaded(true)} onError={() => setLogoFailed(true)} className={`relative max-w-full rounded-lg bg-white object-contain px-3 py-1.5 ring-1 ring-white/20 [animation:fadein_0.6s_ease] ${logoLoaded ? "max-h-20" : "max-h-14 opacity-0"}`} />
+          <img src={logoSrc || `/api/tapcard/logo?domain=${d}`} alt="" onLoad={() => setLogoLoaded(true)} onError={() => setLogoFailed(true)} className={`relative max-w-full rounded-lg bg-white object-contain px-3 py-1.5 ring-1 ring-white/20 [animation:fadein_0.6s_ease] ${logoLoaded ? "max-h-20" : "max-h-14 opacity-0"}`} />
         ) : null}
       </div>
       <div className="px-4">
@@ -103,7 +103,7 @@ export function CardFace({ name, kind, typed, stage, rows, socials, interactive,
             // A favicon of 16 or 32 pixels (often a website builder's default) looks poor and may not be theirs: use the shop icon instead.
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={`/api/favicon?domain=${d}`} alt=""
+              src={`/api/tapcard/favicon?domain=${d}`} alt=""
               onLoad={(e) => { if (e.currentTarget.naturalWidth > 0 && e.currentTarget.naturalWidth <= 32) setIconFailed(true); }}
               onError={() => setIconFailed(true)} className="h-12 w-12 object-contain"
             />
@@ -183,7 +183,7 @@ function InPhoneBrowser({ row, name, website, onClose }: { row: Row; name: strin
           <>
             {!loaded ? <div className="absolute inset-0 flex items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-black/10 border-t-black/60" /></div> : null}
             <iframe
-              src={`/api/demo/page?url=${encodeURIComponent(url)}&site=${encodeURIComponent(website)}`}
+              src={`/api/tapcard/demo/page?url=${encodeURIComponent(url)}&site=${encodeURIComponent(website)}`}
               title={row.title} sandbox="allow-popups allow-popups-to-escape-sandbox" referrerPolicy="no-referrer"
               onLoad={() => setLoaded(true)} className="h-full w-full border-0 bg-white"
             />
