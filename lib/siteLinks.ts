@@ -274,7 +274,7 @@ export function jsonLdUrls(html: string): { menu?: string; sameAs: string[]; pla
   return { menu, sameAs, places };
 }
 
-const GENERIC = new Set(["restaurant", "restaurants", "london", "street", "road", "lane", "avenue", "the", "and", "ltd", "limited", "cafe", "bar", "kitchen", "takeaway", "order", "online", "with", "from"]);
+const GENERIC = new Set(["locations", "location", "contact", "find", "visit", "address", "restaurant", "restaurants", "london", "street", "road", "lane", "avenue", "the", "and", "ltd", "limited", "cafe", "bar", "kitchen", "takeaway", "order", "online", "with", "from"]);
 /// Of the ordering links on a site's delivery page, the one for this branch: the link whose address, or the heading beside it, names the branch's
 /// town or street ("chakra-little-venice" beside "Little Venice"). One link alone is taken; several with no clear winner give nothing, because
 /// another branch's link is worse than none.
@@ -414,27 +414,6 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
       else if (/^(shop|online shop|store|shop online|web ?shop|our (online )?shop|shop now|buy online|buy now|order flowers|send flowers|buy flowers|order a bouquet|order your flowers)$/.test(t) || /\/(shop|store|order-flowers|send-flowers|buy-flowers)(\.html?)?\/?$/.test(path)) pick(found, "shop", href);
     }
   }
-  // No ordering link for this branch on the homepage: the site's own Delivery / Order page, where a group lists one link per branch.
-  if (!found.has("order")) {
-    const orderPages = anchors(html, base)
-      .filter(({ href, text }) => href.hostname.replace(/^www\./, "") === siteHost && (/^(delivery|order( online| now| takeaway)?|takeaway|click (&|and) collect|order (&|and) collect)$/i.test(text) || /^\/(delivery|order|order-online|takeaway)[^/]*\/?$/i.test(href.pathname)))
-      .map(({ href }) => href.toString()).filter((u, i, a) => a.indexOf(u) === i).slice(0, 2);
-    for (const u of orderPages) {
-      const more = await safeFetch(u);
-      if (!more || !(more.res.headers.get("content-type") ?? "").includes("text/html")) continue;
-      const b = await readLimited(more.res, MAX_HTML);
-      if (!b) continue;
-      const pageHtml = b.toString("utf8");
-      let pageBase: URL;
-      try { pageBase = new URL(more.url ?? u); } catch { continue; }
-      const cands = anchors(pageHtml, pageBase)
-        .filter(({ href }) => ORDER_HOSTS.test(href.hostname.replace(/^www\./, "")))
-        .map(({ href, at }) => ({ url: href.toString(), context: pageHtml.slice(Math.max(0, at - 400), at).replace(/<[^>]*>/g, " ") }))
-        .filter((c, i, a) => a.findIndex((x) => x.url === c.url) === i);
-      const best = bestOrderLink(cands, `${name ?? ""} ${address ?? ""}`);
-      if (best) { pick(found, "order", best); break; }
-    }
-  }
   // Opening hours: the homepage's structured data, then up to two same-site branch/contact pages.
   const where = `${name ?? ""} ${address ?? ""}`;
   const postcode = postcodeOf(address);
@@ -469,6 +448,29 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
     }
   }
   if (hours) found.set("hours", hours);
+  // No ordering link for this branch on the homepage: the site's own Delivery / Order page, where a group lists one link per branch. The branch is
+  // known by what the person gave AND by how the site itself names the place at this postcode ("Little Venice, 14 Formosa St"), since a map
+  // listing often says just "Chakra".
+  if (!found.has("order")) {
+    const orderPages = anchors(html, base)
+      .filter(({ href, text }) => href.hostname.replace(/^www\./, "") === siteHost && (/^(delivery|order( online| now| takeaway)?|takeaway|click (&|and) collect|order (&|and) collect)$/i.test(text) || /^\/(delivery|order|order-online|takeaway)[^/]*\/?$/i.test(href.pathname)))
+      .map(({ href }) => href.toString()).filter((u, i, a) => a.indexOf(u) === i).slice(0, 2);
+    for (const u of orderPages) {
+      const more = await safeFetch(u);
+      if (!more || !(more.res.headers.get("content-type") ?? "").includes("text/html")) continue;
+      const b = await readLimited(more.res, MAX_HTML);
+      if (!b) continue;
+      const pageHtml = b.toString("utf8");
+      let pageBase: URL;
+      try { pageBase = new URL(more.url ?? u); } catch { continue; }
+      const cands = anchors(pageHtml, pageBase)
+        .filter(({ href }) => ORDER_HOSTS.test(href.hostname.replace(/^www\./, "")))
+        .map(({ href, at }) => ({ url: href.toString(), context: pageHtml.slice(Math.max(0, at - 400), at).replace(/<[^>]*>/g, " ") }))
+        .filter((c, i, a) => a.findIndex((x) => x.url === c.url) === i);
+      const best = bestOrderLink(cands, `${name ?? ""} ${address ?? ""} ${place?.addressText ?? ""}`);
+      if (best) { pick(found, "order", best); break; }
+    }
+  }
   const details: SiteDetails = { ...social };
   if (place && (hours || place.addressText)) {
     // A heading read in front of the address ("LOCATIONS, Little Venice, 14 Formosa St") is not part of it.
