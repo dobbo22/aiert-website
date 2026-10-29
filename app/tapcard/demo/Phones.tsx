@@ -655,7 +655,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
         {/* One line, reserved so nothing shifts. The input offers this business type's ideas when clicked. */}
         <div className={`mt-2 flex items-center gap-2 ${built ? "" : "invisible"}`}>
           <label htmlFor="offer-text" className="text-sm font-semibold text-white">Offer:</label>
-          <input id="offer-text" list="offer-ideas" value={offer} maxLength={60} disabled={running || revealed < 2} onChange={(e) => setOffer(e.target.value)}
+          <input id="offer-text" list="offer-ideas" value={offer} maxLength={60} disabled={running} onChange={(e) => setOffer(e.target.value)}
             className="min-w-0 flex-1 rounded-xl bg-white px-3 py-1.5 text-sm text-[#111318] disabled:opacity-50" />
           <datalist id="offer-ideas">{suggestions.map((o) => <option key={o} value={o} />)}</datalist>
         </div>
