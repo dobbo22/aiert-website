@@ -109,6 +109,11 @@ test("a business signs up, goes through every tab, and finds nothing broken", as
   const qr2 = await show(() => Promise.resolve({ default: qrPage.default as never }), { searchParams: Promise.resolve({ shop: added.location.id }) });
   assert.ok(!/>Sample</.test(qr2), "the card exists, so the sign is the real one");
 
+  // 8-. A received copy of the card only knows the website, so the logo route finds the company's own logo by domain
+  const { orgLogoUrlForDomain } = await import("../lib/tapcardBiz");
+  assert.equal(await orgLogoUrlForDomain("www.journeycafe.example"), "https://journeycafe.example/logo.png");
+  assert.equal(await orgLogoUrlForDomain("other.example"), null);
+
   // 8a. The second ordinary link made for the same shop before it was claimed makes no second card
   const dupRes = await claim.POST(req("/api/biz/claim", { body: { token: inv2.link.split("#")[1] } }));
   assert.equal(dupRes.status, 409);

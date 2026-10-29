@@ -634,6 +634,19 @@ export async function orgLogoUrlForCard(card: object): Promise<string | null> {
   return (await getOrg(orgId))?.logo_url ?? null;
 }
 
+/// The uploaded logo of the company whose website is on this domain (www. ignored), if any. A received company card in the apps has no
+/// link to its org, only its website, so /api/logo uses this to show the company's own logo rather than whatever its site declares.
+export async function orgLogoUrlForDomain(domain: string): Promise<string | null> {
+  await ensureSchema();
+  const want = domain.toLowerCase().replace(/^www\./, "");
+  const rows = (await sql`SELECT website, logo_url FROM tapcard_biz_orgs WHERE logo_url IS NOT NULL AND logo_url <> '' AND website <> ''`) as { website: string; logo_url: string }[];
+  for (const r of rows) {
+    const host = r.website.trim().toLowerCase().replace(/^https?:\/\//, "").split(/[/?#]/)[0].replace(/^www\./, "");
+    if (host === want) return r.logo_url;
+  }
+  return null;
+}
+
 /// orgLogoUrlForCard's image bytes, for the Wallet pass artwork. Only ever
 /// our own Vercel Blob URL (set by the logo route), capped like site icons.
 export async function orgLogoBytesForCard(card: object): Promise<Buffer | null> {
