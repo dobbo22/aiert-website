@@ -28,7 +28,7 @@ export default function WalkIn() {
   const [building, setBuilding] = useState(false);
   const [built, setBuilt] = useState<Built | null>(null);
   const [kind, setKind] = useState("Something else");
-  const [tab, setTab] = useState<"owner" | "customer">("owner");
+  const [tab, setTab] = useState<"owner" | "customer" | "demo">("owner");
   const [qr, setQr] = useState("");
   const [email, setEmail] = useState("");
   const [note, setNote] = useState<{ text: string; ok: boolean } | null>(null);
@@ -138,12 +138,15 @@ export default function WalkIn() {
                 if (!touch) return;
                 const dx = e.changedTouches[0].clientX - touch.x, dy = e.changedTouches[0].clientY - touch.y;
                 setTouch(null);
-                if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 2) setTab(dx < 0 ? "customer" : "owner");
+                if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 2) {
+                  const order = ["owner", "customer", "demo"] as const;
+                  setTab(order[Math.max(0, Math.min(order.length - 1, order.indexOf(tab) + (dx < 0 ? 1 : -1)))]);
+                }
               } : undefined}
             >
               <div className="mb-4 flex items-center gap-2">
                 <div role="tablist" className="flex gap-2">
-                  {([["owner", "Owner"], ["customer", "Customer"]] as const).map(([id, label]) => (
+                  {([["owner", "Owner"], ["customer", "Customer"], ["demo", "Demo"]] as const).map(([id, label]) => (
                     <button key={id} role="tab" aria-selected={tab === id} type="button" onClick={() => setTab(id)}
                       className={`rounded-xl px-5 py-2 text-lg font-bold ${tab === id ? "btn-gold" : "bg-white/10 text-cloud"}`}>{label}</button>
                   ))}
@@ -152,10 +155,10 @@ export default function WalkIn() {
                   {full ? "Close ✕" : "Full screen"}
                 </button>
               </div>
-              {full && <p className="mb-3 text-center text-sm text-cloud">Swipe left or right to switch between the owner and the customer.</p>}
+              {full && <p className="mb-3 text-center text-sm text-cloud">Swipe left or right to switch between Owner, Customer and Demo.</p>}
               <Phones
                 name={built.card.name} website={built.card.website} kind={kind} built stage={4} typed={built.card.name}
-                rows={rows.filter((r) => !r.social)} socials={rows.filter((r) => r.social)} buildSpinner={false} idleText="" view={tab} fill={full} customerStartsWithCard
+                rows={rows.filter((r) => !r.social)} socials={rows.filter((r) => r.social)} buildSpinner={false} idleText="" view={tab === "demo" ? "both" : tab} fill={full} customerStartsWithCard={tab !== "demo"} showControls={tab === "demo"}
               />
             </div>
           </div>

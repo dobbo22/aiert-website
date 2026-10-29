@@ -228,7 +228,7 @@ function Tick({ label, sub }: { label: string; sub?: string }) {
   );
 }
 
-export default function Phones({ name, website, kind, built, stage, typed, rows, socials, buildSpinner, idleText, view = "both", fill = false, customerStartsWithCard = false }: {
+export default function Phones({ name, website, kind, built, stage, typed, rows, socials, buildSpinner, idleText, view = "both", fill = false, customerStartsWithCard = false, showControls = true }: {
   name: string; website: string; kind: string; built: boolean; stage: number; typed: string; rows: Row[]; socials: Row[]; buildSpinner: boolean; idleText: string;
   /** Which phone to show: both, or only the owner's or the customer's (the story still plays across both). */
   view?: "both" | "owner" | "customer";
@@ -236,6 +236,8 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
   fill?: boolean;
   /** The customer's phone starts on the business's card, every button live, instead of an empty "No cards yet" screen. */
   customerStartsWithCard?: boolean;
+  /** The caption and story buttons above the phones. Off for a plain, tappable card. */
+  showControls?: boolean;
 }) {
   const domain = domainOf(website);
   const [caption, setCaption] = useState<{ step: number; text: string } | null>(null);
@@ -424,7 +426,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
           <div>
             <AppBar title={name} buttons />
             <CardFace name={name} kind={kind} typed={typed} stage={stage} rows={rows} socials={socials} interactive={stage >= 4} domain={domain} onOpen={openA} />
-            {built ? <CardActions onShare={share} onOffer={sendOffer} offerReady={revealed >= 2} offerLive={false} disabled={running} /> : null}
+            {built && showControls ? <CardActions onShare={share} onOffer={sendOffer} offerReady={revealed >= 2} offerLive={false} disabled={running} /> : null}
           </div>
         );
     }
@@ -555,7 +557,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
 
   return (
     <div>
-      <div className="mx-auto mb-4 max-w-2xl rounded-2xl bg-charcoal px-4 py-3 text-left shadow-lg ring-2 ring-gold/60" aria-live="polite">
+      {showControls && <div className="mx-auto mb-4 max-w-2xl rounded-2xl bg-charcoal px-4 py-3 text-left shadow-lg ring-2 ring-gold/60" aria-live="polite">
         {/* Fixed height so the controls below never move, whatever the text length. */}
         <div className="flex h-[5.4rem] items-start gap-3 overflow-hidden">
           {shownText ? (
@@ -608,7 +610,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
             className="min-w-0 flex-1 rounded-xl bg-white px-3 py-1.5 text-sm text-[#111318] disabled:opacity-50" />
           <datalist id="offer-ideas">{suggestions.map((o) => <option key={o} value={o} />)}</datalist>
         </div>
-      </div>
+      </div>}
       <div className="flex flex-wrap justify-center gap-6">
         <div className={view === "customer" ? "hidden" : ""}><Phone fill={fill} label="Your business" tab={built && ["card", "saved", "offerLive"].includes(aView) ? "cards" : undefined} overlay={browseA ? <InPhoneBrowser row={browseA} name={name} website={website} onClose={() => setBrowseA(null)} /> : null}>{showPhoneA()}</Phone></div>
         <div className={view === "owner" ? "hidden" : ""}><Phone fill={fill} label="Alex Morgan, a customer" tab={bView === "contacts" ? "contacts" : undefined} overlay={browseB ? <InPhoneBrowser row={browseB} name={name} website={website} onClose={() => setBrowseB(null)} /> : null}>{showPhoneB()}</Phone></div>
