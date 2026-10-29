@@ -27,6 +27,18 @@ function TabBar({ active }: { active: "cards" | "contacts" }) {
 }
 
 export function Phone({ label, children, overlay, tab, large, fill }: { label: string; children: React.ReactNode; overlay?: React.ReactNode; tab?: "cards" | "contacts"; large?: boolean; fill?: boolean }) {
+  // Full screen: no phone frame or caption, just the app screen using the whole display.
+  if (fill) {
+    return (
+      <div className="mx-auto w-full max-w-[30rem]">
+        <div className="relative h-[calc(100dvh-4.75rem)] overflow-hidden rounded-2xl bg-[#111318] text-white ring-1 ring-white/15">
+          <div className={`h-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${tab ? "pb-20" : ""}`}>{children}</div>
+          {tab ? <TabBar active={tab} /> : null}
+          {overlay}
+        </div>
+      </div>
+    );
+  }
   return (
     <div className={`w-full ${fill ? "max-w-[26rem]" : large ? "max-w-[23rem]" : "max-w-[17rem]"}`}>
       <p className="mb-2 text-center text-sm font-semibold text-cloud">{label}</p>

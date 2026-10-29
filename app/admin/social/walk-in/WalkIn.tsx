@@ -132,7 +132,7 @@ export default function WalkIn() {
             {/* The same element in both modes, so the story keeps its place when going full screen: on a phone it fills the screen and a swipe
                 left or right switches between the owner and the customer. */}
             <div
-              className={full ? "fixed inset-0 z-50 overflow-y-auto bg-[#0b0d12] p-3" : "min-w-0"}
+              className={full ? "fixed inset-0 z-50 overflow-y-auto bg-[#0b0d12] p-2" : "min-w-0"}
               onTouchStart={full ? (e) => setTouch({ x: e.touches[0].clientX, y: e.touches[0].clientY }) : undefined}
               onTouchEnd={full ? (e) => {
                 if (!touch) return;
@@ -144,18 +144,18 @@ export default function WalkIn() {
                 }
               } : undefined}
             >
-              <div className="mb-4 flex flex-wrap items-center gap-2">
+              <div className={`flex flex-wrap items-center gap-2 ${full ? "mb-2" : "mb-4"}`}>
                 <div role="tablist" className="flex gap-2">
                   {([["owner", "Owner"], ["customer", "Customer"], ["demo", "Demo"]] as const).map(([id, label]) => (
                     <button key={id} role="tab" aria-selected={tab === id} type="button" onClick={() => setTab(id)}
                       className={`rounded-xl px-4 py-2 text-base font-bold sm:px-5 sm:text-lg ${tab === id ? "btn-gold" : "bg-white/10 text-cloud"}`}>{label}</button>
                   ))}
                 </div>
-                <button type="button" onClick={() => setFull((v) => !v)} className="ml-auto rounded-xl bg-white/10 px-4 py-2 text-base font-bold text-cloud sm:text-lg">
-                  {full ? "Close ✕" : "Full screen"}
+                <button type="button" onClick={() => setFull((v) => !v)} aria-label={full ? "Close full screen" : "Full screen"} className="ml-auto whitespace-nowrap rounded-xl bg-white/10 px-4 py-2 text-base font-bold text-cloud sm:text-lg">
+                  {full ? "✕" : "Full screen"}
                 </button>
               </div>
-              {full && <p className="mb-3 text-center text-sm text-cloud">Swipe left or right to switch between Owner, Customer and Demo.</p>}
+              
               <Phones
                 name={built.card.name} website={built.card.website} kind={kind} built stage={4} typed={built.card.name}
                 rows={rows.filter((r) => !r.social)} socials={rows.filter((r) => r.social)} buildSpinner={false} idleText="" view={tab === "demo" ? "both" : tab} fill={full} customerStartsWithCard={tab !== "demo"} showControls={tab === "demo"} brandColor={built.brandColor} rating={built.rating}
