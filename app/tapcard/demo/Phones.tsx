@@ -510,10 +510,11 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
     setStamps(0);
     void runScenes([
       { run: () => { setBView("idle"); setAView("offerLive"); }, step: 4, hold: 600 },
-      { run: () => { setBView("stamps"); setStamps(0); }, settle: 1500, step: 4, text: "Replace the paper loyalty card|Choose Stamp card, say how many stamps and what the reward is. Nothing to print, nothing to lose in a wallet." },
+      { run: () => { setBView("stamps"); setStamps(-1); }, settle: 1500, step: 4, text: "Replace the paper loyalty card|You choose Stamp card, how many stamps and the reward. Customers tap Get my stamp card. Nothing to print, nothing to lose in a wallet." },
+      { run: () => setStamps(0), step: 4, text: "Their card, on their phone|Alex has the stamp card, with a QR code to show at every visit." },
       { run: () => setStamps(1), step: 4, text: "Every visit, a stamp|Staff scan Alex's code and enter the PIN, and a stamp appears. Alex has a reason to come back." },
       { run: () => setStamps(2), hold: 800 }, { run: () => setStamps(3), hold: 800 }, { run: () => setStamps(4), hold: 800 },
-      { run: () => { setStamps(5); setBurst((b) => b + 1); }, step: 4, text: "Reward unlocked|Five stamps and Alex's reward is ready to claim. Customers who collect stamps come back to finish the card." },
+      { run: () => { setStamps(5); setBurst((b) => b + 1); }, step: 4, text: "Reward unlocked|The card is full and Alex's reward is ready to claim. A full card starts again, so there is always a reason to come back." },
     ], () => setCompleted((c) => Math.max(c, 4)));
   };
 
@@ -670,23 +671,39 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
       </div>
     );
     switch (bView) {
-      case "stamps":
+      case "stamps": {
+        // As in the apps: the offer with "Get my stamp card", then numbered stamps filling in navy, the count and reward line, and the code staff scan.
+        const need = 5, reward = "the 6th free";
         return (
           <div>
             <AppBar title={name} />
             <div className="mx-3 mt-2 rounded-2xl bg-white/10 p-3 text-center">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-300">Stamp card</p>
+              <p className="text-sm font-semibold">Stamp card</p>
               <p className="mt-1 text-lg font-bold">Buy 5, get the 6th free</p>
-              <div className="mt-3 flex justify-center gap-2">
-                {[0, 1, 2, 3, 4].map((i) => (
-                  <span key={i} className={`flex h-9 w-9 items-center justify-center rounded-full text-lg font-black ${i < stamps ? "bg-gold text-[#111318] [animation:pop_0.4s_ease]" : "bg-white/10 text-white/40"}`}>{i < stamps ? "\u2713" : i + 1}</span>
-                ))}
-              </div>
-              <p className="mt-3 text-sm font-semibold">{stamps >= 5 ? "Reward ready. Show this to claim it." : `${stamps} of 5 stamps`}</p>
+              {stamps < 0 ? (
+                <>
+                  <p className="mt-1 text-xs font-semibold">Collect {need} stamps, then {reward}</p>
+                  <div className="mt-3 rounded-xl bg-[#1C2B61] py-2.5 text-sm font-semibold text-white ring-1 ring-white/30">Get my stamp card</div>
+                </>
+              ) : (
+                <>
+                  <div className="mt-3 flex justify-center gap-2">
+                    {Array.from({ length: need }, (_, k) => (
+                      <span key={k} className={`flex h-[30px] w-[30px] items-center justify-center rounded-full text-xs font-bold ${k < stamps ? "bg-[#1C2B61] text-white ring-1 ring-white/40 [animation:pop_0.4s_ease]" : "bg-white/15 text-white"}`}>{k < stamps ? "\u2713" : k + 1}</span>
+                    ))}
+                  </div>
+                  <p className="mt-3 text-sm font-semibold">{stamps >= need ? `Full! Show this to claim: ${reward}` : `${stamps} of ${need}. ${need - stamps} more for: ${reward}`}</p>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  {codeQr ? <img src={codeQr} alt="" className="mx-auto mt-3 h-36 w-36 rounded-xl bg-white p-2" /> : null}
+                  <p className="mt-2 text-xs">Show this to staff at each visit.</p>
+                  <p className="font-mono text-xs">{code}</p>
+                </>
+              )}
             </div>
             <CardFace brandColor={brandColor} rating={rating} name={name} kind={kind} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openB} />
           </div>
         );
+      }
       case "scanning":
         return (
           <div className="flex min-h-[30rem] flex-col items-center justify-center bg-black">
