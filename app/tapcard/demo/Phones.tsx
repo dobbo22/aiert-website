@@ -677,6 +677,36 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
           {caption.text}
         </button>
       ) : null}
+      {panelOpen ? (
+        <div className="absolute inset-x-2 bottom-[8.25rem] z-40 rounded-2xl bg-charcoal p-3 text-left text-sm text-white shadow-2xl ring-1 ring-gold/60 [animation:fadein_0.2s_ease]">
+          <div className="flex items-center justify-between">
+            <label className="flex cursor-pointer items-center gap-2 font-semibold">
+              <input type="checkbox" className="h-5 w-5" checked={auto} onChange={(e) => setAuto(e.target.checked)} />
+              Auto-play
+            </label>
+            <button type="button" onClick={() => setPanelOpen(false)} aria-label="Close settings" className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-base">{"\u2715"}</button>
+          </div>
+          <div className="mt-3 flex items-center gap-2">
+            <label htmlFor="offer-text-m" className="font-semibold">Offer:</label>
+            <input id="offer-text-m" list="offer-ideas-m" value={offer} maxLength={60} disabled={running && completed >= 1} onChange={(e) => setOffer(e.target.value)}
+              className="min-w-0 flex-1 rounded-xl bg-white px-3 py-1.5 text-sm text-[#111318] disabled:opacity-50" />
+            <datalist id="offer-ideas-m">{suggestions.map((o) => <option key={o} value={o} />)}</datalist>
+          </div>
+          <div className="mt-3 flex gap-2" role="tablist" aria-label="Which phone to show">
+            {([["owner", "Owner's phone"], ["customer", "Customer's phone"]] as const).map(([id, label]) => (
+              <button key={id} type="button" role="tab" aria-selected={focus === id} onClick={() => setFocus(id)}
+                className={`flex-1 rounded-lg px-2 py-1.5 font-semibold ${focus === id ? "bg-white text-[#111318]" : "bg-white/10 text-white"}`}>{label}</button>
+            ))}
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
+            <button type="button" disabled={running} onClick={() => { resetStory(); setPanelOpen(false); }} className="font-semibold text-gold underline disabled:opacity-40">Start again</button>
+            {[1, 2, 3].map((n) => (completed >= n ? (
+              <button key={n} type="button" disabled={running} onClick={() => { setPanelOpen(false); [share, sendOffer, useOffer][n - 1](); }} className="font-semibold text-gold underline disabled:opacity-40">Replay {n}</button>
+            ) : null))}
+            <button type="button" onClick={() => window.location.reload()} className="font-semibold text-gold underline">New business</button>
+          </div>
+        </div>
+      ) : null}
       <div className="pointer-events-none absolute inset-x-0 bottom-[5rem] z-30 flex items-center justify-center gap-3 px-3">
         <button type="button" onClick={() => setCaptionShown((v) => !v)} disabled={!caption} aria-label="Show the step text"
           className="pointer-events-auto flex h-11 w-11 flex-none items-center justify-center rounded-full bg-black/75 text-lg font-bold text-white shadow-xl ring-1 ring-white/20 disabled:opacity-30">i</button>
@@ -689,7 +719,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
 
   return (
     <div>
-      {showControls && (!present || panelOpen) && <div className={`mx-auto mb-4 max-w-2xl rounded-2xl bg-charcoal px-4 py-3 text-left shadow-lg ring-2 ring-gold/60 ${fill ? "sticky top-0 z-30" : ""}`} aria-live="polite">
+      {showControls && !present && <div className={`mx-auto mb-4 max-w-2xl rounded-2xl bg-charcoal px-4 py-3 text-left shadow-lg ring-2 ring-gold/60 ${fill ? "sticky top-0 z-30" : ""}`} aria-live="polite">
         {/* On a laptop the height is fixed so the controls below never move; on a phone the box grows to fit the whole sentence instead of cutting it off. */}
         <div className="flex min-h-[4.5rem] items-start gap-3 sm:h-[5.4rem] sm:overflow-hidden">
           {shownText ? (
