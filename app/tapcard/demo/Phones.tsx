@@ -361,6 +361,8 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
   // up (green) and waits to be pressed. With Auto-play on, the scene instead moves on by itself after enough time to read it
   // (about 3 seconds plus 55 ms a letter). A scene without text is a quick animation step (typing).
   const runRef = useRef(0);
+  const presentRef = useRef(false);
+  presentRef.current = present;
   const autoRef = useRef(false);
   const skipRef = useRef(false);
   const [auto, setAutoState] = useState(false);
@@ -399,7 +401,8 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
       const settle = sc.settle ?? 1100;
       for (let t = 0; t < settle; t += 50) { await sleep(50); if (runRef.current !== id) return; if (skipRef.current) break; }
       setReady(true);
-      let left = Math.max(1500, (sc.hold ?? Math.max(4500, 3000 + sc.text.length * 55)) - settle);
+      // Auto-play on a phone: the step text shows, hides to leave the screen clear for five seconds, then the next scene (and its text) opens.
+      let left = Math.max(1500, (sc.hold ?? Math.max(4500, 3000 + sc.text.length * 55)) - settle) + (presentRef.current ? 5000 : 0);
       while (!skipRef.current) {
         await sleep(50);
         if (runRef.current !== id) return;
