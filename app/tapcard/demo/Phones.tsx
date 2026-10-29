@@ -381,6 +381,15 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
     setCompleted(0); setTypedOffer(""); setPin("");
   }
 
+  // Switching between the Owner, Customer and Demo tabs starts clean: nothing the story did carries over to the plain cards.
+  const firstView = useRef(true);
+  useEffect(() => {
+    if (firstView.current) { firstView.current = false; return; }
+    resetStory();
+    setPanelOpen(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view]);
+
   async function runScenes(scenes: Scene[], then?: () => void) {
     const id = ++runRef.current;
     setHint(null);
