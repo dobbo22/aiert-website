@@ -45,12 +45,12 @@ export async function POST(req: NextRequest) {
   if (name.length < 2) return NextResponse.json({ error: "A name is required." }, { status: 400 });
   const spot = Number.isFinite(b?.lat) && Number.isFinite(b?.lng) && b?.lat !== 0 ? { lat: Number(b!.lat), lng: Number(b!.lng) } : null;
   // The place listing first (phone, website, hours), then the website itself for every link: the same as the business admin's builder.
-  const place = await fillPlaceDetails(name, address, spot ?? nearOf(req), "walkin").catch(() => null);
+  const given = String(b?.website ?? "").trim().slice(0, 200);
+  const place = await fillPlaceDetails(name, address, spot ?? nearOf(req), "walkin", !!given).catch(() => null);
   // The website is what the logo, brand colour, links and socials all come from, so it has to be the right one. The apps take it from Google,
   // which is right far more often than the free listings, so a walk-in does the same (one lookup, for an admin only) and keeps the
   // free listings as the fallback.
   // The page's own Apple Maps search (MapKit JS, as the iPhone app does) already gives a website when there is one: then no lookup is needed.
-  const given = String(b?.website ?? "").trim().slice(0, 200);
   const found = given ? [] : await searchBusinesses(`${name} ${address}`, spot ?? nearOf(req), true, "walkin").catch((): BusinessHit[] => []);
   const pc = postcodeOf(address);
   const google = (pc ? found.find((h) => postcodeOf(h.address) === pc) : undefined) ?? (pc ? undefined : found[0]);

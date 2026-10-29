@@ -6,7 +6,7 @@ export interface PlaceHit { id: string; name: string; address: string; website: 
 
 /// One picked business's phone, website and opening hours, cheapest source first: TomTom, then HERE (both free tiers), and Google only if
 /// neither found a website. Each fills in what the others lacked. `quotaKey` is who the Google lookup is counted against.
-export async function fillPlaceDetails(name: string, address: string, near: { lat: number; lng: number } | null, quotaKey: string): Promise<{ hit: PlaceHit; found: boolean }> {
+export async function fillPlaceDetails(name: string, address: string, near: { lat: number; lng: number } | null, quotaKey: string, haveWebsite = false): Promise<{ hit: PlaceHit; found: boolean }> {
   const got: PlaceDetail = { phone: "", website: "", hours: "", source: "" };
   const take = (d: PlaceDetail) => {
     if (!d.phone && !d.website && !d.hours) return;
@@ -17,7 +17,8 @@ export async function fillPlaceDetails(name: string, address: string, near: { la
   // HERE has opening hours, which TomTom does not, so it is asked whenever the website or the hours are still missing.
   if (!got.website || !got.hours) take(await hereDetails(name, address, near ?? undefined));
   let fromGoogle: BusinessHit | undefined;
-  if (!got.website) {
+  // Google is only for a business whose website nothing else found, and never when the caller already has the website.
+  if (!got.website && !haveWebsite) {
     const found = await searchBusinesses(`${name} ${address}`, near, false, quotaKey).catch((): BusinessHit[] => []);
     // The same shop: the same postcode when we have one, else the first result.
     const pc = postcodeOf(address);
