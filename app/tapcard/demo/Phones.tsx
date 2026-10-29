@@ -151,7 +151,7 @@ export function CardFace({ name, kind, typed, stage, rows, socials, interactive,
               <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full" style={{ background: r.color }}><ContactIcon name={r.icon} /></span>
               <span className="min-w-0">
                 <span className="block text-sm font-semibold">{r.title}</span>
-                {r.linkOnly ? null : <span className="block truncate text-xs text-white/70">{r.detail}</span>}
+                {r.linkOnly ? null : <span className="block break-words text-xs text-white/70">{r.detail}</span>}
               </span>
             </>
           );
