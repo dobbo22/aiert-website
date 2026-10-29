@@ -274,6 +274,22 @@ export function jsonLdUrls(html: string): { menu?: string; sameAs: string[]; pla
   return { menu, sameAs, places };
 }
 
+const GENERIC = new Set(["restaurant", "restaurants", "london", "street", "road", "lane", "avenue", "the", "and", "ltd", "limited", "cafe", "bar", "kitchen", "takeaway", "order", "online", "with", "from"]);
+/// Of the ordering links on a site's delivery page, the one for this branch: the link whose address, or the heading beside it, names the branch's
+/// town or street ("chakra-little-venice" beside "Little Venice"). One link alone is taken; several with no clear winner give nothing, because
+/// another branch's link is worse than none.
+export function bestOrderLink(cands: { url: string; context: string }[], where: string): string | null {
+  if (cands.length === 0) return null;
+  if (cands.length === 1) return cands[0].url;
+  const tokens = [...new Set(where.toLowerCase().split(/[^a-z]+/).filter((w) => w.length >= 4 && !GENERIC.has(w)))];
+  const scored = cands.map((c) => {
+    let hay = c.context.toLowerCase();
+    try { hay += ` ${decodeURIComponent(new URL(c.url).pathname).toLowerCase().replace(/[-_/]+/g, " ")}`; } catch { /* ignore */ }
+    return { url: c.url, score: tokens.filter((t) => hay.includes(t)).length };
+  }).sort((a, b) => b.score - a.score);
+  return scored[0].score > 0 && scored[0].score > scored[1].score ? scored[0].url : null;
+}
+
 function pick(found: Map<LinkKind, string>, kind: LinkKind, url: URL | string) {
   if (found.has(kind)) return;
   const u = typeof url === "string" ? url : url.toString();
@@ -396,6 +412,27 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
       else if (/^(prices?|pricing|price list|full price list|see (our )?prices|our prices)$/.test(t) || /^\/(pricing|prices|price-list)\/?$/.test(path)) addExtra("View prices", href);
       else if (/^(book( now| online)?|schedule( a)?( pick ?up| collection| delivery| visit)?|make a booking|book (an )?appointment|book a visit)$/.test(t) || /^\/(book|booking|bookings|book-?now|appointments?|schedule)\/?$/.test(path)) addExtra(t ? t.replace(/\b\w/g, (c) => c.toUpperCase()).slice(0, 40) : "Book now", href);
       else if (/^(shop|online shop|store|shop online|web ?shop|our (online )?shop|shop now|buy online|buy now|order flowers|send flowers|buy flowers|order a bouquet|order your flowers)$/.test(t) || /\/(shop|store|order-flowers|send-flowers|buy-flowers)(\.html?)?\/?$/.test(path)) pick(found, "shop", href);
+    }
+  }
+  // No ordering link for this branch on the homepage: the site's own Delivery / Order page, where a group lists one link per branch.
+  if (!found.has("order")) {
+    const orderPages = anchors(html, base)
+      .filter(({ href, text }) => href.hostname.replace(/^www\./, "") === siteHost && (/^(delivery|order( online| now| takeaway)?|takeaway|click (&|and) collect|order (&|and) collect)$/i.test(text) || /^\/(delivery|order|order-online|takeaway)[^/]*\/?$/i.test(href.pathname)))
+      .map(({ href }) => href.toString()).filter((u, i, a) => a.indexOf(u) === i).slice(0, 2);
+    for (const u of orderPages) {
+      const more = await safeFetch(u);
+      if (!more || !(more.res.headers.get("content-type") ?? "").includes("text/html")) continue;
+      const b = await readLimited(more.res, MAX_HTML);
+      if (!b) continue;
+      const pageHtml = b.toString("utf8");
+      let pageBase: URL;
+      try { pageBase = new URL(more.url ?? u); } catch { continue; }
+      const cands = anchors(pageHtml, pageBase)
+        .filter(({ href }) => ORDER_HOSTS.test(href.hostname.replace(/^www\./, "")))
+        .map(({ href, at }) => ({ url: href.toString(), context: pageHtml.slice(Math.max(0, at - 400), at).replace(/<[^>]*>/g, " ") }))
+        .filter((c, i, a) => a.findIndex((x) => x.url === c.url) === i);
+      const best = bestOrderLink(cands, `${name ?? ""} ${address ?? ""}`);
+      if (best) { pick(found, "order", best); break; }
     }
   }
   // Opening hours: the homepage's structured data, then up to two same-site branch/contact pages.

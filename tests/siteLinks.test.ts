@@ -32,3 +32,16 @@ test("a single-address site keeps its links whatever the postcode", async () => 
   const r = await findSiteLinks("https://one.example", "2 Mill Lane, Dunmow CM6 1AB", "One", { html, url: "https://one.example/" });
   assert.ok(r.links.some((l) => l.kind === "order"));
 });
+
+test("the site's own delivery page gives this branch's ordering link", async () => {
+  const { bestOrderLink } = await import("../lib/siteLinks");
+  const cands = [
+    { url: "https://deliveroo.co.uk/menu/london/maida-vale/chakra-little-venice", context: "Delivery Little Venice" },
+    { url: "https://deliveroo.co.uk/menu/london/holland-park/chakra-holland-street", context: "Kensington" },
+  ];
+  assert.equal(bestOrderLink(cands, "Chakra Little Venice 14 Formosa St, London W9 1EE"), cands[0].url);
+  assert.equal(bestOrderLink(cands, "Chakra Kensington 1 Holland Street London W8"), cands[1].url);
+  assert.equal(bestOrderLink(cands, "Somewhere Else 1 Other Rd"), null, "several links and none for this branch: none, not a guess");
+  assert.equal(bestOrderLink([cands[0]], "Anything"), cands[0].url, "one link on the page is taken");
+  assert.equal(bestOrderLink([], "Anything"), null);
+});
