@@ -6,8 +6,72 @@ import Phones from "@/app/tapcard/demo/Phones";
 import { rowsFor, type Card } from "@/app/tapcard/demo/DemoBuilder";
 import { DEMO_KINDS } from "@/app/tapcard/demo/demoOffers";
 
-interface Hit { id: string; name: string; address: string; type: string; lat?: number; lng?: number }
+interface Hit { id: string; name: string; address: string; type: string; lat?: number; lng?: number; website?: string; phone?: string }
 interface Built { card: Card; token: string; link: string; brandColor: string | null; rating: { rating: number; count: number } | null }
+
+// Apple Maps search in the browser (MapKit JS): the same data the iPhone app gets from MapKit, including each place's phone and website, which the
+// server-side Apple API does not give. Any failure returns null and the page falls back to the server search.
+interface MkPlace { name?: string; formattedAddress?: string; telephone?: string; urls?: string[]; pointOfInterestCategory?: string; coordinate?: { latitude: number; longitude: number } }
+interface MkGlobal {
+  init(o: { authorizationCallback: (done: (t: string) => void) => void; language?: string }): void;
+  Search: new (o: Record<string, unknown>) => { search(q: string, cb: (err: unknown, data?: { places?: MkPlace[] }) => void): void };
+  CoordinateRegion: new (c: unknown, s: unknown) => unknown;
+  Coordinate: new (lat: number, lng: number) => unknown;
+  CoordinateSpan: new (a: number, b: number) => unknown;
+}
+let mapkitReady: Promise<MkGlobal | null> | null = null;
+function loadMapKit(): Promise<MkGlobal | null> {
+  if (!mapkitReady) {
+    mapkitReady = new Promise((resolve) => {
+      const w = window as unknown as { mapkit?: MkGlobal };
+      const start = () => {
+        try {
+          w.mapkit!.init({
+            authorizationCallback: (done) => { void fetch("/api/admin/tapcard/mapkit-token").then((r) => r.json()).then((j: { token?: string }) => { if (j.token) done(j.token); }).catch(() => {}); },
+            language: "en-GB",
+          });
+          resolve(w.mapkit!);
+        } catch { resolve(null); }
+      };
+      if (w.mapkit) { start(); return; }
+      const s = document.createElement("script");
+      s.src = "https://cdn.apple-mapkit.com/mk/5.x.x/mapkit.js";
+      s.crossOrigin = "anonymous";
+      s.onload = start;
+      s.onerror = () => resolve(null);
+      document.head.appendChild(s);
+    });
+  }
+  return mapkitReady;
+}
+// Apple often lists a business's Facebook page or a directory as its "website": that is not its site, and its logo is not the business's.
+const NOT_A_SITE = /(^|\.)(facebook|fb|instagram|twitter|x|tiktok|linkedin|youtube|linktr|linktree|tripadvisor|yell|ubereats|deliveroo|justeat|opentable|google|booksy|treatwell|fresha)\.[a-z.]+$|^(fb\.me|g\.page)$/i;
+async function mapkitSearch(q: string): Promise<Hit[] | null> {
+  const mk = await loadMapKit();
+  if (!mk) return null;
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(null), 7000);
+    try {
+      const search = new mk.Search({
+        getsUserLocation: false, includeAddresses: false, includeQueries: false, includePointsOfInterest: true,
+        region: new mk.CoordinateRegion(new mk.Coordinate(54.0, -2.5), new mk.CoordinateSpan(11, 11)),
+      });
+      search.search(q, (err, data) => {
+        clearTimeout(timer);
+        if (err || !data?.places?.length) { resolve(null); return; }
+        resolve(data.places.slice(0, 6).flatMap((p): Hit[] => {
+          if (!p.name) return [];
+          const site = (p.urls ?? []).find((u) => { try { return !NOT_A_SITE.test(new URL(u).hostname); } catch { return false; } }) ?? "";
+          const c = p.coordinate;
+          return [{
+            id: `mk:${c ? `${c.latitude},${c.longitude}` : ""}|${p.name}`, name: p.name, address: (p.formattedAddress ?? "").replace(/, United Kingdom$/i, ""),
+            type: (p.pointOfInterestCategory ?? "").replace(/^MKPOICategory/, ""), lat: c?.latitude, lng: c?.longitude, website: site, phone: p.telephone ?? "",
+          }];
+        }));
+      });
+    } catch { clearTimeout(timer); resolve(null); }
+  });
+}
 
 // A guess at the business type from the listing's category, so the offer examples suit the shop. Changeable.
 function guessKind(type: string): string {
@@ -47,6 +111,8 @@ export default function WalkIn() {
     e.preventDefault();
     if (q.trim().length < 2) return;
     setSearching(true); setNote(null); setHits([]);
+    const apple = await mapkitSearch(q.trim()).catch(() => null);
+    if (apple?.length) { setHits(apple); setSearching(false); return; }
     const res = await fetch(`/api/admin/tapcard/walkin?q=${encodeURIComponent(q.trim())}`).catch(() => null);
     const data = (await res?.json().catch(() => null)) as { hits?: Hit[]; error?: string } | null;
     setSearching(false);
@@ -57,7 +123,7 @@ export default function WalkIn() {
 
   async function build(h: Hit) {
     setBuilding(true); setNote(null); setBuilt(null);
-    const res = await fetch("/api/admin/tapcard/walkin", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: h.name, address: h.address, lat: h.lat, lng: h.lng }) }).catch(() => null);
+    const res = await fetch("/api/admin/tapcard/walkin", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: h.name, address: h.address, lat: h.lat, lng: h.lng, website: h.website, phone: h.phone }) }).catch(() => null);
     const data = (await res?.json().catch(() => null)) as (Built & { error?: string }) | null;
     setBuilding(false);
     if (!res?.ok || !data?.card) { setNote({ text: data?.error ?? "Couldn't build the card. Try again.", ok: false }); return; }

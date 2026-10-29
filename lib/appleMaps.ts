@@ -15,14 +15,20 @@ export function appleMapsConfigured(): boolean {
   return !!(process.env.APPLE_MAPS_KEY_P8 && process.env.APPLE_MAPS_KEY_ID && process.env.APPLE_MAPS_TEAM_ID);
 }
 
-function authJwt(): string {
+function authJwt(origin?: string): string {
   const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString("base64url");
   const now = Math.floor(Date.now() / 1000);
   const head = b64({ alg: "ES256", kid: process.env.APPLE_MAPS_KEY_ID, typ: "JWT" });
-  const body = b64({ iss: process.env.APPLE_MAPS_TEAM_ID, iat: now, exp: now + 1800 });
+  const body = b64({ iss: process.env.APPLE_MAPS_TEAM_ID, iat: now, exp: now + 1800, ...(origin ? { origin } : {}) });
   const key = (process.env.APPLE_MAPS_KEY_P8 ?? "").replace(/\\n/g, "\n");
   const sig = crypto.sign("sha256", Buffer.from(`${head}.${body}`), { key, dsaEncoding: "ieee-p1363" }).toString("base64url");
   return `${head}.${body}.${sig}`;
+}
+
+/// A token for MapKit JS in the admin's browser (the same Maps key as the Server API). It is tied to the page's origin, lasts 30 minutes, and is only
+/// given to the signed-in admin. MapKit JS search returns a place's phone and website, which the Server API does not, as the iPhone app's does.
+export function mapkitJsToken(origin: string): string | null {
+  return appleMapsConfigured() ? authJwt(origin) : null;
 }
 
 async function accessToken(): Promise<string | null> {

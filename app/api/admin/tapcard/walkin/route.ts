@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   if (!(await isAdminRequest())) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   if (rateLimited(req, "walkin-build", 40)) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-  const b = (await req.json().catch(() => null)) as { name?: string; address?: string; lat?: number; lng?: number; website?: string } | null;
+  const b = (await req.json().catch(() => null)) as { name?: string; address?: string; lat?: number; lng?: number; website?: string; phone?: string } | null;
   const name = String(b?.name ?? "").trim().slice(0, 80);
   const address = String(b?.address ?? "").trim().slice(0, 200);
   if (name.length < 2) return NextResponse.json({ error: "A name is required." }, { status: 400 });
@@ -49,15 +49,17 @@ export async function POST(req: NextRequest) {
   // The website is what the logo, brand colour, links and socials all come from, so it has to be the right one. The apps take it from Google,
   // which is right far more often than the free listings, so a walk-in does the same (one lookup, for an admin only) and keeps the
   // free listings as the fallback.
-  const found = await searchBusinesses(`${name} ${address}`, spot ?? nearOf(req), true, "walkin").catch((): BusinessHit[] => []);
+  // The page's own Apple Maps search (MapKit JS, as the iPhone app does) already gives a website when there is one: then no lookup is needed.
+  const given = String(b?.website ?? "").trim().slice(0, 200);
+  const found = given ? [] : await searchBusinesses(`${name} ${address}`, spot ?? nearOf(req), true, "walkin").catch((): BusinessHit[] => []);
   const pc = postcodeOf(address);
   const google = (pc ? found.find((h) => postcodeOf(h.address) === pc) : undefined) ?? (pc ? undefined : found[0]);
-  const website = String(b?.website ?? "").trim().slice(0, 200) || google?.website || place?.hit.website || "";
+  const website = given || google?.website || place?.hit.website || "";
   const built = await buildPrebuiltCard(name, website, address);
   const card = built.card;
   // What the website did not say, the listing may: address, phone, opening hours.
   if (!card.address) card.address = address;
-  if (!card.phone) card.phone = google?.phone || place?.hit.phone || "";
+  if (!card.phone) card.phone = String(b?.phone ?? "").trim().slice(0, 40) || google?.phone || place?.hit.phone || "";
   const hours = google?.hours || place?.hit.hours;
   if (hours && !card.links.some((l) => l.kind === "hours")) card.links = [...card.links, { kind: "hours" as const, label: "Opening hours", value: hours }].slice(0, 10);
   const token = await storePrebuilt(WALK_IN_OWNER, name, website, card, null, "");

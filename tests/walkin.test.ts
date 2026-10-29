@@ -35,3 +35,28 @@ test("a built walk-in card's start link can be emailed to the prospect, and only
   assert.ok(ctx.outbox[0].html.includes(`https://tapcard.aiert.co.uk/start/${token}`), "the email carries the start link");
   assert.ok(ctx.outbox[0].subject.includes("Salon Rose"));
 });
+
+test("the MapKit JS token is signed for the admin's own origin and only for the admin", async () => {
+  const { generateKeyPairSync, createVerify } = await import("node:crypto");
+  const { privateKey, publicKey } = generateKeyPairSync("ec", { namedCurve: "P-256" });
+  process.env.APPLE_MAPS_KEY_P8 = privateKey.export({ type: "pkcs8", format: "pem" }).toString();
+  process.env.APPLE_MAPS_KEY_ID = "KEY123";
+  process.env.APPLE_MAPS_TEAM_ID = "TEAM123";
+  const { mapkitJsToken } = await import("../lib/appleMaps");
+  const t = mapkitJsToken("https://www.aiert.co.uk")!;
+  const [h, p, sig] = t.split(".");
+  assert.equal(JSON.parse(Buffer.from(h, "base64url").toString()).kid, "KEY123");
+  const body = JSON.parse(Buffer.from(p, "base64url").toString());
+  assert.equal(body.iss, "TEAM123");
+  assert.equal(body.origin, "https://www.aiert.co.uk");
+  assert.ok(body.exp - body.iat <= 1800);
+  assert.ok(createVerify("sha256").update(`${h}.${p}`).verify({ key: publicKey, dsaEncoding: "ieee-p1363" }, Buffer.from(sig, "base64url")), "a valid ES256 signature");
+
+  const route = await import("../app/api/admin/tapcard/mapkit-token/route");
+  const call = () => route.GET(new NextRequest("https://www.aiert.co.uk/api/admin/tapcard/mapkit-token", { headers: { host: "www.aiert.co.uk" } }));
+  ctx.admin = false;
+  assert.equal((await call()).status, 401);
+  ctx.admin = true;
+  assert.equal((await call()).status, 200);
+  assert.equal((await route.GET(new NextRequest("https://evil.example/api/admin/tapcard/mapkit-token", { headers: { host: "evil.example" } }))).status, 400, "not for other hosts");
+});
