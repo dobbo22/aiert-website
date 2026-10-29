@@ -6,6 +6,8 @@ import { searchBusinesses, type BusinessHit } from "@/lib/tapcardBusinessSearch"
 import { fillPlaceDetails, type PlaceHit } from "@/lib/placeDetails";
 import { buildPrebuiltCard, getPrebuilt, storePrebuilt } from "@/lib/tapcardPrebuilt";
 import { sendPrebuiltEmail } from "@/lib/tapcardPrebuiltEmail";
+import { resolveSiteBranding } from "@/lib/siteBrandColor";
+import { placeIdFromLinks, placeRating } from "@/lib/tapcardRating";
 
 // The walk-in demo (admin only): find a business by name, build its card from the place listing and its own website, give back a start link
 // (its QR code is what the owner scans to begin on their own phone), and optionally email that link. Nothing here is public.
@@ -51,7 +53,12 @@ export async function POST(req: NextRequest) {
   if (!card.phone && place?.hit.phone) card.phone = place.hit.phone;
   if (place?.hit.hours && !card.links.some((l) => l.kind === "hours")) card.links = [...card.links, { kind: "hours" as const, label: "Opening hours", value: place.hit.hours }].slice(0, 10);
   const token = await storePrebuilt(WALK_IN_OWNER, name, website, card, null, "");
-  return NextResponse.json({ ok: true, card, token, link: `https://tapcard.aiert.co.uk/start/${token}`, found: !!place?.found || !!website });
+  // What the apps show on the card besides the links: the banner in the brand colour of the website, and the Google rating.
+  const [branding, rating] = await Promise.all([
+    website ? resolveSiteBranding(website).catch(() => null) : null,
+    placeRating(placeIdFromLinks(card.links)).catch(() => null),
+  ]);
+  return NextResponse.json({ ok: true, card, token, link: `https://tapcard.aiert.co.uk/start/${token}`, found: !!place?.found || !!website, brandColor: branding?.color ?? null, rating });
 }
 
 export async function PUT(req: NextRequest) {

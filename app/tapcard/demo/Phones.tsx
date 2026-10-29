@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
+import { paletteFor } from "@/lib/brandPalette";
 import ContactIcon from "../ContactIcon";
 import type { Row } from "./DemoBuilder";
 import { offersFor } from "./demoOffers";
@@ -46,12 +47,16 @@ function domainOf(website: string): string {
   try { return new URL(/^https?:\/\//i.test(website) ? website : `https://${website}`).hostname.replace(/^www\./, ""); } catch { return ""; }
 }
 
-export function CardFace({ name, kind, typed, stage, rows, socials, interactive, domain, onOpen, logoSrc, noFavicon }: {
+export function CardFace({ name, kind, typed, stage, rows, socials, interactive, domain, onOpen, logoSrc, noFavicon, brandColor, rating }: {
   name: string; kind: string; typed: string; stage: number; rows: Row[]; socials: Row[]; interactive: boolean; domain: string; onOpen: (r: Row) => void;
   /** The logo already stored for the company: used in place of looking it up on the website again. */
   logoSrc?: string | null;
   /** Never fall back to the site's small favicon (a plain shop icon instead). */
   noFavicon?: boolean;
+  /** The business's brand colour (from its website): the banner gradient, as in the apps. */
+  brandColor?: string | null;
+  /** Its Google rating, shown under the name as in the apps. */
+  rating?: { rating: number; count: number } | null;
 }) {
   // A tap opens inside the phone; a modified click (new tab) still goes to the real page.
   const tap = (r: Row) => (e: React.MouseEvent) => {
@@ -67,7 +72,7 @@ export function CardFace({ name, kind, typed, stage, rows, socials, interactive,
   const d = encodeURIComponent(domain);
   return (
     <div className="pb-6 text-center">
-      <div className="flex h-28 items-start justify-center bg-gradient-to-br from-[#2b2f77] to-[#111318] px-6 pt-3">
+      <div className={`flex h-28 items-start justify-center px-6 pt-3 ${brandColor ? "" : "bg-gradient-to-br from-[#2b2f77] to-[#111318]"}`} style={brandColor ? { background: `linear-gradient(to bottom right, ${paletteFor(brandColor).gradStart}, ${paletteFor(brandColor).gradEnd})` } : undefined}>
         {(logoSrc || domain) && !logoFailed ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={logoSrc || `/api/logo?domain=${d}`} alt="" onLoad={() => setLogoLoaded(true)} onError={() => setLogoFailed(true)} className={`max-w-full rounded-md object-contain [animation:fadein_0.6s_ease] ${logoLoaded ? "max-h-20" : "max-h-14"}`} />
@@ -92,6 +97,7 @@ export function CardFace({ name, kind, typed, stage, rows, socials, interactive,
       ) : null}
       <h3 className={`${logoLoaded ? "mt-4" : "mt-3"} min-h-[1.75rem] text-xl font-bold`}>{typed || name}</h3>
       <span className="mt-1 inline-block rounded-full bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider transition-opacity duration-500" style={{ opacity: stage >= 2 ? 1 : 0 }}>{kind || "Business"}</span>
+      {rating ? <p className="mt-2 text-sm font-semibold"><span className="text-amber-300">★</span> {rating.rating.toFixed(1)} <span className="font-normal text-white/70">({rating.count}) on Google</span></p> : null}
       <ul className="mt-4 space-y-2 text-left">
         {rows.map((r) => {
           const inner = (
@@ -228,7 +234,7 @@ function Tick({ label, sub }: { label: string; sub?: string }) {
   );
 }
 
-export default function Phones({ name, website, kind, built, stage, typed, rows, socials, buildSpinner, idleText, view = "both", fill = false, customerStartsWithCard = false, showControls = true }: {
+export default function Phones({ name, website, kind, built, stage, typed, rows, socials, buildSpinner, idleText, view = "both", fill = false, customerStartsWithCard = false, showControls = true, brandColor = null, rating = null }: {
   name: string; website: string; kind: string; built: boolean; stage: number; typed: string; rows: Row[]; socials: Row[]; buildSpinner: boolean; idleText: string;
   /** Which phone to show: both, or only the owner's or the customer's (the story still plays across both). */
   view?: "both" | "owner" | "customer";
@@ -238,6 +244,8 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
   customerStartsWithCard?: boolean;
   /** The caption and story buttons above the phones. Off for a plain, tappable card. */
   showControls?: boolean;
+  brandColor?: string | null;
+  rating?: { rating: number; count: number } | null;
 }) {
   const domain = domainOf(website);
   const [caption, setCaption] = useState<{ step: number; text: string } | null>(null);
@@ -381,7 +389,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
             <AppBar title={name} buttons />
             <Toast><strong>Alex Morgan</strong> saved your card and sent you theirs.</Toast>
             <Toast>1 follower now gets your offers and news.</Toast>
-            <CardFace name={name} kind={kind} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openA} />
+            <CardFace brandColor={brandColor} rating={rating} name={name} kind={kind} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openA} />
             <CardActions onShare={share} onOffer={sendOffer} offerReady={revealed >= 2} offerLive={false} disabled={running} />
           </div>
         );
@@ -402,7 +410,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
           <div>
             <AppBar title={name} buttons />
             <Toast><strong>Offer live:</strong> {offer}. 1 follower notified.</Toast>
-            <CardFace name={name} kind={kind} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openA} />
+            <CardFace brandColor={brandColor} rating={rating} name={name} kind={kind} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openA} />
             <CardActions onShare={share} onOffer={sendOffer} offerReady={revealed >= 2} offerLive={true} disabled={running} />
           </div>
         );
@@ -425,7 +433,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
         return (
           <div>
             <AppBar title={name} buttons />
-            <CardFace name={name} kind={kind} typed={typed} stage={stage} rows={rows} socials={socials} interactive={stage >= 4} domain={domain} onOpen={openA} />
+            <CardFace brandColor={brandColor} rating={rating} name={name} kind={kind} typed={typed} stage={stage} rows={rows} socials={socials} interactive={stage >= 4} domain={domain} onOpen={openA} />
             {built && showControls ? <CardActions onShare={share} onOffer={sendOffer} offerReady={revealed >= 2} offerLive={false} disabled={running} /> : null}
           </div>
         );
@@ -437,7 +445,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
       <div>
         <AppBar title="Card received" />
         {extra}
-        <CardFace name={name} kind={kind} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openB} />
+        <CardFace brandColor={brandColor} rating={rating} name={name} kind={kind} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openB} />
       </div>
     );
     switch (bView) {
@@ -505,7 +513,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
               <p className="text-xs text-white/70">Ends in 7 days</p>
               <div className="mt-3 rounded-xl bg-blue-500 py-2 text-sm font-semibold">Claim this offer</div>
             </div>
-            <CardFace name={name} kind={kind} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openB} />
+            <CardFace brandColor={brandColor} rating={rating} name={name} kind={kind} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openB} />
           </div>
         );
       case "claimed":

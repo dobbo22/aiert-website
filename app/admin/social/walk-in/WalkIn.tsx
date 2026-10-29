@@ -7,7 +7,7 @@ import { rowsFor, type Card } from "@/app/tapcard/demo/DemoBuilder";
 import { DEMO_KINDS } from "@/app/tapcard/demo/demoOffers";
 
 interface Hit { id: string; name: string; address: string; type: string; lat?: number; lng?: number }
-interface Built { card: Card; token: string; link: string }
+interface Built { card: Card; token: string; link: string; brandColor: string | null; rating: { rating: number; count: number } | null }
 
 // A guess at the business type from the listing's category, so the offer examples suit the shop. Changeable.
 function guessKind(type: string): string {
@@ -61,7 +61,7 @@ export default function WalkIn() {
     const data = (await res?.json().catch(() => null)) as (Built & { error?: string }) | null;
     setBuilding(false);
     if (!res?.ok || !data?.card) { setNote({ text: data?.error ?? "Couldn't build the card. Try again.", ok: false }); return; }
-    setBuilt({ card: data.card, token: data.token, link: data.link });
+    setBuilt({ card: data.card, token: data.token, link: data.link, brandColor: data.brandColor ?? null, rating: data.rating ?? null });
     setKind(guessKind(h.type));
     setTab("owner"); setHits([]); setEmail("");
   }
@@ -144,21 +144,21 @@ export default function WalkIn() {
                 }
               } : undefined}
             >
-              <div className="mb-4 flex items-center gap-2">
+              <div className="mb-4 flex flex-wrap items-center gap-2">
                 <div role="tablist" className="flex gap-2">
                   {([["owner", "Owner"], ["customer", "Customer"], ["demo", "Demo"]] as const).map(([id, label]) => (
                     <button key={id} role="tab" aria-selected={tab === id} type="button" onClick={() => setTab(id)}
-                      className={`rounded-xl px-5 py-2 text-lg font-bold ${tab === id ? "btn-gold" : "bg-white/10 text-cloud"}`}>{label}</button>
+                      className={`rounded-xl px-4 py-2 text-base font-bold sm:px-5 sm:text-lg ${tab === id ? "btn-gold" : "bg-white/10 text-cloud"}`}>{label}</button>
                   ))}
                 </div>
-                <button type="button" onClick={() => setFull((v) => !v)} className="ml-auto rounded-xl bg-white/10 px-4 py-2 text-lg font-bold text-cloud">
+                <button type="button" onClick={() => setFull((v) => !v)} className="ml-auto rounded-xl bg-white/10 px-4 py-2 text-base font-bold text-cloud sm:text-lg">
                   {full ? "Close ✕" : "Full screen"}
                 </button>
               </div>
               {full && <p className="mb-3 text-center text-sm text-cloud">Swipe left or right to switch between Owner, Customer and Demo.</p>}
               <Phones
                 name={built.card.name} website={built.card.website} kind={kind} built stage={4} typed={built.card.name}
-                rows={rows.filter((r) => !r.social)} socials={rows.filter((r) => r.social)} buildSpinner={false} idleText="" view={tab === "demo" ? "both" : tab} fill={full} customerStartsWithCard={tab !== "demo"} showControls={tab === "demo"}
+                rows={rows.filter((r) => !r.social)} socials={rows.filter((r) => r.social)} buildSpinner={false} idleText="" view={tab === "demo" ? "both" : tab} fill={full} customerStartsWithCard={tab !== "demo"} showControls={tab === "demo"} brandColor={built.brandColor} rating={built.rating}
               />
             </div>
           </div>
