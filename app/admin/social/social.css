@@ -275,3 +275,25 @@
   text-align: center;
   padding: 3rem 0;
 }
+
+/* Phone: the page list is hidden behind one button, so the page itself is not crowded. */
+.social-tabs-toggle { display: none; }
+@media (max-width: 767px) {
+  .social-tabs-toggle {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding: 0.7rem 1rem;
+    border-radius: 8px;
+    border: 1px solid rgba(148, 163, 184, 0.4);
+    background: rgba(148, 163, 184, 0.12);
+    color: #f8fafc;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+  .social-tabs { display: none; flex-direction: column; margin-top: -0.5rem; }
+  .social-tabs.social-tabs-open { display: flex; }
+  .social-tab { font-size: 1rem; padding: 0.7rem 1rem; }
+}

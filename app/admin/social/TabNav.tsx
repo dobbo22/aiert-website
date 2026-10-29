@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -21,22 +22,32 @@ const TABS = [
 
 export default function TabNav() {
   const pathname = usePathname();
+  // On a phone only the current page shows, with a Pages button that opens the rest.
+  const [open, setOpen] = useState(false);
+  useEffect(() => setOpen(false), [pathname]);
+  const current = TABS.find((t) => (t.exact ? pathname === t.href : pathname.startsWith(t.href))) ?? TABS[0];
 
   return (
-    <nav className="social-tabs">
-      {TABS.map((tab) => {
-        const active = tab.exact ? pathname === tab.href : pathname.startsWith(tab.href);
-        return (
-          <Link
-            key={tab.href}
-            href={tab.href}
-            className={`social-tab ${active ? "social-tab-active" : ""}`}
-          >
-            {tab.label}
-            {tab.badge && <span className="social-tab-badge">{tab.badge}</span>}
-          </Link>
-        );
-      })}
-    </nav>
+    <>
+      <button type="button" className="social-tabs-toggle" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+        <span>{current.label}</span>
+        <span aria-hidden="true">{open ? "▲" : "▼ Pages"}</span>
+      </button>
+      <nav className={`social-tabs ${open ? "social-tabs-open" : ""}`}>
+        {TABS.map((tab) => {
+          const active = tab.exact ? pathname === tab.href : pathname.startsWith(tab.href);
+          return (
+            <Link
+              key={tab.href}
+              href={tab.href}
+              className={`social-tab ${active ? "social-tab-active" : ""}`}
+            >
+              {tab.label}
+              {tab.badge && <span className="social-tab-badge">{tab.badge}</span>}
+            </Link>
+          );
+        })}
+      </nav>
+    </>
   );
 }
