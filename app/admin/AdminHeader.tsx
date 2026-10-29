@@ -12,8 +12,12 @@ const SECTIONS = [
   { href: "/admin/mailbroom", label: "Reviewers" },
 ];
 
+// The Social pages that run TapCard (not MailBroom's own posting) carry the TapCard name and icon.
+const TAPCARD_PAGES = ["/admin/social/walk-in", "/admin/social/demo", "/admin/social/funnel", "/admin/social/companies", "/admin/social/moderation", "/admin/social/verifications", "/admin/social/grants"];
+
 export default function AdminHeader() {
   const pathname = usePathname();
+  const tapcard = TAPCARD_PAGES.some((p) => pathname.startsWith(p));
   // On a phone the sections and Log out sit behind a menu button, so the page is not crowded.
   const [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [pathname]);
@@ -23,14 +27,14 @@ export default function AdminHeader() {
       <div className="max-w-6xl mx-auto px-6 md:px-8 py-4 flex items-center justify-between gap-4">
         <Link href="/admin/social" className="flex items-center gap-3">
           <img
-            src="/mailbroom-icon.png"
-            alt="MailBroom"
+            src={tapcard ? "/tapcard-icon.png" : "/mailbroom-icon.png"}
+            alt={tapcard ? "TapCard" : "MailBroom"}
             width={32}
             height={32}
             className="w-8 h-8 rounded-lg"
           />
           <span className="font-bold text-lg tracking-tight text-cloud">
-            MailBroom <span className="text-mist font-medium">Admin</span>
+            {tapcard ? "TapCard" : "MailBroom"} <span className="text-mist font-medium">Admin</span>
           </span>
         </Link>
 
