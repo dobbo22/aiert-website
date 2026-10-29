@@ -344,7 +344,8 @@ export interface SiteBranch { name: string; address: string; phone: string; hour
 
 // `address` is whatever the card has so far; `name` is the card's name (e.g. "Acme Cafe Shoreditch"), used to pick the branch.
 // `prefetched` is the home page as a phone read it (some sites refuse requests from our servers): it is used instead of fetching it here.
-export async function findSiteLinks(websiteOrDomain: string, address?: string, name?: string, prefetched?: { html: string; url: string }): Promise<{ links: CardLink[]; details: SiteDetails; branches: SiteBranch[] }> {
+// `otherPlaceOnly`: the site gives addresses, and none is anywhere near the one asked about (a map listing that points at another shop's site).
+export async function findSiteLinks(websiteOrDomain: string, address?: string, name?: string, prefetched?: { html: string; url: string }): Promise<{ links: CardLink[]; details: SiteDetails; branches: SiteBranch[]; otherPlaceOnly?: boolean }> {
   let host = websiteOrDomain.trim();
   try { host = new URL(/^[a-z]+:\/\//i.test(host) ? host : `https://${host}`).hostname; } catch { /* keep */ }
   const domain = normalizeDomain(host);
@@ -517,7 +518,10 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
     found.set("book_table", bookNow.value);
     extras.splice(extras.indexOf(bookNow), 1);
   }
-  return { links: sanitizeLinks([...[...found].map(([kind, value]) => ({ kind, label: "", value })), ...extras]), details, branches };
+  const outward = (pc: string) => pc.slice(0, -3);
+  const sitePcs = [...places.map((p) => p.postcode), ...spots.map((s) => s.pc)].filter(Boolean);
+  const otherPlaceOnly = !!postcode && !place && sitePcs.length > 0 && !sitePcs.some((pc) => outward(pc) === outward(postcode));
+  return { links: sanitizeLinks([...[...found].map(([kind, value]) => ({ kind, label: "", value })), ...extras]), details, branches, otherPlaceOnly };
 }
 
 // ---- Finding a company's other shops from its own website ----------------------------------------------------------------------------

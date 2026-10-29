@@ -81,14 +81,19 @@ export interface SiteBranchChoice { name: string; address: string; phone: string
 /// `address` is what the visitor chose or typed (a branch's address, a town or a postcode): it picks the branch on a
 /// multi-address site, so the card gets that address, phone and opening hours. With several addresses and none chosen,
 /// `branches` lists them for the visitor to pick from.
-export async function buildPrebuiltCard(name: string, website: string, address = ""): Promise<{ card: PrebuiltCard; branches: SiteBranchChoice[] }> {
-  const found = website ? await findSiteLinks(website, address, name).catch(() => null) : null;
+// `checkSite`: the website came from a map listing rather than from the person, so a site that only lists other places (Google gives
+// the Fulham Ocean Catch the Islington shop's site) is left out: `wrongSite` is then true and the card is built without a website.
+export async function buildPrebuiltCard(name: string, website: string, address = "", checkSite = false): Promise<{ card: PrebuiltCard; branches: SiteBranchChoice[]; wrongSite?: boolean }> {
+  let found = website ? await findSiteLinks(website, address, name).catch(() => null) : null;
+  const wrongSite = !!(checkSite && found?.otherPlaceOnly);
+  if (wrongSite) { found = null; website = ""; }
   const d = found?.details ?? {};
   const branches = found?.branches ?? [];
   const url = website && !/^https?:\/\//i.test(website) ? `https://${website}` : website;
   const links = sanitizeLinks(found?.links ?? []);
   return {
     branches,
+    wrongSite,
     card: {
       name,
       company: name,

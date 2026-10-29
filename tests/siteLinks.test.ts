@@ -56,3 +56,16 @@ test("a week set out one day per line gives every open day, and leaves a closed 
   assert.match(hours, /^Tue to Thu: 1pm.3:30pm, 5pm.10pm; Fri and Sat: 1pm.3:30pm, 5pm.10:30pm; Sun: 1pm.3:30pm, 5pm.10pm$/);
   assert.ok(!/mon/i.test(hours), "a closed day is not listed");
 });
+
+test("a site that only lists another area is flagged, a site near the address is not", async () => {
+  const { findSiteLinks } = await import("../lib/siteLinks");
+  const islington = `<html><body><p>Contact Us</p><p>Islington 69 Chapel Market, Angel, London N1 9ER Tel: 020 7713 6555</p></body></html>`;
+  const far = await findSiteLinks("https://catch.example", "407A North End Rd, London SW6 1NS", "Ocean Catch London", { html: islington, url: "https://catch.example/" });
+  assert.equal(far.otherPlaceOnly, true, "Fulham address, Islington-only site");
+  const near = await findSiteLinks("https://catch.example", "69 Chapel Market, London N1 9ER", "Ocean Catch", { html: islington, url: "https://catch.example/" });
+  assert.ok(!near.otherPlaceOnly, "the site's own address");
+  const none = await findSiteLinks("https://catch.example", "407A North End Rd, London SW6 1NS", "Ocean Catch", { html: "<html><body>Fresh fish</body></html>", url: "https://catch.example/" });
+  assert.ok(!none.otherPlaceOnly, "a site that gives no address is not judged");
+  const sameArea = await findSiteLinks("https://catch.example", "1 Chapel Market, London N1 9EZ", "Ocean Catch", { html: islington, url: "https://catch.example/" });
+  assert.ok(!sameArea.otherPlaceOnly, "same postcode area");
+});

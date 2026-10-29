@@ -10,8 +10,8 @@ export async function GET(req: NextRequest) {
   if (!website || website.length > 200) return NextResponse.json({ links: [], details: {}, branches: [] });
   const address = (req.nextUrl.searchParams.get("address") ?? "").slice(0, 300);
   const name = (req.nextUrl.searchParams.get("name") ?? "").slice(0, 120);
-  const { links, details, branches } = await findSiteLinks(website, address, name).catch(() => ({ links: [], details: {}, branches: [] }));
-  return NextResponse.json({ links, details, branches }, { headers: { "Cache-Control": "public, max-age=300" } });
+  const { links, details, branches, otherPlaceOnly } = await findSiteLinks(website, address, name).catch(() => ({ links: [], details: {}, branches: [], otherPlaceOnly: false }));
+  return NextResponse.json({ links, details, branches, otherPlaceOnly: !!otherPlaceOnly }, { headers: { "Cache-Control": "public, max-age=300" } });
 }
 
 // The same, from a home page the phone read itself (a site that blocks our servers still opens on a phone). Stores nothing.

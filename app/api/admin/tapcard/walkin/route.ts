@@ -54,8 +54,9 @@ export async function POST(req: NextRequest) {
   const found = given ? [] : await searchBusinesses(`${name} ${address}`, spot ?? nearOf(req), true, "walkin").catch((): BusinessHit[] => []);
   const pc = postcodeOf(address);
   const google = (pc ? found.find((h) => postcodeOf(h.address) === pc) : undefined) ?? (pc ? undefined : found[0]);
-  const website = given || google?.website || place?.hit.website || "";
-  const built = await buildPrebuiltCard(name, website, address);
+  let website = given || google?.website || place?.hit.website || "";
+  const built = await buildPrebuiltCard(name, website, address, true);
+  if (built.wrongSite) website = "";
   const card = built.card;
   // What the website did not say, the listing may: address, phone, opening hours.
   if (!card.address) card.address = address;
@@ -68,7 +69,7 @@ export async function POST(req: NextRequest) {
     website ? resolveSiteBranding(website).catch(() => null) : null,
     placeRating(placeIdFromLinks(card.links)).catch(() => null),
   ]);
-  return NextResponse.json({ ok: true, card, token, link: `https://tapcard.aiert.co.uk/start/${token}`, found: !!place?.found || !!website, brandColor: branding?.color ?? null, rating });
+  return NextResponse.json({ ok: true, card, token, link: `https://tapcard.aiert.co.uk/start/${token}`, found: !!place?.found || !!website, wrongSite: !!built.wrongSite, brandColor: branding?.color ?? null, rating });
 }
 
 export async function PUT(req: NextRequest) {

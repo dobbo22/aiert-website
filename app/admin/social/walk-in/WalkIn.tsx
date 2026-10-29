@@ -144,11 +144,12 @@ export default function WalkIn() {
   async function build(h: Hit) {
     setBuilding(true); setNote(null); setBuilt(null);
     const res = await fetch("/api/admin/tapcard/walkin", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: h.name, address: h.address, lat: h.lat, lng: h.lng, website: h.website, phone: h.phone }) }).catch(() => null);
-    const data = (await res?.json().catch(() => null)) as (Built & { error?: string }) | null;
+    const data = (await res?.json().catch(() => null)) as (Built & { error?: string; wrongSite?: boolean }) | null;
     setBuilding(false);
     if (!res?.ok || !data?.card) { setNote({ text: data?.error ?? "Couldn't build the card. Try again.", ok: false }); return; }
     setBuilt({ card: data.card, token: data.token, link: data.link, brandColor: data.brandColor ?? null, rating: data.rating ?? null });
     setKind(guessKind(h.type));
+    if (data.wrongSite) setNote({ text: "The website on the map listing only shows other branches, so it was left off this card. Add the right one if there is one.", ok: false });
     setTab("owner"); setHits([]); setEmail("");
   }
 

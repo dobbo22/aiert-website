@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
   const address = (body?.address ?? "").slice(0, 300);
   const name = (body?.name ?? "").slice(0, 120);
   const [site, branding] = await Promise.all([
-    findSiteLinks(website, address, name).catch(() => ({ links: [], details: {}, branches: [] })),
+    findSiteLinks(website, address, name).catch(() => ({ links: [], details: {}, branches: [], otherPlaceOnly: false })),
     // The bare domain first: some sites' logos are only found there, and the colour comes from the logo (else from the small icon).
     resolveSiteBranding(bareHost(website)).catch(() => ({ color: null, address: null })),
   ]);
@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
     details: site.details,
     links: site.links,
     branches: site.branches,
+    otherPlaceOnly: !!site.otherPlaceOnly,
   });
 }
 
