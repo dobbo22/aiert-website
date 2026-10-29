@@ -78,6 +78,9 @@ export function CardFace({ name, kind, typed, stage, rows, socials, interactive,
     if (e.metaKey || e.ctrlKey || e.shiftKey) return;
     // Directions go straight to the map (Apple Maps on an Apple device): there is nothing to preview, and the phone's own Maps app does the rest.
     if (r.id === "address") return;
+    // On a real phone the website, social links and the rest also open for real, in the phone's own browser or app. On a laptop or tablet in
+    // a meeting they still open inside the demo phone, so the audience stays on the screen.
+    if (typeof navigator !== "undefined" && /iPhone|iPod|Android.*Mobile/.test(navigator.userAgent)) return;
     e.preventDefault();
     onOpen(r);
   };
