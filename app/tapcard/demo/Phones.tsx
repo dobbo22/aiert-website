@@ -8,12 +8,13 @@ import ContactIcon from "../ContactIcon";
 import type { Row } from "./DemoBuilder";
 import { offersFor } from "./demoOffers";
 import { parseHours, todayLine, weekText } from "./openingHours";
+import { PROMOTE_NOTE } from "../promoteNote";
 
 // Two phones: the business (left) and Alex Morgan, an anonymous customer (right). The screens scroll inside a fixed-size
 // phone. After the card is built, buttons play the story: share the card, send an offer, use the offer.
 
 
-type AView = "card" | "qr" | "saved" | "offerForm" | "offerLive" | "staff" | "used";
+type AView = "card" | "qr" | "saved" | "offerForm" | "offerLive" | "staff" | "used" | "sign" | "stats" | "cta";
 type BView = "idle" | "scanning" | "received" | "saved" | "follow" | "contacts" | "push" | "offer" | "claimed" | "used";
 
 function TabBar({ active }: { active: "cards" | "contacts" }) {
@@ -242,6 +243,40 @@ function InPhoneBrowser({ row, name, website, onClose }: { row: Row; name: strin
   );
 }
 
+// A caption is "Headline|detail": the headline is large and gold, the detail beneath it.
+function CaptionText({ text }: { text: string }) {
+  const [head, ...rest] = text.split("|");
+  if (!rest.length) return <>{text}</>;
+  return (
+    <>
+      <span className="block text-xl font-black leading-tight text-gold sm:text-2xl">{head}</span>
+      <span className="mt-1 block">{rest.join("|")}</span>
+    </>
+  );
+}
+
+// A big number that counts up, for the results screen.
+function CountUp({ to, label }: { to: number; label: string }) {
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    let raf = 0;
+    const t0 = performance.now();
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - t0) / 1600);
+      setN(Math.round(to * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [to]);
+  return (
+    <div className="rounded-2xl bg-white/10 p-3 text-center">
+      <p className="text-3xl font-black tabular-nums text-gold">{n.toLocaleString("en-GB")}</p>
+      <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-white">{label}</p>
+    </div>
+  );
+}
+
 function AppBar({ title, buttons = false }: { title: string; buttons?: boolean }) {
   const circle = (d: string) => (
     <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10" aria-hidden="true">
@@ -340,7 +375,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
     return () => clearTimeout(t);
   }, [caption]);
   const [completed, setCompleted] = useState(0); // stories finished: 1 share, 2 offer, 3 use
-  const revealed = built ? Math.min(3, completed + 1) : 0; // the furthest story that can be played now
+  const revealed = built ? Math.min(4, completed + 1) : 0; // the furthest story that can be played now
   const [running, setRunning] = useState(false);
   const suggestions = offersFor(kind);
   const [offerOverride, setOffer] = useState<string | null>(null);
@@ -423,35 +458,41 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
   }
 
   const share = () => runScenes([
-    { run: () => { setBView("idle"); setAView("qr"); }, step: 1, text: "Customers scan your card's QR code from your phone, or from a printed TapCard sign in your window or at reception. They need the free TapCard app, and it arrives instantly." },
-    { run: () => setBView("scanning"), settle: 2300, step: 1, text: `Alex Morgan, a ${kind ? kind.toLowerCase() : "business"} customer with TapCard installed, scans your QR code…` },
-    { run: () => setBView("received"), step: 1, text: "It's instant. Alex sees your card at once, with your links ready to tap, and chooses Save & send my card." },
-    { run: () => setBView("saved"), step: 1, text: "Alex's own card is sent back to you, so you each have the other's details." },
-    { run: () => setBView("follow"), step: 1, text: "Alex is asked once: do you want offers and news from this business? You can't send anyone offers unless they say yes." },
-    { run: () => { setBView("contacts"); setAView("saved"); }, step: 1, text: "Alex now follows you. Your phone shows the new follower. Next: send them an offer." },
+    { run: () => { setBView("idle"); setAView("qr"); }, step: 1, text: "Turn every visitor into a customer you keep|Customers scan your card's QR code from your phone, or from a printed TapCard sign in your window or at reception. They need the free TapCard app." },
+    { run: () => setBView("scanning"), settle: 2300, step: 1, text: `Two seconds. No typing.|Alex Morgan, a ${kind ? kind.toLowerCase() : "business"} customer with TapCard installed, scans your QR code…` },
+    { run: () => setBView("received"), step: 1, text: "Your whole business, in their pocket|Alex sees your card at once, with your links ready to tap: call, directions, menu, booking, reviews. Alex chooses Save & send my card." },
+    { run: () => setBView("saved"), step: 1, text: "A handshake, not a handout|Alex's own card is sent back to you, so you each have the other's details." },
+    { run: () => setBView("follow"), step: 1, text: "They opt in. You stay in control.|Alex is asked once: do you want offers and news from this business? You can't send anyone offers unless they say yes." },
+    { run: () => { setBView("contacts"); setAView("saved"); }, step: 1, text: "A customer you can reach directly|Alex now follows you. Your phone shows the new follower. Next: send them an offer." },
   ], () => setCompleted((c) => Math.max(c, 1)));
 
   const sendOffer = () => {
     setTypedOffer(""); setPin("");
     const typing: Scene[] = offer.split("").map((_, i) => ({ run: () => setTypedOffer(offer.slice(0, i + 1)) }));
     void runScenes([
-      { run: () => setAView("offerForm"), step: 2, text: `You write the offer (for a ${kind ? kind.toLowerCase() : "business"}, something like this), choose how long it lasts and set a PIN for your staff. It takes seconds.`, hold: 2500 },
+      { run: () => setAView("offerForm"), step: 2, text: `Write it in seconds|You write the offer (for a ${kind ? kind.toLowerCase() : "business"}, something like this), choose how long it lasts and set a PIN for your staff.`, hold: 2500 },
       ...typing,
       { run: () => setPin("4321"), hold: 900 },
-      { run: () => setAView("offerLive"), step: 2, text: "One tap posts it. Everyone who follows you is notified. Only people who said yes." },
-      { run: () => setBView("push"), settle: 1500, step: 2, text: "Alex's phone buzzes with your offer, even with TapCard closed." },
-      { run: () => setBView("offer"), step: 2, text: "Alex opens it and can claim a one-off code. Next: see it being used." },
+      { run: () => setAView("offerLive"), step: 2, text: "One tap. Everyone who follows you hears about it.|Only people who said yes, so it is never spam." },
+      { run: () => setBView("push"), settle: 1500, step: 2, text: "It lands on their lock screen|Alex's phone buzzes with your offer, even with TapCard closed." },
+      { run: () => setBView("offer"), step: 2, text: "Straight to someone who already likes you|Alex opens it and can claim a one-off code. Next: watch it being used." },
     ], () => setCompleted((c) => Math.max(c, 2)));
   };
 
   const useOffer = () => runScenes([
-    { run: () => setBView("offer"), step: 3, text: "Alex taps Claim this offer…", hold: 3500 },
-    { run: () => setBView("claimed"), step: 3, text: "…and gets their own one-off QR code to show in your shop." },
-    { run: () => { setAView("staff"); setPin(""); }, step: 3, text: "Your staff scan it. The screen checks the offer is valid and asks for your PIN.", hold: 5000 },
+    { run: () => setBView("offer"), step: 3, text: "One tap to claim|Alex taps Claim this offer…", hold: 3500 },
+    { run: () => setBView("claimed"), step: 3, text: "Their own one-off code|…and gets a QR code to show in your shop." },
+    { run: () => { setAView("staff"); setPin(""); }, step: 3, text: "Your staff check it in seconds|They scan it. The screen checks the offer is valid and asks for your PIN.", hold: 5000 },
     { run: () => setPin("4"), hold: 450 }, { run: () => setPin("43"), hold: 450 }, { run: () => setPin("432"), hold: 450 }, { run: () => setPin("4321"), hold: 900 },
-    { run: () => { setAView("used"); setBView("used"); }, step: 3, text: "A big tick for your staff, and Alex's phone shows the offer as used. It can't be used twice." },
-    { run: () => setAView("offerLive"), step: 3, text: "That's the whole journey. Press Set up again to try your own business." },
+    { run: () => { setAView("used"); setBView("used"); }, step: 3, text: "Used once. Never twice.|A big tick for your staff, and Alex's phone shows the offer as used." },
+    { run: () => setAView("offerLive"), step: 3, text: "That's the loop|Scan, follow, offer, visit. Next: see what it adds up to." },
   ], () => setCompleted((c) => Math.max(c, 3)));
+
+  const results = () => runScenes([
+    { run: () => { setBView("idle"); setAView("sign"); }, step: 4, text: "Your shop window becomes a sign-up form|Print a TapCard sign from the app for your window or till. Every scan is a customer who can follow you." },
+    { run: () => setAView("stats"), settle: 2200, step: 4, text: "See exactly what is working|Card views, QR scans, saves, followers and offers used, counted for you. These are example numbers; yours fill in as customers use your card." },
+    { run: () => setAView("cta"), step: 4, text: "Your turn|Scan to start your own card, built from your website. Free to install and to build." },
+  ], () => setCompleted((c) => Math.max(c, 4)));
 
   const showPhoneA = () => {
     if (!built && stage < 1) {
@@ -476,6 +517,54 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
               <p className="mt-3 text-sm font-semibold">Scan to get my card and offers</p>
               <p className="mt-2 text-xs leading-snug text-white/80">Customers scan this from your phone, or from a printed TapCard sign in your shop window or on your reception desk.</p>
               <p className="mt-2 text-xs leading-snug text-white/80">They need TapCard on their phone (it&apos;s free). Scanning is instant: your card and offers land straight in their app.</p>
+            </div>
+          </div>
+        );
+      case "sign":
+        return (
+          <div>
+            <AppBar title="Print a sign" />
+            <div className="px-4 pt-3">
+              <div className="rounded-2xl bg-white p-4 text-center text-[#111318] shadow-xl [animation:fadein_0.5s_ease]">
+                <p className="text-[11px] font-bold uppercase tracking-widest">Scan to follow</p>
+                <p className="mt-1 text-2xl font-black leading-tight">{name}</p>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {cardQr ? <img src={cardQr} alt="" className="mx-auto mt-3 h-40 w-40" /> : null}
+                <p className="mt-2 text-sm font-bold">Offers and news on your phone</p>
+                <p className="text-[10px]">TapCard is free to install</p>
+              </div>
+              <p className="mt-3 text-center text-xs text-white">Window, till or reception desk. Print it from the app.</p>
+            </div>
+          </div>
+        );
+      case "stats":
+        return (
+          <div>
+            <AppBar title="Your numbers" />
+            <div className="px-3 pt-3">
+              <p className="text-center text-[10px] font-semibold uppercase tracking-wider text-amber-300">Example numbers</p>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <CountUp to={1248} label="Card views" />
+                <CountUp to={412} label="QR scans" />
+                <CountUp to={187} label="Saved cards" />
+                <CountUp to={142} label="Followers" />
+                <CountUp to={63} label="Offers claimed" />
+                <CountUp to={41} label="Offers used" />
+              </div>
+              <p className="mt-3 text-center text-xs text-white">Yours fill in as customers use your card.</p>
+            </div>
+          </div>
+        );
+      case "cta":
+        return (
+          <div>
+            <AppBar title="Your turn" />
+            <div className="px-4 pt-3 text-center">
+              <p className="text-2xl font-black [animation:fadein_0.5s_ease]">Ready to try it?</p>
+              <p className="mt-1 text-sm text-white">Scan to start your own card, built from your website.</p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {cardQr ? <img src={cardQr} alt="" className="mx-auto mt-3 h-40 w-40 rounded-2xl bg-white p-2" /> : null}
+              <p className="mt-3 text-xs leading-snug text-white">{PROMOTE_NOTE}</p>
             </div>
           </div>
         );
@@ -647,6 +736,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
     1: "Share my card: your customer scans your QR code, saves your card, and says yes to hearing about your offers.",
     2: `Send an offer: you type an offer (for example "${suggestions[0]}"), press post, and the customer's phone gets a notification.`,
     3: "Use the offer: the customer claims a one-off QR code, your staff scan it and enter the PIN, and it's marked as used.",
+    4: "See the results: a printed window sign, your numbers counting up, and how to start your own.",
     0: "New business: clears this page so you can build a different card.",
   };
   const bind = (n: number) => ({
@@ -661,8 +751,8 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
 
   // The one button that starts each story, then becomes Next (grey, then green when the screen is ready).
   const storyButton = (base: string) => {
-            const labels = ["1. Share my card", "2. Send an offer", "3. Use the offer"];
-            const plays = [share, sendOffer, useOffer];
+            const labels = ["1. Share my card", "2. Send an offer", "3. Use the offer", "4. See the results"];
+            const plays = [share, sendOffer, useOffer, results];
             if (running) {
               return (
                 <button type="button" onClick={() => { skipRef.current = true; }} disabled={!ready}
@@ -671,7 +761,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
                 </button>
               );
             }
-            if (completed >= 3) {
+            if (completed >= 4) {
               return <button type="button" onClick={resetStory} {...bind(0)} className={`${base} btn-gold`}>↻ Watch again</button>;
             }
             return <button type="button" onClick={plays[completed]} {...bind(completed + 1)} className={`${base} btn-gold`}>▶ {labels[completed]}</button>;
@@ -683,7 +773,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
         <button type="button" onClick={() => setCaptionShown(false)} aria-label="Hide the step text"
           className="absolute inset-x-2 top-2 z-30 rounded-2xl bg-black/85 p-3 text-left text-sm font-semibold leading-snug text-white shadow-xl ring-1 ring-white/20 [animation:fadein_0.3s_ease]">
           <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-gold text-xs font-black text-[#111318]">{caption.step || "\u2713"}</span>
-          {caption.text}
+          <span className="block"><CaptionText text={caption.text} /></span>
         </button>
       ) : null}
       {panelOpen ? (
@@ -709,8 +799,8 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
             <button type="button" disabled={running} onClick={() => { resetStory(); setPanelOpen(false); }} className="font-semibold text-gold underline disabled:opacity-40">Start again</button>
-            {[1, 2, 3].map((n) => (completed >= n ? (
-              <button key={n} type="button" disabled={running} onClick={() => { setPanelOpen(false); [share, sendOffer, useOffer][n - 1](); }} className="font-semibold text-gold underline disabled:opacity-40">Replay {n}</button>
+            {[1, 2, 3, 4].map((n) => (completed >= n ? (
+              <button key={n} type="button" disabled={running} onClick={() => { setPanelOpen(false); [share, sendOffer, useOffer, results][n - 1](); }} className="font-semibold text-gold underline disabled:opacity-40">Replay {n}</button>
             ) : null))}
             <button type="button" onClick={() => window.location.reload()} className="font-semibold text-gold underline">New business</button>
           </div>
@@ -730,11 +820,11 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
     <div>
       {showControls && !present && <div className={`mx-auto mb-4 max-w-2xl rounded-2xl bg-charcoal px-4 py-3 text-left shadow-lg ring-2 ring-gold/60 ${fill ? "sticky top-0 z-30" : ""}`} aria-live="polite">
         {/* On a laptop the height is fixed so the controls below never move; on a phone the box grows to fit the whole sentence instead of cutting it off. */}
-        <div className="flex min-h-[4.5rem] items-start gap-3 sm:h-[5.4rem] sm:overflow-hidden">
+        <div className="flex min-h-[4.5rem] items-start gap-3 sm:h-[8.25rem] sm:overflow-hidden">
           {shownText ? (
             <>
               <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-gold text-lg font-black text-[#111318]">{shownText.step || "✓"}</span>
-              <p className="text-base font-semibold leading-snug text-white sm:text-lg">{shownText.text}</p>
+              <p className="text-base font-semibold leading-snug text-white sm:text-lg"><CaptionText text={shownText.text} /></p>
             </>
           ) : (
             <p className="text-lg font-semibold leading-snug text-white">Fill in the form and we&apos;ll build your card from your website. Then one button plays what happens when a customer scans it and when you send an offer.</p>
@@ -752,8 +842,8 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
           <span className="min-w-[6.5rem]">{running && scene ? `Scene ${scene.i} of ${scene.n}` : ""}</span>
           <span className="ml-auto flex items-center gap-3">
             <button type="button" disabled={running} onClick={resetStory} className="font-semibold text-gold underline disabled:opacity-40">Start again</button>
-            {[1, 2, 3].map((n) => (completed >= n ? (
-              <button key={n} type="button" disabled={running} onClick={[share, sendOffer, useOffer][n - 1]} {...bind(n)} className="font-semibold text-gold underline disabled:opacity-40">Replay {n}</button>
+            {[1, 2, 3, 4].map((n) => (completed >= n ? (
+              <button key={n} type="button" disabled={running} onClick={[share, sendOffer, useOffer, results][n - 1]} {...bind(n)} className="font-semibold text-gold underline disabled:opacity-40">Replay {n}</button>
             ) : null))}
             <button type="button" onClick={() => window.location.reload()} {...bind(0)} className="font-semibold text-gold underline">New business</button>
           </span>
