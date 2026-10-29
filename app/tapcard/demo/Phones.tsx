@@ -28,12 +28,12 @@ function TabBar({ active }: { active: "cards" | "contacts" }) {
   );
 }
 
-export function Phone({ label, children, overlay, tab, large, fill }: { label: string; children: React.ReactNode; overlay?: React.ReactNode; tab?: "cards" | "contacts"; large?: boolean; fill?: boolean }) {
+export function Phone({ label, children, overlay, tab, large, fill, short }: { label: string; children: React.ReactNode; overlay?: React.ReactNode; tab?: "cards" | "contacts"; large?: boolean; fill?: boolean; short?: boolean }) {
   // Full screen: no phone frame or caption, just the app screen using the whole display.
   if (fill) {
     return (
       <div className="mx-auto w-full max-w-[30rem]">
-        <div className="relative h-[calc(var(--vh,100dvh)-4.75rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] min-h-[20rem] overflow-hidden rounded-2xl bg-[#111318] text-white ring-1 ring-white/15">
+        <div className={`relative ${short ? "h-[calc(var(--vh,100dvh)-19rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] min-h-[16rem]" : "h-[calc(var(--vh,100dvh)-4.75rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] min-h-[20rem]"} overflow-hidden rounded-2xl bg-[#111318] text-white ring-1 ring-white/15`}>
           <div className={`h-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${tab ? "pb-20" : ""}`}>{children}</div>
           {tab ? <TabBar active={tab} /> : null}
           {overlay}
@@ -313,6 +313,11 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
   const openB = (r: Row) => setBrowseB(r);
   const [aView, setAView] = useState<AView>("card");
   const [bView, setBView] = useState<BView>("idle");
+  // Full screen on a phone shows one phone at a time: whichever the story is working on (the owner's or the customer's).
+  const [focus, setFocus] = useState<"owner" | "customer">("owner");
+  useEffect(() => { if (aView !== "card") setFocus("owner"); }, [aView]);
+  useEffect(() => { if (bView !== "idle") setFocus("customer"); }, [bView]);
+  const follow = fill && view === "both";
   const [completed, setCompleted] = useState(0); // stories finished: 1 share, 2 offer, 3 use
   const revealed = built ? Math.min(3, completed + 1) : 0; // the furthest story that can be played now
   const [running, setRunning] = useState(false);
@@ -349,7 +354,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
   function resetStory() {
     runRef.current += 1;
     setRunning(false); setReady(false); setScene(null); setCaption(null); setHint(null);
-    setAView("card"); setBView("idle"); setBrowseA(null); setBrowseB(null);
+    setAView("card"); setBView("idle"); setBrowseA(null); setBrowseB(null); setFocus("owner");
     setCompleted(0); setTypedOffer(""); setPin("");
   }
 
@@ -623,7 +628,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
 
   return (
     <div>
-      {showControls && <div className="mx-auto mb-4 max-w-2xl rounded-2xl bg-charcoal px-4 py-3 text-left shadow-lg ring-2 ring-gold/60" aria-live="polite">
+      {showControls && <div className={`mx-auto mb-4 max-w-2xl rounded-2xl bg-charcoal px-4 py-3 text-left shadow-lg ring-2 ring-gold/60 ${fill ? "sticky top-0 z-30" : ""}`} aria-live="polite">
         {/* On a laptop the height is fixed so the controls below never move; on a phone the box grows to fit the whole sentence instead of cutting it off. */}
         <div className="flex min-h-[4.5rem] items-start gap-3 sm:h-[5.4rem] sm:overflow-hidden">
           {shownText ? (
@@ -669,17 +674,25 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
             <button type="button" onClick={() => window.location.reload()} {...bind(0)} className="font-semibold text-gold underline">New business</button>
           </span>
         </div>
+        {follow ? (
+          <div className="mt-2 flex gap-2" role="tablist" aria-label="Which phone to show">
+            {([["owner", "Owner's phone"], ["customer", "Customer's phone"]] as const).map(([id, label]) => (
+              <button key={id} type="button" role="tab" aria-selected={focus === id} onClick={() => setFocus(id)}
+                className={`flex-1 rounded-lg px-2 py-1.5 text-sm font-semibold ${focus === id ? "bg-white text-[#111318]" : "bg-white/10 text-white"}`}>{label}</button>
+            ))}
+          </div>
+        ) : null}
         {/* One line, reserved so nothing shifts. The input offers this business type's ideas when clicked. */}
         <div className={`mt-2 flex items-center gap-2 ${built ? "" : "invisible"}`}>
           <label htmlFor="offer-text" className="text-sm font-semibold text-white">Offer:</label>
-          <input id="offer-text" list="offer-ideas" value={offer} maxLength={60} disabled={running} onChange={(e) => setOffer(e.target.value)}
+          <input id="offer-text" list="offer-ideas" value={offer} maxLength={60} disabled={running && completed >= 1} onChange={(e) => setOffer(e.target.value)}
             className="min-w-0 flex-1 rounded-xl bg-white px-3 py-1.5 text-sm text-[#111318] disabled:opacity-50" />
           <datalist id="offer-ideas">{suggestions.map((o) => <option key={o} value={o} />)}</datalist>
         </div>
       </div>}
       <div className={`flex flex-wrap justify-center gap-6 ${fill ? "w-full" : ""}`}>
-        <div className={`${view === "customer" ? "hidden" : ""} ${fill ? "w-full min-w-0" : ""}`}><Phone fill={fill} label="Your business" tab={built && ["card", "saved", "offerLive"].includes(aView) ? "cards" : undefined} overlay={browseA ? <InPhoneBrowser row={browseA} name={name} website={website} onClose={() => setBrowseA(null)} /> : null}>{showPhoneA()}</Phone></div>
-        <div className={`${view === "owner" ? "hidden" : ""} ${fill ? "w-full min-w-0" : ""}`}><Phone fill={fill} label="Alex Morgan, a customer" tab={bView === "contacts" ? "contacts" : undefined} overlay={browseB ? <InPhoneBrowser row={browseB} name={name} website={website} onClose={() => setBrowseB(null)} /> : null}>{showPhoneB()}</Phone></div>
+        <div className={`${view === "customer" || (follow && focus === "customer") ? "hidden" : ""} ${fill ? "w-full min-w-0" : ""}`}><Phone fill={fill} short={follow} label="Your business" tab={built && ["card", "saved", "offerLive"].includes(aView) ? "cards" : undefined} overlay={browseA ? <InPhoneBrowser row={browseA} name={name} website={website} onClose={() => setBrowseA(null)} /> : null}>{showPhoneA()}</Phone></div>
+        <div className={`${view === "owner" || (follow && focus === "owner") ? "hidden" : ""} ${fill ? "w-full min-w-0" : ""}`}><Phone fill={fill} short={follow} label="Alex Morgan, a customer" tab={bView === "contacts" ? "contacts" : undefined} overlay={browseB ? <InPhoneBrowser row={browseB} name={name} website={website} onClose={() => setBrowseB(null)} /> : null}>{showPhoneB()}</Phone></div>
       </div>
       <style>{`
         @keyframes scan { 0% { top: 8px; } 50% { top: calc(100% - 10px); } 100% { top: 8px; } }
