@@ -28,7 +28,7 @@ function TabBar({ active }: { active: "cards" | "contacts" }) {
   );
 }
 
-export function Phone({ label, children, overlay, tab, large, fill, short }: { label: string; children: React.ReactNode; overlay?: React.ReactNode; tab?: "cards" | "contacts"; large?: boolean; fill?: boolean; short?: boolean }) {
+export function Phone({ label, children, overlay, tab, large, fill, short, hud }: { label: string; children: React.ReactNode; overlay?: React.ReactNode; tab?: "cards" | "contacts"; large?: boolean; fill?: boolean; short?: boolean; hud?: React.ReactNode }) {
   // Full screen: no phone frame or caption, just the app screen using the whole display.
   if (fill) {
     return (
@@ -37,6 +37,7 @@ export function Phone({ label, children, overlay, tab, large, fill, short }: { l
           <div className={`h-full overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${tab ? "pb-20" : ""}`}>{children}</div>
           {tab ? <TabBar active={tab} /> : null}
           {overlay}
+          {hud}
         </div>
       </div>
     );
@@ -319,6 +320,25 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
   useEffect(() => { if (bView !== "idle") setFocus("customer"); }, [bView]);
   // On a phone-sized screen the demo shows one phone at a time and switches to whichever the story is working on; wider screens show both.
   const follow = view === "both";
+  // Presentation mode, for a phone-sized screen in full screen: the phone fills the screen, the step text shows for a few seconds and then hides,
+  // and only a Next button floats over the screen. A gear opens the full controls (offer wording, start again, auto-play).
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const f = () => setNarrow(mq.matches);
+    f();
+    mq.addEventListener("change", f);
+    return () => mq.removeEventListener("change", f);
+  }, []);
+  const present = fill && follow && narrow;
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [captionShown, setCaptionShown] = useState(true);
+  useEffect(() => {
+    if (!caption) return;
+    setCaptionShown(true);
+    const t = setTimeout(() => setCaptionShown(false), Math.max(3500, caption.text.length * 55));
+    return () => clearTimeout(t);
+  }, [caption]);
   const [completed, setCompleted] = useState(0); // stories finished: 1 share, 2 offer, 3 use
   const revealed = built ? Math.min(3, completed + 1) : 0; // the furthest story that can be played now
   const [running, setRunning] = useState(false);
@@ -627,9 +647,46 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
     ? { step: 0, text: "Your card is built. Press the gold button to see how people get it. Then press the same button each time it turns green. Tap anything on the phones to try the links." }
     : null);
 
+  // The one button that starts each story, then becomes Next (grey, then green when the screen is ready).
+  const storyButton = (base: string) => {
+            const labels = ["1. Share my card", "2. Send an offer", "3. Use the offer"];
+            const plays = [share, sendOffer, useOffer];
+            if (running) {
+              return (
+                <button type="button" onClick={() => { skipRef.current = true; }} disabled={!ready}
+                  className={`${base} ${ready ? "animate-pulse bg-green-500 text-white ring-4 ring-green-300" : "bg-white/10 text-white/40"}`}>
+                  Next ›
+                </button>
+              );
+            }
+            if (completed >= 3) {
+              return <button type="button" onClick={resetStory} {...bind(0)} className={`${base} btn-gold`}>↻ Watch again</button>;
+            }
+            return <button type="button" onClick={plays[completed]} {...bind(completed + 1)} className={`${base} btn-gold`}>▶ {labels[completed]}</button>;
+  };
+
+  const hud = present && built ? (
+    <>
+      {caption && captionShown ? (
+        <button type="button" onClick={() => setCaptionShown(false)} aria-label="Hide the step text"
+          className="absolute inset-x-2 top-2 z-30 rounded-2xl bg-black/85 p-3 text-left text-sm font-semibold leading-snug text-white shadow-xl ring-1 ring-white/20 [animation:fadein_0.3s_ease]">
+          <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-gold text-xs font-black text-[#111318]">{caption.step || "\u2713"}</span>
+          {caption.text}
+        </button>
+      ) : null}
+      <div className="pointer-events-none absolute inset-x-0 bottom-[5rem] z-30 flex items-center justify-center gap-3 px-3">
+        <button type="button" onClick={() => setCaptionShown((v) => !v)} disabled={!caption} aria-label="Show the step text"
+          className="pointer-events-auto flex h-11 w-11 flex-none items-center justify-center rounded-full bg-black/75 text-lg font-bold text-white shadow-xl ring-1 ring-white/20 disabled:opacity-30">i</button>
+        <div className="pointer-events-auto min-w-0 flex-1 max-w-[15rem]">{storyButton("h-12 w-full rounded-full text-base font-bold shadow-xl transition")}</div>
+        <button type="button" onClick={() => setPanelOpen((v) => !v)} aria-label="Controls" aria-expanded={panelOpen}
+          className="pointer-events-auto flex h-11 w-11 flex-none items-center justify-center rounded-full bg-black/75 text-lg text-white shadow-xl ring-1 ring-white/20">{"\u2699"}</button>
+      </div>
+    </>
+  ) : null;
+
   return (
     <div>
-      {showControls && <div className={`mx-auto mb-4 max-w-2xl rounded-2xl bg-charcoal px-4 py-3 text-left shadow-lg ring-2 ring-gold/60 ${fill ? "sticky top-0 z-30" : ""}`} aria-live="polite">
+      {showControls && (!present || panelOpen) && <div className={`mx-auto mb-4 max-w-2xl rounded-2xl bg-charcoal px-4 py-3 text-left shadow-lg ring-2 ring-gold/60 ${fill ? "sticky top-0 z-30" : ""}`} aria-live="polite">
         {/* On a laptop the height is fixed so the controls below never move; on a phone the box grows to fit the whole sentence instead of cutting it off. */}
         <div className="flex min-h-[4.5rem] items-start gap-3 sm:h-[5.4rem] sm:overflow-hidden">
           {shownText ? (
@@ -643,23 +700,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
         </div>
         {/* One button in one fixed place: it starts each story, then becomes Next (grey, then green when the screen is ready). */}
         <div className={`mt-2 ${built ? "" : "invisible"}`}>
-          {(() => {
-            const labels = ["1. Share my card", "2. Send an offer", "3. Use the offer"];
-            const plays = [share, sendOffer, useOffer];
-            const base = "h-12 w-full rounded-xl text-lg font-bold transition";
-            if (running) {
-              return (
-                <button type="button" onClick={() => { skipRef.current = true; }} disabled={!ready}
-                  className={`${base} ${ready ? "animate-pulse bg-green-500 text-white ring-4 ring-green-300" : "bg-white/10 text-white/40"}`}>
-                  Next ›
-                </button>
-              );
-            }
-            if (completed >= 3) {
-              return <button type="button" onClick={resetStory} {...bind(0)} className={`${base} btn-gold`}>↻ Watch again</button>;
-            }
-            return <button type="button" onClick={plays[completed]} {...bind(completed + 1)} className={`${base} btn-gold`}>▶ {labels[completed]}</button>;
-          })()}
+          {storyButton("h-12 w-full rounded-xl text-lg font-bold transition")}
         </div>
         <div className={`mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-white/90 ${built ? "" : "invisible"}`}>
           <label className="flex cursor-pointer items-center gap-2">
@@ -692,8 +733,8 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
         </div>
       </div>}
       <div className={`flex flex-wrap justify-center gap-6 ${fill ? "w-full" : ""}`}>
-        <div className={`${view === "customer" ? "hidden" : follow && focus === "customer" ? (fill ? "hidden lg:block" : "hidden sm:block") : ""} ${fill ? "w-full min-w-0" : ""}`}><Phone fill={fill} short={fill && follow} label="Your business" tab={built && ["card", "saved", "offerLive"].includes(aView) ? "cards" : undefined} overlay={browseA ? <InPhoneBrowser row={browseA} name={name} website={website} onClose={() => setBrowseA(null)} /> : null}>{showPhoneA()}</Phone></div>
-        <div className={`${view === "owner" ? "hidden" : follow && focus === "owner" ? (fill ? "hidden lg:block" : "hidden sm:block") : ""} ${fill ? "w-full min-w-0" : ""}`}><Phone fill={fill} short={fill && follow} label="Alex Morgan, a customer" tab={bView === "contacts" ? "contacts" : undefined} overlay={browseB ? <InPhoneBrowser row={browseB} name={name} website={website} onClose={() => setBrowseB(null)} /> : null}>{showPhoneB()}</Phone></div>
+        <div className={`${view === "customer" ? "hidden" : follow && focus === "customer" ? (fill ? "hidden lg:block" : "hidden sm:block") : ""} ${fill ? "w-full min-w-0" : ""}`}><Phone fill={fill} short={fill && follow && !present} hud={hud} label="Your business" tab={built && ["card", "saved", "offerLive"].includes(aView) ? "cards" : undefined} overlay={browseA ? <InPhoneBrowser row={browseA} name={name} website={website} onClose={() => setBrowseA(null)} /> : null}>{showPhoneA()}</Phone></div>
+        <div className={`${view === "owner" ? "hidden" : follow && focus === "owner" ? (fill ? "hidden lg:block" : "hidden sm:block") : ""} ${fill ? "w-full min-w-0" : ""}`}><Phone fill={fill} short={fill && follow && !present} hud={hud} label="Alex Morgan, a customer" tab={bView === "contacts" ? "contacts" : undefined} overlay={browseB ? <InPhoneBrowser row={browseB} name={name} website={website} onClose={() => setBrowseB(null)} /> : null}>{showPhoneB()}</Phone></div>
       </div>
       <style>{`
         @keyframes scan { 0% { top: 8px; } 50% { top: calc(100% - 10px); } 100% { top: 8px; } }
