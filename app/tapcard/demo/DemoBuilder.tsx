@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import ContactIcon, { type ContactIconName } from "../ContactIcon";
 import Phones from "./Phones";
 import { DEMO_KINDS } from "./demoOffers";
+import { PROMOTE_NOTE, PROMOTE_NOTE_TITLE } from "../promoteNote";
 
 interface Link { kind: string; label: string; value: string }
 export interface Card {
@@ -310,6 +311,10 @@ export default function DemoBuilder() {
               <li>Tap the link, then install TapCard (free).</li>
               <li>Open TapCard. Your card is there, ready to check and share.</li>
             </ol>
+            <div className="mt-5 rounded-xl bg-white/10 p-4 text-cloud">
+              <p className="font-semibold">{PROMOTE_NOTE_TITLE}</p>
+              <p className="mt-1">{PROMOTE_NOTE}</p>
+            </div>
             <button onClick={() => { setPhase("form"); setCard(null); setStage(0); }} className="mt-5 text-gold underline">Try another business</button>
           </div>
         )}

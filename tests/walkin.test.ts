@@ -34,6 +34,7 @@ test("a built walk-in card's start link can be emailed to the prospect, and only
   assert.equal(ctx.outbox[0].to, "owner@salonrose.example");
   assert.ok(ctx.outbox[0].html.includes(`https://tapcard.aiert.co.uk/start/${token}`), "the email carries the start link");
   assert.ok(ctx.outbox[0].subject.includes("Salon Rose"));
+  assert.ok(ctx.outbox[0].html.includes("3 months free") && ctx.outbox[0].text.includes("£49.99 a year"), "the email says what costs money");
 });
 
 test("the MapKit JS token is signed for the admin's own origin and only for the admin", async () => {

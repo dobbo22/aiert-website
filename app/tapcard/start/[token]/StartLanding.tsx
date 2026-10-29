@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { PROMOTE_NOTE, PROMOTE_NOTE_TITLE } from "../../promoteNote";
 
 const report = (token: string, event: "opened" | "store", platform = "") => {
   try {
@@ -26,6 +27,10 @@ export default function StartLanding({ token, appStoreHref, playStoreHref, isDes
           <li>2. Open TapCard. Your card is already built, made from your own website. On iPhone, tap <strong>Allow Paste</strong> if it asks.</li>
           <li className="text-white/60">If it doesn&apos;t appear, come back to the email and tap the link again.</li>
         </ol>
+        <div className="mt-5 rounded-xl bg-white/10 p-3 text-left text-sm text-white">
+          <p className="font-semibold">{PROMOTE_NOTE_TITLE}</p>
+          <p className="mt-1">{PROMOTE_NOTE}</p>
+        </div>
         <div className="mt-6 flex flex-col items-center gap-3">
           <a href={appStoreHref} onClick={() => { copyLink(); if (valid) report(token, "store", "ios"); }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}

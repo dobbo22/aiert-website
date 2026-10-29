@@ -5,6 +5,7 @@ import QRCode from "qrcode";
 import Phones from "@/app/tapcard/demo/Phones";
 import { rowsFor, type Card } from "@/app/tapcard/demo/DemoBuilder";
 import { DEMO_KINDS } from "@/app/tapcard/demo/demoOffers";
+import { PROMOTE_NOTE, PROMOTE_NOTE_TITLE } from "@/app/tapcard/promoteNote";
 
 interface Hit { id: string; name: string; address: string; type: string; lat?: number; lng?: number; website?: string; phone?: string }
 interface Built { card: Card; token: string; link: string; brandColor: string | null; rating: { rating: number; count: number } | null }
@@ -198,6 +199,10 @@ export default function WalkIn() {
                 <img src={qr} alt="QR code that starts this business's TapCard" className="mt-4 aspect-square w-full max-w-[30rem] rounded-xl bg-white" />
               ) : <p className="mt-4 text-cloud">Making the QR code…</p>}
               <p className="mt-2 text-sm text-cloud">Screen brightness up, about 20 to 30 cm away. The link works for 30 days and can be opened more than once.</p>
+              <div className="mt-4 rounded-xl bg-white/10 p-3 text-cloud">
+                <p className="font-semibold">{PROMOTE_NOTE_TITLE}</p>
+                <p className="mt-1 text-sm">{PROMOTE_NOTE}</p>
+              </div>
               <form onSubmit={sendEmail} className="mt-5">
                 <label htmlFor="we" className="block text-sm font-semibold text-cloud">Or email them the link</label>
                 <div className="mt-1 flex gap-2">
