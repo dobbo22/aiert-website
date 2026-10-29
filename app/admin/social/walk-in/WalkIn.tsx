@@ -155,7 +155,7 @@ export default function WalkIn() {
               {full && <p className="mb-3 text-center text-sm text-cloud">Swipe left or right to switch between the owner and the customer.</p>}
               <Phones
                 name={built.card.name} website={built.card.website} kind={kind} built stage={4} typed={built.card.name}
-                rows={rows.filter((r) => !r.social)} socials={rows.filter((r) => r.social)} buildSpinner={false} idleText="" view={tab} fill={full}
+                rows={rows.filter((r) => !r.social)} socials={rows.filter((r) => r.social)} buildSpinner={false} idleText="" view={tab} fill={full} customerStartsWithCard
               />
             </div>
           </div>

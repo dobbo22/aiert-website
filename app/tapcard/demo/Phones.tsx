@@ -228,12 +228,14 @@ function Tick({ label, sub }: { label: string; sub?: string }) {
   );
 }
 
-export default function Phones({ name, website, kind, built, stage, typed, rows, socials, buildSpinner, idleText, view = "both", fill = false }: {
+export default function Phones({ name, website, kind, built, stage, typed, rows, socials, buildSpinner, idleText, view = "both", fill = false, customerStartsWithCard = false }: {
   name: string; website: string; kind: string; built: boolean; stage: number; typed: string; rows: Row[]; socials: Row[]; buildSpinner: boolean; idleText: string;
   /** Which phone to show: both, or only the owner's or the customer's (the story still plays across both). */
   view?: "both" | "owner" | "customer";
   /** Fill a phone-sized screen (the full-screen view) instead of the small desktop mock-ups. */
   fill?: boolean;
+  /** The customer's phone starts on the business's card, every button live, instead of an empty "No cards yet" screen. */
+  customerStartsWithCard?: boolean;
 }) {
   const domain = domainOf(website);
   const [caption, setCaption] = useState<{ step: number; text: string } | null>(null);
@@ -520,6 +522,9 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
       case "used":
         return <Tick label="Offer used" sub="Enjoy!" />;
       default:
+        if (customerStartsWithCard && built) {
+          return received(<p className="px-4 pt-2 text-center text-xs text-white/70">What a customer sees after scanning the QR code. Tap Call, Find us, the website or any link.</p>);
+        }
         return (
           <div className="flex min-h-[30rem] flex-col items-center justify-center px-6 text-center">
             <p className="text-xs uppercase tracking-wider text-white/60">Alex Morgan&apos;s phone</p>
