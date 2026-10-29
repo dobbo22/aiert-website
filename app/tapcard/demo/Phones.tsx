@@ -607,12 +607,12 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
   return (
     <div>
       {showControls && <div className="mx-auto mb-4 max-w-2xl rounded-2xl bg-charcoal px-4 py-3 text-left shadow-lg ring-2 ring-gold/60" aria-live="polite">
-        {/* Fixed height so the controls below never move, whatever the text length. */}
-        <div className="flex h-[5.4rem] items-start gap-3 overflow-hidden">
+        {/* On a laptop the height is fixed so the controls below never move; on a phone the box grows to fit the whole sentence instead of cutting it off. */}
+        <div className="flex min-h-[4.5rem] items-start gap-3 sm:h-[5.4rem] sm:overflow-hidden">
           {shownText ? (
             <>
               <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-gold text-lg font-black text-[#111318]">{shownText.step || "✓"}</span>
-              <p className="text-lg font-semibold leading-snug text-white">{shownText.text}</p>
+              <p className="text-base font-semibold leading-snug text-white sm:text-lg">{shownText.text}</p>
             </>
           ) : (
             <p className="text-lg font-semibold leading-snug text-white">Fill in the form and we&apos;ll build your card from your website. Then one button plays what happens when a customer scans it and when you send an offer.</p>
