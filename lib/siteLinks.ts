@@ -164,12 +164,21 @@ export function textPlace(html: string): HoursPlace | null {
   if (hIdx >= 0) {
     for (let k = hIdx + 1; k < Math.min(lines.length, hIdx + 12); k++) {
       if (DAY_WORDS.test(lines[k]) && TIME.test(lines[k]) && lines[k].length < 90) hoursLines.push(tidyHoursLine(lines[k]));
+      else if (DAY_WORDS.test(lines[k]) && /\bclosed\b/i.test(lines[k]) && lines[k].length < 90) continue; // a closed day is left out
       else if (hoursLines.length) break;
     }
   } else {
     // No "Opening hours" heading: a single line like "Monday-Friday: 8am-5pm, Saturday 8am-4.30pm".
     anchorIdx = lines.findIndex((l) => l.length < 110 && DAY_WORDS.test(l) && TIME.test(l) && !/delivery|collection|turnaround|pick ?up/i.test(l));
-    if (anchorIdx >= 0) hoursLines.push(tidyHoursLine(lines[anchorIdx]));
+    if (anchorIdx >= 0) {
+      // A week set out one day (or run of days) per line: take the whole run of lines, not just the first. A day that is closed has no times, so
+      // it is left out (the apps read a missing day as closed).
+      const dayLine = (l: string) => l.length < 90 && DAY_WORDS.test(l) && (TIME.test(l) || /\bclosed\b/i.test(l));
+      let start = anchorIdx, end = anchorIdx;
+      while (start > 0 && dayLine(lines[start - 1])) start--;
+      while (end + 1 < lines.length && dayLine(lines[end + 1])) end++;
+      for (let k = start; k <= end; k++) if (TIME.test(lines[k])) hoursLines.push(tidyHoursLine(lines[k]));
+    }
   }
   if (!hoursLines.length) return null;
   const hIdxUsed = anchorIdx;

@@ -7,6 +7,7 @@ import { probePlate } from "@/lib/logoBackdrop";
 import ContactIcon from "../ContactIcon";
 import type { Row } from "./DemoBuilder";
 import { offersFor } from "./demoOffers";
+import { parseHours, todayLine, weekText } from "./openingHours";
 
 // Two phones: the business (left) and Alex Morgan, an anonymous customer (right). The screens scroll inside a fixed-size
 // phone. After the card is built, buttons play the story: share the card, send an offer, use the offer.
@@ -86,6 +87,8 @@ export function CardFace({ name, kind, typed, stage, rows, socials, interactive,
   };
   const [logoFailed, setLogoFailed] = useState(false);
   const [iconFailed, setIconFailed] = useState(false);
+  // The opening-hours row shows today's hours and opens to the whole week when tapped, as in the apps.
+  const [hoursOpen, setHoursOpen] = useState(false);
   const [logoLoadedState, setLogoLoaded] = useState(false);
   // A stored company logo is the picture: no round avatar or shop icon beside it.
   const logoLoaded = logoLoadedState || (!!logoSrc && !logoFailed);
@@ -129,6 +132,20 @@ export function CardFace({ name, kind, typed, stage, rows, socials, interactive,
       {rating ? <p className="mt-2 text-sm font-semibold"><span className="text-amber-300">★</span> {rating.rating.toFixed(1)} <span className="font-normal text-white/70">({rating.count}) on Google</span></p> : null}
       <ul className="mt-4 space-y-2 text-left">
         {rows.map((r) => {
+          const week = r.id === "link:hours" ? parseHours(r.detail) : null;
+          if (week) {
+            return (
+              <li key={r.key}>
+                <button type="button" onClick={() => setHoursOpen((o) => !o)} aria-expanded={hoursOpen} className="flex w-full items-center gap-3 rounded-xl bg-white/10 px-3 py-2 text-left transition hover:bg-white/20 [animation:fadein_0.5s_ease]">
+                  <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full" style={{ background: r.color }}><ContactIcon name={r.icon} /></span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold">{r.title}</span>
+                    <span className="block whitespace-pre-line text-xs text-white/70">{hoursOpen ? weekText(week) : `${todayLine(week)}  \u25BE`}</span>
+                  </span>
+                </button>
+              </li>
+            );
+          }
           const inner = (
             <>
               <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full" style={{ background: r.color }}><ContactIcon name={r.icon} /></span>

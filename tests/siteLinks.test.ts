@@ -45,3 +45,14 @@ test("the site's own delivery page gives this branch's ordering link", async () 
   assert.equal(bestOrderLink([cands[0]], "Anything"), cands[0].url, "one link on the page is taken");
   assert.equal(bestOrderLink([], "Anything"), null);
 });
+
+test("a week set out one day per line gives every open day, and leaves a closed day out", async () => {
+  const { findSiteLinks } = await import("../lib/siteLinks");
+  const html = `<html><body><p>14 Formosa St, London W9 1EE</p>
+    <div>Monday: Closed</div><div>Tuesday to Thursday: 1pm – 3:30pm, 5pm – 10pm</div>
+    <div>Friday and Saturday: 1pm – 3:30pm, 5pm – 10:30pm</div><div>Sunday: 1pm – 3:30pm, 5pm – 10pm</div></body></html>`;
+  const r = await findSiteLinks("https://hours.example", "14 Formosa St, London W9 1EE", "Hours Place", { html, url: "https://hours.example/" });
+  const hours = r.links.find((l) => l.kind === "hours")?.value ?? "";
+  assert.match(hours, /^Tue to Thu: 1pm.3:30pm, 5pm.10pm; Fri and Sat: 1pm.3:30pm, 5pm.10:30pm; Sun: 1pm.3:30pm, 5pm.10pm$/);
+  assert.ok(!/mon/i.test(hours), "a closed day is not listed");
+});
