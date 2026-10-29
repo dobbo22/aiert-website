@@ -317,7 +317,8 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
   const [focus, setFocus] = useState<"owner" | "customer">("owner");
   useEffect(() => { if (aView !== "card") setFocus("owner"); }, [aView]);
   useEffect(() => { if (bView !== "idle") setFocus("customer"); }, [bView]);
-  const follow = fill && view === "both";
+  // On a phone-sized screen the demo shows one phone at a time and switches to whichever the story is working on; wider screens show both.
+  const follow = view === "both";
   const [completed, setCompleted] = useState(0); // stories finished: 1 share, 2 offer, 3 use
   const revealed = built ? Math.min(3, completed + 1) : 0; // the furthest story that can be played now
   const [running, setRunning] = useState(false);
@@ -675,7 +676,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
           </span>
         </div>
         {follow ? (
-          <div className="mt-2 flex gap-2" role="tablist" aria-label="Which phone to show">
+          <div className={`mt-2 flex gap-2 ${fill ? "lg:hidden" : "sm:hidden"}`} role="tablist" aria-label="Which phone to show">
             {([["owner", "Owner's phone"], ["customer", "Customer's phone"]] as const).map(([id, label]) => (
               <button key={id} type="button" role="tab" aria-selected={focus === id} onClick={() => setFocus(id)}
                 className={`flex-1 rounded-lg px-2 py-1.5 text-sm font-semibold ${focus === id ? "bg-white text-[#111318]" : "bg-white/10 text-white"}`}>{label}</button>
@@ -691,8 +692,8 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
         </div>
       </div>}
       <div className={`flex flex-wrap justify-center gap-6 ${fill ? "w-full" : ""}`}>
-        <div className={`${view === "customer" || (follow && focus === "customer") ? "hidden" : ""} ${fill ? "w-full min-w-0" : ""}`}><Phone fill={fill} short={follow} label="Your business" tab={built && ["card", "saved", "offerLive"].includes(aView) ? "cards" : undefined} overlay={browseA ? <InPhoneBrowser row={browseA} name={name} website={website} onClose={() => setBrowseA(null)} /> : null}>{showPhoneA()}</Phone></div>
-        <div className={`${view === "owner" || (follow && focus === "owner") ? "hidden" : ""} ${fill ? "w-full min-w-0" : ""}`}><Phone fill={fill} short={follow} label="Alex Morgan, a customer" tab={bView === "contacts" ? "contacts" : undefined} overlay={browseB ? <InPhoneBrowser row={browseB} name={name} website={website} onClose={() => setBrowseB(null)} /> : null}>{showPhoneB()}</Phone></div>
+        <div className={`${view === "customer" ? "hidden" : follow && focus === "customer" ? (fill ? "hidden lg:block" : "hidden sm:block") : ""} ${fill ? "w-full min-w-0" : ""}`}><Phone fill={fill} short={fill && follow} label="Your business" tab={built && ["card", "saved", "offerLive"].includes(aView) ? "cards" : undefined} overlay={browseA ? <InPhoneBrowser row={browseA} name={name} website={website} onClose={() => setBrowseA(null)} /> : null}>{showPhoneA()}</Phone></div>
+        <div className={`${view === "owner" ? "hidden" : follow && focus === "owner" ? (fill ? "hidden lg:block" : "hidden sm:block") : ""} ${fill ? "w-full min-w-0" : ""}`}><Phone fill={fill} short={fill && follow} label="Alex Morgan, a customer" tab={bView === "contacts" ? "contacts" : undefined} overlay={browseB ? <InPhoneBrowser row={browseB} name={name} website={website} onClose={() => setBrowseB(null)} /> : null}>{showPhoneB()}</Phone></div>
       </div>
       <style>{`
         @keyframes scan { 0% { top: 8px; } 50% { top: calc(100% - 10px); } 100% { top: 8px; } }
