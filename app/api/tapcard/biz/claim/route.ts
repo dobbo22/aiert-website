@@ -43,6 +43,14 @@ export async function POST(req: NextRequest) {
       editToken: newToken,
     });
   }
+  // A shop's card is made once. A second link for the same shop (an admin pressed Create link twice, or sent it to two people) must not
+  // make a stray duplicate card; the admin hands the existing card over instead. Checked before the invite is spent.
+  if (invite.l) {
+    const shop = await getLocation(invite.l);
+    if (shop && shop.org_id === org.id && shop.claimed_card_id) {
+      return NextResponse.json({ error: "This shop's card has already been made. Look in My Cards, or ask your admin for a hand-over link if you are taking it over." }, { status: 409 });
+    }
+  }
   // Checked before spending, so a full plan doesn't burn the invite.
   if (org.seat_limit > 0 && (await countOrgCards(org.id)) >= org.seat_limit) {
     return NextResponse.json({ error: "your company has used all its TapCard seats — ask your admin" }, { status: 402 });

@@ -88,6 +88,7 @@ test("a business signs up, goes through every tab, and finds nothing broken", as
 
   // 7. The manager gets the link and makes the card
   const inv = await json(await locs.POST(req("/api/tapcard/biz/locations", { body: { invite: { locationId: added.location.id, name: "Mia", email: "mia@journeycafe.example" } } })));
+  const inv2 = await json(await locs.POST(req("/api/tapcard/biz/locations", { body: { invite: { locationId: added.location.id, name: "Mia again", email: "mia@journeycafe.example" } } })));
   const claim = await import("../app/api/tapcard/biz/claim/route");
   // (the claim comes from the phone: no admin cookie)
   const claimRes = await claim.POST(req("/api/biz/claim", { body: { token: inv.link.split("#")[1] } }));
@@ -107,6 +108,11 @@ test("a business signs up, goes through every tab, and finds nothing broken", as
   assert.match(locPage2, /Card made/);
   const qr2 = await show(() => Promise.resolve({ default: qrPage.default as never }), { searchParams: Promise.resolve({ shop: added.location.id }) });
   assert.ok(!/>Sample</.test(qr2), "the card exists, so the sign is the real one");
+
+  // 8a. The second ordinary link made for the same shop before it was claimed makes no second card
+  const dupRes = await claim.POST(req("/api/biz/claim", { body: { token: inv2.link.split("#")[1] } }));
+  assert.equal(dupRes.status, 409);
+  assert.equal(((await sql`SELECT COUNT(*)::int AS n FROM tapcard_cards WHERE org_id = ${orgId}`)[0] as { n: number }).n, 1, "no stray duplicate card");
 
   // 8b. Hand-over: a link for a shop that already has its card moves the same card to the manager, with a new edit token
   const before = (await sql`SELECT id, edit_token_hash FROM tapcard_cards WHERE org_id = ${orgId} AND card_kind = 'business'`)[0] as { id: string; edit_token_hash: string };
