@@ -76,6 +76,8 @@ export function CardFace({ name, kind, typed, stage, rows, socials, interactive,
   // A tap opens inside the phone; a modified click (new tab) still goes to the real page.
   const tap = (r: Row) => (e: React.MouseEvent) => {
     if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+    // Directions go straight to the map (Apple Maps on an Apple device): there is nothing to preview, and the phone's own Maps app does the rest.
+    if (r.id === "address") return;
     e.preventDefault();
     onOpen(r);
   };
