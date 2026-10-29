@@ -8,6 +8,7 @@ import sql from "@/lib/db";
 import { verifyAppleJwsRaw } from "@/lib/tapcardFounders";
 import { getOrg, isOrgActive } from "@/lib/tapcardBiz";
 import { activeGrant } from "@/lib/tapcardGrants";
+import { businessDomain } from "@/lib/tapcardDomain";
 
 const BUNDLE_ID = "com.mailbroom.tapcard";
 export const PROMOTE_IOS_IDS = [
@@ -155,9 +156,52 @@ export class PromoteLimitError extends Error {
 }
 const MOVE_COOLDOWN_DAYS = 30;
 
+/// The 3-month free trial belongs to an Apple ID (or Google account), not to a business, so a business could otherwise start a new trial
+/// with each new account. It is therefore remembered per business: by the domain it verified, and by its website's domain. A trial that
+/// arrives for a business that already had one on a DIFFERENT subscription is refused; the same subscription renewing is fine, and a paid
+/// (non-trial) purchase is never affected.
+export class TrialUsedError extends Error {
+  constructor() {
+    super("This business has already had its 3 months free, on another Apple ID or Google account, so the free trial can't be used again. Promote starts when your first payment is taken, or you can sign in with the account you first used.");
+  }
+}
+
+let trialReady: Promise<unknown> | null = null;
+function ensureTrialSchema(): Promise<unknown> {
+  if (!trialReady) {
+    trialReady = sql`
+      CREATE TABLE IF NOT EXISTS tapcard_promote_trials (
+        business_key TEXT PRIMARY KEY,
+        original_id TEXT NOT NULL,
+        card_id TEXT NOT NULL,
+        platform TEXT NOT NULL,
+        started_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )
+    `
+      // The verified domain column is made by the verification code the first time it runs; the trial check must not depend on that having happened.
+      .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS verified_domain TEXT NOT NULL DEFAULT ''`)
+      .catch((err) => { trialReady = null; throw err; });
+  }
+  return trialReady;
+}
+
+async function claimTrial(cardId: string, v: Verified): Promise<void> {
+  await ensureTrialSchema();
+  const row = ((await sql`SELECT website, verified_domain FROM tapcard_cards WHERE id = ${cardId}`) as { website: string; verified_domain: string }[])[0];
+  const keys = [...new Set([row?.verified_domain ?? "", businessDomain(row?.website ?? "")].filter(Boolean))];
+  // A business with no domain of its own can only be held to its own card.
+  if (!keys.length) keys.push(`card:${cardId}`);
+  const seen = (await sql`SELECT business_key, original_id FROM tapcard_promote_trials WHERE business_key = ANY(${keys})`) as { business_key: string; original_id: string }[];
+  if (seen.some((s) => s.original_id !== v.originalId)) throw new TrialUsedError();
+  for (const k of keys) {
+    await sql`INSERT INTO tapcard_promote_trials (business_key, original_id, card_id, platform) VALUES (${k}, ${v.originalId}, ${cardId}, ${v.platform}) ON CONFLICT (business_key) DO NOTHING`;
+  }
+}
+
 /// Stores what the store confirmed for this card, keeping the later of the two end dates.
 export async function saveVerified(cardId: string, v: Verified, opts: { move?: boolean } = {}): Promise<PromoteStatus> {
   await ensureSchema();
+  if (v.trial) await claimTrial(cardId, v);
   if (v.originalId) {
     const others = (await sql`
       SELECT card_id, updated_at FROM tapcard_promote

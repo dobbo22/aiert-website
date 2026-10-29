@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCard } from "@/lib/tapcardDb";
 import { postTargetsFor } from "@/lib/tapcardBiz";
 import { canEdit, readEditToken } from "@/lib/tapcardAuth";
-import { PromoteLimitError, promoteStatus, saveVerified, verifyAndroid, verifyIos } from "@/lib/tapcardPromote";
+import { PromoteLimitError, TrialUsedError, promoteStatus, saveVerified, verifyAndroid, verifyIos } from "@/lib/tapcardPromote";
 
 // The business proves its Promote subscription for this card. POST { platform: "ios", jws } (the signed
 // transaction) or { platform: "android", purchaseToken }, with the card's edit token. GET returns the status.
@@ -24,6 +24,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const verified = body?.platform === "android" ? await verifyAndroid(String(body.purchaseToken ?? "")) : await verifyIos(String(body?.jws ?? ""));
     return NextResponse.json(await saveVerified(id, verified, { move: body?.move === true }));
   } catch (err) {
+    if (err instanceof TrialUsedError) return NextResponse.json({ error: err.message, code: "trial_used" }, { status: 409 });
     if (err instanceof PromoteLimitError) return NextResponse.json({ error: err.message, code: "on_another_card", canMove: err.canMove, limit: err.limit }, { status: 409 });
     return NextResponse.json({ error: err instanceof Error ? err.message : "Couldn't verify the subscription" }, { status: 400 });
   }
