@@ -59,7 +59,7 @@ function domainOf(website: string): string {
   try { return new URL(/^https?:\/\//i.test(website) ? website : `https://${website}`).hostname.replace(/^www\./, ""); } catch { return ""; }
 }
 
-export function CardFace({ name, kind, typed, stage, rows, socials, interactive, domain, onOpen, logoSrc, noFavicon, brandColor, rating }: {
+export function CardFace({ name, kind, typed, stage, rows, socials, interactive, domain, onOpen, logoSrc, noFavicon, brandColor, rating, qr }: {
   name: string; kind: string; typed: string; stage: number; rows: Row[]; socials: Row[]; interactive: boolean; domain: string; onOpen: (r: Row) => void;
   /** The logo already stored for the company: used in place of looking it up on the website again. */
   logoSrc?: string | null;
@@ -69,6 +69,8 @@ export function CardFace({ name, kind, typed, stage, rows, socials, interactive,
   brandColor?: string | null;
   /** Its Google rating, shown under the name as in the apps. */
   rating?: { rating: number; count: number } | null;
+  /** A QR code (image address) shown under the links, as on the app's card: "Scan to get my card". */
+  qr?: string | null;
 }) {
   // A tap opens inside the phone; a modified click (new tab) still goes to the real page.
   const tap = (r: Row) => (e: React.MouseEvent) => {
@@ -145,6 +147,14 @@ export function CardFace({ name, kind, typed, stage, rows, socials, interactive,
               </a>
             ))}
           </div>
+        </div>
+      ) : null}
+      {qr ? (
+        <div className="mt-5 flex flex-col items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={qr} alt="QR code of the card" className="h-36 w-36 rounded-xl bg-white p-2" />
+          <p className="mt-2 text-xs font-semibold">Scan to get my card</p>
+          <p className="text-[10px] text-white/60">TapCard from AIERT</p>
         </div>
       ) : null}
       </div>
@@ -251,7 +261,7 @@ function Tick({ label, sub }: { label: string; sub?: string }) {
   );
 }
 
-export default function Phones({ name, website, kind, built, stage, typed, rows, socials, buildSpinner, idleText, view = "both", fill = false, customerStartsWithCard = false, showControls = true, brandColor = null, rating = null }: {
+export default function Phones({ name, website, kind, built, stage, typed, rows, socials, buildSpinner, idleText, view = "both", fill = false, customerStartsWithCard = false, showControls = true, brandColor = null, rating = null, showQr = false, qrLink = "https://tapcard.aiert.co.uk/demo" }: {
   name: string; website: string; kind: string; built: boolean; stage: number; typed: string; rows: Row[]; socials: Row[]; buildSpinner: boolean; idleText: string;
   /** Which phone to show: both, or only the owner's or the customer's (the story still plays across both). */
   view?: "both" | "owner" | "customer";
@@ -263,6 +273,9 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
   showControls?: boolean;
   brandColor?: string | null;
   rating?: { rating: number; count: number } | null;
+  /** Show the card's QR code under its links on the owner's phone, pointing at qrLink. */
+  showQr?: boolean;
+  qrLink?: string;
 }) {
   const domain = domainOf(website);
   const [caption, setCaption] = useState<{ step: number; text: string } | null>(null);
@@ -286,9 +299,10 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
   const [cardQr, setCardQr] = useState("");
 
   useEffect(() => {
-    void QRCode.toDataURL("https://tapcard.aiert.co.uk/demo", { margin: 1, width: 200, color: { dark: "#111318", light: "#ffffff" } }).then(setCardQr);
+    void QRCode.toDataURL(qrLink, { margin: 1, width: 200, color: { dark: "#111318", light: "#ffffff" } }).then(setCardQr);
     void QRCode.toDataURL(`https://tapcard.aiert.co.uk/o/${code}`, { margin: 1, width: 200, color: { dark: "#111318", light: "#ffffff" } }).then(setCodeQr);
-  }, [code]);
+  }, [code, qrLink]);
+  const ownerQr = showQr ? cardQr : null;
 
   // A story is a list of scenes. By default it is a click-through: each scene with text settles for a moment, then Next lights
   // up (green) and waits to be pressed. With Auto-play on, the scene instead moves on by itself after enough time to read it
@@ -406,7 +420,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
             <AppBar title={name} buttons />
             <Toast><strong>Alex Morgan</strong> saved your card and sent you theirs.</Toast>
             <Toast>1 follower now gets your offers and news.</Toast>
-            <CardFace brandColor={brandColor} rating={rating} name={name} kind={kind} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openA} />
+            <CardFace brandColor={brandColor} rating={rating} name={name} kind={kind} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openA} qr={ownerQr} />
             <CardActions onShare={share} onOffer={sendOffer} offerReady={revealed >= 2} offerLive={false} disabled={running} />
           </div>
         );
@@ -427,7 +441,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
           <div>
             <AppBar title={name} buttons />
             <Toast><strong>Offer live:</strong> {offer}. 1 follower notified.</Toast>
-            <CardFace brandColor={brandColor} rating={rating} name={name} kind={kind} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openA} />
+            <CardFace brandColor={brandColor} rating={rating} name={name} kind={kind} typed={name} stage={4} rows={rows} socials={socials} interactive domain={domain} onOpen={openA} qr={ownerQr} />
             <CardActions onShare={share} onOffer={sendOffer} offerReady={revealed >= 2} offerLive={true} disabled={running} />
           </div>
         );
@@ -450,7 +464,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
         return (
           <div>
             <AppBar title={name} buttons />
-            <CardFace brandColor={brandColor} rating={rating} name={name} kind={kind} typed={typed} stage={stage} rows={rows} socials={socials} interactive={stage >= 4} domain={domain} onOpen={openA} />
+            <CardFace brandColor={brandColor} rating={rating} name={name} kind={kind} typed={typed} stage={stage} rows={rows} socials={socials} interactive={stage >= 4} domain={domain} onOpen={openA} qr={ownerQr} />
             {built && showControls ? <CardActions onShare={share} onOffer={sendOffer} offerReady={revealed >= 2} offerLive={false} disabled={running} /> : null}
           </div>
         );
