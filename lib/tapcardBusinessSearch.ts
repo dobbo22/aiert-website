@@ -90,14 +90,21 @@ export async function searchBusinesses(queryRaw: string, near?: { lat: number; l
   const cacheKey = `${useFree ? "free|" : ""}${q.toLowerCase()}|${area ? `${area.lat.toFixed(1)},${area.lng.toFixed(1)}` : ""}`;
   const cached = cache.get(cacheKey);
   if (cached && Date.now() - cached.at < 10 * 60_000) return cached.hits;
+  let weakFree: BusinessHit[] = [];
   if (useFree) {
-    let found = await tomtomSearch(q, area);
-    if (!found.length) found = await hereSearch(q, area);
-    if (found.length) {
+    // A free result is only worth showing when it has a website (that is what builds the card). A bare name and address, which is often a
+    // stale or wrong listing, falls through to the next provider and finally to Google; it is shown only if Google has nothing either.
+    const useful = (h: BusinessHit[]) => h.some((x) => x.website);
+    const tt = await tomtomSearch(q, area);
+    let found = tt;
+    if (!useful(found)) { const hr = await hereSearch(q, area); if (useful(hr) || !found.length) found = hr; }
+    if (useful(found)) {
       if (cache.size > 500) cache.clear();
       cache.set(cacheKey, { at: Date.now(), hits: found });
       return found;
     }
+    if (!key) return found;
+    weakFree = found;
   }
   if (!key) return [];
   // A phone past its own 20 a day gets nothing (the apps then use their on-device fallback or typing); cached answers above are free.
@@ -115,13 +122,14 @@ export async function searchBusinesses(queryRaw: string, near?: { lat: number; l
     }),
     signal: AbortSignal.timeout(6000),
   }).catch(() => null);
-  if (!res?.ok) { console.warn(`business-search: Google Places ${res ? res.status : "no response"}`); return []; }
+  if (!res?.ok) { console.warn(`business-search: Google Places ${res ? res.status : "no response"}`); return useFree ? weakFree : []; }
   const j = (await res.json().catch(() => ({}))) as { places?: { id?: string; displayName?: { text?: string }; formattedAddress?: string; websiteUri?: string; internationalPhoneNumber?: string; primaryTypeDisplayName?: { text?: string }; regularOpeningHours?: { periods?: { open?: { day?: number; hour?: number; minute?: number }; close?: { day?: number; hour?: number; minute?: number } }[] } }[] };
   const hits: BusinessHit[] = (j.places ?? []).flatMap((p) => p.id && p.displayName?.text ? [{
     id: p.id, name: p.displayName.text.slice(0, 120), address: (p.formattedAddress ?? "").slice(0, 200),
     website: cleanSite(p.websiteUri ?? "").slice(0, 200), phone: (p.internationalPhoneNumber ?? "").slice(0, 40), type: (p.primaryTypeDisplayName?.text ?? "").slice(0, 60), hours: hoursOf(p.regularOpeningHours?.periods),
   }] : []);
+  const result = hits.length || !useFree ? hits : weakFree;
   if (cache.size > 500) cache.clear();
-  cache.set(cacheKey, { at: Date.now(), hits });
-  return hits;
+  cache.set(cacheKey, { at: Date.now(), hits: result });
+  return result;
 }
