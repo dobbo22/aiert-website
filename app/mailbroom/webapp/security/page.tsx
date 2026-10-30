@@ -21,7 +21,7 @@ const sections = [
     icon: "🔐",
     title: "Customer data access",
     body: "Access to customer data is controlled at the application layer, not left to ambient trust. Every request runs through session-based authentication (Microsoft Entra ID sign-in); within an organisation, access is role-based — only designated admins can manage billing or members. AIERT's own internal staff tools are deliberately need-to-know: staff can see an organisation's plan, seat usage, and aggregate totals, and the contact details of its designated admins — never a full employee roster or individual usage.",
-    link: { href: "/mailbroom/webapp/privacy", label: "See the full Privacy Policy →" },
+    link: { href: "/privacy", label: "See the full Privacy Policy →" },
   },
   {
     icon: "🗝️",
@@ -42,7 +42,7 @@ const sections = [
       "Application code is version-controlled in Git — every deployed version is independently recoverable by commit, with no separate code backup required.",
       "Email content itself is never stored by MailBroom in the first place (see the Privacy Policy), so it isn't part of what's backed up here — the backup covers account, organisation, and usage data, not mailbox content.",
     ],
-    link: { href: "/mailbroom/webapp/privacy", label: "See the full Privacy Policy →" },
+    link: { href: "/privacy", label: "See the full Privacy Policy →" },
   },
   {
     icon: "🔄",

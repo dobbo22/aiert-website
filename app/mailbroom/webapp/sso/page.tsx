@@ -70,7 +70,7 @@ const sections = [
     icon: "🧪",
     title: "Testing before you commit",
     body: "IT Directors evaluating MailBroom for Business can request a free 30-day trial — a time-limited login with full feature access, no card required, no company-wide licence purchase needed to test it against your own tenant.",
-    link: { href: "/mailbroom/webapp/trial", label: "Request a trial →" },
+    link: { href: "/trial", label: "Request a trial →" },
   },
   {
     icon: "🚦",

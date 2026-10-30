@@ -51,7 +51,7 @@ const topics = [
     icon: "🔐",
     title: "Security & privacy",
     body: "Sign-in goes through Microsoft Entra ID — MailBroom never sees or stores your password, only a scoped Graph access token. Email content is fetched live to power these features and is never stored in our database.",
-    link: { href: "/mailbroom/webapp/privacy", label: "Read the full Privacy Policy →" },
+    link: { href: "/privacy", label: "Read the full Privacy Policy →" },
   },
 ];
 

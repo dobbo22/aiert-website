@@ -143,16 +143,29 @@ const nextConfig: NextConfig = {
         destination: "https://tapcard.aiert.co.uk/",
         permanent: true,
       },
+      // (A bare page and a page with more path are separate rules: ":rest*" with nothing after it would add a trailing slash and a second hop.)
       {
-        source: "/tapcard/:page(promote|how-it-works|societies|demo|business|digital-business-card|guide|support|privacy|blog)/:rest*",
+        source: "/tapcard/:page(promote|how-it-works|societies|demo|business|digital-business-card|guide|support|privacy|blog)",
         has: [{ type: "host", value: AIERT_HOST }],
-        destination: "https://tapcard.aiert.co.uk/:page/:rest*",
+        destination: "https://tapcard.aiert.co.uk/:page",
         permanent: true,
       },
       {
-        source: "/:page(promote|how-it-works|societies|demo|business|digital-business-card|guide|support)/:rest*",
+        source: "/tapcard/:page(promote|how-it-works|societies|demo|business|digital-business-card|guide|support|privacy|blog)/:rest+",
         has: [{ type: "host", value: AIERT_HOST }],
-        destination: "https://tapcard.aiert.co.uk/:page/:rest*",
+        destination: "https://tapcard.aiert.co.uk/:page/:rest+",
+        permanent: true,
+      },
+      {
+        source: "/:page(promote|how-it-works|societies|demo|business|digital-business-card|guide|support)",
+        has: [{ type: "host", value: AIERT_HOST }],
+        destination: "https://tapcard.aiert.co.uk/:page",
+        permanent: true,
+      },
+      {
+        source: "/:page(promote|how-it-works|societies|demo|business|digital-business-card|guide|support)/:rest+",
+        has: [{ type: "host", value: AIERT_HOST }],
+        destination: "https://tapcard.aiert.co.uk/:page/:rest+",
         permanent: true,
       },
       // The blog (previously aiert.co.uk/blog) moved to ios.mailbroom.app —
@@ -189,7 +202,7 @@ const nextConfig: NextConfig = {
         // 404s. This silently broke the Trial Request form's submit
         // (fetch("/api/mailbroom/trial-request")) until caught here.
         {
-          source: "/:path((?!_next/|api/|sitemap\\.xml|robots\\.txt|llms\\.txt|mailbroom-icon\\.png|09d90e3ec75e4e3c93a57c014df8764a\\.txt).*)",
+          source: "/:path((?!_next/|api/|sitemap\\.xml|robots\\.txt|llms\\.txt|mailbroom-icon\\.png|mailbroom-smart-delete\\.png|09d90e3ec75e4e3c93a57c014df8764a\\.txt).*)",
           has: [{ type: "host", value: MAILBROOM_APEX_HOST }],
           destination: "/mailbroom/webapp/:path*",
         },

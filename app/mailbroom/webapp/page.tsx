@@ -310,21 +310,21 @@ export default async function MailBroomWebAppPage() {
               icon: "💰",
               title: "Storage costs are rising",
               desc: "Microsoft charges by the gigabyte once a mailbox outgrows its plan — and archive storage past 1.5 TB is billed the same way. Every year of unswept newsletters and old attachments is a recurring line item, not a one-off.",
-              href: "/mailbroom/webapp/storage-costs",
+              href: "/storage-costs",
               linkLabel: "See the real cost of email storage",
             },
             {
               icon: "🎫",
               title: "IT time goes to quota tickets",
               desc: "\"My mailbox is full\" is one of the most common helpdesk tickets in any Microsoft 365 estate — and the fix is almost always the same manual cleanup, repeated per employee, every few months.",
-              href: "/mailbroom/webapp/roi",
+              href: "/roi",
               linkLabel: "See the ROI case",
             },
             {
               icon: "🛡️",
               title: "Compliance can't be an afterthought",
               desc: "Whatever tool clears out a mailbox has to respect the holds and retention policies already in place — not work around them. That has to be true by design, not by policy memo.",
-              href: "/mailbroom/webapp/roi#compliance",
+              href: "/roi#compliance",
               linkLabel: "Read how holds are respected",
             },
           ].map((item) => (
@@ -412,7 +412,7 @@ export default async function MailBroomWebAppPage() {
             <div className="relative">
               <div className="absolute -inset-10 rounded-full blur-3xl opacity-20 bg-cyan-500" />
               <img
-                src="/mailbroom/smart-delete.png"
+                src="/mailbroom-smart-delete.png"
                 alt="MailBroom Smart Sweep — senders ranked by email volume with bulk delete and unsubscribe actions"
                 className="relative rounded-3xl shadow-2xl max-w-xs w-full"
               />
