@@ -107,7 +107,7 @@ export async function tomtomSearch(q: string, near?: Near, limit = 5): Promise<F
     if (!res.ok) return [];
     const j = (await res.json()) as { results?: { id?: string; poi?: { name?: string; phone?: string; url?: string; categories?: string[]; classifications?: { names?: { name?: string }[] }[] }; address?: { freeformAddress?: string; postalCode?: string } }[] };
     return (j.results ?? []).flatMap((r) => r.id && r.poi?.name ? [{
-      id: `tomtom:${r.id}`, name: r.poi.name.slice(0, 120), address: (r.address?.freeformAddress ?? "").slice(0, 200),
+      id: `tomtom:${r.id}`, name: r.poi.name.replace(/[.\s]+$/, "").slice(0, 120), address: (r.address?.freeformAddress ?? "").slice(0, 200),
       website: siteOnly(r.poi.url ?? "").slice(0, 200), phone: sanePhone(r.poi.phone ?? "").slice(0, 40), type: [...new Set([r.poi.classifications?.[0]?.names?.[0]?.name, r.poi.categories?.[0]].filter(Boolean))].join(", ").slice(0, 80), hours: "",
     }] : []);
   } catch {
@@ -125,7 +125,7 @@ export async function hereSearch(q: string, near?: Near, limit = 5): Promise<Fre
     if (!res.ok) return [];
     const j = (await res.json()) as { items?: { id?: string; title?: string; resultType?: string; address?: { label?: string }; categories?: { name?: string }[]; contacts?: { phone?: { value?: string }[]; www?: { value?: string }[] }[]; openingHours?: { text?: string[] }[] }[] };
     return (j.items ?? []).flatMap((i) => i.id && i.title && i.resultType === "place" ? [{
-      id: `here:${i.id}`, name: i.title.slice(0, 120), address: (i.address?.label ?? "").slice(0, 200),
+      id: `here:${i.id}`, name: i.title.replace(/[.\s]+$/, "").slice(0, 120), address: (i.address?.label ?? "").slice(0, 200),
       website: siteOnly(ownSite((i.contacts?.[0]?.www ?? []).map((w) => w.value ?? ""))).slice(0, 200),
       phone: sanePhone((i.contacts?.[0]?.phone ?? []).map((p) => p.value ?? "").find((p) => sanePhone(p)) ?? "").slice(0, 40),
       type: (i.categories ?? []).slice(0, 3).map((c) => c.name ?? "").filter(Boolean).join(", ").slice(0, 80),
