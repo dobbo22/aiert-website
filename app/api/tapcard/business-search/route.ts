@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimited } from "@/lib/rateLimit";
 import { searchBusinesses } from "@/lib/tapcardBusinessSearch";
+import { finderSearch } from "@/lib/finderSearch";
 import { requireBizUser } from "@/lib/tapcardBizSession";
 
 // tapcard.aiert.co.uk/api/business-search?q=maguro+bristol — see lib/tapcardBusinessSearch.ts.
@@ -14,6 +15,12 @@ export async function GET(req: NextRequest) {
   if (!device) {
     const user = await requireBizUser().catch(() => null);
     if (user) device = `biz-${user.orgId}`;
+  }
+  // The restaurant list-finder never uses Google: Apple, TomTom and HERE only (lib/finderSearch.ts).
+  if (req.nextUrl.searchParams.get("src") === "finder") {
+    const q = (req.nextUrl.searchParams.get("q") ?? "").trim().slice(0, 100);
+    const found = q.length >= 3 ? await finderSearch(q, near).catch(() => []) : [];
+    return NextResponse.json({ hits: found }, { headers: { "Cache-Control": "private, max-age=300" } });
   }
   const hits = await searchBusinesses(req.nextUrl.searchParams.get("q") ?? "", near, req.nextUrl.searchParams.get("src") === "finder", device, req.nextUrl.searchParams.get("free") === "1").catch(() => []);
   // Private: the order depends on where the person is.

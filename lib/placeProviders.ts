@@ -98,12 +98,12 @@ export interface FreeBusinessHit { id: string; name: string; address: string; we
 const siteOnly = (u: string) => { try { const x = new URL(cleanUrl(u)); return `${x.protocol}//${x.hostname}${x.pathname === "/" ? "" : x.pathname.replace(/\/$/, "")}`; } catch { return ""; } };
 
 /// TomTom Search: up to five real businesses (not streets or towns) for a typed name and town.
-export async function tomtomSearch(q: string, near?: Near): Promise<FreeBusinessHit[]> {
+export async function tomtomSearch(q: string, near?: Near, limit = 5): Promise<FreeBusinessHit[]> {
   if (!tomtomConfigured()) return [];
   try {
     if (!(await underProviderCap("tomtom"))) return [];
     const loc = near && Number.isFinite(near.lat) && Number.isFinite(near.lng) ? `&lat=${near.lat.toFixed(4)}&lon=${near.lng.toFixed(4)}` : "";
-    const res = await fetch(`https://api.tomtom.com/search/2/search/${encodeURIComponent(q.slice(0, 100))}.json?key=${encodeURIComponent(process.env.TOMTOM_API_KEY!)}&limit=5&countrySet=GB&language=en-GB&typeahead=false&idxSet=POI${loc}`, { signal: AbortSignal.timeout(6000) });
+    const res = await fetch(`https://api.tomtom.com/search/2/search/${encodeURIComponent(q.slice(0, 100))}.json?key=${encodeURIComponent(process.env.TOMTOM_API_KEY!)}&limit=${limit}&countrySet=GB&language=en-GB&typeahead=false&idxSet=POI${loc}`, { signal: AbortSignal.timeout(6000) });
     if (!res.ok) return [];
     const j = (await res.json()) as { results?: { id?: string; poi?: { name?: string; phone?: string; url?: string; categories?: string[] }; address?: { freeformAddress?: string; postalCode?: string } }[] };
     return (j.results ?? []).flatMap((r) => r.id && r.poi?.name ? [{
@@ -116,12 +116,12 @@ export async function tomtomSearch(q: string, near?: Near): Promise<FreeBusiness
 }
 
 /// HERE Discover: up to five real businesses for a typed name and town, with their phone, website and opening hours where listed.
-export async function hereSearch(q: string, near?: Near): Promise<FreeBusinessHit[]> {
+export async function hereSearch(q: string, near?: Near, limit = 5): Promise<FreeBusinessHit[]> {
   if (!hereConfigured()) return [];
   try {
     if (!(await underProviderCap("here"))) return [];
     const pos = near && Number.isFinite(near.lat) && Number.isFinite(near.lng) ? near : { lat: 52.5, lng: -1.5 };
-    const res = await fetch(`https://discover.search.hereapi.com/v1/discover?q=${encodeURIComponent(q.slice(0, 100))}&at=${pos.lat.toFixed(4)},${pos.lng.toFixed(4)}&limit=5&lang=en-GB&in=countryCode:GBR&apiKey=${encodeURIComponent(process.env.HERE_API_KEY!)}`, { signal: AbortSignal.timeout(6000) });
+    const res = await fetch(`https://discover.search.hereapi.com/v1/discover?q=${encodeURIComponent(q.slice(0, 100))}&at=${pos.lat.toFixed(4)},${pos.lng.toFixed(4)}&limit=${limit}&lang=en-GB&in=countryCode:GBR&apiKey=${encodeURIComponent(process.env.HERE_API_KEY!)}`, { signal: AbortSignal.timeout(6000) });
     if (!res.ok) return [];
     const j = (await res.json()) as { items?: { id?: string; title?: string; resultType?: string; address?: { label?: string }; categories?: { name?: string }[]; contacts?: { phone?: { value?: string }[]; www?: { value?: string }[] }[]; openingHours?: { text?: string[] }[] }[] };
     return (j.items ?? []).flatMap((i) => i.id && i.title && i.resultType === "place" ? [{
