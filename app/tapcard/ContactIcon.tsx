@@ -14,7 +14,7 @@ const BRAND_PATHS = {
 } as const;
 
 
-export type ContactIconName = keyof typeof BRAND_PATHS | "linkedin" | "phone" | "mail" | "globe" | "mapPin" | "calendar" | "menu" | "bag" | "clock" | "star" | "link";
+export type ContactIconName = keyof typeof BRAND_PATHS | "linkedin" | "phone" | "mail" | "globe" | "mapPin" | "calendar" | "menu" | "utensils" | "bed" | "bookOpen" | "bag" | "cart" | "clock" | "star" | "link";
 
 export default function ContactIcon({ name, large = false }: { name: ContactIconName; large?: boolean }) {
   const size = large ? "h-7 w-7" : "h-5 w-5";
@@ -54,6 +54,38 @@ export default function ContactIcon({ name, large = false }: { name: ContactIcon
       return (
         <LineIcon size={size}>
           <path d="M3 6h18M3 12h18M3 18h18" />
+        </LineIcon>
+      );
+    case "utensils":
+      return (
+        <LineIcon size={size}>
+          <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
+          <path d="M7 2v20" />
+          <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
+        </LineIcon>
+      );
+    case "bed":
+      return (
+        <LineIcon size={size}>
+          <path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8" />
+          <path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4" />
+          <path d="M12 4v6" />
+          <path d="M2 18h20" />
+        </LineIcon>
+      );
+    case "bookOpen":
+      return (
+        <LineIcon size={size}>
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+        </LineIcon>
+      );
+    case "cart":
+      return (
+        <LineIcon size={size}>
+          <circle cx="8" cy="21" r="1" />
+          <circle cx="19" cy="21" r="1" />
+          <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
         </LineIcon>
       );
     case "bag":

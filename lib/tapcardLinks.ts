@@ -67,12 +67,15 @@ export function isTapLink(link: CardLink): boolean {
   return /^https?:\/\//i.test(link.value) && !TEXT_KINDS.includes(link.kind);
 }
 
-export type LinkIcon = "calendar" | "menu" | "bag" | "clock" | "star" | "link";
+export type LinkIcon = "calendar" | "utensils" | "bed" | "bookOpen" | "bag" | "cart" | "clock" | "star" | "link";
 export function linkIcon(kind: LinkKind): LinkIcon {
   switch (kind) {
-    case "book_table": case "book_room": case "appointment": return "calendar";
-    case "menu": return "menu";
-    case "shop": case "order": return "bag";
+    case "book_table": return "utensils";
+    case "book_room": return "bed";
+    case "appointment": return "calendar";
+    case "menu": return "bookOpen";
+    case "order": return "bag";
+    case "shop": return "cart";
     case "hours": return "clock";
     case "reviews": case "tripadvisor": case "google_review": return "star";
     default: return "link";
