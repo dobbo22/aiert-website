@@ -387,7 +387,10 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
 
   // A page that shows several branches (each section starts with its own address): an ordering, booking or review link belongs to the branch
   // whose address comes just before it. A link in another branch's section is not this one's (Chakra Hayes's Deliveroo is not Little Venice's).
-  const spots = [...html.matchAll(/\b([A-Z]{1,2}\d[A-Z\d]?)\s*(\d[A-Z]{2})\b/gi)].map((m) => ({ at: m.index ?? 0, pc: `${m[1]}${m[2]}`.toUpperCase() }));
+  // Only postcodes in the page's visible text count: scripts, styles and tag attributes (class names, ids) are blanked first, because a site
+  // builder's code is full of strings like "QM39GH" that look like a postcode and made a real booking link seem to belong to another branch.
+  const visible = html.replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, (m) => " ".repeat(m.length)).replace(/<[^>]*>/g, (m) => " ".repeat(m.length));
+  const spots = [...visible.matchAll(/\b([A-Z]{1,2}\d[A-Z\d]?)\s*(\d[A-Z]{2})\b/gi)].map((m) => ({ at: m.index ?? 0, pc: `${m[1]}${m[2]}`.toUpperCase() }));
   const wantPc = postcodeOf(address);
   const manyBranches = !!wantPc && new Set(spots.map((s) => s.pc)).size >= 2 && spots.some((s) => s.pc === wantPc);
   const inOtherBranch = (at: number) => {
@@ -415,7 +418,7 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
     else if (ORDER_HOSTS.test(h)) pick(found, "order", href);
     else if (same) {
       if (/^(book(ing)?s?( a)? ?table|reserve( a table)?|reservations?|book online)$/.test(t) || /\/(reservations?|book-a-table|booking)\/?$/.test(path)) pick(found, "book_table", href);
-      else if (/^(book (a )?room|rooms? (&|and) rates|check availability)$/.test(t)) pick(found, "book_room", href);
+      else if (/^(book (a )?room|rooms? (&|and) rates|check availability|rooms?|bedrooms?|stay( with us)?|our rooms|accommodation)$/.test(t) || /^\/(rooms?|bedrooms?|stay|accommodation|our-rooms)\/?$/.test(path)) pick(found, "book_room", href);
       else if ((t.includes("menu") && t.length <= 30 && !/gift|cookie|privacy|vouchers?/.test(t)) || /^\/(menus?|food-and-drink|our-menu)\/?$/.test(path) || /menu[^/]*\.pdf$/.test(path)) pick(found, "menu", href);
       else if (/^(order( online| now)?|takeaway|click (&|and) collect)$/.test(t) || /\/(order|order-online)\/?$/.test(path)) pick(found, "order", href);
       else if (/^(news|latest news|news (&|and) events|blog|our blog|the blog|what'?s on|events|journal|updates)$/.test(t) || /^\/(news|blog|latest-news|whats-on|events|journal)\/?$/.test(path)) addExtra("Latest news", href);

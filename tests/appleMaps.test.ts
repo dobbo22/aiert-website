@@ -167,6 +167,7 @@ test("a picked shop's details come from TomTom, then HERE, filling in what is mi
 test("Google's review link: found with an ID-only search near Apple's position, else the full search", async () => {
   process.env.GOOGLE_PLACES_API_KEY = "g-key";
   configure();
+  process.env.TAPCARD_GOOGLE_REVIEW_LOOKUP = "1"; // the paid lookup is off by default; this test is about how it works when on
   const { findReviewLinks } = await import("../lib/reviewLookup");
   const googleCalls: { mask: string; body: Record<string, any> }[] = [];
   const go = (apple: unknown[], googleIdOnly: unknown[], googleFull: unknown[]) => {
