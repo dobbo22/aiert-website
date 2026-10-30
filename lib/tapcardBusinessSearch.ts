@@ -95,9 +95,16 @@ export async function searchBusinesses(queryRaw: string, near?: { lat: number; l
     // A free result is only worth showing when it has a website (that is what builds the card). A bare name and address, which is often a
     // stale or wrong listing, falls through to the next provider and finally to Google; it is shown only if Google has nothing either.
     const useful = (h: BusinessHit[]) => h.some((x) => x.website);
-    const tt = await tomtomSearch(q, area);
+    // TomTom and HERE weigh the name over the town ("PizzaExpress Clifton Bristol" gives London branches), so a result only counts when every
+    // typed word that is not in its name (the town) appears in its address.
+    const words = q.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 3);
+    const inTown = (h: BusinessHit) => {
+      const name = h.name.toLowerCase(), addr = h.address.toLowerCase();
+      return words.filter((w) => !name.includes(w)).every((w) => addr.includes(w));
+    };
+    const tt = (await tomtomSearch(q, area)).filter(inTown);
     let found = tt;
-    if (!useful(found)) { const hr = await hereSearch(q, area); if (useful(hr) || !found.length) found = hr; }
+    if (!useful(found)) { const hr = (await hereSearch(q, area)).filter(inTown); if (useful(hr) || !found.length) found = hr; }
     if (useful(found)) {
       if (cache.size > 500) cache.clear();
       cache.set(cacheKey, { at: Date.now(), hits: found });
