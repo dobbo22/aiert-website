@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAdminRequest } from "@/lib/adminRequest";
 import { rateLimited } from "@/lib/rateLimit";
 import { appleSearch } from "@/lib/appleMaps";
-import { searchBusinesses, type BusinessHit } from "@/lib/tapcardBusinessSearch";
+import { finderSearch } from "@/lib/finderSearch";
 import { fillPlaceDetails, type PlaceHit } from "@/lib/placeDetails";
 import { postcodeOf } from "@/lib/siteLinks";
 import { buildPrebuiltCard, getPrebuilt, storePrebuilt } from "@/lib/tapcardPrebuilt";
@@ -30,8 +30,9 @@ export async function GET(req: NextRequest) {
     const hits: PlaceHit[] = apple.map((p) => ({ id: `apple:${p.id}`, name: p.name, address: p.address, website: "", phone: "", type: p.type, hours: "", source: "apple", lat: p.lat, lng: p.lng }));
     return NextResponse.json({ hits });
   }
-  const google = await searchBusinesses(q, near, false, "walkin").catch((): BusinessHit[] => []);
-  return NextResponse.json({ hits: google.map((g): PlaceHit => ({ ...g, source: "google" })) });
+  // Apple found nothing: TomTom and HERE (merged), never Google.
+  const free = await finderSearch(q, near).catch(() => []);
+  return NextResponse.json({ hits: free.map((g): PlaceHit => ({ ...g, source: "tomtom+here" })) });
 }
 
 // POST { name, address, lat?, lng?, website? } builds the card and stores it for the start link.
@@ -46,12 +47,11 @@ export async function POST(req: NextRequest) {
   const spot = Number.isFinite(b?.lat) && Number.isFinite(b?.lng) && b?.lat !== 0 ? { lat: Number(b!.lat), lng: Number(b!.lng) } : null;
   // The place listing first (phone, website, hours), then the website itself for every link: the same as the business admin's builder.
   const given = String(b?.website ?? "").trim().slice(0, 200);
-  const place = await fillPlaceDetails(name, address, spot ?? nearOf(req), "walkin", !!given).catch(() => null);
-  // The website is what the logo, brand colour, links and socials all come from, so it has to be the right one. The apps take it from Google,
-  // which is right far more often than the free listings, so a walk-in does the same (one lookup, for an admin only) and keeps the
-  // free listings as the fallback.
+  const place = await fillPlaceDetails(name, address, spot ?? nearOf(req), "walkin", !!given, false).catch(() => null);
+  // The website is what the logo, brand colour, links and socials all come from, so it has to be the right one. Google is no longer used (it is a
+  // paid call): TomTom and HERE are searched for the same name and address, and the one in the same postcode is taken.
   // The page's own Apple Maps search (MapKit JS, as the iPhone app does) already gives a website when there is one: then no lookup is needed.
-  const found = given ? [] : await searchBusinesses(`${name} ${address}`, spot ?? nearOf(req), true, "walkin").catch((): BusinessHit[] => []);
+  const found = given ? [] : await finderSearch(`${name} ${address}`.trim(), spot ?? nearOf(req)).catch(() => []);
   const pc = postcodeOf(address);
   const google = (pc ? found.find((h) => postcodeOf(h.address) === pc) : undefined) ?? (pc ? undefined : found[0]);
   let website = given || google?.website || place?.hit.website || "";
