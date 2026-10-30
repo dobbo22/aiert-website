@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import SignupForm from "./SignupForm";
-import { LOCATION_TIERS, MAX_LOCATIONS, STAFF_PER_LOCATION, tierLabel } from "@/lib/tapcardBizPricing";
+import JsonLd from "../JsonLd";
+import { LOCATION_TIERS, MAX_LOCATIONS, PRICING_SENTENCE, STAFF_PER_LOCATION, tierLabel } from "@/lib/tapcardBizPricing";
 
 const TITLE = "TapCard for Business";
 const DESCRIPTION =
@@ -35,9 +36,26 @@ const FEATURES = [
   },
 ];
 
+// Each answer repeats what the page says above (prices come from lib/tapcardBizPricing); keep them in step.
+const FAQ = [
+  ["What is TapCard for Business?", "A way to give every employee and every location a digital business card on their phone. Logo, colours, website and social links are set once and locked to your brand, and you add your whole team in one go."],
+  ["How much does TapCard for Business cost?", `${PRICING_SENTENCE} Start with a 30-day free trial.`],
+  ["Does my team need to make an account or pay for the app?", "No. Employees share their card from day one. The personal lifetime-unlock paywall does not apply to company-provisioned cards, and the company pays one subscription."],
+  ["How do I add all my staff at once?", "Choose your staff list (a CSV, or an Outlook, Google or iCloud contacts export) and you get one invite link per person to send from your own email. The list stays on your computer."],
+  ["Can each branch post its own offers and news?", "Yes. Every location card includes TapCard Promote, so each branch can post special offers (each with a one-off QR code) and news to the people who follow it. Head office sees every location's views, scans, saves and offers claimed and used in one place, with a CSV download."],
+  ["I only have one shop. Do I need TapCard for Business?", "No. Business starts at two locations. For one shop or one card, TapCard Promote in the app is £49.99 a year or £9.99 a month, with the first 3 months free."],
+] as const;
+
+const FAQ_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQ.map(([name, text]) => ({ "@type": "Question", name, acceptedAnswer: { "@type": "Answer", text } })),
+};
+
 export default function TapCardBusinessPage() {
   return (
     <main className="min-h-screen px-4 py-12">
+      <JsonLd data={FAQ_JSON_LD} />
       <div className="mx-auto max-w-5xl">
         <header className="flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -105,6 +123,18 @@ export default function TapCardBusinessPage() {
           <p className="mt-4">
             <a href="/promote" className="btn-gold inline-block rounded-xl px-6 py-3 font-semibold">See what you can do with Promote</a>
           </p>
+        </section>
+
+        <section className="mt-12">
+          <h2 className="text-2xl font-black text-cloud">Questions about TapCard for Business</h2>
+          <div className="mt-4 space-y-4">
+            {FAQ.map(([q, a]) => (
+              <div key={q} className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
+                <h3 className="text-lg font-bold text-cloud">{q}</h3>
+                <p className="mt-2 leading-relaxed text-cloud">{a}</p>
+              </div>
+            ))}
+          </div>
         </section>
 
         <footer className="mt-16 border-t border-slate pt-6 text-sm text-cloud">

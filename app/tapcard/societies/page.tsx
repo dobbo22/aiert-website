@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import StoreBadges from "../../StoreBadges";
 import { appStoreUrl, playStoreUrl } from "@/lib/tapcardInvites";
+import JsonLd from "../JsonLd";
 
 const DESCRIPTION =
   "Keep members and supporters in the loop without chasing them: people follow your club, society or charity once, and every news item you post reaches their phone.";
@@ -52,11 +53,28 @@ const STEPS = [
   ["Post when there is something to say", "Open TapCard, tap Promote, write a line. That is the whole job."],
 ];
 
+// Each answer repeats what the page says above; keep them in step.
+const FAQ = [
+  ["How can a club, society or charity use TapCard?", "People follow your group once, and every news item you post reaches their phone. You post one short line from your phone, with an optional Read more link to the full story on your website or newsletter."],
+  ["How much does it cost?", "Free for 3 months, then £49.99 a year or £9.99 a month for one card with TapCard Promote (news, events and stamp cards). Making and sharing the card is free, and people who follow you never pay."],
+  ["Do our members need the TapCard app?", "To receive news and offers as notifications they need the free TapCard app. People without it can still see your card and its latest news on its page."],
+  ["Can we see who follows us?", "No. You see how many people follow you, never who. Followers choose what they hear about and get at most two notifications a week from you."],
+  ["Can we run events, member perks or a stamp card?", "Yes. Offer a first session free, early-bird tickets or a members' discount, each claimed with its own one-off code and checked by a steward with a PIN. Or run a stamp card, such as attend six sessions and get the seventh free."],
+  ["Are posts moderated?", "Posts are checked automatically: no abusive content, no gambling offers and no money-making scams. A raffle or fundraiser is fine, and we may take a look at it. Anyone can report a card, offer or news item from its page."],
+] as const;
+
+const FAQ_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQ.map(([name, text]) => ({ "@type": "Question", name, acceptedAnswer: { "@type": "Answer", text } })),
+};
+
 export default function SocietiesPage() {
   const appStore = appStoreUrl("promote", "web");
   const playStore = playStoreUrl("promote", "web");
   return (
     <main className="pitch min-h-screen px-4 py-12">
+      <JsonLd data={FAQ_JSON_LD} />
       <div className="mx-auto max-w-5xl">
         <Link href="/" className="inline-flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -112,6 +130,18 @@ export default function SocietiesPage() {
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-cloud">
             Followers must have the free TapCard app to receive news and offers. People without it can still see your card and its latest news on its page.
           </p>
+        </section>
+
+        <section className="mt-14">
+          <h2 className="text-2xl font-black text-cloud">Questions about TapCard for groups</h2>
+          <div className="mt-4 space-y-4">
+            {FAQ.map(([q, a]) => (
+              <div key={q} className="card rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
+                <h3 className="text-lg font-bold text-cloud">{q}</h3>
+                <p className="mt-2 leading-relaxed text-cloud">{a}</p>
+              </div>
+            ))}
+          </div>
         </section>
 
         <p className="mt-10 text-center text-sm text-cloud">

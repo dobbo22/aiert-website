@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import StoreBadges from "../../StoreBadges";
 import { appStoreUrl, playStoreUrl } from "@/lib/tapcardInvites";
+import JsonLd from "../JsonLd";
 
 const DESCRIPTION =
   "One-touch marketing for your restaurant, café or shop: post a special offer or a news flash from your phone and the people who follow your card are notified on their phone.";
@@ -48,11 +49,29 @@ const STEPS = [
   ["They claim it, you scan it", "Each person claims their own one-off QR code. Your staff scan it with a phone camera (or type the code on any till), enter the PIN, and it is marked as used. It can never be used twice."],
 ];
 
+// Each answer repeats what the page says above; keep them in step.
+const FAQ = [
+  ["What is TapCard Promote?", "One-touch marketing for a restaurant, café, salon or shop. You post a special offer or a news flash from your phone, and the people who follow your card are notified on their phone."],
+  ["How much does TapCard Promote cost?", "Free for the first 3 months, then £49.99 a year or £9.99 a month. One subscription covers one business card, and you can cancel any time in the App Store or Google Play. The TapCard app is free for your customers."],
+  ["Do my customers need the TapCard app?", "Anyone can scan your QR code, see your card and save you. To follow you and get offers and news as notifications, they need the free TapCard app."],
+  ["How does a customer claim an offer?", "Each person claims their own one-off QR code. Your staff scan it with a phone camera (or type the code on any till), enter the PIN, and it is marked as used. It can never be used twice."],
+  ["Can I run a stamp card?", "Yes. You choose the number of stamps and the reward in your own words. Customers keep the stamp card on their phone, your staff add a stamp with a scan and your PIN, and the card starts again when the reward is given."],
+  ["Will I be able to see who my customers are?", "No. You see numbers only: how many people claimed each offer, how many used it, how many follow you and how often your card is viewed. You never see who anyone is."],
+  ["I have several locations. Which plan do I need?", "TapCard for Business. It is priced per location and billed yearly (£42 a year each for 2 to 4 locations, £34 each for 5 to 19, £27 each from 20), includes up to 10 staff cards per location and includes Promote on every card. One shop or one card? Choose Promote."],
+] as const;
+
+const FAQ_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQ.map(([name, text]) => ({ "@type": "Question", name, acceptedAnswer: { "@type": "Answer", text } })),
+};
+
 export default function PromotePage() {
   const appStore = appStoreUrl("promote", "web");
   const playStore = playStoreUrl("promote", "web");
   return (
     <main className="pitch min-h-screen px-4 py-12">
+      <JsonLd data={FAQ_JSON_LD} />
       <style>{`
         @media print {
           @page { size: A4; margin: 12mm; }
@@ -167,6 +186,18 @@ export default function PromotePage() {
             Not sure which? One shop or one card? Choose Promote. Two or more locations? TapCard for Business works out cheaper per location
             than separate Promote subscriptions, and includes your staff cards.
           </p>
+        </section>
+
+        <section className="mt-14">
+          <h2 className="text-2xl font-black text-cloud">Questions about TapCard Promote</h2>
+          <div className="mt-4 space-y-4">
+            {FAQ.map(([q, a]) => (
+              <div key={q} className="card rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
+                <h3 className="text-lg font-bold text-cloud">{q}</h3>
+                <p className="mt-2 leading-relaxed text-cloud">{a}</p>
+              </div>
+            ))}
+          </div>
         </section>
 
         <section className="mt-12 text-center">
