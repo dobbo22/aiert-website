@@ -117,7 +117,7 @@ export default function TapCardHomePage() {
             <p className="mt-4 text-lg font-semibold text-cloud">Always be prepared. Always current.</p>
 
             <StoreBadges appStoreUrl={APP_STORE_URL} playStoreUrl={PLAY_STORE_URL} className="mt-8" />
-            <p className="mt-4 text-cloud">Run a business? <a href="/demo?utm_source=home" className="font-semibold underline">Build your card in 30 seconds</a>, with nothing to install. Run a club or charity? <a href="/societies" className="font-semibold underline">See TapCard for groups</a>.</p>
+            <p className="mt-4 text-cloud">Run a business? <a href="/demo?utm_source=home" className="font-semibold underline">Build your card in 30 seconds</a>, with nothing to install. Want it for your whole team? <a href="/business" className="font-semibold underline">See TapCard for business</a>. Run a club or charity? <a href="/societies" className="font-semibold underline">See TapCard for groups</a>.</p>
             <p className="mt-3 text-sm text-mist">Free to download. The first 1,000 users on each phone get TapCard free for life.</p>
           </div>
 
@@ -155,7 +155,8 @@ export default function TapCardHomePage() {
           <p>
             TapCard is made by AIERT Ltd, registered in England &amp; Wales, No. 16587000.{" "}
             <a href="/how-it-works" className="text-gold underline">How it works</a> ·{" "}
-            <a href="/promote" className="text-gold underline">For businesses</a> ·{" "}
+            <a href="/business" className="text-gold underline">For businesses</a> ·{" "}
+            <a href="/promote" className="text-gold underline">Promote</a> ·{" "}
             <a href="/support" className="text-gold underline">Support</a> ·{" "}
             <a href="/privacy" className="text-gold underline">Privacy</a> ·{" "}
             <a href="mailto:enquiries@aiert.co.uk" className="text-gold underline">enquiries@aiert.co.uk</a>

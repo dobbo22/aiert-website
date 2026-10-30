@@ -9,6 +9,7 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   title: "TapCard for clubs, societies and charities – AIERT Ltd",
   description: DESCRIPTION,
+  alternates: { canonical: "https://tapcard.aiert.co.uk/societies" },
   openGraph: {
     title: "TapCard for clubs, societies and charities",
     description: DESCRIPTION,
