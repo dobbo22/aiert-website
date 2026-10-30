@@ -105,10 +105,10 @@ export async function tomtomSearch(q: string, near?: Near, limit = 5): Promise<F
     const loc = near && Number.isFinite(near.lat) && Number.isFinite(near.lng) ? `&lat=${near.lat.toFixed(4)}&lon=${near.lng.toFixed(4)}` : "";
     const res = await fetch(`https://api.tomtom.com/search/2/search/${encodeURIComponent(q.slice(0, 100))}.json?key=${encodeURIComponent(process.env.TOMTOM_API_KEY!)}&limit=${limit}&countrySet=GB&language=en-GB&typeahead=false&idxSet=POI${loc}`, { signal: AbortSignal.timeout(6000) });
     if (!res.ok) return [];
-    const j = (await res.json()) as { results?: { id?: string; poi?: { name?: string; phone?: string; url?: string; categories?: string[] }; address?: { freeformAddress?: string; postalCode?: string } }[] };
+    const j = (await res.json()) as { results?: { id?: string; poi?: { name?: string; phone?: string; url?: string; categories?: string[]; classifications?: { names?: { name?: string }[] }[] }; address?: { freeformAddress?: string; postalCode?: string } }[] };
     return (j.results ?? []).flatMap((r) => r.id && r.poi?.name ? [{
       id: `tomtom:${r.id}`, name: r.poi.name.slice(0, 120), address: (r.address?.freeformAddress ?? "").slice(0, 200),
-      website: siteOnly(r.poi.url ?? "").slice(0, 200), phone: sanePhone(r.poi.phone ?? "").slice(0, 40), type: (r.poi.categories?.[0] ?? "").slice(0, 60), hours: "",
+      website: siteOnly(r.poi.url ?? "").slice(0, 200), phone: sanePhone(r.poi.phone ?? "").slice(0, 40), type: [r.poi.classifications?.[0]?.names?.[0]?.name, r.poi.categories?.[0]].filter(Boolean).join(", ").slice(0, 80), hours: "",
     }] : []);
   } catch {
     return [];
@@ -128,7 +128,7 @@ export async function hereSearch(q: string, near?: Near, limit = 5): Promise<Fre
       id: `here:${i.id}`, name: i.title.slice(0, 120), address: (i.address?.label ?? "").slice(0, 200),
       website: siteOnly(ownSite((i.contacts?.[0]?.www ?? []).map((w) => w.value ?? ""))).slice(0, 200),
       phone: sanePhone((i.contacts?.[0]?.phone ?? []).map((p) => p.value ?? "").find((p) => sanePhone(p)) ?? "").slice(0, 40),
-      type: (i.categories?.[0]?.name ?? "").slice(0, 60),
+      type: (i.categories ?? []).slice(0, 3).map((c) => c.name ?? "").filter(Boolean).join(", ").slice(0, 80),
       hours: (i.openingHours?.[0]?.text ?? []).join("; ").replace(/\s*-\s*/g, "–").slice(0, 300),
     }] : []);
   } catch {
@@ -167,6 +167,10 @@ export function tidyFreeHits(hits: FreeBusinessHit[]): FreeBusinessHit[] {
     const key = `${norm2(h.name)}|${pc}`, have = out.get(key);
     if (!have) { out.set(key, h); continue; }
     have.website ||= h.website; have.phone ||= h.phone; have.hours ||= h.hours;
+    // A pub with rooms is listed as a restaurant and a hotel: the merged place keeps both types, so the card can offer food and rooms.
+    const types = have.type.split(", ").filter(Boolean);
+    for (const t of h.type.split(", ").filter(Boolean)) if (!types.includes(t)) types.push(t);
+    have.type = types.join(", ").slice(0, 120);
   }
   return [...out.values()];
 }
