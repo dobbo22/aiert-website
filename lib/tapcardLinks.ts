@@ -82,6 +82,20 @@ export function linkIcon(kind: LinkKind): LinkIcon {
   }
 }
 
+/// The icon tile colour for a link row, so a table, a room, the menu and the hours are told apart at a glance.
+export function linkColor(kind: LinkKind): string {
+  switch (kind) {
+    case "book_table": return "#EA580C";
+    case "book_room": return "#7C3AED";
+    case "appointment": return "#0891B2";
+    case "menu": return "#B45309";
+    case "order": return "#DB2777";
+    case "shop": return "#4F46E5";
+    case "hours": return "#475569";
+    default: return "#0E8C99";
+  }
+}
+
 // "Call me" on a person's card; "Call us" on a business card; "Call to book" when the business has a menu or
 // hours but no online booking, so the phone number is the way to book.
 export function callActionLabel(links: { kind: string }[]): string {

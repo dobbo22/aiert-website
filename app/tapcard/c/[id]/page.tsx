@@ -9,7 +9,7 @@ import { orgLogoUrlForCard } from "@/lib/tapcardBiz";
 import { BannerBrand, BrandProvider, FaviconBadge } from "../../CardBrand";
 import ContactIcon, { type ContactIconName } from "../../ContactIcon";
 import AcceptRecipientForm from "../../AcceptRecipientForm";
-import { callActionLabel, isTapLink, linkIcon, parseStoredLinks } from "@/lib/tapcardLinks";
+import { callActionLabel, isTapLink, linkColor, linkIcon, parseStoredLinks } from "@/lib/tapcardLinks";
 import { placeIdFromLinks, placeRating } from "@/lib/tapcardRating";
 import SaveContactButton from "../../SaveContactButton";
 import CarryCardToInstall from "../../CarryCardToInstall";
@@ -128,7 +128,7 @@ export default async function CardPage({
     value: l.value,
     href: isTapLink(l) ? l.value : "",
     icon: linkIcon(l.kind) as ContactIconName,
-    iconBg: "#0E8C99",
+    iconBg: linkColor(l.kind),
   }));
   const visibleLines = [...contactLines.filter((line) => line.value), ...linkRows];
   // Google's rating for a business found through Google (its review link carries the place id); nothing is stored here.
