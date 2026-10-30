@@ -100,9 +100,14 @@ export async function searchBusinesses(queryRaw: string, near?: { lat: number; l
     // Words that say what kind of business it is ("hotel", "restaurant") are not the town: they may match the listing's type instead, or be ignored.
     const KIND_WORDS = new Set(["hotel", "restaurant", "cafe", "bar", "pub", "shop", "store", "the", "and", "kitchen", "grill", "inn", "bistro", "brasserie", "takeaway"]);
     const words = q.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 3 && !KIND_WORDS.has(w));
+    // A postcode area in the search ("W9", "BS8 4AB") decides it: a neighbourhood name that is not in the address ("Little Venice") must not block a
+    // result whose postcode matches. With no postcode typed, every leftover word has to be in the address.
+    const isPostcodePart = (w: string) => /^[a-z]{1,2}\d[a-z\d]?$/.test(w) || /^\d[a-z]{2}$/.test(w);
     const inTown = (h: BusinessHit) => {
       const name = h.name.toLowerCase(), addr = h.address.toLowerCase();
-      return words.filter((w) => !name.includes(w)).every((w) => addr.includes(w));
+      const left = words.filter((w) => !name.includes(w));
+      const pcLeft = left.filter(isPostcodePart);
+      return (pcLeft.length ? pcLeft : left).every((w) => addr.includes(w));
     };
     const tt = tidyFreeHits((await tomtomSearch(q, area)).filter(inTown));
     let found = tt;

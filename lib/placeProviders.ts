@@ -108,7 +108,7 @@ export async function tomtomSearch(q: string, near?: Near, limit = 5): Promise<F
     const j = (await res.json()) as { results?: { id?: string; poi?: { name?: string; phone?: string; url?: string; categories?: string[]; classifications?: { names?: { name?: string }[] }[] }; address?: { freeformAddress?: string; postalCode?: string } }[] };
     return (j.results ?? []).flatMap((r) => r.id && r.poi?.name ? [{
       id: `tomtom:${r.id}`, name: r.poi.name.slice(0, 120), address: (r.address?.freeformAddress ?? "").slice(0, 200),
-      website: siteOnly(r.poi.url ?? "").slice(0, 200), phone: sanePhone(r.poi.phone ?? "").slice(0, 40), type: [r.poi.classifications?.[0]?.names?.[0]?.name, r.poi.categories?.[0]].filter(Boolean).join(", ").slice(0, 80), hours: "",
+      website: siteOnly(r.poi.url ?? "").slice(0, 200), phone: sanePhone(r.poi.phone ?? "").slice(0, 40), type: [...new Set([r.poi.classifications?.[0]?.names?.[0]?.name, r.poi.categories?.[0]].filter(Boolean))].join(", ").slice(0, 80), hours: "",
     }] : []);
   } catch {
     return [];
