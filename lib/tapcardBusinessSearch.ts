@@ -5,7 +5,7 @@
 import { createHash } from "crypto";
 import sql from "@/lib/db";
 import { formatHours } from "@/lib/siteLinks";
-import { hereDetails, hereSearch, tomtomSearch } from "@/lib/placeProviders";
+import { hereDetails, hereSearch, tidyFreeHits, tomtomSearch } from "@/lib/placeProviders";
 
 // Customers' lookups and the restaurant list-finder (src=finder) have separate daily allowances, so one can't starve the other.
 const DAILY_CAP = 400;
@@ -102,9 +102,9 @@ export async function searchBusinesses(queryRaw: string, near?: { lat: number; l
       const name = h.name.toLowerCase(), addr = h.address.toLowerCase();
       return words.filter((w) => !name.includes(w)).every((w) => addr.includes(w));
     };
-    const tt = (await tomtomSearch(q, area)).filter(inTown);
+    const tt = tidyFreeHits((await tomtomSearch(q, area)).filter(inTown));
     let found = tt;
-    if (!useful(found)) { const hr = (await hereSearch(q, area)).filter(inTown); if (useful(hr) || !found.length) found = hr; }
+    if (!useful(found)) { const hr = tidyFreeHits((await hereSearch(q, area)).filter(inTown)); if (useful(hr) || !found.length) found = hr; }
     if (useful(found)) {
       // TomTom has no opening hours (Google gave them): the first few results still without any get them from HERE, which does.
       await Promise.all(found.filter((h) => !h.hours).slice(0, 3).map(async (h) => {

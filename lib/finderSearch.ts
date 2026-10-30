@@ -1,5 +1,5 @@
 import { appleSearch } from "@/lib/appleMaps";
-import { hereDetails, hereSearch, tomtomDetails, tomtomSearch, type FreeBusinessHit } from "@/lib/placeProviders";
+import { cleanFreeWebsite, hereDetails, hereSearch, tomtomDetails, tomtomSearch, type FreeBusinessHit } from "@/lib/placeProviders";
 import { postcodeOf } from "@/lib/siteLinks";
 
 // The restaurant list-finder's search (src=finder): Apple, TomTom and HERE only, never Google. Each provider is asked, the answers are merged
@@ -15,7 +15,8 @@ const keyOf = (h: FreeBusinessHit) => `${norm(h.name)}|${postcodeOf(h.address) |
 export async function finderSearch(q: string, near?: Near): Promise<FreeBusinessHit[]> {
   const [apple, tomtom, here] = await Promise.all([appleSearch(q, near), tomtomSearch(q, near, 10), hereSearch(q, near, 10)]);
   const merged = new Map<string, FreeBusinessHit>();
-  const add = (h: FreeBusinessHit) => {
+  const add = (h0: FreeBusinessHit) => {
+    const h = { ...h0, website: cleanFreeWebsite(h0.website) };
     const key = keyOf(h), have = merged.get(key);
     if (!have) { merged.set(key, { ...h, id: `place:${key}` }); return; }
     have.website ||= h.website; have.phone ||= h.phone; have.hours ||= h.hours; have.type ||= h.type;

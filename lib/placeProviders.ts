@@ -135,3 +135,38 @@ export async function hereSearch(q: string, near?: Near, limit = 5): Promise<Fre
     return [];
   }
 }
+
+// Booking platforms, delivery apps, directories and social sites: a listing that gives one of these as its "website" has not given its own, and
+// reading it would put the platform's own socials and links on the card. Small businesses' own builder sites (wixsite, business.site) are fine.
+const THIRD_PARTY = /(^|\.)(sevenrooms|opentable|resdiary|bookatable|designmynight|resy|tock|quandoo|thefork|toasttab|squareup|facebook|instagram|tripadvisor|yell|ubereats|deliveroo|just-eat|justeat|linktr\.ee|google|booking|expedia|hotels|airbnb)\.(com|co\.uk|ee|net)$/i;
+// A deep page that is not a branch (/gallery, /menus, /contact) is trimmed to the home page, which is what carries the links, socials and hours.
+// Branch pages such as /kensington stay.
+const GENERIC_PAGE = /^(gallery|menus?|contact(-us)?|about(-us)?|home|index(\.html?)?|bookings?|book(-a-table|-now)?|reservations?|find-us|visit-us|events|whats-on|food|drinks?|rooms|accommodation|photos)$/i;
+
+/// A free listing's website made safe to read: "" for a booking platform or social site, and a generic page trimmed to the home page.
+export function cleanFreeWebsite(raw: string): string {
+  try {
+    const u = new URL(cleanUrl(raw));
+    if (THIRD_PARTY.test(u.hostname)) return "";
+    const parts = u.pathname.split("/").filter(Boolean);
+    if (parts.length === 1 && GENERIC_PAGE.test(parts[0])) return `${u.protocol}//${u.hostname}`;
+    return `${u.protocol}//${u.hostname}${parts.length ? `/${parts.join("/")}` : ""}`;
+  } catch {
+    return "";
+  }
+}
+
+/// The same business listed more than once (TomTom lists a pub and its rooms as two places at one address) becomes one entry: the first
+/// listing's name and order, with whichever website, phone and hours any of them had.
+export function tidyFreeHits(hits: FreeBusinessHit[]): FreeBusinessHit[] {
+  const norm2 = (t: string) => t.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "");
+  const out = new Map<string, FreeBusinessHit>();
+  for (const h0 of hits) {
+    const h = { ...h0, website: cleanFreeWebsite(h0.website) };
+    const pc = postcodeOf(h.address) || norm2(h.address).slice(0, 14);
+    const key = `${norm2(h.name)}|${pc}`, have = out.get(key);
+    if (!have) { out.set(key, h); continue; }
+    have.website ||= h.website; have.phone ||= h.phone; have.hours ||= h.hours;
+  }
+  return [...out.values()];
+}
