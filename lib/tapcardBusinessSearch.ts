@@ -99,10 +99,11 @@ export async function searchBusinesses(queryRaw: string, near?: { lat: number; l
     // typed word that is not in its name (the town) appears in its address.
     // Words that say what kind of business it is ("hotel", "restaurant") are not the town: they may match the listing's type instead, or be ignored.
     const KIND_WORDS = new Set(["hotel", "restaurant", "cafe", "bar", "pub", "shop", "store", "the", "and", "kitchen", "grill", "inn", "bistro", "brasserie", "takeaway"]);
-    const words = q.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 3 && !KIND_WORDS.has(w));
+    const isPostcodePart = (w: string) => /^[a-z]{1,2}\d[a-z\d]?$/.test(w) || /^\d[a-z]{2}$/.test(w);
+    // Two-letter postcode areas ("W9", "N1", "E2") count too: dropping short words let any "Bridge House" in the country through for "Bridge House W9".
+    const words = q.toLowerCase().split(/[^a-z0-9]+/).filter((w) => (w.length >= 3 || isPostcodePart(w)) && !KIND_WORDS.has(w));
     // A postcode area in the search ("W9", "BS8 4AB") decides it: a neighbourhood name that is not in the address ("Little Venice") must not block a
     // result whose postcode matches. With no postcode typed, every leftover word has to be in the address.
-    const isPostcodePart = (w: string) => /^[a-z]{1,2}\d[a-z\d]?$/.test(w) || /^\d[a-z]{2}$/.test(w);
     const inTown = (h: BusinessHit) => {
       const name = h.name.toLowerCase(), addr = h.address.toLowerCase();
       const left = words.filter((w) => !name.includes(w));
