@@ -57,6 +57,15 @@ test("a week set out one day per line gives every open day, and leaves a closed 
   assert.ok(!/mon/i.test(hours), "a closed day is not listed");
 });
 
+test("an OPENING HOURS heading with a day on one line and its times on the next gives the whole week", async () => {
+  const { findSiteLinks } = await import("../lib/siteLinks");
+  const html = `<html><body><p>60 Blomfield Road, London W9 2PB</p><h3>OPENING HOURS</h3>
+    <p>Monday - Friday 12:00 - 23:00</p><p>Saturday</p><p>09:00 - 23:00</p><p>Sunday</p><p>09:00 - 22:30</p></body></html>`;
+  const r = await findSiteLinks("https://summer.example", "60 Blomfield Road, London W9 2PB", "The Summerhouse", { html, url: "https://summer.example/" });
+  const hours = r.links.find((l) => l.kind === "hours")?.value ?? "";
+  assert.match(hours, /^Mon.Fri 12:00.23:00; Sat 09:00.23:00; Sun 09:00.22:30$/);
+});
+
 test("a site that only lists another area is flagged, a site near the address is not", async () => {
   const { findSiteLinks } = await import("../lib/siteLinks");
   const islington = `<html><body><p>Contact Us</p><p>Islington 69 Chapel Market, Angel, London N1 9ER Tel: 020 7713 6555</p></body></html>`;

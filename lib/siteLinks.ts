@@ -154,10 +154,23 @@ function tidyHoursLine(line: string): string {
     .replace(/\s*[-\u2013\u2014]\s*/g, "\u2013").replace(/\s+/g, " ").replace(/\s*&\s*/g, " & ").trim();
 }
 
+// A page that sets a day on one line and its times on the next ("Saturday" / "09:00 - 23:00") reads as one line ("Saturday 09:00 - 23:00").
+function joinDayAndTimes(lines: string[]): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i], next = lines[i + 1];
+    if (next !== undefined && l.length < 30 && DAY_WORDS.test(l) && !TIME.test(l) && !/\bclosed\b/i.test(l) && TIME.test(next) && !DAY_WORDS.test(next) && next.length < 40) {
+      out.push(`${l} ${next}`);
+      i++;
+    } else out.push(l);
+  }
+  return out;
+}
+
 // A site with no structured data but a plain "Find us / Opening hours" block: one address, one phone, one set of
 // hours. Only used when the page has exactly one such block, so a wrong branch is never guessed.
 export function textPlace(html: string): HoursPlace | null {
-  const lines = pageLines(html);
+  const lines = joinDayAndTimes(pageLines(html));
   const hIdx = lines.findIndex((l) => /^(opening|opening times|opening hours|hours|our hours|trading hours)\b[^a-z0-9]*$/i.test(l.replace(/[:\s]+$/, "")) || /^opening (hours|times)\b/i.test(l));
   const hoursLines: string[] = [];
   let anchorIdx = hIdx;
