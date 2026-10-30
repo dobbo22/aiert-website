@@ -5,6 +5,7 @@
 import { createHash } from "crypto";
 import sql from "@/lib/db";
 import { formatHours } from "@/lib/siteLinks";
+import { hereSearch, tomtomSearch } from "@/lib/placeProviders";
 
 // Customers' lookups and the restaurant list-finder (src=finder) have separate daily allowances, so one can't starve the other.
 const DAILY_CAP = 400;
@@ -76,15 +77,29 @@ function hoursOf(periods?: { open?: { day?: number; hour?: number; minute?: numb
   return formatHours(specs).slice(0, 200);
 }
 
-export async function searchBusinesses(queryRaw: string, near?: { lat: number; lng: number } | null, finder = false, device = ""): Promise<BusinessHit[]> {
+/// `free` (the new apps' "Find your business") tries TomTom, then HERE, before Google: they cost nothing and have their own daily limits, and
+/// Google (paid, capped per phone) is only the last resort. Their ids start "tomtom:" or "here:", so they never carry a Google review link.
+/// Without `free` (older apps, the Google-listing dialog, the restaurant finder) it is Google only, exactly as before.
+export async function searchBusinesses(queryRaw: string, near?: { lat: number; lng: number } | null, finder = false, device = "", free = false): Promise<BusinessHit[]> {
   const key = process.env.GOOGLE_PLACES_API_KEY;
   const q = queryRaw.trim().slice(0, 100);
-  if (!key || q.length < 3) return [];
+  if (q.length < 3) return [];
   // The searcher's rough area (from their connection, never stored) puts the nearest branch first: a local branch first, not one in another city.
   const area = near && Number.isFinite(near.lat) && Number.isFinite(near.lng) && Math.abs(near.lat) <= 90 && Math.abs(near.lng) <= 180 ? near : null;
-  const cacheKey = `${q.toLowerCase()}|${area ? `${area.lat.toFixed(1)},${area.lng.toFixed(1)}` : ""}`;
+  const useFree = free && !finder;
+  const cacheKey = `${useFree ? "free|" : ""}${q.toLowerCase()}|${area ? `${area.lat.toFixed(1)},${area.lng.toFixed(1)}` : ""}`;
   const cached = cache.get(cacheKey);
   if (cached && Date.now() - cached.at < 10 * 60_000) return cached.hits;
+  if (useFree) {
+    let found = await tomtomSearch(q, area);
+    if (!found.length) found = await hereSearch(q, area);
+    if (found.length) {
+      if (cache.size > 500) cache.clear();
+      cache.set(cacheKey, { at: Date.now(), hits: found });
+      return found;
+    }
+  }
+  if (!key) return [];
   // A phone past its own 20 a day gets nothing (the apps then use their on-device fallback or typing); cached answers above are free.
   if (!finder && device && !sameTypingSession(device, q) && !(await underDeviceCap(device).catch(() => true))) return [];
   if (!(await underCap(finder).catch(() => false))) return [];

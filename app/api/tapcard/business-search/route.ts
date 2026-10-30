@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     const user = await requireBizUser().catch(() => null);
     if (user) device = `biz-${user.orgId}`;
   }
-  const hits = await searchBusinesses(req.nextUrl.searchParams.get("q") ?? "", near, req.nextUrl.searchParams.get("src") === "finder", device).catch(() => []);
+  const hits = await searchBusinesses(req.nextUrl.searchParams.get("q") ?? "", near, req.nextUrl.searchParams.get("src") === "finder", device, req.nextUrl.searchParams.get("free") === "1").catch(() => []);
   // Private: the order depends on where the person is.
   return NextResponse.json({ hits }, { headers: { "Cache-Control": "private, max-age=300" } });
 }

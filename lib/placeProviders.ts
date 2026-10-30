@@ -88,3 +88,50 @@ export async function hereDetails(name: string, address: string, at?: Near): Pro
     return none;
   }
 }
+
+// ---- Name search for "Find your business": the same two free providers, tried before Google's paid Places search.
+
+/// One business as a free provider lists it. The id carries the provider ("tomtom:...", "here:...") so the apps can tell it is not a Google
+/// place id and skip the Google review link. Opening hours are only there when HERE lists them.
+export interface FreeBusinessHit { id: string; name: string; address: string; website: string; phone: string; type: string; hours: string }
+
+const siteOnly = (u: string) => { try { const x = new URL(cleanUrl(u)); return `${x.protocol}//${x.hostname}${x.pathname === "/" ? "" : x.pathname.replace(/\/$/, "")}`; } catch { return ""; } };
+
+/// TomTom Search: up to five real businesses (not streets or towns) for a typed name and town.
+export async function tomtomSearch(q: string, near?: Near): Promise<FreeBusinessHit[]> {
+  if (!tomtomConfigured()) return [];
+  try {
+    if (!(await underProviderCap("tomtom"))) return [];
+    const loc = near && Number.isFinite(near.lat) && Number.isFinite(near.lng) ? `&lat=${near.lat.toFixed(4)}&lon=${near.lng.toFixed(4)}` : "";
+    const res = await fetch(`https://api.tomtom.com/search/2/search/${encodeURIComponent(q.slice(0, 100))}.json?key=${encodeURIComponent(process.env.TOMTOM_API_KEY!)}&limit=5&countrySet=GB&language=en-GB&typeahead=false&idxSet=POI${loc}`, { signal: AbortSignal.timeout(6000) });
+    if (!res.ok) return [];
+    const j = (await res.json()) as { results?: { id?: string; poi?: { name?: string; phone?: string; url?: string; categories?: string[] }; address?: { freeformAddress?: string; postalCode?: string } }[] };
+    return (j.results ?? []).flatMap((r) => r.id && r.poi?.name ? [{
+      id: `tomtom:${r.id}`, name: r.poi.name.slice(0, 120), address: (r.address?.freeformAddress ?? "").slice(0, 200),
+      website: siteOnly(r.poi.url ?? "").slice(0, 200), phone: sanePhone(r.poi.phone ?? "").slice(0, 40), type: (r.poi.categories?.[0] ?? "").slice(0, 60), hours: "",
+    }] : []);
+  } catch {
+    return [];
+  }
+}
+
+/// HERE Discover: up to five real businesses for a typed name and town, with their phone, website and opening hours where listed.
+export async function hereSearch(q: string, near?: Near): Promise<FreeBusinessHit[]> {
+  if (!hereConfigured()) return [];
+  try {
+    if (!(await underProviderCap("here"))) return [];
+    const pos = near && Number.isFinite(near.lat) && Number.isFinite(near.lng) ? near : { lat: 52.5, lng: -1.5 };
+    const res = await fetch(`https://discover.search.hereapi.com/v1/discover?q=${encodeURIComponent(q.slice(0, 100))}&at=${pos.lat.toFixed(4)},${pos.lng.toFixed(4)}&limit=5&lang=en-GB&in=countryCode:GBR&apiKey=${encodeURIComponent(process.env.HERE_API_KEY!)}`, { signal: AbortSignal.timeout(6000) });
+    if (!res.ok) return [];
+    const j = (await res.json()) as { items?: { id?: string; title?: string; resultType?: string; address?: { label?: string }; categories?: { name?: string }[]; contacts?: { phone?: { value?: string }[]; www?: { value?: string }[] }[]; openingHours?: { text?: string[] }[] }[] };
+    return (j.items ?? []).flatMap((i) => i.id && i.title && i.resultType === "place" ? [{
+      id: `here:${i.id}`, name: i.title.slice(0, 120), address: (i.address?.label ?? "").slice(0, 200),
+      website: siteOnly(ownSite((i.contacts?.[0]?.www ?? []).map((w) => w.value ?? ""))).slice(0, 200),
+      phone: sanePhone((i.contacts?.[0]?.phone ?? []).map((p) => p.value ?? "").find((p) => sanePhone(p)) ?? "").slice(0, 40),
+      type: (i.categories?.[0]?.name ?? "").slice(0, 60),
+      hours: (i.openingHours?.[0]?.text ?? []).join("; ").replace(/\s*-\s*/g, "–").slice(0, 300),
+    }] : []);
+  } catch {
+    return [];
+  }
+}
