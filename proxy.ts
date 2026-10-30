@@ -33,6 +33,12 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Crawler files are served by the host-aware app/sitemap.ts, app/robots.ts and app/llms.txt (and the IndexNow key in
+  // public/). Rewriting them to /tapcard/... gave a 404 page, so TapCard had no sitemap or robots.txt at all.
+  if (/^\/(sitemap\.xml|robots\.txt|llms\.txt|09d90e3ec75e4e3c93a57c014df8764a\.txt)$/.test(request.nextUrl.pathname)) {
+    return NextResponse.next();
+  }
+
   // Browsers ask for /favicon.ico by itself: on this host that is TapCard's icon, not the AIERT site-wide one.
   if (request.nextUrl.pathname === "/favicon.ico") {
     const url = request.nextUrl.clone();

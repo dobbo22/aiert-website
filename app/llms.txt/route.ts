@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { BUSINESS_BASE_URL } from "@/lib/mailbroom-routes.mjs";
+import { TAPCARD_BASE_URL } from "@/lib/tapcard-routes.mjs";
 
 // llms.txt (llmstxt.org) — a plain-text summary AI crawlers/answer engines
 // (ChatGPT, Perplexity, Claude) can read directly, separate from the
@@ -113,8 +114,44 @@ MailBroom is a product of AIERT Ltd, registered in England & Wales (No. 16587000
 Contact: admin@aiert.co.uk
 `;
 
+const TAPCARD_TXT = `# TapCard
+
+> TapCard is a digital business card app for iPhone and Android. Share your card with a QR code or a link, add it to Apple Wallet or Google Wallet, and it stays in sync with everyone you have shared it with. The person receiving your card does not need the app. Free to download.
+
+## What it does
+
+- [How TapCard works](${TAPCARD_BASE_URL}/how-it-works): make a card in two screens with no account, share by QR code, link, Wallet or an offline QR code that works with no signal, and save contacts in one tap.
+- [Visual guide](${TAPCARD_BASE_URL}/guide): screenshot walkthrough of setup, sharing, scanning, offers, stamp cards and Wallet passes.
+- [Try the demo](${TAPCARD_BASE_URL}/demo): enter a business name and website and watch a card, offer and customer view being built.
+
+## For businesses
+
+- [TapCard for Business](${TAPCARD_BASE_URL}/business): cards locked to your brand for many locations and staff, with an admin console.
+- [TapCard Promote](${TAPCARD_BASE_URL}/promote): offers, stamp cards and news sent to people who follow your business. Subscription with 3 months free; TapCard does not take payments for your discounts.
+- [Security](${TAPCARD_BASE_URL}/business/security): how business cards and staff access are protected.
+
+## For clubs, societies and charities
+
+- [TapCard for clubs, societies and charities](${TAPCARD_BASE_URL}/societies)
+
+## Support and legal
+
+- [Support](${TAPCARD_BASE_URL}/support)
+- [Privacy Policy](${TAPCARD_BASE_URL}/privacy)
+
+## Get the app
+
+- iPhone: https://apps.apple.com/app/id6816003159
+- Android: https://play.google.com/store/apps/details?id=com.mailbroom.tapcard
+
+## Company
+
+TapCard is a product of AIERT Ltd, registered in England & Wales (No. 16587000).
+Contact: admin@aiert.co.uk
+`;
+
 export async function GET() {
   const host = (await headers()).get("host") ?? "";
-  const body = host.startsWith("ios.mailbroom.app") ? IOS_TXT : BUSINESS_TXT;
+  const body = host.startsWith("tapcard.") ? TAPCARD_TXT : host.startsWith("ios.mailbroom.app") ? IOS_TXT : BUSINESS_TXT;
   return new Response(body, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
 }

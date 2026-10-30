@@ -6,6 +6,7 @@
 // adding/removing pages, or after a significant content update to an
 // existing page; not needed for minor edits, which natural crawling
 // handles fine.
+import { TAPCARD_BASE_URL, TAPCARD_ROUTES } from "../lib/tapcard-routes.mjs";
 import { BUSINESS_BASE_URL, BUSINESS_ROUTES, IOS_BASE_URL, IOS_ROUTES } from "../lib/mailbroom-routes.mjs";
 
 const KEY = "09d90e3ec75e4e3c93a57c014df8764a";
@@ -17,6 +18,7 @@ const KEY = "09d90e3ec75e4e3c93a57c014df8764a";
 const BATCHES = [
   { host: "mailbroom.app", baseUrl: BUSINESS_BASE_URL, routes: BUSINESS_ROUTES },
   { host: "ios.mailbroom.app", baseUrl: IOS_BASE_URL, routes: IOS_ROUTES },
+  { host: "tapcard.aiert.co.uk", baseUrl: TAPCARD_BASE_URL, routes: TAPCARD_ROUTES },
 ];
 
 let failed = false;

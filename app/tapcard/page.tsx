@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import StoreBadges from "../StoreBadges";
 import DemoVideo from "./DemoVideo";
+import JsonLd from "./JsonLd";
 
 const TITLE = "TapCard – your business card on your phone";
 const DESCRIPTION =
@@ -28,6 +29,33 @@ export const metadata: Metadata = {
 
 const APP_STORE_URL = "https://apps.apple.com/app/id6816003159";
 const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.mailbroom.tapcard";
+
+const APP_JSON_LD = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://www.aiert.co.uk/#org",
+      name: "AIERT Ltd",
+      url: "https://www.aiert.co.uk",
+      email: "admin@aiert.co.uk",
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://tapcard.aiert.co.uk/#app",
+      name: "TapCard: Digital Business Card",
+      alternateName: "TapCard",
+      url: "https://tapcard.aiert.co.uk/",
+      description: DESCRIPTION,
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "iOS, Android",
+      downloadUrl: [APP_STORE_URL, PLAY_STORE_URL],
+      installUrl: APP_STORE_URL,
+      offers: { "@type": "Offer", price: "0", priceCurrency: "GBP" },
+      publisher: { "@id": "https://www.aiert.co.uk/#org" },
+    },
+  ],
+};
 
 const FEATURES = [
   {
@@ -64,6 +92,7 @@ const FEATURES = [
 export default function TapCardHomePage() {
   return (
     <main className="min-h-screen px-4 py-12">
+      <JsonLd data={APP_JSON_LD} />
       <div className="mx-auto max-w-5xl">
         <header className="flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}

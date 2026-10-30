@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { headers } from "next/headers";
 import { BUSINESS_BASE_URL, BUSINESS_ROUTES, IOS_BASE_URL, IOS_ROUTES } from "@/lib/mailbroom-routes.mjs";
+import { TAPCARD_BASE_URL, TAPCARD_ROUTES } from "@/lib/tapcard-routes.mjs";
 
 // MailBroom marketing pages now live on their own domains, split by
 // audience: mailbroom.app (B2B webapp funnel — the former
@@ -20,6 +21,7 @@ type Route = { path: string; priority: number; changeFrequency: MetadataRoute.Si
 // `string` — cast back to the literal union sitemap() actually returns.
 const businessRoutes = BUSINESS_ROUTES as Route[];
 const iosRoutes = IOS_ROUTES as Route[];
+const tapcardRoutes = TAPCARD_ROUTES as Route[];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const lastModified = new Date();
@@ -31,6 +33,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   });
 
   const host = (await headers()).get("host") ?? "";
+  // proxy.ts lets /sitemap.xml through untouched on this host (see there).
+  if (host.startsWith("tapcard.")) {
+    return tapcardRoutes.map(toEntry(TAPCARD_BASE_URL));
+  }
   // Exact match, not startsWith — "app.mailbroom.app" would otherwise
   // never match anyway (doesn't start with "mailbroom.app"), but staying
   // exact here avoids the same substring trap as next.config.ts's rewrite.

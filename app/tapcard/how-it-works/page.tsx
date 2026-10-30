@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import DocPage from "../DocPage";
 import StoreBadges from "../../StoreBadges";
+import JsonLd from "../JsonLd";
 
 const DESCRIPTION =
   "Your business card on your phone: share it with a QR code or a link, swap details in seconds, and stay in sync automatically — even after it's saved.";
@@ -21,11 +22,27 @@ export const metadata: Metadata = {
 const APP_STORE_URL = "https://apps.apple.com/app/id6816003159?pt=128647066&ct=how-it-works&mt=8";
 const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.mailbroom.tapcard&referrer=utm_source%3Dtapcard-web%26utm_medium%3Dhow-it-works";
 
+// Each answer repeats what the page says below; keep them in step.
+const FAQ = [
+  ["Does the person I share my card with need the TapCard app?", "No. Your card opens in their browser and they tap Save Contact to put your details into their phone's contacts. Only people who want to receive your offers and news need the app."],
+  ["Can I share my TapCard with no signal?", "Yes. Tap Offline QR to show a QR code that holds your contact details themselves, so it works with no signal and no app on their phone. You can also send your contact file by AirDrop."],
+  ["Can I put my business card in Apple Wallet or Google Wallet?", "Yes. Add your card to your phone's Wallet so it is always to hand, and pick a design in the app so your Wallet card matches."],
+  ["Do I need an account to make a TapCard?", "No. There is nothing to sign up for. Answer what the card is for, add your details, and share it."],
+  ["Does TapCard take payments for offers?", "No. You give the discount yourself; TapCard does not take payments. Promote, which lets a business post offers and news, starts with 3 months free, then costs £49.99 a year or £9.99 a month."],
+] as const;
+
+const FAQ_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: FAQ.map(([name, text]) => ({ "@type": "Question", name, acceptedAnswer: { "@type": "Answer", text } })),
+};
+
 // Linked from the invite email ("See exactly how it works") —
 // tapcard.aiert.co.uk/how-it-works.
 export default function HowItWorksPage() {
   return (
     <DocPage title="How TapCard works">
+      <JsonLd data={FAQ_JSON_LD} />
       <section>
         <p>
           Someone asks for your business card and you haven&apos;t got one on you, or you&apos;ve run out. TapCard
