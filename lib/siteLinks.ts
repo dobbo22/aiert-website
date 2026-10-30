@@ -121,7 +121,9 @@ export function addressKey(text: string | undefined | null): string {
 export function matchPlace(places: HoursPlace[], postcode: string, address = ""): HoursPlace | undefined {
   const key = addressKey(address);
   // One place on the whole site: that is the one, unless the card's postcode says it is somewhere else.
-  if (places.length === 1 && (!postcode || !places[0].postcode || places[0].postcode === postcode)) return places[0];
+  // A postcode that differs only in its last letter (W9 2PA on the site, W9 2PB on the map listing) is the same street: map providers are often one unit off.
+  const nearPostcode = (a: string, b: string) => a === b || (a.length >= 5 && b.length >= 5 && a.slice(0, -1) === b.slice(0, -1));
+  if (places.length === 1 && (!postcode || !places[0].postcode || nearPostcode(places[0].postcode, postcode))) return places[0];
   if (postcode || key) {
     const byPostcode = postcode ? places.find((p) => p.postcode && p.postcode === postcode) : undefined;
     if (byPostcode) return byPostcode;

@@ -57,6 +57,16 @@ test("a week set out one day per line gives every open day, and leaves a closed 
   assert.ok(!/mon/i.test(hours), "a closed day is not listed");
 });
 
+test("hours above the address, with the listing's postcode one letter off the site's, still give the whole week", async () => {
+  const { findSiteLinks } = await import("../lib/siteLinks");
+  const html = `<html><body><p>Event Pack</p><h3>OPENING HOURS</h3>
+    <p>Monday - Friday 12:00 - 23:00</p><p>Saturday</p><p>09:00 - 23:00</p><p>Sunday</p><p>09:00 - 22:30</p>
+    <p>Where to find us:</p><p>60 Blomfield Road, London W9 2PA</p><p>Part of First Restaurant Group</p></body></html>`;
+  const r = await findSiteLinks("https://summer.example", "60 Blomfield Road, Warwick Avenue, London, W9 2PB", "The Summerhouse", { html, url: "https://summer.example/" });
+  const hours = r.links.find((l) => l.kind === "hours")?.value ?? "";
+  assert.match(hours, /^Mon.Fri 12:00.23:00; Sat 09:00.23:00; Sun 09:00.22:30$/);
+});
+
 test("an OPENING HOURS heading with a day on one line and its times on the next gives the whole week", async () => {
   const { findSiteLinks } = await import("../lib/siteLinks");
   const html = `<html><body><p>60 Blomfield Road, London W9 2PB</p><h3>OPENING HOURS</h3>
