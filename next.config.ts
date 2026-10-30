@@ -133,6 +133,28 @@ const nextConfig: NextConfig = {
         destination: "https://ios.mailbroom.app/:path*",
         permanent: true,
       },
+      // TapCard's marketing pages live on tapcard.aiert.co.uk, whose pages link to each other with relative paths (/promote, /business,
+      // /how-it-works…). Viewed on www.aiert.co.uk (www.aiert.co.uk/tapcard) those links 404, and /blog there goes to the MailBroom blog. So the
+      // www copies, and the bare paths people may have linked, 301 to the TapCard host. /tapcard/c/* (a card's own page, used for the iPhone
+      // "Open in app" hand-off) and /tapcard/s/* are deliberately NOT redirected, and www's own /privacy and /blog rules are untouched.
+      {
+        source: "/tapcard",
+        has: [{ type: "host", value: AIERT_HOST }],
+        destination: "https://tapcard.aiert.co.uk/",
+        permanent: true,
+      },
+      {
+        source: "/tapcard/:page(promote|how-it-works|societies|demo|business|digital-business-card|guide|support|privacy|blog)/:rest*",
+        has: [{ type: "host", value: AIERT_HOST }],
+        destination: "https://tapcard.aiert.co.uk/:page/:rest*",
+        permanent: true,
+      },
+      {
+        source: "/:page(promote|how-it-works|societies|demo|business|digital-business-card|guide|support)/:rest*",
+        has: [{ type: "host", value: AIERT_HOST }],
+        destination: "https://tapcard.aiert.co.uk/:page/:rest*",
+        permanent: true,
+      },
       // The blog (previously aiert.co.uk/blog) moved to ios.mailbroom.app —
       // its one existing post is about the iOS app specifically, not a
       // generic AIERT topic, so it belongs alongside the product it covers.
