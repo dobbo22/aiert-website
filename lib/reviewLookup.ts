@@ -10,6 +10,11 @@ import { appleSearch, appleMapsConfigured } from "@/lib/appleMaps";
 const DAILY_CAP = 300;
 const TTL_DAYS = 30;
 
+// Off: the Google "write a review" lookup is a paid Places call made on every site read (apps, admin builders, list finder, walk-ins). A business's own
+// website link to Google reviews is still picked up (that is free); only this paid search for one is gated. Set TAPCARD_GOOGLE_REVIEW_LOOKUP=1 to
+// turn it back on once usage and revenue justify it. Tripadvisor is unaffected.
+const GOOGLE_REVIEW_LOOKUP = process.env.TAPCARD_GOOGLE_REVIEW_LOOKUP === "1";
+
 export interface ReviewLinks { google?: string; tripadvisor?: string }
 
 let ready: Promise<unknown> | null = null;
@@ -114,10 +119,10 @@ export async function findReviewLinks(name: string, address: string, website = "
     WHERE key_hash = ${keyHash}
       AND ((google <> '' OR tripadvisor <> '') AND fetched_at > now() - ${TTL_DAYS + " days"}::interval OR fetched_at > now() - interval '1 hour')
   `) as { google: string; tripadvisor: string }[];
-  if (cached[0]) return { google: cached[0].google || undefined, tripadvisor: cached[0].tripadvisor || undefined };
+  if (cached[0]) return { google: GOOGLE_REVIEW_LOOKUP ? cached[0].google || undefined : undefined, tripadvisor: cached[0].tripadvisor || undefined };
   const today = (await sql`SELECT COUNT(*)::int AS n FROM tapcard_review_cache WHERE fetched_at > now() - interval '1 day'`) as { n: number }[];
   if ((today[0]?.n ?? 0) >= DAILY_CAP) return {};
-  const [google, tripadvisor] = await Promise.all([googleLink(n, a, website), tripadvisorLink(n, a)]);
+  const [google, tripadvisor] = await Promise.all([GOOGLE_REVIEW_LOOKUP ? googleLink(n, a, website) : Promise.resolve(undefined), tripadvisorLink(n, a)]);
   await sql`
     INSERT INTO tapcard_review_cache (key_hash, google, tripadvisor) VALUES (${keyHash}, ${google ?? ""}, ${tripadvisor ?? ""})
     ON CONFLICT (key_hash) DO UPDATE SET google = EXCLUDED.google, tripadvisor = EXCLUDED.tripadvisor, fetched_at = now()
