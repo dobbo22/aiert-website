@@ -155,6 +155,7 @@ export default function TapCardHomePage() {
           <p>
             TapCard is made by AIERT Ltd, registered in England &amp; Wales, No. 16587000.{" "}
             <a href="/how-it-works" className="text-gold underline">How it works</a> ·{" "}
+            <a href="/digital-business-card" className="text-gold underline">Digital business card</a> ·{" "}
             <a href="/business" className="text-gold underline">For businesses</a> ·{" "}
             <a href="/promote" className="text-gold underline">Promote</a> ·{" "}
             <a href="/support" className="text-gold underline">Support</a> ·{" "}
