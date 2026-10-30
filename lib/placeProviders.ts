@@ -172,5 +172,20 @@ export function tidyFreeHits(hits: FreeBusinessHit[]): FreeBusinessHit[] {
     for (const t of h.type.split(", ").filter(Boolean)) if (!types.includes(t)) types.push(t);
     have.type = types.join(", ").slice(0, 120);
   }
-  return [...out.values()];
+  // The restaurant and the hotel of one building are listed under different names ("The Colonnade London", "Colonnade Hotel London"): the same
+  // postcode and house number plus one shared distinctive word in the names makes them one place.
+  const STOP = new Set(["the", "and", "london", "hotel", "restaurant", "cafe", "bar", "pub", "kitchen", "grill", "ltd", "limited", "inn", "bistro", "brasserie"]);
+  const words = (t: string) => new Set(t.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 4 && !STOP.has(w)));
+  const house = (a: string) => /\b\d+[a-z]?\b/i.exec(a)?.[0]?.toLowerCase() ?? "";
+  const merged: FreeBusinessHit[] = [];
+  for (const h of out.values()) {
+    const pc = postcodeOf(h.address), hw = words(h.name);
+    const twin = pc ? merged.find((m) => postcodeOf(m.address) === pc && house(m.address) === house(h.address) && [...words(m.name)].some((w) => hw.has(w))) : undefined;
+    if (!twin) { merged.push(h); continue; }
+    twin.website ||= h.website; twin.phone ||= h.phone; twin.hours ||= h.hours;
+    const types = twin.type.split(", ").filter(Boolean);
+    for (const t of h.type.split(", ").filter(Boolean)) if (!types.includes(t)) types.push(t);
+    twin.type = types.join(", ").slice(0, 120);
+  }
+  return merged;
 }

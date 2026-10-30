@@ -4,7 +4,7 @@
 // and the apps fall back to typing the name and website.
 import { createHash } from "crypto";
 import sql from "@/lib/db";
-import { formatHours } from "@/lib/siteLinks";
+import { formatHours, postcodeOf } from "@/lib/siteLinks";
 import { hereDetails, hereSearch, tidyFreeHits, tomtomSearch } from "@/lib/placeProviders";
 
 // Customers' lookups and the restaurant list-finder (src=finder) have separate daily allowances, so one can't starve the other.
@@ -97,7 +97,9 @@ export async function searchBusinesses(queryRaw: string, near?: { lat: number; l
     const useful = (h: BusinessHit[]) => h.some((x) => x.website);
     // TomTom and HERE weigh the name over the town ("PizzaExpress Clifton Bristol" gives London branches), so a result only counts when every
     // typed word that is not in its name (the town) appears in its address.
-    const words = q.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 3);
+    // Words that say what kind of business it is ("hotel", "restaurant") are not the town: they may match the listing's type instead, or be ignored.
+    const KIND_WORDS = new Set(["hotel", "restaurant", "cafe", "bar", "pub", "shop", "store", "the", "and", "kitchen", "grill", "inn", "bistro", "brasserie", "takeaway"]);
+    const words = q.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 3 && !KIND_WORDS.has(w));
     const inTown = (h: BusinessHit) => {
       const name = h.name.toLowerCase(), addr = h.address.toLowerCase();
       return words.filter((w) => !name.includes(w)).every((w) => addr.includes(w));
@@ -140,7 +142,9 @@ export async function searchBusinesses(queryRaw: string, near?: { lat: number; l
     id: p.id, name: p.displayName.text.slice(0, 120), address: (p.formattedAddress ?? "").slice(0, 200),
     website: cleanSite(p.websiteUri ?? "").slice(0, 200), phone: (p.internationalPhoneNumber ?? "").slice(0, 40), type: (p.primaryTypeDisplayName?.text ?? "").slice(0, 60), hours: hoursOf(p.regularOpeningHours?.periods),
   }] : []);
-  const result = hits.length || !useFree ? hits : weakFree;
+  // The apps are UK-only: a Google result with no UK postcode (a Boston hotel for "Colonnade Hotel W9") is dropped when the search came from the free path.
+  const ukHits = useFree ? hits.filter((h) => postcodeOf(h.address)) : hits;
+  const result = ukHits.length || !useFree ? ukHits : weakFree;
   if (cache.size > 500) cache.clear();
   cache.set(cacheKey, { at: Date.now(), hits: result });
   return result;
