@@ -13,6 +13,7 @@ import { callActionLabel, isTapLink, linkColor, linkIcon, parseStoredLinks } fro
 import { placeIdFromLinks, placeRating } from "@/lib/tapcardRating";
 import SaveContactButton from "../../SaveContactButton";
 import ShareBackForm from "../../ShareBackForm";
+import ReferBusiness from "../../ReferBusiness";
 import CarryCardToInstall from "../../CarryCardToInstall";
 import { publicAnnouncement, publicOffer, recentAnnouncements } from "@/lib/tapcardOffers";
 import ClaimOfferWeb from "../../ClaimOfferWeb";
@@ -239,6 +240,8 @@ export default async function CardPage({
             )}
 
             {!acceptToken && send !== "1" && card.accept_share_back !== false && <ShareBackForm cardId={id} ownerFirstName={firstName} />}
+
+            {!acceptToken && send !== "1" && card.card_kind !== "person" && !/personal/i.test(card.label) && <ReferBusiness origin={TAPCARD_ORIGIN} />}
 
             {acceptToken && (
               <AcceptRecipientForm cardId={id} token={acceptToken} ownerFirstName={firstName} appStoreUrl={TAPCARD_APP_STORE_URL} />

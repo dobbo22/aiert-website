@@ -71,6 +71,7 @@ export const TRACKED_LINKS: Record<string, TrackedLink> = {
   // The "Get the app" line in the message TapCard prepares when someone sends their card to a contact.
   "tapcard-web-share-get-tapcard": { label: "TapCard sent message → Get TapCard", to: "https://apps.apple.com/app/id6816003159", appStoreId: "6816003159", playPackage: "com.mailbroom.tapcard", campaign: "tapcard-message", playSource: "tapcard-message", playMedium: "sent-card" },
   // The Get the App handout page (www.aiert.co.uk/get-app): its QR codes point here, so every scan is counted.
+  "tapcard-web-referral-business": { label: "Card page: customer refers a business → build a card", to: "https://tapcard.aiert.co.uk/demo?utm_source=referral&utm_medium=card-page" },
   "tapcard-web-qr-tapcard": { label: "Get-app QR → TapCard", to: "https://apps.apple.com/app/id6816003159", appStoreId: "6816003159", playPackage: "com.mailbroom.tapcard", campaign: "qr-handout", playSource: "qr", playMedium: "handout" },
   "tapcard-web-qr-powersearch": { label: "Get-app QR → PowerSearch", to: "https://apps.apple.com/app/powersearch/id6807772868", appStoreId: "6807772868", playPackage: "mailbroom.app", campaign: "qr-handout", playSource: "qr", playMedium: "handout" },
   "tapcard-web-qr-mailbroom": { label: "Get-app QR → MailBroom", to: "https://apps.apple.com/app/mailbroom/id6766489663", appStoreId: "6766489663", campaign: "qr-handout", playSource: "qr", playMedium: "handout" },
