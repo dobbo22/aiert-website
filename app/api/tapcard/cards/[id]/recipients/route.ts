@@ -25,7 +25,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const recipients = await listRecipients(id);
   return NextResponse.json({
     recipients: recipients.map((r) => ({
-      id: r.id,
+      id: Number(r.id), // bigserial arrives as a string; the apps decode a number
       acceptedAt: r.accepted_at,
       acceptedName: r.accepted_name,
       acceptedPhone: r.accepted_phone,
