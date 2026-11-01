@@ -136,6 +136,21 @@ export default function TapCardPrivacyPage() {
       </section>
 
       <section>
+        <h2>When someone shares their details with you</h2>
+        <p>
+          If you leave <strong>Let people share their details with me</strong> switched on for a card, anyone who opens its
+          page (or the iPhone App Clip) can type a <strong>name, a phone number or email and optionally a company</strong> and send
+          it. We keep that with the card so it appears in the card owner&apos;s Contacts. We do not email these people, we do not
+          use their details for anything else, and the card owner can remove them. It is deleted with the card. To limit abuse,
+          each card accepts a limited number an hour. When you share details this way, nothing else is collected about you.
+        </p>
+        <p className="mt-3">
+          The iPhone App Clip and the full app share a small private storage area on your phone (an Apple app group). It holds only
+          the business you were looking at and an offer you claimed, so the app can open on them after you install it. It is not sent anywhere.
+        </p>
+      </section>
+
+      <section>
         <h2>Who can see a shared card</h2>
         <p>
           Anyone who has the link, scans the QR code or has the Wallet pass can see the card and save it as a

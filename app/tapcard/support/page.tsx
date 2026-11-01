@@ -25,6 +25,8 @@ export default function TapCardSupportPage() {
           <li>Use <strong>Share</strong>, <strong>Send</strong> or <strong>QR sign</strong> (business cards) to share the link, send it to contacts, or email yourself a QR sign for your window.</li>
           <li>No signal? Tap <strong>Offline QR</strong>. The code contains your contact details, so it works without signal or the app.</li>
           <li>People who scan the QR code see your card in their browser and can tap Save Contact. They don&apos;t need the app.</li>
+          <li>People who open your card can also tap <strong>Share your details</strong> to leave their name and a phone number or email. They appear in your Contacts marked <strong>New</strong>. Turn this off in <strong>Edit card</strong> with <strong>Let people share their details with me</strong>.</li>
+          <li>When someone gets TapCard after saving your card, the app asks <strong>Send your card to you?</strong> once they have made their own card.</li>
           <li>Edits you save update the same link and QR code. </li>
           <li>To stop sharing with one person, open them in Contacts and tap <strong>Stop sharing with</strong> them.</li>
           <li>To take your card offline altogether, open <strong>Edit this card</strong> and choose <strong>Stop sharing this card online</strong>. The link and QR code then stop working.</li>

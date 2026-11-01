@@ -16,6 +16,13 @@ then check `git log` in each repo for anything newer.
 - **Logo plates** adapt to the logo's colours (`lib/logoBackdrop.ts`, apps' LogoBackdrop); `/api/logo` and `/api/favicon` send `access-control-allow-origin: *`.
 - **QR sign** is business cards only, "Email me the sign" only (no Print), headline "Scan to follow and receive news and offers", optional rating/map/social/review icons (off by default).
 
+## 1 Nov 2026: getting details back, App Clip, QR
+- **Share your details** on the public card page (`app/tapcard/ShareBackForm.tsx`, `POST /api/tapcard/cards/[id]/share-back`): name plus phone or email, honeypot, 30 an hour per card, phone at least 7 digits. Stored as a recipient row with `source='web'` (`addWebShareBack` in lib/tapcardDb.ts), never emailed. Per-card switch `tapcard_cards.accept_share_back` (apps send `acceptShareBack`; public JSON returns it). Recipients GET returns numeric `id`, `source`, `createdAt`. Owner push `pushToOwner` (lib/tapcardPush.ts, kind `reply`) on web share-backs and on send-back exchanges, needs the owner's install registered for push.
+- **Apps (iPhone 3.13, Android 1.8.20):** after a new user saves a card before having their own, then makes their first card, they are asked to send it back (free of the unlock); web share-backs appear in Contacts as New (every shared card is refreshed); Edit card has the switch; hotels whose site can't be read get a Book a room row to their website; QR uses error correction Q and a smaller logo and is shown larger.
+- **App Clip:** advanced experiences for https://tapcard.aiert.co.uk/c and /s (created in the ASC website; API cannot). The Clip can share details, add the card or an offer/stamp card to Wallet, and hands the business and any claim to the full app through the app group `group.com.mailbroom.tapcard` (`ClipHandoff.swift` in both targets). Export needs manual signing profiles (see the release memory note): `AppStore/ExportOptions-manual.plist`.
+- **Google rating star is off** unless env `TAPCARD_GOOGLE_RATING=1` (like `TAPCARD_GOOGLE_REVIEW_LOOKUP`). Funnel steps added: web_shareback, opened_sender_card, sendback_*, clip_shared_details, clip_wallet_*.
+- Docs updated: /guide ("Get their details back"), /how-it-works FAQ + Share it list, /support, /privacy (details left on a card, app group).
+
 ## Repos and where they live on the Mac
 
 | What | GitHub | Mac folder | Branch to work on |

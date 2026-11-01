@@ -26,6 +26,7 @@ const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.mailbr
 // Each answer repeats what the page says below; keep them in step.
 const FAQ = [
   ["Does the person I share my card with need the TapCard app?", "No. Your card opens in their browser and they tap Save Contact to put your details into their phone's contacts. Only people who want to receive your offers and news need the app."],
+  ["How do I get their details back?", "Anyone who opens your card on the web, or in the iPhone App Clip, can tap Share your details and leave their name and a phone number or email, with no app and no sign-up. They appear in your Contacts marked New. If they install TapCard, the app offers to send you their own card in one tap. You can switch this off for a card in Edit card."],
   ["Can I share my TapCard with no signal?", "Yes. Tap Offline QR to show a QR code that holds your contact details themselves, so it works with no signal and no app on their phone. You can also send your contact file by AirDrop."],
   ["Can I put my business card in Apple Wallet or Google Wallet?", "Yes. Add your card to your phone's Wallet so it is always to hand, and pick a design in the app so your Wallet card matches."],
   ["Do I need an account to make a TapCard?", "No. There is nothing to sign up for. Answer what the card is for, add your details, and share it."],
@@ -93,6 +94,11 @@ export default function HowItWorksPage() {
           <li>
             <strong>QR code:</strong> open TapCard and let them scan the code with their phone camera. Anyone can scan it and see your card on
             the web, but <strong>only people who have the TapCard app can receive your offers and news</strong>.
+          </li>
+          <li>
+            <strong>Getting details back:</strong> anyone who opens your card can tap <strong>Share your details</strong> and leave a
+            name and a phone number or email, with no app. They appear in your Contacts marked New. People who install TapCard are asked
+            to send you their own card in one tap. You can turn this off for a card in <strong>Edit card</strong>.
           </li>
           <li><strong>Link:</strong> send your card&apos;s link by text, WhatsApp or email, or add it to your email signature.</li>
           <li>

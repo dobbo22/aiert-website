@@ -22,7 +22,11 @@ const steps: { title: string; img?: string; alt?: string; text: string }[] = [
     title: "Share your card",
     img: "share.png",
     alt: "TapCard share screen with a QR code and Share, Send and QR sign buttons",
-    text: "Your QR code is the quickest way. Anyone scans it with their camera and saves you, with no app needed. Under it, Share sends your link, Send picks people from your contacts, and QR sign (on business cards) makes a poster for your window or till, headed with your business name and \"Scan to follow and receive news and offers\". Choose Email me the sign and print it from a computer. Add your card to Apple Wallet or Google Wallet and choose a design: Brand (a business's own logo and colours, the first choice for businesses), Artwork or Photo.",
+    text: "Your QR code is the quickest way. Anyone scans it with their camera and saves you, with no app needed (on an iPhone without TapCard it opens a quick preview, an App Clip, where they can save you, add you to Apple Wallet or share their details back). Under it, Share sends your link, Send picks people from your contacts, and QR sign (on business cards) makes a poster for your window or till, headed with your business name and \"Scan to follow and receive news and offers\". Choose Email me the sign and print it from a computer. Add your card to Apple Wallet or Google Wallet and choose a design: Brand (a business's own logo and colours, the first choice for businesses), Artwork or Photo.",
+  },
+  {
+    title: "Get their details back",
+    text: "Anyone who opens your card on the web, or scans it with an iPhone's App Clip, can tap Share your details with you, type their name and a phone number or email, and send. It needs no app and no sign-up. They appear in your Contacts marked New, and you get a notification if your phone has them switched on. If you would rather not take details this way, open Edit card and switch off Let people share their details with me. When someone gets TapCard after saving your card, the app asks Send your card to you? as soon as they have made their own card, and one tap sends it, with nothing to buy. You find it under Contacts, filed under your card. The QR code is larger and easier to scan in poor light; if there is no signal at all, show your Offline QR.",
   },
   {
     title: "No signal? Use Offline QR",
