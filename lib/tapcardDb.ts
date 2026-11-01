@@ -44,6 +44,8 @@ export interface TapCardRecord {
   /// "person" (someone's own business card), "business" (a restaurant, shop, salon...) or "" when the owner never said:
   /// then the apps work it out from the links, as before. Chosen by the owner when the card is created.
   card_kind: string;
+  /// Owner's switch for "Share your details" on the public page (default on).
+  accept_share_back?: boolean;
   verified_at?: string | null;
   updated_at: Date | string;
 }
@@ -51,8 +53,9 @@ export interface TapCardRecord {
 /// pass_style is optional: app builds that predate it don't send one, and
 /// an update without it keeps the card's current style. brand_color is
 /// never accepted from the client at all — see lib/siteBrandColor.ts.
-type TapCardInput = Omit<TapCardRecord, "id" | "photo_url" | "edit_token_hash" | "view_count" | "save_count" | "qr_view_count" | "pass_style" | "brand_color" | "updated_at" | "links" | "card_kind"> & {
+type TapCardInput = Omit<TapCardRecord, "id" | "photo_url" | "edit_token_hash" | "view_count" | "save_count" | "qr_view_count" | "pass_style" | "brand_color" | "updated_at" | "links" | "card_kind" | "accept_share_back"> & {
   card_kind?: string;
+  accept_share_back?: boolean;
   photo_url?: string | null;
   links?: string;
   pass_style?: string;
@@ -94,6 +97,7 @@ function ensureSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS facebook_url TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS tiktok_url TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS whatsapp_url TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS accept_share_back BOOLEAN NOT NULL DEFAULT true`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS facebook_is_page BOOLEAN NOT NULL DEFAULT false`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS edit_token_hash TEXT`)
       .then(() => sql`ALTER TABLE tapcard_cards ADD COLUMN IF NOT EXISTS creator_ip_hash TEXT NOT NULL DEFAULT ''`)
@@ -194,6 +198,7 @@ export async function createCard(input: TapCardInput, editTokenHash: string, cre
             ${input.twitter_url}, ${input.instagram_url}, ${input.facebook_url}, ${input.facebook_is_page}, ${input.tiktok_url}, ${input.whatsapp_url}, ${input.photo_url ?? null},
             ${editTokenHash}, ${creatorIpHash}, ${input.pass_style ?? "artwork"}, ${input.links ?? "[]"}, ${input.card_kind ?? ""})
   `;
+  if (input.accept_share_back === false) await sql`UPDATE tapcard_cards SET accept_share_back = false WHERE id = ${id}`;
   return id;
 }
 
@@ -212,6 +217,7 @@ export async function updateCard(id: string, input: TapCardInput): Promise<boole
         pass_style = COALESCE(${input.pass_style ?? null}, pass_style),
         links = COALESCE(${input.links ?? null}, links),
         card_kind = COALESCE(${input.card_kind ?? null}, card_kind),
+        accept_share_back = COALESCE(${input.accept_share_back ?? null}, accept_share_back),
         updated_at = now()
     WHERE id = ${id}
     RETURNING id
@@ -305,6 +311,7 @@ export function publicCardJSON(card: TapCardRecord) {
     brandColor: card.brand_color || null,
     links: parseStoredLinks(card.links),
     cardKind: card.card_kind || null,
+    acceptShareBack: card.accept_share_back !== false,
     verified: !!card.verified_at,
   };
 }

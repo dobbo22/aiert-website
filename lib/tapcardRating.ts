@@ -45,6 +45,8 @@ export function placeIdFromLinks(links: { kind?: string; value?: string }[] | nu
 
 export async function placeRating(placeId: string): Promise<GoogleRating | null> {
   const key = process.env.GOOGLE_PLACES_API_KEY;
+  // Paid Google call, switched off like the review lookup; set TAPCARD_GOOGLE_RATING=1 to bring the star back.
+  if (process.env.TAPCARD_GOOGLE_RATING !== "1") return null;
   if (!key || !/^[A-Za-z0-9_-]{10,200}$/.test(placeId)) return null;
   const held = memory.get(placeId);
   if (held && Date.now() - held.at < HOLD_MS) return held.value;

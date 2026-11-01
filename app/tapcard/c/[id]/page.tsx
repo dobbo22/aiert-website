@@ -238,7 +238,7 @@ export default async function CardPage({
               </a>
             )}
 
-            {!acceptToken && send !== "1" && <ShareBackForm cardId={id} ownerFirstName={firstName} />}
+            {!acceptToken && send !== "1" && card.accept_share_back !== false && <ShareBackForm cardId={id} ownerFirstName={firstName} />}
 
             {acceptToken && (
               <AcceptRecipientForm cardId={id} token={acceptToken} ownerFirstName={firstName} appStoreUrl={TAPCARD_APP_STORE_URL} />

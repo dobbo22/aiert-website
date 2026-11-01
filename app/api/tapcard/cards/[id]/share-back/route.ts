@@ -28,11 +28,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const email = clip(body.email, 200);
   if (!name) return NextResponse.json({ error: "Please enter your name" }, { status: 400 });
   if (!phone && !email) return NextResponse.json({ error: "Add a phone number or an email" }, { status: 400 });
+  if (phone && phone.replace(/\D/g, "").length < 7) return NextResponse.json({ error: "That phone number looks too short" }, { status: 400 });
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return NextResponse.json({ error: "That email doesn't look right" }, { status: 400 });
 
   const card = await getCard(id);
   if (!card) return NextResponse.json({ error: "not found" }, { status: 404 });
 
+  if (card.accept_share_back === false) return NextResponse.json({ error: "This card isn't taking details" }, { status: 403 });
   const ok = await addWebShareBack(id, {
     name, phone, email,
     title: clip(body.title, 200),
