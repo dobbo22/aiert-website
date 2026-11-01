@@ -159,6 +159,9 @@ function ensureSchema(): Promise<unknown> {
       // When the person first opened the card link they were sent (never counts link-preview robots).
       .then(() => sql`ALTER TABLE tapcard_card_recipients ADD COLUMN IF NOT EXISTS opened_at TIMESTAMPTZ`)
       .then(() => sql`ALTER TABLE tapcard_card_recipients ADD COLUMN IF NOT EXISTS open_count INTEGER NOT NULL DEFAULT 0`)
+      // 'owner' = the owner sent their card to this person; 'web' = a stranger who opened the public card page and
+      // chose "Share your details" (see addWebShareBack). Web rows are never emailed (do_not_contact).
+      .then(() => sql`ALTER TABLE tapcard_card_recipients ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'owner'`)
       .catch((err) => {
         schemaReady = null; // let the next call retry rather than caching a failure
         throw err;
@@ -377,6 +380,8 @@ export interface TapCardRecipient {
   email: string;
   unsubscribe_token: string;
   accept_token: string | null;
+  source?: string;
+  created_at?: Date | string;
   do_not_contact: boolean;
   last_notified_at: Date | string | null;
   last_notified_snapshot: Record<string, string> | null;
@@ -454,6 +459,34 @@ export async function acceptRecipient(
     RETURNING card_id
   `) as { card_id: string }[];
   return rows[0]?.card_id ?? null;
+}
+
+/// Someone who opened the public card page (QR / link) and chose to share their details back, with no app and no
+/// personal link. Stored as an already-accepted recipient so the owner's apps list it like any other pending card.
+/// Never emailed (do_not_contact): they asked to be in touch with the owner, not for updates. Returns false when
+/// this card has had too many web submissions in the last hour (spam guard).
+export async function addWebShareBack(
+  cardId: string,
+  d: { name: string; phone: string; email: string; title: string; company: string; website: string },
+): Promise<boolean> {
+  await ensureSchema();
+  const recent = (await sql`
+    SELECT count(*)::int AS n FROM tapcard_card_recipients
+    WHERE card_id = ${cardId} AND source = 'web' AND created_at > now() - interval '1 hour'
+  `) as { n: number }[];
+  if ((recent[0]?.n ?? 0) >= 30) return false;
+  await sql`
+    INSERT INTO tapcard_card_recipients
+      (card_id, name, phone, email, unsubscribe_token, accept_token, do_not_contact, source, accepted_at,
+       accepted_name, accepted_phone, accepted_email, accepted_title, accepted_company, accepted_website)
+    VALUES (${cardId}, ${d.name}, ${d.phone}, ${d.email}, ${crypto.randomBytes(6).toString("base64url")},
+            ${crypto.randomBytes(6).toString("base64url")}, true, 'web', now(),
+            ${d.name}, ${d.phone}, ${d.email}, ${d.title}, ${d.company}, ${d.website})
+    ON CONFLICT (card_id, phone, email) DO UPDATE SET
+      accepted_at = now(), accepted_name = EXCLUDED.accepted_name, accepted_title = EXCLUDED.accepted_title,
+      accepted_company = EXCLUDED.accepted_company, accepted_website = EXCLUDED.accepted_website
+  `;
+  return true;
 }
 
 /// Recipients worth emailing about a change: haven't unsubscribed and gave

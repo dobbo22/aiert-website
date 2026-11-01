@@ -12,6 +12,7 @@ import AcceptRecipientForm from "../../AcceptRecipientForm";
 import { callActionLabel, isTapLink, linkColor, linkIcon, parseStoredLinks } from "@/lib/tapcardLinks";
 import { placeIdFromLinks, placeRating } from "@/lib/tapcardRating";
 import SaveContactButton from "../../SaveContactButton";
+import ShareBackForm from "../../ShareBackForm";
 import CarryCardToInstall from "../../CarryCardToInstall";
 import { publicAnnouncement, publicOffer, recentAnnouncements } from "@/lib/tapcardOffers";
 import ClaimOfferWeb from "../../ClaimOfferWeb";
@@ -236,6 +237,8 @@ export default async function CardPage({
                 Send {firstName} your card
               </a>
             )}
+
+            {!acceptToken && send !== "1" && <ShareBackForm cardId={id} ownerFirstName={firstName} />}
 
             {acceptToken && (
               <AcceptRecipientForm cardId={id} token={acceptToken} ownerFirstName={firstName} appStoreUrl={TAPCARD_APP_STORE_URL} />

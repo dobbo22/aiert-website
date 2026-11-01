@@ -35,6 +35,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       acceptedWebsite: r.accepted_website,
       openedAt: r.opened_at,
       openCount: r.open_count,
+      source: r.source ?? "owner",
+      createdAt: r.created_at,
     })),
   });
 }
