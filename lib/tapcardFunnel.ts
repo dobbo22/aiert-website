@@ -10,6 +10,8 @@ export const FUNNEL_STEPS = [
   "clip_opened", "clip_offer_claimed", "clip_get_app_tapped",
   // The same on the website card page (Android, and iPhone before the Clip).
   "web_offer_claimed", "web_get_app_tapped",
+  // Getting the card back: a stranger sharing details on the web card page, and a new app user asked to send their card back.
+  "web_shareback", "opened_sender_card", "sendback_prompted", "sendback_sent", "sendback_skipped",
 ] as const;
 export type FunnelStep = (typeof FUNNEL_STEPS)[number];
 

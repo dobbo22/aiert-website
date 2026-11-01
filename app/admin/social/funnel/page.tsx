@@ -10,7 +10,7 @@ const LABEL: Record<string, string> = {
   lookup_used: "Searched Find your business", lookup_picked: "Picked a business from the list", scan_used: "Scanned a paper card",
   phone_hint_used: "Used this phone's number",
   clip_opened: "App Clip: opened from a QR code", clip_offer_claimed: "App Clip: claimed an offer", clip_get_app_tapped: "App Clip: tapped Get the app",
-  web_offer_claimed: "Website card: claimed an offer", web_get_app_tapped: "Website card: tapped Get the app", apple_signin_used: "Used Sign in with Apple", contacts_used: "Filled from Contacts",
+  web_offer_claimed: "Website card: claimed an offer", web_get_app_tapped: "Website card: tapped Get the app", web_shareback: "Website card: someone shared their details", opened_sender_card: "New app user: opened the card they scanned", sendback_prompted: "New app user: asked to send their card back", sendback_sent: "New app user: sent their card back", sendback_skipped: "New app user: skipped sending back", apple_signin_used: "Used Sign in with Apple", contacts_used: "Filled from Contacts",
 };
 
 export default async function FunnelPage({ searchParams }: { searchParams: Promise<{ days?: string }> }) {

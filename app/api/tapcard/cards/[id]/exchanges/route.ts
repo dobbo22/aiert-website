@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
+import { pushToOwner } from "@/lib/tapcardPush";
 import {
   addExchange,
   countRecentExchangesFrom,
@@ -33,6 +34,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "too many cards sent, try again later" }, { status: 429 });
   }
   await addExchange(id, fromCardId);
+  after(() => pushToOwner(id, to.grouping_id, { title: "New contact", body: `${from.name || from.company || "Someone"} sent you their card` }));
   return NextResponse.json({ ok: true });
 }
 

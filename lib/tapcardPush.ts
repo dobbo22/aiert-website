@@ -255,3 +255,40 @@ export async function cleanupPush(): Promise<void> {
       AND NOT EXISTS (SELECT 1 FROM tapcard_push_prefs p WHERE p.follower_hash = d.follower_hash)
   `;
 }
+
+/// One message to the phone that owns `cardId` (the install that saved the card), e.g. "someone sent you their card".
+/// At most 6 an hour per card. Never throws.
+export async function pushToOwner(cardId: string, groupingId: string, msg: { title: string; body: string }): Promise<boolean> {
+  try {
+    if (!groupingId || (!apnsConfigured() && !fcmConfigured())) return false;
+    await ensureSchema();
+    const who = followerHash(groupingId);
+    const recent = (await sql`
+      SELECT COUNT(*)::int AS n FROM tapcard_push_log WHERE card_id = ${cardId} AND follower_hash = ${who} AND kind = 'reply' AND sent_at > now() - interval '1 hour'
+    `) as { n: number }[];
+    if ((recent[0]?.n ?? 0) >= 6) return false;
+    const dev = (await sql`SELECT platform, token FROM tapcard_push_devices WHERE follower_hash = ${who}`) as { platform: string; token: string }[];
+    if (!dev[0]) return false;
+    const data = { cardId, kind: "reply", ref: String(Date.now()) };
+    let out: { result: SendResult };
+    if (dev[0].platform === "android") out = fcmConfigured() ? await fcmSend(dev[0].token, msg.title, msg.body, data) : { result: "error" };
+    else {
+      const aps = { aps: { alert: { title: msg.title, body: msg.body }, sound: "default", "thread-id": cardId }, tapcard: data };
+      const hosts = ["https://api.push.apple.com", ...(process.env.APNS_SANDBOX_FALLBACK === "1" ? ["https://api.sandbox.push.apple.com"] : [])];
+      out = { result: "error" };
+      for (const h of hosts) {
+        const c = http2.connect(h);
+        c.on("error", () => {});
+        out = await apnsSend(c, dev[0].token, aps);
+        c.close();
+        if (out.result !== "dead") break;
+      }
+    }
+    if (out.result === "ok") await sql`INSERT INTO tapcard_push_log (card_id, follower_hash, kind, ref) VALUES (${cardId}, ${who}, 'reply', ${data.ref})`;
+    else if (out.result === "dead") await sql`DELETE FROM tapcard_push_devices WHERE follower_hash = ${who}`;
+    return out.result === "ok";
+  } catch (e) {
+    console.error("push to owner failed", e);
+    return false;
+  }
+}

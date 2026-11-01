@@ -1,5 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { addWebShareBack, getCard } from "@/lib/tapcardDb";
+import { pushToOwner } from "@/lib/tapcardPush";
+import { recordFunnel } from "@/lib/tapcardFunnel";
 
 interface Body {
   name?: string;
@@ -38,5 +40,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     website: clip(body.website, 300),
   });
   if (!ok) return NextResponse.json({ error: "Too many people sharing right now, try again later" }, { status: 429 });
+  after(async () => {
+    await recordFunnel("web_shareback", "other", "").catch(() => {});
+    await pushToOwner(id, card.grouping_id, { title: "New contact", body: `${name} shared their details with you` });
+  });
   return NextResponse.json({ ok: true });
 }
