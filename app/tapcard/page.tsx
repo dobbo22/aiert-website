@@ -30,6 +30,15 @@ export const metadata: Metadata = {
 const APP_STORE_URL = "https://apps.apple.com/app/id6816003159";
 const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.mailbroom.tapcard";
 
+const GLANCE = [
+  ["Is TapCard free?", "Free for life for the first 1,000 people on iPhone and the first 1,000 on Android. After that, sharing your own card needs a one-off unlock from \u00a30.99, which rises a little as more people join. Receiving a card is always free, and the person receiving it does not need the app."],
+  ["Do I need an account?", "No. You make a card in two screens, with no account or sign-up."],
+  ["How do people get my card?", "By QR code, by link, through Apple Wallet or Google Wallet, or with an offline QR code that works with no signal. If they have a card of their own they can send it back with one tap, and even without the app they can leave their details on your card page, so you get their details too."],
+  ["Is there an App Clip?", "On iPhone, scanning a business's QR code with the Camera can open a small TapCard App Clip, so a customer can see the card, save it and add it to Wallet without installing the full app."],
+  ["How many cards can I have?", "Up to 3 shared cards on one phone, for example personal, work and a side business. Company cards from TapCard for Business do not count towards that."],
+  ["What can a business do with it?", "Restaurants, shops and salons can send offers, stamp cards and news to people who follow them with TapCard Promote: free for 3 months, then \u00a349.99 a year or \u00a39.99 a month for one card. TapCard does not take payments for your discounts. TapCard for Business adds branded cards for many locations and staff."],
+] as const;
+
 const APP_JSON_LD = {
   "@context": "https://schema.org",
   "@graph": [
@@ -53,6 +62,10 @@ const APP_JSON_LD = {
       installUrl: APP_STORE_URL,
       offers: { "@type": "Offer", price: "0", priceCurrency: "GBP" },
       publisher: { "@id": "https://www.aiert.co.uk/#org" },
+    },
+    {
+      "@type": "FAQPage",
+      mainEntity: GLANCE.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })),
     },
   ],
 };
@@ -131,6 +144,18 @@ export default function TapCardHomePage() {
               <p className="mt-2 leading-relaxed text-cloud">{f.body}</p>
             </div>
           ))}
+        </section>
+
+        <section className="mt-16">
+          <h2 className="text-2xl font-black text-cloud">TapCard at a glance</h2>
+          <dl className="mt-6 grid gap-4 sm:grid-cols-2">
+            {GLANCE.map(([q, a]) => (
+              <div key={q} className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
+                <dt className="text-lg font-bold text-cloud">{q}</dt>
+                <dd className="mt-2 leading-relaxed text-cloud">{a}</dd>
+              </div>
+            ))}
+          </dl>
         </section>
 
         <section className="mt-12 flex flex-wrap gap-4">
