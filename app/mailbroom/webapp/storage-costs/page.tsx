@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "How to Reduce Microsoft 365 Storage Costs | AIERT Ltd",
+  title: "Microsoft 365 Storage Costs: What You Pay and How to Cut It",
   description:
-    "What Microsoft actually charges once a mailbox outgrows its plan, and how to reduce Microsoft 365 storage costs — extra storage, archive overage, and how to avoid paying to store clutter you don't need.",
+    "What Microsoft charges when a mailbox outgrows its plan: extra storage (commonly about $0.20/GB a month), archive add-on costs, and how to cut the bill.",
   keywords: ["reduce Microsoft 365 storage costs", "Microsoft 365 storage cost", "Exchange Online storage overage", "mailbox storage limit", "archive mailbox cost", "email storage pricing", "lower Exchange Online costs"],
   metadataBase: new URL("https://mailbroom.app"),
   alternates: { canonical: "/storage-costs" },
   openGraph: {
     images: [{ url: "https://mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
-    title: "How to Reduce Microsoft 365 Storage Costs",
-    description: "What Microsoft actually charges once a mailbox outgrows its plan, and how to bring the bill back down.",
+    title: "Microsoft 365 Storage Costs: What You Pay and How to Cut It",
+    description: "What Microsoft charges once a mailbox outgrows its plan, and how to bring the bill back down.",
     url: "https://mailbroom.app/storage-costs",
     siteName: "AIERT Ltd",
     locale: "en_GB",

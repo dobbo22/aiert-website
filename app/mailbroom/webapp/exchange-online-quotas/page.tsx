@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Exchange Online Storage Quotas by Plan, Explained | AIERT Ltd",
+  title: "Exchange Online Storage Limits by Plan: 50GB to 100GB (2026)",
   description:
-    "How much mailbox storage each Microsoft 365 / Exchange Online plan includes, what changed on 1 July 2026, and what happens once a mailbox is over its plan's limit.",
+    "Exchange Online mailbox size limits by plan: the 50GB to 100GB change from 1 July 2026, what each Microsoft 365 plan includes, and what happens when a mailbox is full.",
   keywords: [
     "Exchange Online storage limits",
     "Microsoft 365 mailbox size by plan",
@@ -15,8 +15,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "/exchange-online-quotas" },
   openGraph: {
     images: [{ url: "https://mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
-    title: "Exchange Online Storage Quotas by Plan, Explained",
-    description: "How much mailbox storage each M365 plan includes, and what happens once a mailbox is over the limit.",
+    title: "Exchange Online Storage Limits by Plan: 50GB to 100GB (2026)",
+    description: "Mailbox size limits by Microsoft 365 plan, the 1 July 2026 change, and what happens once a mailbox is full.",
     url: "https://mailbroom.app/exchange-online-quotas",
     siteName: "AIERT Ltd",
     locale: "en_GB",
