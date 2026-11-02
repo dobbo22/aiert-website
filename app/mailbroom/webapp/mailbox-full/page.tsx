@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Exchange Online Mailbox Full? How to Fix It | AIERT Ltd",
+  title: "Mailbox Full? How to Fix It in Outlook and Exchange Online",
   description:
-    "Mailbox full and can't send email in Exchange Online? Here's why it happens, what breaks first, and how to fix it fast — including the safest way to clear space across every mailbox in the company.",
+    "Your mailbox is full, or a recipient's is? What the message means, what stops working first, and how to free space fast in Outlook and Exchange Online.",
   keywords: ["Exchange Online mailbox full", "mailbox full fix", "can't send email mailbox full", "Outlook mailbox full", "Exchange Online storage quota exceeded", "Microsoft 365 mailbox over quota"],
   metadataBase: new URL("https://mailbroom.app"),
   alternates: { canonical: "/mailbox-full" },
   openGraph: {
     images: [{ url: "https://mailbroom.app/mailbroom-business-og.png", width: 1200, height: 628, alt: "MailBroom for Business — inbox cleanup for the whole company" }],
-    title: "Exchange Online Mailbox Full? How to Fix It",
-    description: "Why it happens, what breaks first, and how to fix it fast.",
+    title: "Mailbox Full? How to Fix It in Outlook and Exchange Online",
+    description: "What the message means, what stops working first, and how to free space fast.",
     url: "https://mailbroom.app/mailbox-full",
     siteName: "AIERT Ltd",
     locale: "en_GB",
@@ -19,6 +19,14 @@ export const metadata: Metadata = {
 };
 
 const faqs = [
+  {
+    q: "What does \"the recipient's mailbox is full\" mean?",
+    a: "It is a bounce message from the other person's mail system: their mailbox is over its storage limit, so it refused your message (often with the code 552 5.2.2). Nothing is wrong with your email. Try again later, reach them another way, or ask them to clear some space. If people tell you your own address bounces, your mailbox has passed its send-and-receive limit and needs clearing.",
+  },
+  {
+    q: "My mailbox is full: what should I do first?",
+    a: "Empty Deleted Items and Junk Email, because they still count against your storage until emptied. Then find what is using the space: in classic Outlook for Windows, File, Info, Tools, Mailbox Cleanup shows the biggest folders and items. Delete or save the largest attachments first, then unsubscribe from newsletters so it does not fill up again.",
+  },
   {
     q: "What happens when an Exchange Online mailbox is full?",
     a: "Exchange Online enforces storage limits in stages. Once a mailbox passes its warning threshold, the user gets a low-storage notification but mail still flows normally. Past the send limit, the user can still receive mail but can no longer send. Past the send-and-receive limit, incoming mail is rejected and bounces back to the sender — the most disruptive stage, since it looks to outside senders like the account doesn't exist.",
@@ -48,7 +56,7 @@ const faqs = [
 const techArticleJsonLd = {
   "@context": "https://schema.org",
   "@type": "TechArticle",
-  headline: "Exchange Online Mailbox Full? How to Fix It",
+  headline: "Mailbox Full? How to Fix It in Outlook and Exchange Online",
   description: "Why an Exchange Online mailbox fills up, what breaks at each stage, and how to fix it — including the safest way to clear space across every mailbox in a company.",
   url: "https://mailbroom.app/mailbox-full",
   dateModified: "2026-07-21",
