@@ -33,7 +33,7 @@ export default function LocationPricing({ value, onChange }: { value: number; on
           </li>
         ))}
       </ul>
-      <p className="mt-2 text-xs text-mist">Prices are for UK businesses; VAT at 20% is added at checkout. Based elsewhere? Email enquiries@aiert.co.uk. One shop or one card only? TapCard Promote in the app is simpler: £49.99 a year, first 3 months free.</p>
+      <p className="mt-2 text-xs text-mist">Prices are for UK businesses; VAT at 20% is added at checkout. Based elsewhere? Email enquiries@aiert.co.uk. One shop or one card only? TapCard Promote in the app is simpler: £49.99 a year (VAT included), first 3 months free.</p>
     </div>
   );
 }

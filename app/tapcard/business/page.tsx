@@ -43,7 +43,7 @@ const FAQ = [
   ["Does my team need to make an account or pay for the app?", "No. Employees share their card from day one. The personal lifetime-unlock paywall does not apply to company-provisioned cards, and the company pays one subscription."],
   ["How do I add all my staff at once?", "Choose your staff list (a CSV, or an Outlook, Google or iCloud contacts export) and you get one invite link per person to send from your own email. The list stays on your computer."],
   ["Can each branch post its own offers and news?", "Yes. Every location card includes TapCard Promote, so each branch can post special offers (each with a one-off QR code) and news to the people who follow it. Head office sees every location's views, scans, saves and offers claimed and used in one place, with a CSV download."],
-  ["I only have one shop. Do I need TapCard for Business?", "No. Business starts at two locations. For one shop or one card, TapCard Promote in the app is £49.99 a year or £9.99 a month, with the first 3 months free."],
+  ["I only have one shop. Do I need TapCard for Business?", "No. Business starts at two locations. For one shop or one card, TapCard Promote in the app is £49.99 a year or £9.99 a month (VAT included), with the first 3 months free."],
 ] as const;
 
 const FAQ_JSON_LD = {
