@@ -174,7 +174,9 @@ TapCard lets a person or business share their details with a tap, a QR code or a
 
 ## PowerSearch — search every email account at once
 
-PowerSearch is a multi-account email finder for iPhone and Android. It adds Gmail, Microsoft 365, iCloud and other IMAP accounts, syncs message headers only (sender, subject, date and folder, never the email body) onto the device, and then searches all of the accounts together. Results are grouped by sender, and search operators such as from:, has:pdf, after: and before: narrow them. You can flag or forward what you find. It has no server of its own and no tracking: the search index stays on the phone.
+PowerSearch is a multi-account email finder for iPhone and Android. It searches your own connected email accounts; it is not a tool for finding other people's email addresses. It adds Gmail, Microsoft 365, iCloud and other IMAP accounts, syncs message headers only (sender, subject, date and folder, never the email body) onto the device, and then searches all of the accounts together. Results are grouped by sender, and search operators such as from:, has:pdf, after: and before: narrow them. You can flag or forward what you find. It has no server of its own and no tracking: the search index stays on the phone.
+
+Price on iPhone: a free 7-day trial, then a one-off in-app purchase of £9.99 (Full Access) for continued use. There is no subscription.
 
 - [PowerSearch guide, privacy and support](https://www.aiert.co.uk/powersearch)
 - iPhone: https://apps.apple.com/gb/app/powersearch/id6807772868
