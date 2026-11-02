@@ -260,3 +260,6 @@ New in these builds:
 - Wording changed on: /business (pricing section), /promote (two plans side by side), /how-it-works, Business guide + security page, the trial-reminder email, and the apps' business suggestion text (apps: code only, ships in the next release; the builds in review still say "plans start at GBP 20 a year").
 - Not done: what to do with orgs already on the old bands (none known except the Dishoom test org), and Apple/Google do not see any of this (web plan sold to companies).
 - Housekeeping after the Stripe work: the CLI's live key (rk_live) was widened to Products/Prices write; Martin can set it back to read-only. Two unpaid Checkout sessions (3 locations) were opened for testing and expire by themselves; two unpaid test orgs named "TapCard price check (delete me)" exist: `DELETE FROM tapcard_biz_orgs WHERE name = 'TapCard price check (delete me)';` in the invites database.
+
+## 2 Nov 2026: three shared cards per phone
+`MAX_CARDS_PER_INSTALL` in `lib/tapcardCardLimits.ts` is now 3 (was 5). Company cards (org_id set) do not count. Before changing it, installs on the live database had at most 3 cards (157 with 1, 23 with 2, 2 with 3), so nobody was over the new limit. When a phone is at the limit, an unused card older than 7 days is cleared to make room; if none is unused the new card is refused with code `too_many_cards`.

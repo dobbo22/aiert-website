@@ -9,7 +9,7 @@ import { deleteCard } from "@/lib/tapcardDb";
 // - A card is "unused" when nobody has opened or saved it, it has no recipients, offers, subscription or followers, it is not verified
 //   and it is a personal-plan card (company cards are never touched here).
 
-export const MAX_CARDS_PER_INSTALL = 5;
+export const MAX_CARDS_PER_INSTALL = 3;
 /// An unused card must be at least this old before it can be cleared to make room (a card just made may not have been shared yet).
 const MIN_AGE_DAYS_TO_MAKE_ROOM = 7;
 
