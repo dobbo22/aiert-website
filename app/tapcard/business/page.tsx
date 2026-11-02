@@ -101,7 +101,7 @@ export default function TapCardBusinessPage() {
             ))}
           </ul>
           <p className="mt-4 text-lg leading-relaxed text-cloud">
-            Billed yearly, plus VAT at 20%. Every location includes its own card and up to {STAFF_PER_LOCATION} staff cards, and TapCard Promote (special offers and
+            Billed yearly, plus VAT at 20%, for UK businesses (based elsewhere? <a href="mailto:enquiries@aiert.co.uk?subject=TapCard%20for%20Business%20outside%20the%20UK" className="text-gold underline">Email us</a>). Every location includes its own card and up to {STAFF_PER_LOCATION} staff cards, and TapCard Promote (special offers and
             news) is included on every location card, so you don&apos;t also need a Promote subscription. Start with a 30-day free trial (one card).
             More than {MAX_LOCATIONS} locations? <a href="mailto:enquiries@aiert.co.uk?subject=TapCard%20for%20Business" className="text-gold underline">Get in touch</a>.
           </p>
