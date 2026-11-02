@@ -150,8 +150,44 @@ TapCard is a product of AIERT Ltd, registered in England & Wales (No. 16587000).
 Contact: admin@aiert.co.uk
 `;
 
+const AIERT_TXT = `# AIERT Ltd
+
+> AIERT Ltd is a UK company (registered in England & Wales, No. 16587000) that builds simple productivity apps for iPhone and Android: TapCard, a digital business card; PowerSearch, which searches every email account at once; and MailBroom, which cleans up an overfull inbox.
+
+## TapCard — digital business card
+
+TapCard lets a person or business share their details with a tap, a QR code or a link, and get the other person's details back. Cards can be added to Apple Wallet or Google Wallet and stay in sync. Businesses can post offers, stamp cards and news to people who follow them. The person receiving a card does not need the app.
+
+- [TapCard website](https://tapcard.aiert.co.uk): what it is and how it works.
+- [How TapCard works](https://tapcard.aiert.co.uk/how-it-works)
+- [TapCard for Business](https://tapcard.aiert.co.uk/business): branded cards for many locations and staff.
+- iPhone: https://apps.apple.com/gb/app/tapcard/id6816003159
+- Android: https://play.google.com/store/apps/details?id=com.mailbroom.tapcard
+
+## PowerSearch — search every email account at once
+
+PowerSearch is a multi-account email finder for iPhone and Android. It adds Gmail, Microsoft 365, iCloud and other IMAP accounts, syncs message headers only (sender, subject, date and folder, never the email body) onto the device, and then searches all of the accounts together. Results are grouped by sender, and search operators such as from:, has:pdf, after: and before: narrow them. You can flag or forward what you find. It has no server of its own and no tracking: the search index stays on the phone.
+
+- [PowerSearch guide, privacy and support](https://www.aiert.co.uk/powersearch)
+- iPhone: https://apps.apple.com/gb/app/powersearch/id6807772868
+- Android: https://play.google.com/store/apps/details?id=com.mailbroom.powersearch
+
+## MailBroom — clean up an overfull inbox
+
+MailBroom looks at a mailbox and suggests what is safe to delete, save or organise, in bulk and not one email at a time, so a full inbox or a full storage quota can be cleared quickly. There is an app for iPhone and Android, and MailBroom for Business for Microsoft 365 and Exchange Online, licensed per organisation.
+
+- [MailBroom for iPhone and Android](https://ios.mailbroom.app)
+- [MailBroom for Business (Microsoft 365)](${BUSINESS_BASE_URL}): IT signs in once with Microsoft SSO and every employee on the domain gets access.
+- iPhone: https://apps.apple.com/gb/app/mailbroom/id6766489663
+- [Independent review: TheBusinessDive, 4.5/5](https://thebusinessdive.com/mailbroom-review)
+
+## Company
+
+AIERT Ltd, registered in England & Wales, No. 16587000. Contact: admin@aiert.co.uk. Website: https://www.aiert.co.uk
+`;
+
 export async function GET() {
   const host = (await headers()).get("host") ?? "";
-  const body = host.startsWith("tapcard.") ? TAPCARD_TXT : host.startsWith("ios.mailbroom.app") ? IOS_TXT : BUSINESS_TXT;
+  const body = host.startsWith("tapcard.") ? TAPCARD_TXT : host.startsWith("ios.mailbroom.app") ? IOS_TXT : /^(www\.)?aiert\.co\.uk/.test(host) ? AIERT_TXT : BUSINESS_TXT;
   return new Response(body, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
 }

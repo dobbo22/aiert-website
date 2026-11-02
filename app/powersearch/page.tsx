@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "PowerSearch – Privacy & Support | AIERT Ltd",
+  title: "PowerSearch: Search All Your Email Accounts at Once | AIERT Ltd",
   description:
-    "PowerSearch is a multi-account email finder for iPhone and Android — sync headers from every account on-device, search across all of them, flag or forward what you find. Privacy policy and support.",
+    "PowerSearch is a multi-account email finder for iPhone and Android: sync headers from Gmail, Microsoft 365, iCloud and IMAP accounts on your device, search across all of them, flag or forward what you find. Guide, privacy and support.",
   metadataBase: new URL("https://www.aiert.co.uk"),
   alternates: { canonical: "/powersearch" },
   openGraph: {
