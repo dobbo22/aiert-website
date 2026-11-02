@@ -7,7 +7,7 @@ export interface CardRow { id: string; name: string; company: string; kind: stri
 export interface LinkRow { slug: string; label: string; n: number }
 export interface Numbers {
   days: number;
-  totals: { cards: number; newCards: number; views: number; qr: number; saves: number; followers: number; installs: number; claims: number; used: number };
+  totals: { cards: number; newCards: number; views: number; qr: number; saves: number; followers: number; installs: number; claims: number; used: number; promoteEver: number; promoteActive: number };
   cards: CardRow[] | null;
   funnel: { step: string; n: number }[] | null;
   links: LinkRow[] | null;
@@ -40,6 +40,9 @@ export async function weeklyNumbers(days: number): Promise<Numbers> {
   const installs = await one(sql`SELECT COUNT(*)::int AS n FROM tapcard_card_installs`);
   const claims = await one(sql`SELECT COUNT(*)::int AS n FROM tapcard_offer_claims`);
   const used = await one(sql`SELECT COUNT(*)::int AS n FROM tapcard_offer_claims WHERE redeemed_at IS NOT NULL`);
+  // Store subscribers only (App Store and Google Play); grants are not counted. Counts people (original purchase), not renewals.
+  const promoteEver = await one(sql`SELECT COUNT(DISTINCT original_id)::int AS n FROM tapcard_promote WHERE original_id <> ''`);
+  const promoteActive = await one(sql`SELECT COUNT(DISTINCT original_id)::int AS n FROM tapcard_promote WHERE original_id <> '' AND until > now()`);
   const a = ((all ?? [{}]) as Record<string, number>[])[0];
 
   const f = await safe(funnelTotals(days));
@@ -53,6 +56,6 @@ export async function weeklyNumbers(days: number): Promise<Numbers> {
 
   return {
     days, cards: rows, funnel, links, mailshots,
-    totals: { cards: a.cards ?? 0, newCards: a.new_cards ?? 0, views: a.views ?? 0, qr: a.qr ?? 0, saves: a.saves ?? 0, followers, installs, claims, used },
+    totals: { cards: a.cards ?? 0, newCards: a.new_cards ?? 0, views: a.views ?? 0, qr: a.qr ?? 0, saves: a.saves ?? 0, followers, installs, claims, used, promoteEver, promoteActive },
   };
 }

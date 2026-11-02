@@ -31,6 +31,11 @@ export default async function NumbersPage({ searchParams }: { searchParams: Prom
         ))}
       </div>
 
+      <p style={{ marginTop: 16 }}>
+        <strong>Promote subscribers: {t.promoteEver} of 1,000</strong> before the new-subscriber price rises from £49.99 to £99.99 (decided 21 Oct 2026).
+        {" "}{t.promoteActive} active now; free trials and renewals are not double counted. When it reaches 1,000, change the price for new subscribers in App Store Connect and Play Console, then update the website pricing text.
+      </p>
+
       <h2 style={h2}>Businesses</h2>
       {!d.cards ? <p>Not available.</p> : d.cards.length === 0 ? <p>No business cards yet.</p> : (
         <div style={{ overflowX: "auto" }}><table style={{ borderCollapse: "collapse" }}>
