@@ -23,8 +23,6 @@ const TAPCARD_ORIGIN = "https://tapcard.aiert.co.uk";
 // Through tapcard.aiert.co.uk/go/<slug> (app/tapcard/go), which counts the
 // click and adds App Store campaign attribution — see lib/trackedLinks.ts.
 const TAPCARD_APP_STORE_PATH = `${TAPCARD_ORIGIN}/go/tapcard-web-get-tapcard`;
-const MAILBROOM_APP_STORE_URL = `${TAPCARD_ORIGIN}/go/tapcard-web-mailbroom`;
-const POWERSEARCH_APP_STORE_URL = `${TAPCARD_ORIGIN}/go/tapcard-web-powersearch`;
 
 // "Send your card back" needs TapCard 1.1 (Universal Links + the send-back
 // screen). Keep this off until 1.1 is live on the App Store — with 1.0, a
@@ -357,33 +355,7 @@ export default async function CardPage({
           </BrandProvider>
         </div>
 
-        <a
-          href={TAPCARD_APP_STORE_URL}
-          className="mt-4 flex items-center gap-3 rounded-xl border border-slate px-4 py-3 text-cloud"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="https://www.aiert.co.uk/tapcard-icon.png" alt="" className="h-8 w-8 rounded-lg" />
-          <span>Get TapCard — make your own card →</span>
-        </a>
-
         {!acceptToken && send !== "1" && card.card_kind !== "person" && !/personal/i.test(card.label) && <ReferBusiness origin={TAPCARD_ORIGIN} />}
-
-        <div className="mt-8 space-y-3">
-          <PromoCard
-            iconSrc="https://www.aiert.co.uk/mailbroom-icon.png"
-            headline="Also drowning in old email?"
-            body="MailBroom, from the same developer, looks at your mailbox and suggests what's safe to delete, save, or organise — in bulk, not one at a time."
-            ctaLabel="Get MailBroom"
-            href={MAILBROOM_APP_STORE_URL}
-          />
-          <PromoCard
-            iconSrc="https://www.aiert.co.uk/powersearch-icon.png"
-            headline="Need to find an old email fast?"
-            body="PowerSearch, also from Aiert Ltd, searches every connected account at once — great for finding that one email with your tickets, a contract, or a receipt buried months ago."
-            ctaLabel="Get PowerSearch"
-            href={POWERSEARCH_APP_STORE_URL}
-          />
-        </div>
 
         {/* Apple guideline 1.2: public user content needs a way to report it. */}
         <p className="mt-8 text-center text-xs text-cloud">
@@ -443,32 +415,4 @@ function mapsUrl(address: string, userAgent: string, place = ""): string {
   if (/Android/i.test(userAgent)) return `geo:0,0?q=${query}`;
   if (/iPhone|iPad|iPod/i.test(userAgent)) return `https://maps.apple.com/?q=${encodeURIComponent(appleMapsQuery(a, place))}`;
   return `https://www.google.com/maps/search/?api=1&query=${query}`;
-}
-
-function PromoCard({
-  iconSrc,
-  headline,
-  body,
-  ctaLabel,
-  href,
-}: {
-  iconSrc: string;
-  headline: string;
-  body: string;
-  ctaLabel: string;
-  href: string;
-}) {
-  return (
-    <div className="rounded-xl bg-charcoal p-4">
-      <div className="flex items-center gap-3">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={iconSrc} alt="" className="h-7 w-7 rounded-[7px]" />
-        <p className="font-semibold text-cloud">{headline}</p>
-      </div>
-      <p className="mt-2 text-sm text-cloud">{body}</p>
-      <a href={href} className="mt-2 inline-block text-sm font-semibold text-teal">
-        {ctaLabel} →
-      </a>
-    </div>
-  );
 }
