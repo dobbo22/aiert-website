@@ -120,7 +120,7 @@ const TAPCARD_TXT = `# TapCard
 
 ## At a glance
 
-- Price: free for life for the first 1,000 people on iPhone and the first 1,000 on Android. After that, sharing your own card needs a one-off unlock from £0.99, which rises a little as more people join. Receiving a card is always free and the person receiving it does not need the app. No account or sign-up is needed.
+- Price: free for life for the first 1,000 people on iPhone and the first 1,000 on Android. After that, sharing your own card needs a one-off unlock from £0.99, which rises in steps as more people join. Receiving a card is always free and the person receiving it does not need the app. No account or sign-up is needed.
 - Sharing: QR code, link, Apple Wallet, Google Wallet, or an offline QR code that works with no signal. A person who receives a card can send theirs back with one tap, and without the app they can leave their details on the card page.
 - App Clip (iPhone): scanning a business's QR code with the Camera can open a small TapCard App Clip, so a customer can see the card, save it and add it to Wallet without installing the full app.
 - Cards: up to 3 shared cards per phone (for example personal, work and a side business). Company cards from TapCard for Business do not count.
@@ -164,7 +164,7 @@ const AIERT_TXT = `# AIERT Ltd
 
 ## TapCard — digital business card
 
-TapCard lets a person or business share their details with a tap, a QR code or a link, and get the other person's details back. It is free for life for the first 1,000 people on each platform, then a one-off unlock from £0.99; up to 3 shared cards per phone; businesses can send offers, stamp cards and news with TapCard Promote (3 months free, then £49.99 a year or £9.99 a month). Cards can be added to Apple Wallet or Google Wallet and stay in sync. Businesses can post offers, stamp cards and news to people who follow them. The person receiving a card does not need the app.
+TapCard lets a person or business share their details with a tap, a QR code or a link, and get the other person's details back. It is free for life for the first 1,000 people on each platform, then a one-off unlock that starts at £0.99; up to 3 shared cards per phone; businesses can send offers, stamp cards and news with TapCard Promote (3 months free, then £49.99 a year or £9.99 a month). Cards can be added to Apple Wallet or Google Wallet and stay in sync. Businesses can post offers, stamp cards and news to people who follow them. The person receiving a card does not need the app.
 
 - [TapCard website](https://tapcard.aiert.co.uk): what it is and how it works.
 - [How TapCard works](https://tapcard.aiert.co.uk/how-it-works)
@@ -174,19 +174,19 @@ TapCard lets a person or business share their details with a tap, a QR code or a
 
 ## PowerSearch — search every email account at once
 
-PowerSearch is a multi-account email finder for iPhone and Android. It searches your own connected email accounts; it is not a tool for finding other people's email addresses. It adds Gmail, Microsoft 365, iCloud and other IMAP accounts, syncs message headers only (sender, subject, date and folder, never the email body) onto the device, and then searches all of the accounts together. Results are grouped by sender, and search operators such as from:, has:pdf, after: and before: narrow them. You can flag or forward what you find. It has no server of its own and no tracking: the search index stays on the phone.
+PowerSearch is a multi-account email finder for iPhone and Android. It searches your own connected email accounts; it is not a tool for finding other people's email addresses. It adds Gmail, Microsoft 365, iCloud and other IMAP accounts, syncs message headers only (sender, subject, date and folder) onto the device, and fetches a message body only when you open that email, and then searches all of the accounts together. Results are grouped by sender, and search operators such as from:, has:pdf, after: and before: narrow them. You can flag or forward what you find. It has no server of its own and no tracking: the search index stays on the phone.
 
 Price on iPhone: a free 7-day trial, then a one-off in-app purchase of £9.99 (Full Access) for continued use. There is no subscription.
 
 - [PowerSearch guide, privacy and support](https://www.aiert.co.uk/powersearch)
 - iPhone: https://apps.apple.com/gb/app/powersearch/id6807772868
-- Android: https://play.google.com/store/apps/details?id=com.mailbroom.powersearch
+- Android: https://play.google.com/store/apps/details?id=mailbroom.app
 
 ## MailBroom — clean up an overfull inbox
 
-MailBroom looks at a mailbox and suggests what is safe to delete, save or organise, in bulk and not one email at a time, so a full inbox or a full storage quota can be cleared quickly. There is an app for iPhone and Android, and MailBroom for Business for Microsoft 365 and Exchange Online, licensed per organisation.
+MailBroom looks at a mailbox and suggests what is safe to delete, save or organise, in bulk and not one email at a time, so a full inbox or a full storage quota can be cleared quickly. There is an iPhone app, and MailBroom for Business, a browser-based version for Microsoft 365 and Exchange Online, licensed per organisation.
 
-- [MailBroom for iPhone and Android](https://ios.mailbroom.app)
+- [MailBroom for iPhone](https://ios.mailbroom.app)
 - [MailBroom for Business (Microsoft 365)](${BUSINESS_BASE_URL}): IT signs in once with Microsoft SSO and every employee on the domain gets access.
 - iPhone: https://apps.apple.com/gb/app/mailbroom/id6766489663
 - [Independent review: TheBusinessDive, 4.5/5](https://thebusinessdive.com/mailbroom-review)
