@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import StoreBadges from "./StoreBadges";
+import JsonLd from "./tapcard/JsonLd";
 
 const MAILBROOM_APP_STORE = "https://apps.apple.com/gb/app/mailbroom/id6766489663";
 const POWERSEARCH_APP_STORE = "https://apps.apple.com/gb/app/powersearch/id6807772868";
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
     "Aiert Ltd builds simple productivity apps for iPhone and Android: TapCard, a digital business card (free for the first 1,000 users); PowerSearch, which searches every email account at once; and MailBroom, which cleans up your inbox privately on your phone.",
   keywords: ["Aiert", "productivity apps", "TapCard", "digital business card", "PowerSearch", "email search", "MailBroom", "email cleaner", "inbox cleaner", "UK", "on-device"],
   metadataBase: new URL("https://www.aiert.co.uk"),
+  alternates: { canonical: "https://www.aiert.co.uk/" },
   openGraph: {
     title: "Aiert Ltd – Simple productivity apps for iPhone and Android",
     description:
@@ -23,9 +25,55 @@ export const metadata: Metadata = {
   },
 };
 
+const JSON_LD = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://www.aiert.co.uk/#org",
+      name: "AIERT Ltd",
+      url: "https://www.aiert.co.uk/",
+      logo: "https://www.aiert.co.uk/tapcard-icon.png",
+      description: "A UK company building simple productivity apps for iPhone and Android: TapCard, PowerSearch and MailBroom.",
+      identifier: "16587000",
+      areaServed: "GB",
+    },
+    {
+      "@type": "SoftwareApplication",
+      name: "TapCard: Digital Business Card",
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "iOS, Android",
+      url: "https://tapcard.aiert.co.uk/",
+      downloadUrl: TAPCARD_APP_STORE,
+      description: "A free digital business card: share your details with a tap or a QR code, and get theirs back.",
+      publisher: { "@id": "https://www.aiert.co.uk/#org" },
+    },
+    {
+      "@type": "SoftwareApplication",
+      name: "PowerSearch",
+      applicationCategory: "ProductivityApplication",
+      operatingSystem: "iOS, Android",
+      downloadUrl: POWERSEARCH_APP_STORE,
+      description: "Search every connected email account at once.",
+      publisher: { "@id": "https://www.aiert.co.uk/#org" },
+    },
+    {
+      "@type": "SoftwareApplication",
+      name: "MailBroom",
+      applicationCategory: "UtilitiesApplication",
+      operatingSystem: "iOS, Android",
+      url: "https://ios.mailbroom.app/",
+      downloadUrl: MAILBROOM_APP_STORE,
+      description: "Cleans up your inbox by suggesting what is safe to delete, save or organise, in bulk.",
+      publisher: { "@id": "https://www.aiert.co.uk/#org" },
+    },
+  ],
+};
+
 export default function Home() {
   return (
     <div className="min-h-screen hero-gradient grid-bg">
+      <JsonLd data={JSON_LD} />
 
       {/* ── NAV ───────────────────────────────────────────── */}
       <nav className="nav-glass sticky top-0 z-50">
@@ -73,9 +121,9 @@ export default function Home() {
         </div>
 
         <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-tight mb-6">
-          <span className="text-cloud">Artificial Intelligence</span>
+          <span className="text-cloud">Digital business cards, email search</span>
           <br />
-          <span className="gold-text">meets Everyday Productivity</span>
+          <span className="gold-text">and inbox clean-up, made simple</span>
         </h1>
 
         <p className="text-lg md:text-xl max-w-2xl mx-auto mb-6 text-mist leading-relaxed">
