@@ -57,7 +57,7 @@ const FAQ = [
   ["How does a customer claim an offer?", "Each person claims their own one-off QR code. Your staff scan it with a phone camera (or type the code on any till), enter the PIN, and it is marked as used. It can never be used twice."],
   ["Can I run a stamp card?", "Yes. You choose the number of stamps and the reward in your own words. Customers keep the stamp card on their phone, your staff add a stamp with a scan and your PIN, and the card starts again when the reward is given."],
   ["Will I be able to see who my customers are?", "No. You see numbers only: how many people claimed each offer, how many used it, how many follow you and how often your card is viewed. You never see who anyone is."],
-  ["I have several locations. Which plan do I need?", "TapCard for Business. It is priced per location and billed yearly (£42 a year each for 2 to 4 locations, £34 each for 5 to 19, £27 each from 20), includes up to 10 staff cards per location and includes Promote on every card. One shop or one card? Choose Promote."],
+  ["I have several locations. Which plan do I need?", "TapCard for Business. It is priced per location and billed yearly (£42 a year each for 2 to 4 locations, £34 each for 5 to 19, £27 each from 20, all plus VAT), includes up to 10 staff cards per location and includes Promote on every card. One shop or one card? Choose Promote."],
 ] as const;
 
 const FAQ_JSON_LD = {
@@ -176,7 +176,7 @@ export default function PromotePage() {
               <h3 className="mt-1 text-xl font-bold text-cloud">TapCard for Business</h3>
               <p className="mt-2 leading-relaxed text-cloud">
                 A company plan instead of a Promote subscription, priced <strong>per location</strong> and billed yearly:{" "}
-                <strong>£42 a year each</strong> for 2 to 4 locations, <strong>£34 each</strong> for 5 to 19, <strong>£27 each</strong> from 20.
+                <strong>£42 a year each</strong> for 2 to 4 locations, <strong>£34 each</strong> for 5 to 19, <strong>£27 each</strong> from 20, all plus VAT.
                 Every location gets its own card and up to 10 staff cards, and <strong>Promote is included on all of them</strong>. Head office sees
                 one set of numbers. Try it free for 30 days. <a href="/business" className="text-gold underline">See TapCard for Business</a>.
               </p>

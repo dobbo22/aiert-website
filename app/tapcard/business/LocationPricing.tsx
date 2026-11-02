@@ -20,7 +20,7 @@ export default function LocationPricing({ value, onChange }: { value: number; on
         />
       </label>
       <p className="mt-3 text-lg font-bold text-cloud">
-        £{annualGBP(n)} a year <span className="text-sm font-normal text-mist">(£{perLocationGBP(n)} per location, billed yearly)</span>
+        £{annualGBP(n)} a year + VAT <span className="text-sm font-normal text-mist">(£{perLocationGBP(n)} per location + VAT, billed yearly)</span>
       </p>
       <p className="mt-1 text-sm text-cloud">
         Each location includes its own card and up to {STAFF_PER_LOCATION} staff cards, with TapCard Promote (offers and news) on every location.
@@ -29,11 +29,11 @@ export default function LocationPricing({ value, onChange }: { value: number; on
         {LOCATION_TIERS.map((t) => (
           <li key={t.from} className="flex justify-between border-b border-slate/50 py-1">
             <span>{tierLabel(t)}</span>
-            <span>£{t.perYear} each a year</span>
+            <span>£{t.perYear} each a year + VAT</span>
           </li>
         ))}
       </ul>
-      <p className="mt-2 text-xs text-mist">One shop or one card only? TapCard Promote in the app is simpler: £49.99 a year, first 3 months free.</p>
+      <p className="mt-2 text-xs text-mist">VAT at 20% is added at checkout. One shop or one card only? TapCard Promote in the app is simpler: £49.99 a year, first 3 months free.</p>
     </div>
   );
 }

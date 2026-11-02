@@ -38,5 +38,5 @@ export function tierLabel(t: LocationTier): string {
 
 /// The one-paragraph explanation used on the public pages, the sign-up form and the trial email.
 export const PRICING_SENTENCE =
-  "TapCard for Business is priced per location, billed yearly: £42 a year per location for 2 to 4 locations, £34 each for 5 to 19, and £27 each from 20. " +
+  "TapCard for Business is priced per location, billed yearly: £42 a year per location for 2 to 4 locations, £34 each for 5 to 19, and £27 each from 20, all plus VAT. " +
   "Every location includes up to 10 staff cards, and TapCard Promote (offers and news) is included on every location card.";

@@ -133,7 +133,7 @@ export default function SignupForm() {
               <input type="radio" name="plan" checked={plan === "locations"} onChange={() => setPlan("locations")} />
               Two or more locations
             </span>
-            <span className="text-mist">from £42 a year each</span>
+            <span className="text-mist">from £42 a year each + VAT</span>
           </label>
         </div>
         {plan === "locations" ? <LocationPricing value={locations} onChange={setLocations} /> : null}

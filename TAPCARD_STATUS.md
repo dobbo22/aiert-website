@@ -263,3 +263,6 @@ New in these builds:
 
 ## 2 Nov 2026: three shared cards per phone
 `MAX_CARDS_PER_INSTALL` in `lib/tapcardCardLimits.ts` is now 3 (was 5). Company cards (org_id set) do not count. Before changing it, installs on the live database had at most 3 cards (157 with 1, 23 with 2, 2 with 3), so nobody was over the new limit. When a phone is at the limit, an unused card older than 7 days is cleared to make room; if none is unused the new card is refused with code `too_many_cards`.
+
+## 2 Nov 2026: TapCard for Business prices are plus VAT
+AIERT Ltd is VAT-registered. TapCard for Business prices (£42 / £34 / £27 per location a year) are quoted **plus VAT**; every public page, the sign-up form, the billing screen and the trial emails now say so. The Stripe Checkout in `app/api/tapcard/biz/checkout/route.ts` adds the VAT when env `TAPCARD_BIZ_TAX_RATE_ID` is set to the id of a 20% VAT tax rate (exclusive) created in Stripe; with it unset, no VAT is added, so set it before or with the deploy. Also set the VAT number in Stripe (Settings, Business details / Invoice settings) so invoices show it. Store prices (Promote £49.99 / £9.99, personal unlocks) already include VAT: Apple and Google collect it, and proceeds are price ÷ 1.2 × 0.85.

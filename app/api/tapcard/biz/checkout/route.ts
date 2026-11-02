@@ -59,7 +59,8 @@ export async function POST(req: NextRequest) {
     customer_email: email,
     client_reference_id: orgId,
     // The buyer can still change the number on the Stripe page; the webhook reads the final quantity.
-    line_items: [{ price: priceId, quantity: locations, adjustable_quantity: { enabled: true, minimum: MIN_LOCATIONS, maximum: MAX_LOCATIONS } }],
+    // Prices are quoted plus VAT. TAPCARD_BIZ_TAX_RATE_ID is the id of a 20% VAT tax rate (exclusive) made in Stripe; without it nothing is added.
+    line_items: [{ price: priceId, quantity: locations, adjustable_quantity: { enabled: true, minimum: MIN_LOCATIONS, maximum: MAX_LOCATIONS }, ...(process.env.TAPCARD_BIZ_TAX_RATE_ID ? { tax_rates: [process.env.TAPCARD_BIZ_TAX_RATE_ID] } : {}) }],
     success_url: `${origin}/business/welcome?org=${orgId}`,
     cancel_url: existingOrg ? `${origin}/business/admin/billing?canceled=1` : `${origin}/business?canceled=1`,
     metadata: { orgId, adminEmail: email, adminName: typeof body.name === "string" ? body.name.trim().slice(0, 100) : "" },

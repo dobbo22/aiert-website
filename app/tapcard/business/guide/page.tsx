@@ -38,7 +38,7 @@ export default function TapCardBusinessGuidePage() {
         <ul>
           <li>
             Start at <a href="/business">tapcard.aiert.co.uk/business</a>. Enter your company name and work email,
-            then choose the free 30-day trial (one card, so you can try it on yourself) or two or more locations, from £42 a year each.
+            then choose the free 30-day trial (one card, so you can try it on yourself) or two or more locations, from £42 a year each plus VAT.
           </li>
           <li>
             There are no passwords. To sign in, enter your email on the admin page and we&apos;ll email you a sign-in
@@ -384,7 +384,7 @@ Sam Patel,sam@yourcompany.com,Account Manager`}</pre>
             details, see invoices or cancel.
           </li>
           <li>
-            Pricing is per location, billed yearly: £42 a year each for 2 to 4 locations, £34 each for 5 to 19, £27 each from 20. Each
+            Pricing is per location, billed yearly: £42 a year each for 2 to 4 locations, £34 each for 5 to 19, £27 each from 20, all plus VAT. Each
             location includes its own card and up to 10 staff cards, and Promote (offers and news) on every location. A new card can only be
             set up while there is room: if you&apos;re full, remove a card or add a location.
           </li>

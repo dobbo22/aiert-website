@@ -292,7 +292,7 @@ export default function HowItWorksPage() {
           first 1,000 people on iPhone, and the first 1,000 on Android, share their own card free for life (counted
           when they first share a card). After that, sharing needs a small one-off unlock (from £0.99). A business with one card can
           instead subscribe to TapCard Promote, which includes sharing and starts with 3 months free. Two or more locations? TapCard for Business is
-          priced per location, from £42 a year each, with Promote included: see <a href="/business">TapCard for Business</a>.
+          priced per location, from £42 a year each plus VAT, with Promote included: see <a href="/business">TapCard for Business</a>.
         </p>
       </section>
 
