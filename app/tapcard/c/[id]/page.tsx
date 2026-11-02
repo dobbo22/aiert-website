@@ -241,8 +241,6 @@ export default async function CardPage({
 
             {!acceptToken && send !== "1" && card.accept_share_back !== false && <ShareBackForm cardId={id} ownerFirstName={firstName} />}
 
-            {!acceptToken && send !== "1" && card.card_kind !== "person" && !/personal/i.test(card.label) && <ReferBusiness origin={TAPCARD_ORIGIN} />}
-
             {acceptToken && (
               <AcceptRecipientForm cardId={id} token={acceptToken} ownerFirstName={firstName} appStoreUrl={TAPCARD_APP_STORE_URL} />
             )}
@@ -367,6 +365,8 @@ export default async function CardPage({
           <img src="https://www.aiert.co.uk/tapcard-icon.png" alt="" className="h-8 w-8 rounded-lg" />
           <span>Get TapCard — make your own card →</span>
         </a>
+
+        {!acceptToken && send !== "1" && card.card_kind !== "person" && !/personal/i.test(card.label) && <ReferBusiness origin={TAPCARD_ORIGIN} />}
 
         <div className="mt-8 space-y-3">
           <PromoCard

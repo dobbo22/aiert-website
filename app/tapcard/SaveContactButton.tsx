@@ -53,7 +53,6 @@ export default function SaveContactButton({
           {icon}
           Save {firstName} to contacts
         </a>
-        <p className="mt-2 text-center text-xs text-white">Get TapCard to make your own card.</p>
         {openInAppHref && (
           <p className="mt-2 text-center text-xs text-white">
             Already have TapCard?{" "}
