@@ -176,6 +176,19 @@ export default function TapCardPrivacyPage() {
       </section>
 
       <section>
+        <h2>TapCard news (optional)</h2>
+        <p>
+          The app may ask once whether you would like news from AIERT, the company behind TapCard. You can <strong>follow
+          AIERT&apos;s own card</strong>, which sends notifications exactly like any business you follow (at most two a week;
+          we count followers but never see names), and/or <strong>give an email address</strong>. If you give an email
+          address we send one email asking you to confirm it. Only if you click the link do we keep the address as a
+          subscriber and email you occasional TapCard news. Every email has a link to stop them, and you can ask us to
+          delete the address at any time at enquiries@aiert.co.uk. We never use the email address on your own card for
+          this, and saying no changes nothing about how TapCard works.
+        </p>
+      </section>
+
+      <section>
         <h2>Founder places and the lifetime unlock</h2>
         <p>
           The first 1,000 people get TapCard free for life. To count them, when you first share your own card the app
