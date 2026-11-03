@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { PROMOTE_NOTE, PROMOTE_NOTE_TITLE } from "../../promoteNote";
 
 const report = (token: string, event: "opened" | "store", platform = "") => {
@@ -12,6 +12,17 @@ const report = (token: string, event: "opened" | "store", platform = "") => {
 export default function StartLanding({ token, appStoreHref, playStoreHref, isDesktop, fromContact = false }: { token: string; appStoreHref: string; playStoreHref: string; isDesktop: boolean; fromContact?: boolean }) {
   const valid = /^[A-Za-z0-9_-]{16,40}$/.test(token);
   useEffect(() => { if (valid) report(token, "opened"); }, [token, valid]);
+  // For someone who already has TapCard but landed here (a browser, or a phone set to open the link in Safari): a button that opens the
+  // app. iPhone opens it for a tap on a link to a different host (www.aiert.co.uk), which this host's own links do not; Android uses an intent.
+  const [openHref, setOpenHref] = useState("");
+  useEffect(() => {
+    if (!valid) return;
+    if (/android/i.test(navigator.userAgent)) {
+      setOpenHref(`intent://tapcard.aiert.co.uk/start/${token}#Intent;scheme=https;package=com.mailbroom.tapcard;S.browser_fallback_url=${encodeURIComponent(window.location.href)};end`);
+    } else if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+      setOpenHref(`https://www.aiert.co.uk/tapcard/start/${token}`);
+    }
+  }, [token, valid]);
   // Android: the token rides in the Play install referrer, so the app finds it on first launch. iPhone has no install
   // referrer: the link is copied when the button is tapped and the app offers to paste it on first launch.
   const playHref = valid ? `${playStoreHref}%26prebuilt%3D${encodeURIComponent(token)}` : playStoreHref;
@@ -43,6 +54,11 @@ export default function StartLanding({ token, appStoreHref, playStoreHref, isDes
             <img src="https://www.aiert.co.uk/tapcard-badges/google-play-badge.png" alt="Get it on Google Play" width={155} height={60} />
           </a>
         </div>
+        {openHref && !isDesktop && (
+          <p className="mt-5 text-sm text-white/80">
+            Already have TapCard? <a href={openHref} className="font-semibold underline text-white">Open your card in the app</a>
+          </p>
+        )}
         {isDesktop && <p className="mt-4 text-xs text-white/60">TapCard is a phone app. Open the email on your phone to get your card.</p>}
       </div>
     </main>
