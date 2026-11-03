@@ -69,7 +69,10 @@ export async function verifyStatus(cardId: string): Promise<{ verified: boolean;
     { verified_at: string | null; verified_domain: string; website: string; org_id?: string | null }[];
   const r = rows[0];
   const verified = !!r?.verified_at || (await companyCardVerified(r?.org_id, r?.website ?? ""));
-  return { verified, domain: r?.verified_domain || (verified ? businessDomain(r?.website ?? "") : ""), ownDomain: businessDomain(r?.website ?? ""), enforced: verifyEnforced(), company: !!r?.org_id };
+  return { verified, domain: r?.verified_domain || (verified ? businessDomain(r?.website ?? "") : ""), ownDomain: businessDomain(r?.website ?? ""), enforced: verifyEnforced(),
+    // The apps let a card post offers and news when it is verified or a company card, and ignore `enforced`. While the rule is off,
+    // report every card as company-covered so the apps do not ask shops to verify; the tick (`verified`) is never faked.
+    company: !!r?.org_id || !verifyEnforced() };
 }
 
 /// Posting offers or news needs a verified card, once the rule is switched on. Personal cards and company cards are not held to it.
