@@ -133,6 +133,13 @@ export default function TapCardPrivacyPage() {
           This is kept until you remove that person in the app or delete the card, and it is deleted with the card.
           It is not used for anything else and is not shared with anyone.
         </p>
+        <p className="mt-3">
+          If the person is a contact you added in TapCard, <strong>Send card</strong> can also make them{" "}
+          <strong>their own TapCard</strong> from the details you hold for them (name, job title, company, phone, email,
+          website, address and any links you added), so they can open it, check it and keep it. We keep that card under a
+          secret link for 30 days (the record is deleted after 60), so only someone with the link can open it. It is not
+          shown to anyone else, and we never email them ourselves. You can switch this off with the switch under Send card.
+        </p>
       </section>
 
       <section>

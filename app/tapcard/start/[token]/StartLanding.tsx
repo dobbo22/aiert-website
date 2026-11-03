@@ -9,7 +9,7 @@ const report = (token: string, event: "opened" | "store", platform = "") => {
   } catch { /* tracking must never get in the way */ }
 };
 
-export default function StartLanding({ token, appStoreHref, playStoreHref, isDesktop }: { token: string; appStoreHref: string; playStoreHref: string; isDesktop: boolean }) {
+export default function StartLanding({ token, appStoreHref, playStoreHref, isDesktop, fromContact = false }: { token: string; appStoreHref: string; playStoreHref: string; isDesktop: boolean; fromContact?: boolean }) {
   const valid = /^[A-Za-z0-9_-]{16,40}$/.test(token);
   useEffect(() => { if (valid) report(token, "opened"); }, [token, valid]);
   // Android: the token rides in the Play install referrer, so the app finds it on first launch. iPhone has no install
@@ -24,13 +24,15 @@ export default function StartLanding({ token, appStoreHref, playStoreHref, isDes
         <h1 className="mt-5 text-2xl font-bold">Your TapCard is ready</h1>
         <ol className="mt-4 space-y-2 text-left text-white/80">
           <li>1. Install TapCard (free to download).</li>
-          <li>2. Open TapCard. Your card is already built, made from your own website. On iPhone, tap <strong>Allow Paste</strong> if it asks.</li>
+          <li>2. Open TapCard. {fromContact ? "Your card is already made, from the details your contact had for you, so you only need to check it and tap to keep it." : "Your card is already built, made from your own website."} On iPhone, tap <strong>Allow Paste</strong> if it asks.</li>
           <li className="text-white/60">If it doesn&apos;t appear, come back to the email and tap the link again.</li>
         </ol>
-        <div className="mt-5 rounded-xl bg-white/10 p-3 text-left text-sm text-white">
-          <p className="font-semibold">{PROMOTE_NOTE_TITLE}</p>
-          <p className="mt-1">{PROMOTE_NOTE}</p>
-        </div>
+        {!fromContact && (
+          <div className="mt-5 rounded-xl bg-white/10 p-3 text-left text-sm text-white">
+            <p className="font-semibold">{PROMOTE_NOTE_TITLE}</p>
+            <p className="mt-1">{PROMOTE_NOTE}</p>
+          </div>
+        )}
         <div className="mt-6 flex flex-col items-center gap-3">
           <a href={appStoreHref} onClick={() => { copyLink(); if (valid) report(token, "store", "ios"); }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}

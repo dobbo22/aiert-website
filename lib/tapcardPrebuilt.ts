@@ -16,7 +16,11 @@ export interface PrebuiltCard {
   address: string;
   phone: string;
   label: string;
-  cardKind: "business";
+  /// "business" for a business built from its website; "person" for a card a contact made for someone from the details it holds.
+  cardKind: "business" | "person";
+  /// A person's job title and email: only on cards made for a contact.
+  title?: string;
+  email?: string;
   links: CardLink[];
   facebookUrl: string;
   instagramUrl: string;
@@ -51,6 +55,8 @@ function ensureSchema(): Promise<unknown> {
       await sql`ALTER TABLE tapcard_prebuilt ADD COLUMN IF NOT EXISTS store_clicked_at TIMESTAMPTZ`;
       await sql`ALTER TABLE tapcard_prebuilt ADD COLUMN IF NOT EXISTS store_platform TEXT`;
       await sql`ALTER TABLE tapcard_prebuilt ADD COLUMN IF NOT EXISTS app_platform TEXT`;
+      // For a card made for a contact: which of the sender's cards made it (for the daily limit; never shown).
+      await sql`ALTER TABLE tapcard_prebuilt ADD COLUMN IF NOT EXISTS made_by_card TEXT`;
       // Everyone who pressed "Build my TapCard": captured then, whether or not they ask for the emailed link.
       await sql`
         CREATE TABLE IF NOT EXISTS tapcard_demo_leads (
@@ -123,12 +129,12 @@ export async function recentCounts(ipHash: string | null, email: string): Promis
   return { byIp: ip, byEmail: em };
 }
 
-export async function storePrebuilt(email: string, name: string, website: string, payload: PrebuiltCard, ipHash: string | null, kind = ""): Promise<string> {
+export async function storePrebuilt(email: string, name: string, website: string, payload: PrebuiltCard, ipHash: string | null, kind = "", madeByCard: string | null = null): Promise<string> {
   await ensureSchema();
   const token = crypto.randomBytes(16).toString("base64url");
   await sql`
-    INSERT INTO tapcard_prebuilt (token, email, business_name, website, payload, ip_hash, kind)
-    VALUES (${token}, ${email}, ${name}, ${website}, ${JSON.stringify(payload)}::jsonb, ${ipHash}, ${kind})
+    INSERT INTO tapcard_prebuilt (token, email, business_name, website, payload, ip_hash, kind, made_by_card)
+    VALUES (${token}, ${email}, ${name}, ${website}, ${JSON.stringify(payload)}::jsonb, ${ipHash}, ${kind}, ${madeByCard})
   `;
   // Keep nothing for long: a link is good for 30 days, rows go after 60.
   await sql`DELETE FROM tapcard_prebuilt WHERE created_at < now() - ${`${DEMO_RETENTION_DAYS} days`}::interval`;
@@ -316,4 +322,20 @@ export async function purgeDemoData(): Promise<{ leads: number; cards: number; c
     RETURNING c.id
   `) as unknown[];
   return { leads: leads.length, cards: cards.length, contacts: contacts.length };
+}
+
+
+/// How many cards this sender's card made for contacts in the last day (the daily limit).
+export async function contactCardsMadeToday(cardId: string): Promise<number> {
+  await ensureSchema();
+  const r = (await sql`SELECT COUNT(*)::int AS n FROM tapcard_prebuilt WHERE made_by_card = ${cardId} AND created_at > now() - interval '1 day'`) as { n: number }[];
+  return r[0]?.n ?? 0;
+}
+
+/// Was this token made for a contact (so the landing page words it that way)? Reads nothing else and records nothing.
+export async function isContactCard(token: string): Promise<boolean> {
+  if (!/^[A-Za-z0-9_-]{16,40}$/.test(token)) return false;
+  await ensureSchema();
+  const r = (await sql`SELECT 1 FROM tapcard_prebuilt WHERE token = ${token} AND kind = 'contact'`) as unknown[];
+  return r.length > 0;
 }
