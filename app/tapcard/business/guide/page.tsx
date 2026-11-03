@@ -277,8 +277,8 @@ Sam Patel,sam@yourcompany.com,Account Manager`}</pre>
       <section>
         <h2>Verifying your business</h2>
         <p>
-          A verified business can post offers and news, and people who look you up see that the card is genuinely
-          yours. TapCard checks you control the business&apos;s own website, never just the name.
+          Verifying is optional for now: offers and news can be posted without it, though it may be needed again later. A verified
+          business shows a tick, so people who look you up see that the card is genuinely yours. TapCard checks you control the business&apos;s own website, never just the name.
         </p>
         <h3 className="mt-4 font-semibold">Your company cards: automatic when all three are true</h3>
         <ol className="ml-5 mt-2 space-y-1.5 [&>li]:list-decimal!">

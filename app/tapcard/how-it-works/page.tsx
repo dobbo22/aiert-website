@@ -72,7 +72,7 @@ export default function HowItWorksPage() {
           <strong>Finish setting up</strong> list shows one step at a time: share your card, verify your business, add booking or
           review links, send your first offer, and set up several locations and staff cards with{" "}
           <a href="/business">TapCard for Business</a>. Each step has its own button, and Skip this step or Add later puts it off.
-          Offers and news are switched on once your business is verified.
+          You can post offers and news straight away; verifying is optional for now and adds a tick to your card.
         </p>
         <p>
           <strong>Just me</strong> (your own business card): two screens. First your name. As you type, TapCard looks you up in your

@@ -108,7 +108,7 @@ const steps: { title: string; img?: string; alt?: string; text: string }[] = [
   },
   {
     title: "Proving a business is yours",
-    text: "A business has to be verified before it can post offers or news. Open Promote on your card and choose Verify. Option 1 is an email code: enter an address on your own website's domain (a Gmail or Outlook address will not do), tap Email me a code and type in the 6 digits. Option 2 is your website: add the one line we give you to your site and tap Check. Verified cards show a tick. Cards that belong to a TapCard for Business company count as verified already. Only one card can be verified for each business website; if someone else made a card for your business, report it and verify yours.",
+    text: "Verifying is optional for now: you can post offers and news without it, and it may be needed again later. A verified card shows a tick that tells people the business is real. To verify, open Promote on your card and choose Verify. Option 1 is an email code: enter an address on your own website's domain (a Gmail or Outlook address will not do), tap Email me a code and type in the 6 digits. Option 2 is your website: add the one line we give you to your site and tap Check. Verified cards show a tick. Cards that belong to a TapCard for Business company count as verified already. Only one card can be verified for each business website; if someone else made a card for your business, report it and verify yours.",
   },
   {
     title: "Safe by design",
