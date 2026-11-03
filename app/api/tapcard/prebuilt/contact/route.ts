@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 
   const payload: PrebuiltCard = {
     name: name || company, company, website, address: str(b.address, 300), phone,
-    label: "Business", cardKind: kind, title: str(b.title, 120), email,
+    label: "Business", cardKind: kind, title: str(b.title, 120), email, fromName: (sender.name || sender.company || "").slice(0, 80),
     links: sanitizeLinks(b.links).slice(0, 10),
     facebookUrl: https(b.facebookUrl), instagramUrl: https(b.instagramUrl), twitterUrl: https(b.twitterUrl),
     linkedInUrl: https(b.linkedInUrl), tiktokUrl: https(b.tiktokUrl), branchCount: 0,

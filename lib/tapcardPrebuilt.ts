@@ -21,6 +21,8 @@ export interface PrebuiltCard {
   /// A person's job title and email: only on cards made for a contact.
   title?: string;
   email?: string;
+  /// The sender's name, so the app can say who made this card for you.
+  fromName?: string;
   links: CardLink[];
   facebookUrl: string;
   instagramUrl: string;
@@ -324,6 +326,14 @@ export async function purgeDemoData(): Promise<{ leads: number; cards: number; c
   return { leads: leads.length, cards: cards.length, contacts: contacts.length };
 }
 
+
+/// The card for a token without recording that anyone opened it (for the picture in the email): nothing is marked.
+export async function peekPrebuilt(token: string): Promise<PrebuiltCard | null> {
+  if (!/^[A-Za-z0-9_-]{16,40}$/.test(token)) return null;
+  await ensureSchema();
+  const rows = (await sql`SELECT payload FROM tapcard_prebuilt WHERE token = ${token} AND created_at > now() - ${TTL_DAYS + " days"}::interval`) as { payload: PrebuiltCard }[];
+  return rows[0]?.payload ?? null;
+}
 
 /// How many cards this sender's card made for contacts in the last day (the daily limit).
 export async function contactCardsMadeToday(cardId: string): Promise<number> {
