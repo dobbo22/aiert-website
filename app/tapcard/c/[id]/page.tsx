@@ -233,9 +233,9 @@ export default async function CardPage({
               vcardHref={`${TAPCARD_ORIGIN}/c/${id}/vcard`}
               storeHref={TAPCARD_APP_STORE_URL}
               cardId={id}
-              openInAppHref={via === "qr" ? openInAppHref : undefined}
+              openInAppHref={via === "qr" || (isMobile && acceptToken) ? openInAppHref : undefined}
               firstName={firstName}
-              goToStore={isMobile && !acceptToken}
+              goToStore={isMobile}
             />
 
             {SEND_BACK_ENABLED && (

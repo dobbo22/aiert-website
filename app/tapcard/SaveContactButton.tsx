@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
 
 // The one main action on a shared card. On a phone it is "Get TapCard": straight to the right store (App Store on iPhone,
 // Google Play on Android) so the person who scanned ends up with the app, which opens on this card. Saving the contact
-// stays available as a smaller link under it. On a computer, or on a card sent to one person, saving is the main action.
+// stays available as a smaller link under it. On a computer, saving is the main action.
 export default function SaveContactButton({
   cardId,
   cardLink,
