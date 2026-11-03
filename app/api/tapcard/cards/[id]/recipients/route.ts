@@ -75,5 +75,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const ownerName = card.name || "I";
   const shareText = `This is my TapCard — ${ownerName}'s digital business card: ${link}. It always shows my latest contact details, even if I change job or number, so you'll never have an old version.\n\nGet the app: https://tapcard.aiert.co.uk/go/tapcard-web-share-get-tapcard`;
 
-  return NextResponse.json({ id: recipient.id, shareText });
+  // The id column is a bigint, which the database driver returns as text; the iPhone app decodes it as a number and failed to ("Couldn't send to that contact").
+  return NextResponse.json({ id: Number(recipient.id), shareText });
 }
