@@ -15,6 +15,10 @@ const steps: { title: string; img?: string; alt?: string; text: string }[] = [
     text: "The first screen asks What is the card for? Choose A business or Just me. For a business, start typing its name and TapCard offers to find it and fills in its address, phone and website. Tap your business in the list and the card is built straight away: it reads your website to add your logo, booking and menu links, opening hours and social profiles. For Just me, type your name (TapCard looks you up in Contacts as you type, and lets you combine entries and choose which number, email and address show, or scan a paper business card), then choose Personal or Work and add your job and phone. There is no account to make and no permission screens first. Under a business card, Finish setting up shows one step at a time: share your card, verify your business, add booking links, send your first offer, or set up several locations. Skip this step or Add later puts a step off.",
   },
   {
+    title: "Fill in what your card is missing",
+    text: "If your business card has no phone number, opening hours, address, website, email or social profiles, a banner on My Cards says We found details for your business. Tap Review to see what TapCard found from Apple Maps (iPhone), public business listings and your own website: phone, address, opening hours, a Book a room or menu link, and social profiles. You can change a detail before you tap Add, or Skip it, or choose Don't suggest this for this card. Nothing is added until you tap Add, a skipped detail is never offered again, and TapCard looks again at most once a month. Google is never asked, and nothing is stored on our server.",
+  },
+  {
     title: "Scan a paper business card",
     text: "On the Just me screen, tap Scan a paper business card and hold the card in front of the camera. TapCard reads it on your phone and suggests your name, job, company, phone, email and website for you to check. The photo is never uploaded.",
   },
@@ -23,6 +27,10 @@ const steps: { title: string; img?: string; alt?: string; text: string }[] = [
     img: "share.png",
     alt: "TapCard share screen with a QR code and Share, Send and QR sign buttons",
     text: "Your QR code is the quickest way. Anyone scans it with their camera and saves you, with no app needed (on an iPhone without TapCard it opens a quick preview, an App Clip, where they can save you, add you to Apple Wallet or share their details back). Under it, Share sends your link, Send picks people from your contacts, and QR sign (on business cards) makes a poster for your window or till, headed with your business name and \"Scan to follow and receive news and offers\". Choose Email me the sign and print it from a computer. Add your card to Apple Wallet or Google Wallet and choose a design: Brand (a business's own logo and colours, the first choice for businesses), Artwork or Photo.",
+  },
+  {
+    title: "Send them their own card",
+    text: "Open a contact you added, with a name or company and a phone, email or website, and tap Send card. Under the button is a switch, on by default: Also send them their own TapCard, made from these details. Your message then carries two links: your card, and a second one that opens a ready-made TapCard for them, built from what you hold (a business card with their company's logo, their name and job title, phone, email, website and address). They check it and tap to keep it. It is kept under a secret link for 30 days, only you can make one, and you can switch it off for any send. If they already have TapCard the link opens it; if the page says Your card is ready, tap Open your card in the app.",
   },
   {
     title: "Get their details back",
@@ -48,13 +56,17 @@ const steps: { title: string; img?: string; alt?: string; text: string }[] = [
     title: "Add your own details",
     img: "contact.png",
     alt: "A received card showing the user's own extra phone, email, where they met and notes",
-    text: "Open someone's card and tap My details to add where you met, a photo, another phone or email, and notes. They appear as extra rows on their card, and you can tap to call or email. This works for people you scanned and for people you picked from your phone contacts. Tap Reposition photo to drag and zoom a photo you added. New phones, emails and photos are added to their phone contact too. If they stop sharing, your details are kept.",
+    text: "Open someone's card and tap My details to add where you met, a photo, another phone or email, and notes. They appear as extra rows on their card, and you can tap to call or email. This works for people you scanned and for people you picked from your phone contacts, including contacts that only have a name and a company: add a phone number or email later if you want to send them your card. Tap Reposition photo to drag and zoom a photo you added. New phones, emails and photos are added to their phone contact too. If they stop sharing, your details are kept.",
   },
   {
     title: "Bookings, shop and more for your business",
     img: "business-links.png",
     alt: "A business card with Book a table, Opening hours and Price list rows",
     text: "On a Business card, tap Edit and find Bookings & links. Add Book a table, Book a room, Book an appointment, View our menu, Order online, Shop online, Opening hours or Leave a review, or make your own with any label, like Price list. Not sure where to start? Tap Start from my type of business and pick restaurant, hotel, shop, salon or trades. If you enter your website, TapCard offers the booking, menu and review links it finds there, and your opening hours when your site publishes them (for a chain, the hours of the branch at your card's address). Each one shows as a tappable row on your card and on your web card. With no online booking, the phone row says Call to book. The Personal card does not have them.",
+  },
+  {
+    title: "Find details for a contact",
+    text: "On a contact you added that has a company name or a website, My details has a Find details button. Tap it and TapCard looks the company up (Apple Maps on iPhone, public business listings and the company's own website) and offers its phone number, address, opening hours, links and social profiles. Change a detail if you like, then tap Add or Skip. The company's phone and email are added as extra ones, so the person's own number is never replaced. Only the company name or website is sent, never the person's name, and you choose when to look.",
   },
   {
     title: "Special offers: for your business",
@@ -66,7 +78,7 @@ const steps: { title: string; img?: string; alt?: string; text: string }[] = [
     title: "Special offers: if you get one",
     img: "offer-customer.png",
     alt: "An offer on a saved card with a one-off QR code to show the staff",
-    text: "When a business you have saved posts an offer, you see an Offer badge on their contact. Open their card and tap Claim this offer. You get your own one-off QR code. Show it to the staff when you pay. They scan it with their phone camera (or type the code at tapcard.aiert.co.uk/redeem on a till with no camera), enter their PIN, and it is marked as used. It works once, then shows Used. When you save a business, its card asks Get offers and news from this business? Tap Yes, keep me posted if you want a notification when it posts a new offer, news or a menu change; Not now leaves it off. Nothing is ever switched on for you, and you choose what you get, or turn it off, from the ⋯ menu at the top of their card. Claiming is free and needs no sign-up, and the business only sees how many people claimed, not who. If you follow a business it sees one number, how many people follow it, never who.",
+    text: "When a business you have saved posts an offer, you see an Offer badge on their contact. Open their card and tap Claim this offer. You get your own one-off QR code. Show it to the staff when you pay. They scan it with their phone camera (or type the code at tapcard.aiert.co.uk/redeem on a till with no camera), enter their PIN, and it is marked as used. It works once, then shows Used. When you save a business, tap Save and follow to keep its card and get a notification when it posts a new offer, news or a menu change (at most two a week). Just save keeps only the contact. Nothing is switched on unless you choose Save and follow, and you can turn it off from the ⋯ menu at the top of their card. Claiming is free and needs no sign-up, and the business only sees how many people claimed, not who. If you follow a business it sees one number, how many people follow it, never who.",
   },
   {
     title: "The Offers tab: every offer in one place",
@@ -104,7 +116,11 @@ const steps: { title: string; img?: string; alt?: string; text: string }[] = [
   },
   {
     title: "Find a business and follow it",
-    text: "In Contacts, tap + then Find a business, type a name and town, and pick it from the list. TapCard saves its phone number, address, website, opening hours and links. If the business is already on TapCard you can open its card and tap Follow to receive its offers and news. Scanning a business's QR code does the same: a Follow or No thanks pop-up appears.",
+    text: "In Contacts, tap + then Find a business, type a name and town, and pick it from the list. TapCard saves its phone number, address, website, opening hours and links. If the business is already on TapCard you can open its card and tap Follow to receive its offers and news. Scanning a business's QR code shows its card with Save and follow and Just save.",
+  },
+  {
+    title: "News from AIERT (optional)",
+    text: "Once, on My Cards, TapCard says Thank you for using TapCard and offers to keep you posted. Follow AIERT sends news as notifications like any business you follow (a couple a month at most). Get updates asks for your email address, sends one confirmation email, and only if you click the link do we email you occasional news, with a link to stop. No thanks ends it for good. Nothing is switched on unless you choose it, and we never use the email on your own card for this.",
   },
   {
     title: "Proving a business is yours",

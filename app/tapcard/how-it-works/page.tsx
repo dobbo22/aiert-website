@@ -30,6 +30,8 @@ const FAQ = [
   ["Can I share my TapCard with no signal?", "Yes. Tap Offline QR to show a QR code that holds your contact details themselves, so it works with no signal and no app on their phone. You can also send your contact file by AirDrop."],
   ["Can I put my business card in Apple Wallet or Google Wallet?", "Yes. Add your card to your phone's Wallet so it is always to hand, and pick a design in the app so your Wallet card matches."],
   ["Do I need an account to make a TapCard?", "No. There is nothing to sign up for. Answer what the card is for, add your details, and share it."],
+  ["Can TapCard fill in my card for me?", "Yes, if you ask. When a business card is missing a phone number, opening hours, an address, a booking or menu link or social profiles, TapCard looks them up from Apple Maps (iPhone), public business listings and your website, and shows them in a Review screen. Nothing is added until you tap Add, a detail you skip is not offered again, and Google is not used."],
+  ["Can I send a contact their own TapCard?", "Yes. Tap Send card on a contact you added: a switch under it (on by default) also sends them a second link to a ready-made TapCard built from the details you hold for them. They check it and keep it. It is kept for 30 days and you can switch it off for any send."],
   ["Does TapCard take payments for offers?", "No. You give the discount yourself; TapCard does not take payments. Promote, which lets a business post offers and news, starts with 3 months free, then costs £49.99 a year or £9.99 a month."],
 ] as const;
 
