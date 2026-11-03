@@ -39,6 +39,16 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     title,
     description: `${card.name}'s digital business card, made with TapCard.`,
     robots: { index: false, follow: false },
+    // What WhatsApp, Messages and other chat apps show for the link: this card's name and picture, not TapCard's generic banner.
+    // The picture carries no phone number or email (see the og route); ?v= makes chat apps fetch it again after the card changes.
+    openGraph: {
+      siteName: "TapCard",
+      type: "website",
+      title,
+      description: `${card.name}'s digital business card. Open it to save their details, or send yours back.`,
+      images: [{ url: `${TAPCARD_ORIGIN}/api/cards/${id}/og?v=${new Date(card.updated_at).getTime()}`, width: 1200, height: 630, alt: `${card.name}'s TapCard` }],
+    },
+    twitter: { card: "summary_large_image", images: [`${TAPCARD_ORIGIN}/api/cards/${id}/og?v=${new Date(card.updated_at).getTime()}`] },
     // Safari's Smart App Banner: "Open" hands this card to the app when it's
     // installed (the app shows it and offers to send a card back), "Get"
     // when it isn't.
