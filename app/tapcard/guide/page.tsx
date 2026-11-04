@@ -33,6 +33,14 @@ const steps: { title: string; img?: string; alt?: string; text: string }[] = [
     text: "Open a contact you added, with a name or company and a phone, email or website, and tap Send card. Under the button is a switch, on by default: Also send them their own TapCard, made from these details. Your message then carries two links: your card, and a second one that opens a ready-made TapCard for them, built from what you hold (a business card with their company's logo, their name and job title, phone, email, website and address). They check it and tap to keep it. It is kept under a secret link for 30 days, only you can make one, and you can switch it off for any send. If they already have TapCard the link opens it; if the page says Your card is ready, tap Open your card in the app.",
   },
   {
+    title: "Choose which card you send from",
+    text: "If you have more than one card, a Send from box appears above Send card on a contact's page. Pick which of your cards goes to that person, for example your Business card to a customer and your Personal card to a friend. The ready-made card you make for them uses the card you picked, and Pending, Opened and Accepted follow that card. Choose Make this my main card in the same box and that card opens first on My Cards and is the one Send card uses unless you pick another.",
+  },
+  {
+    title: "Emailing someone their card",
+    text: "For a contact with an email address but no phone number, Send card writes an email in your own mail app instead of a text. On iPhone it has a picture of their ready-made card and one button, Keep my TapCard; on Android it has one link to the same card. If they do not have TapCard, the link takes them to get the free app and their card is ready when they open it. If they already have TapCard, opening it shows a preview of the card and asks Keep this card? with Keep this card and No thanks, so nothing is added unless they choose to. The email goes from your own address, so TapCard sends nothing on your behalf, and the page behind the link offers your own card too.",
+  },
+  {
     title: "Get their details back",
     text: "Anyone who opens your card on the web, or scans it with an iPhone's App Clip, can tap Share your details with you, type their name and a phone number or email, and send. It needs no app and no sign-up. They appear in your Contacts marked New, and you get a notification if your phone has them switched on. If you would rather not take details this way, open Edit card and switch off Let people share their details with me. When someone gets TapCard after saving your card, the app asks Send your card to you? as soon as they have made their own card, and one tap sends it, with nothing to buy. You find it under Contacts, filed under your card. The QR code is larger and easier to scan in poor light; if there is no signal at all, show your Offline QR.",
   },
@@ -112,7 +120,7 @@ const steps: { title: string; img?: string; alt?: string; text: string }[] = [
   },
   {
     title: "News with a Read more link",
-    text: "A business can post a short news line (up to 140 characters) with an optional Read more link to the full story on its website. Followers get a notification, and the card page keeps an Earlier news list. You can post one news item every 6 hours.",
+    text: "A business can post a short news line (up to 140 characters) with an optional link to the full story: a Facebook or Instagram post, or a page on its website. Copy a post and tap Paste a post I copied (on Android you can also Share a post to TapCard) and the link is lifted out of the text into the Link to the post box; customers then get a See the post button on the news in the app and a Read more link on the card page. Followers get a notification, and tapping it opens the business's card with the news and button. The card page keeps an Earlier news list. You can post one news item every 6 hours.",
   },
   {
     title: "Find a business and follow it",
@@ -121,6 +129,10 @@ const steps: { title: string; img?: string; alt?: string; text: string }[] = [
   {
     title: "News from AIERT (optional)",
     text: "Once, on My Cards, TapCard says Thank you for using TapCard and offers to keep you posted. Follow AIERT sends news as notifications like any business you follow (a couple a month at most). Get updates asks for your email address, sends one confirmation email, and only if you click the link do we email you occasional news, with a link to stop. No thanks ends it for good. Nothing is switched on unless you choose it, and we never use the email on your own card for this.",
+  },
+  {
+    title: "Your followers",
+    text: "Tap the followers count under your QR code to open the Followers screen. It shows how many people follow your card and how many of them a news notification reaches (those with News switched on and notifications allowed on their phone). Followers are anonymous, so there is no list of names. On a business card, tap Message your followers to send a short news line to all of them (this is posting news, part of TapCard Promote or a TapCard for Business plan). People who also left their details through your card, using Share your details on the card page or by sending you theirs, are kept in the Followers view in the Contacts tab, away from your main contacts. Swipe right on iPhone, or tap Move to Contacts on Android, to keep one in Contacts. Adding notes, a category or a reminder, or sending them your card, moves them there for you.",
   },
   {
     title: "Proving a business is yours",

@@ -245,7 +245,7 @@ export default function HowItWorksPage() {
           <strong>Posting news from Facebook or Instagram:</strong> TapCard can&apos;t read your other accounts, but you
           can bring a post across in a few seconds. Copy the post and tap <strong>Paste a post I copied</strong> on the
           news screen, or on Android use <strong>Share</strong> in Facebook or Instagram and choose TapCard. It is
-          trimmed to a news line for you to check before you post. After posting, <strong>Share it on Facebook,
+          trimmed to a news line for you to check before you post, and any link in it goes into the Link to the post box so customers get a <strong>See the post</strong> button. After posting, <strong>Share it on Facebook,
           Instagram…</strong> sends the same news to your other pages.
         </p>
         <p>
