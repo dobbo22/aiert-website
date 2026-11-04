@@ -343,13 +343,22 @@ export async function contactCardsMadeToday(cardId: string): Promise<number> {
 }
 
 /// Who made a contact's card: the sender's public card id and the name shown to the recipient. Nothing is recorded.
-export async function contactSender(token: string): Promise<{ cardId: string; name: string } | null> {
+export async function contactSender(token: string): Promise<{ cardId: string; name: string; acceptToken: string } | null> {
   if (!/^[A-Za-z0-9_-]{16,40}$/.test(token)) return null;
   await ensureSchema();
-  const r = (await sql`SELECT made_by_card, payload->>'fromName' AS from_name FROM tapcard_prebuilt WHERE token = ${token} AND kind = 'contact' AND made_by_card IS NOT NULL AND created_at > now() - ${TTL_DAYS + " days"}::interval`) as { made_by_card: string; from_name: string | null }[];
+  // The sender's tracked link for this contact (the recipient row Send card made), so saving the sender's card still marks them as opened/accepted.
+  const r = (await sql`
+    SELECT p.made_by_card, p.payload->>'fromName' AS from_name,
+      (SELECT r.accept_token FROM tapcard_card_recipients r
+        WHERE r.card_id = p.made_by_card AND lower(r.email) = lower(COALESCE(p.payload->>'email', '')) AND r.email <> ''
+        ORDER BY r.created_at DESC LIMIT 1) AS accept_token
+    FROM tapcard_prebuilt p
+    WHERE p.token = ${token} AND p.kind = 'contact' AND p.made_by_card IS NOT NULL AND p.created_at > now() - ${TTL_DAYS + " days"}::interval
+  `) as { made_by_card: string; from_name: string | null; accept_token: string | null }[];
   const row = r[0];
   if (!row || !/^[A-Za-z0-9_-]{8,40}$/.test(row.made_by_card)) return null;
-  return { cardId: row.made_by_card, name: (row.from_name ?? "").slice(0, 80) };
+  const accept = row.accept_token && /^[A-Za-z0-9_-]{6,20}$/.test(row.accept_token) ? row.accept_token : "";
+  return { cardId: row.made_by_card, name: (row.from_name ?? "").slice(0, 80), acceptToken: accept };
 }
 
 /// Was this token made for a contact (so the landing page words it that way)? Reads nothing else and records nothing.
