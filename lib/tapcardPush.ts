@@ -192,6 +192,20 @@ export interface PushMessage { title: string; body: string; ref: string }
 
 /// Pushes one message to everyone who follows `cardId`, wants this kind, hasn't had two from this business this week,
 /// and hasn't already had this one (same kind + ref). Never throws: a failed push must not fail the post that caused it.
+/// How many of this card's followers a news notification can reach right now: News switched on and a push token registered.
+export async function newsReach(cardId: string): Promise<number> {
+  try {
+    await ensureSchema();
+    const r = (await sql`
+      SELECT COUNT(*)::int AS n FROM tapcard_push_prefs p JOIN tapcard_push_devices d ON d.follower_hash = p.follower_hash
+      WHERE p.card_id = ${cardId} AND p.news
+    `) as { n: number }[];
+    return Number(r[0]?.n ?? 0);
+  } catch {
+    return 0;
+  }
+}
+
 export async function pushToFollowers(cardId: string, kind: PushKind, msg: PushMessage): Promise<{ sent: number; skipped: boolean }> {
   try {
     if (!apnsConfigured() && !fcmConfigured()) return { sent: 0, skipped: true };
