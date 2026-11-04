@@ -9,7 +9,7 @@ const report = (token: string, event: "opened" | "store", platform = "") => {
   } catch { /* tracking must never get in the way */ }
 };
 
-export default function StartLanding({ token, appStoreHref, playStoreHref, isDesktop, fromContact = false }: { token: string; appStoreHref: string; playStoreHref: string; isDesktop: boolean; fromContact?: boolean }) {
+export default function StartLanding({ token, appStoreHref, playStoreHref, isDesktop, fromContact = false, sender = null }: { token: string; appStoreHref: string; playStoreHref: string; isDesktop: boolean; fromContact?: boolean; sender?: { cardId: string; name: string } | null }) {
   const valid = /^[A-Za-z0-9_-]{16,40}$/.test(token);
   useEffect(() => { if (valid) report(token, "opened"); }, [token, valid]);
   // For someone who already has TapCard but landed here (a browser, or a phone set to open the link in Safari): a button that opens the
@@ -54,6 +54,11 @@ export default function StartLanding({ token, appStoreHref, playStoreHref, isDes
             <img src="https://www.aiert.co.uk/tapcard-badges/google-play-badge.png" alt="Get it on Google Play" width={155} height={60} />
           </a>
         </div>
+        {sender && (
+          <p className="mt-5 text-sm text-white/80">
+            Also save {sender.name ? `${sender.name}'s` : "their"} card: <a href={`https://tapcard.aiert.co.uk/c/${sender.cardId}`} className="font-semibold underline text-white">open it here</a>
+          </p>
+        )}
         {openHref && !isDesktop && (
           <p className="mt-5 text-sm text-white/80">
             Already have TapCard? <a href={openHref} className="font-semibold underline text-white">Open your card in the app</a>

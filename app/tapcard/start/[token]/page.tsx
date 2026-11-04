@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { appStoreUrl, platformFromUserAgent, playStoreUrl } from "@/lib/tapcardInvites";
-import { isContactCard } from "@/lib/tapcardPrebuilt";
+import { contactSender } from "@/lib/tapcardPrebuilt";
 import StartLanding from "./StartLanding";
 
 export const metadata: Metadata = {
@@ -14,10 +14,11 @@ export const metadata: Metadata = {
 export default async function StartPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const platform = platformFromUserAgent((await headers()).get("user-agent") ?? "");
-  const fromContact = await isContactCard(token).catch(() => false);
+  const sender = await contactSender(token).catch(() => null);
   return (
     <StartLanding
-      fromContact={fromContact}
+      fromContact={sender !== null}
+      sender={sender}
       token={token}
       appStoreHref={appStoreUrl("prebuilt", "demo")}
       playStoreHref={playStoreUrl("prebuilt", "demo")}

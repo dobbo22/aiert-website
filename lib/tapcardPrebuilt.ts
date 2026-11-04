@@ -342,6 +342,16 @@ export async function contactCardsMadeToday(cardId: string): Promise<number> {
   return r[0]?.n ?? 0;
 }
 
+/// Who made a contact's card: the sender's public card id and the name shown to the recipient. Nothing is recorded.
+export async function contactSender(token: string): Promise<{ cardId: string; name: string } | null> {
+  if (!/^[A-Za-z0-9_-]{16,40}$/.test(token)) return null;
+  await ensureSchema();
+  const r = (await sql`SELECT made_by_card, payload->>'fromName' AS from_name FROM tapcard_prebuilt WHERE token = ${token} AND kind = 'contact' AND made_by_card IS NOT NULL AND created_at > now() - ${TTL_DAYS + " days"}::interval`) as { made_by_card: string; from_name: string | null }[];
+  const row = r[0];
+  if (!row || !/^[A-Za-z0-9_-]{8,40}$/.test(row.made_by_card)) return null;
+  return { cardId: row.made_by_card, name: (row.from_name ?? "").slice(0, 80) };
+}
+
 /// Was this token made for a contact (so the landing page words it that way)? Reads nothing else and records nothing.
 export async function isContactCard(token: string): Promise<boolean> {
   if (!/^[A-Za-z0-9_-]{16,40}$/.test(token)) return false;
