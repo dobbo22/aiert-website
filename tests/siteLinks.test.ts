@@ -114,3 +114,32 @@ test("a site that is not on MatchPoint is unaffected", async () => {
   const r = await findSiteLinks("https://other.example", "", "Other", { html, url: "https://other.example/" });
   assert.ok(!r.links.some((x) => x.label === "Book a court"));
 });
+
+test("a venue's own page: its Playtomic link, its own email and the membership page are taken, not another venue's", async () => {
+  const { findSiteLinks } = await import("../lib/siteLinks");
+  const html = `<html><body><a href="https://playtomic.io/club-earls-court/abc">Book a court</a>
+<a href="/pages/membership">Membership</a><p><a href="mailto:events@club.example">events@club.example</a></p>
+<p><a href="mailto:paddington@club.example">paddington@club.example</a></p>
+<a href="https://playtomic.com/clubs/club-paddington">Book a court</a></body></html>`;
+  const r = await findSiteLinks("https://club.example/pages/paddington", "5 Kingdom Street, London W2 6BD", "Padel Social Club", { html, url: "https://club.example/pages/paddington" });
+  assert.equal(r.links.find((l) => l.label === "Book a court")?.value, "https://playtomic.com/clubs/club-paddington");
+  assert.equal(r.links.find((l) => l.label === "Membership")?.value, "https://club.example/pages/membership");
+  assert.equal(r.details.email, "paddington@club.example");
+});
+
+test("two court-booking links that cannot be told apart give none, one gives it", async () => {
+  const { findSiteLinks } = await import("../lib/siteLinks");
+  const two = `<html><body><a href="https://playtomic.com/clubs/a">Book</a><a href="https://playtomic.com/clubs/b">Book</a></body></html>`;
+  const r2 = await findSiteLinks("https://x.example", "", "X", { html: two, url: "https://x.example/" });
+  assert.ok(!r2.links.some((l) => l.label === "Book a court"));
+  const one = `<html><body><a href="https://playtomic.com/clubs/only">Book</a></body></html>`;
+  const r1 = await findSiteLinks("https://x.example", "", "X", { html: one, url: "https://x.example/" });
+  assert.equal(r1.links.find((l) => l.label === "Book a court")?.value, "https://playtomic.com/clubs/only");
+});
+
+test("an address that runs two venues together is not offered", async () => {
+  const { findSiteLinks } = await import("../lib/siteLinks");
+  const html = `<html><body><p>Earls Court, Empress Place, SW6 1TT</p><p>Paddington, 5 Kingdom Street, London, W2 6BD</p></body></html>`;
+  const r = await findSiteLinks("https://g.example/pages/paddington", "5 Kingdom Street, London W2 6BD", "G", { html, url: "https://g.example/pages/paddington" });
+  assert.ok(!r.details.address || new Set((r.details.address.match(/[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}/gi) ?? []).map((x) => x.replace(/\s/g, ""))).size <= 1);
+});

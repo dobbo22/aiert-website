@@ -43,7 +43,7 @@ function decodeCloudflareEmail(hex: string): string | null {
 }
 
 /// First tel: and mailto: addresses on the page (a plain contact link the visitor can tap).
-function contactLinks(html: string, domain: string): { phone?: string; email?: string } {
+function contactLinks(html: string, domain: string, venueTokens: string[] = []): { phone?: string; email?: string } {
   const phones: string[] = [], emails: string[] = [];
   const re = /<a\b[^>]*?href\s*=\s*(?:"([^"]*)"|'([^']*)')/gi;
   let m: RegExpExecArray | null;
@@ -55,7 +55,10 @@ function contactLinks(html: string, domain: string): { phone?: string; email?: s
   }
   // Cloudflare's other form: <a class="__cf_email__" data-cfemail="...">[email protected]</a>
   for (const m2 of html.matchAll(/data-cfemail\s*=\s*["']([0-9a-f]+)["']/gi)) { const e = decodeCloudflareEmail(m2[1]); if (e && emails.length < 8) emails.push(e.trim().toLowerCase()); }
-  const email = emails.find((e) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e) && e.endsWith(`@${domain}`)) ?? emails.find((e) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e));
+  const valid = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e);
+  // On a venue's own page the address named after the venue (paddington@) is the one for that venue, not events@ or info@.
+  const ofVenue = venueTokens.length ? emails.find((e) => valid(e) && e.endsWith(`@${domain}`) && venueTokens.some((t) => e.split("@")[0].includes(t))) : undefined;
+  const email = ofVenue ?? emails.find((e) => valid(e) && e.endsWith(`@${domain}`)) ?? emails.find(valid);
   return { phone: phones.find((p) => p.replace(/\D/g, "").length >= 9), email };
 }
 
@@ -373,7 +376,13 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
     if (base.protocol !== "https:" || base.hostname.replace(/^www\./, "") !== domain.replace(/^www\./, "")) return { links: [], details: {}, branches: [] };
     html = prefetched.html.slice(0, MAX_HTML);
   } else {
-    const page = await fetchHomePage(domain);
+    // A website with a path (a venue's own page, /pages/paddington) is read as given: the group homepage would show another venue's links.
+    let page: { res: Response; url: URL } | null = null;
+    try {
+      const given = new URL(/^[a-z]+:\/\//i.test(websiteOrDomain.trim()) ? websiteOrDomain.trim() : `https://${websiteOrDomain.trim()}`);
+      if (given.pathname.replace(/\/+$/, "") !== "") page = await safeFetch(given.toString().replace(/^http:/i, "https:"));
+    } catch { /* fall back to the homepage */ }
+    if (!page || !(page.res.headers.get("content-type") ?? "").includes("text/html")) page = await fetchHomePage(domain);
     if (!page || !(page.res.headers.get("content-type") ?? "").includes("text/html")) return { links: [], details: {}, branches: [] };
     const buf = await readLimited(page.res, MAX_HTML);
     if (!buf) return { links: [], details: {}, branches: [] };
@@ -441,6 +450,22 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
       else if (/^(book( now| online)?|schedule( a)?( pick ?up| collection| delivery| visit)?|make a booking|book (an )?appointment|book a visit)$/.test(t) || /^\/(book|booking|bookings|book-?now|appointments?|schedule)\/?$/.test(path)) addExtra(t ? t.replace(/\b\w/g, (c) => c.toUpperCase()).slice(0, 40) : "Book now", href);
       else if (/^(shop|online shop|store|shop online|web ?shop|our (online )?shop|shop now|buy online|buy now|order flowers|send flowers|buy flowers|order a bouquet|order your flowers)$/.test(t) || /\/(shop|store|order-flowers|send-flowers|buy-flowers)(\.html?)?\/?$/.test(path)) pick(found, "shop", href);
     }
+  }
+  // What names this venue: words from its page address and the name/address the person gave ("paddington"). Used to pick the right
+  // court-booking link and the right email on a group site.
+  const venueTokens = [...new Set(`${base.pathname} ${name ?? ""} ${address ?? ""}`.toLowerCase().split(/[^a-z]+/).filter((w) => w.length >= 4 && !GENERIC.has(w)))];
+  // Court booking on Playtomic or Matchi: a group lists one link per venue, so the one whose address names this venue is taken, and
+  // none when several are listed and none can be told apart (a wrong venue's booking link is worse than none).
+  const courtLinks = anchors(html, base).filter(({ href }) => /(^|\.)(playtomic\.(com|io)|matchi\.se)$/i.test(href.hostname.replace(/^www\./, "")));
+  if (courtLinks.length) {
+    const uniq = courtLinks.filter((c, i, a) => a.findIndex((x) => x.href.pathname === c.href.pathname) === i);
+    const score = (c: Anchor) => venueTokens.filter((t) => c.href.pathname.toLowerCase().includes(t) && uniq.some((o) => !o.href.pathname.toLowerCase().includes(t))).length;
+    const best = uniq.length === 1 ? uniq[0] : [...uniq].sort((a, b) => score(b) - score(a))[0];
+    if (best && (uniq.length === 1 || score(best) > 0)) addExtra("Book a court", best.href);
+  }
+  for (const { href, text } of anchors(html, base)) {
+    if (href.hostname.replace(/^www\./, "") !== siteHost) continue;
+    if (/^(membership|memberships|become a member|join( us| the club)?)$/i.test(text) || /^\/(pages\/)?(membership|memberships)\/?$/i.test(href.pathname)) addExtra("Membership", new URL(href.pathname + href.search, base));
   }
   // Sports clubs on the MatchPoint club-management system (many padel and tennis clubs) all use the same page paths, but their menu
   // wording varies, so the generic rules above miss them. A link to the vendor on the page marks the site; only pages the site
@@ -523,10 +548,12 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
     // A heading read in front of the address ("LOCATIONS, Little Venice, 14 Formosa St") is not part of it.
     if (place.addressText) details.address = place.addressText.replace(/^\s*(locations?|contact( us)?|find us|visit us|address|where to find us|our (restaurants?|shops?|branches))\s*[,:\-–]\s*/i, "");
     if (place.phone) details.phone = place.phone;
+    // An address with two postcodes is two places run together (a group page that lists several venues): none is better than a wrong one.
+    if (details.address && new Set([...details.address.matchAll(/\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/gi)].map((m) => m[0].replace(/\s+/g, "").toUpperCase())).size > 1) delete details.address;
   }
 
   // A plain tel: / mailto: link: used when the page lists one place (several branches would make it a guess).
-  const contact = contactLinks(html, domain);
+  const contact = contactLinks(html, domain, venueTokens);
   if (!details.phone && contact.phone && places.length <= 1) details.phone = contact.phone;
   if (!details.email && contact.email) details.email = contact.email;
 
