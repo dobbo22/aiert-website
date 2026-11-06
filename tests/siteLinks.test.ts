@@ -88,3 +88,29 @@ test("a site that only lists another area is flagged, a site near the address is
   const sameArea = await findSiteLinks("https://catch.example", "1 Chapel Market, London N1 9EZ", "Ocean Catch", { html: islington, url: "https://catch.example/" });
   assert.ok(!sameArea.otherPlaceOnly, "same postcode area");
 });
+
+test("a club on the MatchPoint system gets its booking, matches, activities, membership and prices rows", async () => {
+  const { findSiteLinks } = await import("../lib/siteLinks");
+  const html = `<html><body><nav><ul><li><a href='/Booking/Grid.aspx'>Bookings</a></li>
+<li><a href='/Matches/Search.aspx'>Open matches</a></li><li><a href='/ActBooking/WeekGrid.aspx'>Activities</a></li>
+<li><a href='/Pages/14-brentwood_padel_club__rates'>Court Prices</a></li><li><a href='/memberships/subscribe.aspx'>Subscribe</a></li>
+<li><a href='/Pages/41-code_of_conduct'>Code of conduct</a></li></ul></nav>
+<a href="https://apps.apple.com/us/app/brentwood-padel-club/id1642489509">APP STORE</a>
+<a href="https://tpcmatchpoint.com/en">Sports Centers Management Software</a></body></html>`;
+  const r = await findSiteLinks("https://club.example", "Childerditch Lane, Brentwood CM13 3FD", "Brentwood Padel Club", { html, url: "https://club.example/" });
+  const by = (l: string) => r.links.find((x) => x.label === l)?.value;
+  assert.equal(by("Book a court"), "https://club.example/Booking/Grid.aspx");
+  assert.equal(by("Open matches"), "https://club.example/Matches/Search.aspx");
+  assert.equal(by("Activities and coaching"), "https://club.example/ActBooking/WeekGrid.aspx");
+  assert.equal(by("Court prices"), "https://club.example/Pages/14-brentwood_padel_club__rates");
+  assert.equal(by("Membership"), "https://club.example/memberships/subscribe.aspx");
+  assert.equal(by("Get the club app"), "https://apps.apple.com/us/app/brentwood-padel-club/id1642489509");
+  assert.ok(!r.links.some((x) => /conduct/i.test(x.value)), "policy pages are not offered");
+});
+
+test("a site that is not on MatchPoint is unaffected", async () => {
+  const { findSiteLinks } = await import("../lib/siteLinks");
+  const html = `<html><body><a href='/Booking/Grid.aspx'>Bookings</a></body></html>`;
+  const r = await findSiteLinks("https://other.example", "", "Other", { html, url: "https://other.example/" });
+  assert.ok(!r.links.some((x) => x.label === "Book a court"));
+});

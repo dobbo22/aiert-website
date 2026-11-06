@@ -442,6 +442,25 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
       else if (/^(shop|online shop|store|shop online|web ?shop|our (online )?shop|shop now|buy online|buy now|order flowers|send flowers|buy flowers|order a bouquet|order your flowers)$/.test(t) || /\/(shop|store|order-flowers|send-flowers|buy-flowers)(\.html?)?\/?$/.test(path)) pick(found, "shop", href);
     }
   }
+  // Sports clubs on the MatchPoint club-management system (many padel and tennis clubs) all use the same page paths, but their menu
+  // wording varies, so the generic rules above miss them. A link to the vendor on the page marks the site; only pages the site
+  // really links to are offered, never guessed.
+  const all = anchors(html, base);
+  if (all.some(({ href }) => /(^|\.)tpcmatchpoint\.com$/i.test(href.hostname))) {
+    const own = all.filter(({ href }) => href.hostname.replace(/^www\./, "") === siteHost);
+    const find = (re: RegExp) => own.find(({ href }) => re.test(href.pathname + href.search))?.href;
+    const rows: [string, URL | undefined][] = [
+      ["Book a court", find(/^\/booking\/grid\.aspx/i)],
+      ["Open matches", find(/^\/matches\/search\.aspx/i)],
+      ["Activities and coaching", find(/^\/actbooking\/weekgrid\.aspx/i)],
+      ["Court prices", find(/^\/pages\/\d+-[a-z0-9_]*(rates|prices|pricing)[a-z0-9_]*/i)],
+      ["Membership", find(/^\/memberships\/subscribe\.aspx/i)],
+    ];
+    for (const [label, url] of rows) if (url) addExtra(label, new URL(url.pathname + url.search, base));
+    // The club's own app, if the site links to it (a club-branded listing, not the vendor's).
+    const app = all.find(({ href }) => /^apps\.apple\.com$/i.test(href.hostname) && /\/app\/[^/]+\/id\d+/.test(href.pathname) && !/\/app\/(apple-store)\//.test(href.pathname));
+    if (app) addExtra("Get the club app", app.href);
+  }
   // Opening hours: the homepage's structured data, then up to two same-site branch/contact pages.
   const where = `${name ?? ""} ${address ?? ""}`;
   const postcode = postcodeOf(address);
