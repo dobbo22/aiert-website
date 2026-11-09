@@ -36,7 +36,20 @@ if (!ACCESS_TOKEN || !ORG_URN) {
   process.exit(1);
 }
 
-const rawArgs = process.argv.slice(2).filter((a) => a !== "--dry-run");
+const argv = process.argv.slice(2).filter((a) => a !== "--dry-run");
+// --reshare "comment": after the Page post, reshare it from Martin's personal profile with this comment
+// (needs w_member_social and LINKEDIN_PERSON_URN). Opt-in only so nothing lands on a personal profile by accident.
+let reshareComment = null;
+const ri = argv.indexOf("--reshare");
+if (ri !== -1) {
+  reshareComment = argv[ri + 1];
+  if (!reshareComment || reshareComment.startsWith("--")) {
+    console.error('--reshare needs a comment, e.g. --reshare "Our latest, would love your thoughts"');
+    process.exit(1);
+  }
+  argv.splice(ri, 2);
+}
+const rawArgs = argv;
 
 let commentary;
 let imagePath;
@@ -201,14 +214,37 @@ const postUrn = await createPost(postBody);
 console.log(`Post created: ${postUrn}`);
 console.log(`View at: https://www.linkedin.com/feed/update/${postUrn}/`);
 
+const esc = (t) => t.replace(/#(?=\w)|[\\|{}@\[\]()<>#*_~]/g, (ch) => (ch === "#" ? "#" : `\\${ch}`));
+
+if (reshareComment) {
+  const PERSON_URN = process.env.LINKEDIN_PERSON_URN;
+  if (!PERSON_URN) {
+    console.error("\nSkipped personal reshare: LINKEDIN_PERSON_URN is not set in .env.local (run npm run linkedin:whoami).");
+  } else {
+    const reshareUrn = await createPost({
+      author: PERSON_URN,
+      commentary: esc(reshareComment),
+      visibility: "PUBLIC",
+      distribution: { feedDistribution: "MAIN_FEED", targetEntities: [], thirdPartyDistributionChannels: [] },
+      lifecycleState: "PUBLISHED",
+      isReshareDisabledByAuthor: false,
+      reshareContext: { parent: postUrn },
+    });
+    console.log(`Reshared from your profile: https://www.linkedin.com/feed/update/${reshareUrn}/`);
+  }
+}
+
 const groups = (process.env.LINKEDIN_GROUPS || "")
   .split(",")
   .map((g) => g.trim())
   .filter(Boolean);
 
 if (groups.length) {
-  console.log("\nNo Groups API exists — manually reshare this post into:");
+  console.log("\nNo Groups API exists. Share the post into each Group by hand:");
+  console.log(`  1. Open https://www.linkedin.com/feed/update/${postUrn}/`);
+  console.log("  2. Click Share, then Post in a group, add a line of your own (not just the link), and send.");
   for (const g of groups) console.log(`  [ ] ${g}`);
+  console.log("  Tip: tailor each intro to the Group, most Groups remove plain promotion.");
 } else {
   console.log(
     "\nTip: set LINKEDIN_GROUPS in .env.local (comma-separated group names) " +
