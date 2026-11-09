@@ -49,6 +49,22 @@ if (ri !== -1) {
   }
   argv.splice(ri, 2);
 }
+// --article <url> --title "..." --desc "..." [image]: post a link card (title, description and the image as thumbnail).
+const takeFlag = (name) => {
+  const i = argv.indexOf(name);
+  if (i === -1) return null;
+  const v = argv[i + 1];
+  argv.splice(i, 2);
+  return v;
+};
+const articleUrl = takeFlag("--article");
+const articleTitle = takeFlag("--title");
+const articleDesc = takeFlag("--desc");
+if (articleUrl && !articleTitle) {
+  console.error('--article needs --title "..." (and optionally --desc "...")');
+  process.exit(1);
+}
+
 let topic = null;
 const ti = argv.indexOf("--topic");
 if (ti !== -1) { topic = argv[ti + 1]; argv.splice(ti, 2); }
@@ -204,7 +220,14 @@ if (process.argv.includes("--dry-run")) {
   process.exit(0);
 }
 
-if (imagePath && isVideo(imagePath)) {
+if (articleUrl) {
+  const article = { source: articleUrl, title: articleTitle, ...(articleDesc ? { description: articleDesc } : {}) };
+  if (imagePath) {
+    console.log(`Uploading thumbnail: ${imagePath}`);
+    article.thumbnail = await uploadImage(imagePath);
+  }
+  postBody.content = { article };
+} else if (imagePath && isVideo(imagePath)) {
   console.log(`Uploading video: ${imagePath}`);
   postBody.content = { media: { id: await uploadVideo(imagePath) } };
 } else if (imagePath) {
