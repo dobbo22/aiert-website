@@ -186,7 +186,7 @@ export default function TapCardGuidePage() {
         />
       </section>
       {steps.map((s, i) => (
-        <section key={s.title}>
+        <section key={s.title} id={s.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")} style={{ scrollMarginTop: 16 }}>
           <h2>{`${i + 1}. ${s.title}`}</h2>
           <p>{s.text}</p>
           {s.img && (

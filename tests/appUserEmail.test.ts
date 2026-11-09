@@ -10,25 +10,28 @@ test("the three most useful gaps are chosen, in order", () => {
   assert.deepEqual(topFixes([], false), []);
 });
 
-test("the email is personalised, escapes names, and follows the wording rule", () => {
+test("the email is personalised by fixes, and never reveals that we looked at their data", () => {
   const e = buildEmail(base);
-  assert.match(e.subject, /^Sam, 3 quick things to finish your TapCard$/);
-  assert.match(e.html, /Bean &amp; Brew &lt;Ltd&gt;/);
-  assert.doesNotMatch(e.html, /<Ltd>/);
+  assert.match(e.subject, /^Sam, 3 quick things to get more from your TapCard$/);
+  assert.match(e.text, /Thanks for downloading TapCard\. Here are three small things that would make it work much harder for you:/);
   assert.match(e.html, /Add your website/);
+  // nothing that shows we checked their card: no business name, no "I had a look", no talk of how much they have shared
+  for (const out of [e.html, e.text, e.subject]) {
+    assert.doesNotMatch(out, /Brew|I had a look|hasn't been sent|already sent|well filled in|good start/i);
+  }
   assert.doesNotMatch(e.html + e.text, /free app|free TapCard app|no app needed/i);
   assert.match(e.text, /three cards on one phone/);
   assert.match(e.html, /https:\/\/x\.test\/img\/qr-branded\.jpg/);
 });
 
-test("wording changes with how much the card has been shared", () => {
-  assert.match(buildEmail(base).text, /hasn't been sent to anyone yet/);
-  assert.match(buildEmail({ ...base, sentTo: 2 }).text, /already sent your card to 2 people/);
-  assert.match(buildEmail({ ...base, sentTo: 1 }).text, /sent your card to someone/);
-  assert.match(buildEmail({ ...base, missing: ["social"] as never[] }).text, /One small thing would make it work/);
-  assert.match(buildEmail(base).text, /Three small things would make it work/);
+test("the wording follows how many fixes there are, and is the same however much they have shared", () => {
+  assert.match(buildEmail({ ...base, missing: ["social"] as never[] }).text, /Here is one small thing that would make it work much harder/);
+  assert.match(buildEmail({ ...base, missing: ["social", "title"] as never[] }).text, /Here are two small things that would/);
+  assert.equal(buildEmail(base).text.includes("send yours to three people"), true);
+  assert.equal(buildEmail({ ...base, sentTo: 2 }).text, buildEmail({ ...base, sentTo: 0 }).text, "sharing history does not change the email");
   const done = buildEmail({ ...base, missing: [] });
-  assert.match(done.subject, /nearly there/);
+  assert.match(done.subject, /get more from your TapCard/);
+  assert.match(done.text, /Thanks for downloading TapCard\. The next step is getting your card in front of people\./);
   assert.equal(buildEmail({ ...base, firstName: "" }).text.startsWith("Hi,"), true);
 });
 
@@ -46,4 +49,20 @@ test("first names are only taken when the card clearly holds a person's name", a
   assert.ok(missingOf(blank, true).includes("photo"));
   assert.ok(!missingOf({ ...blank, website: "https://x.co.uk" }, false).includes("photo"), "a business with a site gets its logo from it");
   assert.ok(missingOf({ ...blank, website: "https://x.co.uk" }, true).includes("photo"), "a personal card still needs a photo");
+});
+
+test("every fix links to the guide step that shows how, and those steps exist", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { GUIDE_STEPS, stepId } = await import("../lib/appUserEmail");
+  const e = buildEmail(base); // fixes: website, photo, links
+  assert.match(e.html, /href="https:\/\/x\.test\/guide#fill-in-what-your-card-is-missing"/);
+  assert.match(e.html, /href="https:\/\/x\.test\/guide#bookings-shop-and-more-for-your-business"/);
+  assert.match(e.html, /href="https:\/\/x\.test\/guide#share-your-card"/);
+  assert.match(e.html, /href="https:\/\/x\.test\/guide#get-their-details-back"/);
+  assert.match(e.text, /How: https:\/\/x\.test\/guide#share-your-card/);
+  assert.equal(stepId("Bookings, shop and more for your business"), "bookings-shop-and-more-for-your-business");
+  // the guide page must still contain each of these step titles, or the link would land at the top of the page
+  const guide = readFileSync(new URL("../app/tapcard/guide/page.tsx", import.meta.url), "utf8");
+  for (const title of Object.values(GUIDE_STEPS)) assert.ok(guide.includes(`title: "${title}"`), `guide step missing: ${title}`);
+  assert.match(guide, /id=\{s\.title\.toLowerCase\(\)/, "the guide gives each step an id");
 });
