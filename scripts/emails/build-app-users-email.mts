@@ -1,3 +1,4 @@
+// @ts-nocheck  (a standalone script run with tsx: its ".ts" import paths are for tsx, not the site build)
 // Builds one personalised "finish your TapCard" email per real app user, from the live database (read-only).
 //
 //   DATABASE_URL="$(neonctl connection-string --project-id tiny-brook-82758292 --database-name invites --role-name backup_reader --pooled)" \
