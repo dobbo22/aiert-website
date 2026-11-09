@@ -1,6 +1,8 @@
 import { isAdminRequest } from "@/lib/adminRequest";
 import { linkedinConfigured, listLinkedInPosts, type LinkedInPost } from "@/lib/linkedinApi";
+import { getPageOverview, getPostStats, type PageOverview, type PostStats } from "@/lib/linkedinStats";
 import LinkedInFeed from "./LinkedInFeed";
+import LinkedInOverview from "./LinkedInOverview";
 
 export const dynamic = "force-dynamic";
 
@@ -19,10 +21,20 @@ export default async function LinkedInTabPage() {
     error = err instanceof Error ? err.message : "Failed to load LinkedIn posts";
   }
 
+  // Analytics are a nice-to-have: the compose form and feed must still work if they fail.
+  let overview: PageOverview | null = null;
+  let stats: Record<string, PostStats> = {};
+  try {
+    [overview, stats] = await Promise.all([getPageOverview(), getPostStats(posts.map((p) => p.urn))]);
+  } catch {
+    /* leave blank */
+  }
+
   return (
     <>
       {error && <p className="social-compose-error">{error}</p>}
-      <LinkedInFeed initialPosts={posts} />
+      {overview && <LinkedInOverview overview={overview} />}
+      <LinkedInFeed initialPosts={posts} stats={stats} />
     </>
   );
 }

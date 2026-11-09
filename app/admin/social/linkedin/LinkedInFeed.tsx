@@ -2,8 +2,9 @@
 
 import { useRef, useState } from "react";
 import type { LinkedInPost } from "@/lib/linkedinApi";
+import type { PostStats } from "@/lib/linkedinStats";
 
-export default function LinkedInFeed({ initialPosts }: { initialPosts: LinkedInPost[] }) {
+export default function LinkedInFeed({ initialPosts, stats = {} }: { initialPosts: LinkedInPost[]; stats?: Record<string, PostStats> }) {
   const [posts, setPosts] = useState(initialPosts);
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
@@ -53,6 +54,15 @@ export default function LinkedInFeed({ initialPosts }: { initialPosts: LinkedInP
           </div>
           <p className="social-post-message">{post.text || "(no text)"}</p>
           {post.hasMedia && <p className="social-empty">Includes an image or video.</p>}
+          {stats[post.urn] ? (
+            <p className="social-empty">
+              {stats[post.urn].impressions} impressions ({stats[post.urn].uniqueImpressions} people) · {stats[post.urn].clicks} clicks ·{" "}
+              {stats[post.urn].reactions} reactions · {stats[post.urn].comments} comments · {stats[post.urn].shares} shares ·{" "}
+              {(stats[post.urn].engagement * 100).toFixed(1)}% engagement
+            </p>
+          ) : (
+            <p className="social-empty">Stats: not available yet (LinkedIn takes a few hours).</p>
+          )}
         </div>
       ))}
     </div>

@@ -20,6 +20,17 @@ export function linkedinConfigured(): boolean {
   return Boolean(process.env.LINKEDIN_ACCESS_TOKEN && process.env.LINKEDIN_ORG_URN);
 }
 
+export async function linkedinGet(path: string): Promise<unknown> {
+  const { token } = config();
+  const res = await fetch(`${API_BASE}/${path}`, { headers: headers(token), cache: "no-store" });
+  if (!res.ok) throw await failure(`LinkedIn ${path.split("?")[0]}`, res);
+  return res.json();
+}
+
+export function orgUrn(): string {
+  return config().org;
+}
+
 function headers(token: string, extra: Record<string, string> = {}) {
   return {
     Authorization: `Bearer ${token}`,
