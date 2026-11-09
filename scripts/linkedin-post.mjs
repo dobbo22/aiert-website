@@ -273,7 +273,9 @@ try {
 if (groups.length) {
   console.log(`\nNo Groups API exists. Share the post into each Group by hand${topic ? ` (topic: ${topic})` : ""}:`);
   console.log(`  1. Open https://www.linkedin.com/feed/update/${postUrn}/`);
-  console.log("  2. Click Share, then Post in a group, add a line of your own (not just the link), and send.");
+  console.log("  2. Click the three dots, then Copy link to post.");
+  console.log("  3. In each Group below, click Start a post, paste the link and add a line of your own (not just the link).");
+  console.log("     (LinkedIn's Share menu often has no 'post in a group' option, so post from inside the Group.)");
   for (const g of groups) console.log(`  [ ] ${g.name}${g.members ? ` (${g.members.toLocaleString("en-GB")} members)` : ""}`);
   console.log("  Tip: tailor each intro to the Group; most Groups remove plain promotion.");
 } else if (topic) {
