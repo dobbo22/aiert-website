@@ -12,11 +12,12 @@ export async function POST(req: NextRequest) {
   const form = await req.formData();
   const message = String(form.get("message") ?? "").trim();
   const image = form.get("image");
+  const as = form.get("as") === "person" ? "person" : "page";
   if (!message) return NextResponse.json({ error: "Post text is required" }, { status: 400 });
 
   try {
     const media = image instanceof File && image.size > 0 ? { bytes: Buffer.from(await image.arrayBuffer()) } : undefined;
-    const post = await createLinkedInPost(message, media);
+    const post = await createLinkedInPost(message, { as, image: media });
     return NextResponse.json({ ok: true, ...post });
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : "Post failed" }, { status: 500 });

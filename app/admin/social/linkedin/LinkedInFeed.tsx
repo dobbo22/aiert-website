@@ -35,6 +35,13 @@ export default function LinkedInFeed({ initialPosts, stats = {} }: { initialPost
       <form ref={formRef} onSubmit={handleSubmit} className="social-compose">
         <textarea ref={textareaRef} name="message" placeholder="Write a post for the AIERT LTD LinkedIn page…" required maxLength={3000} />
         <div className="social-compose-row">
+          <label>
+            Post as{" "}
+            <select name="as" defaultValue="page">
+              <option value="page">AIERT LTD page</option>
+              <option value="person">Me (my own profile)</option>
+            </select>
+          </label>
           <input type="file" name="image" accept="image/*" />
           <button type="submit" className="social-post-btn" disabled={submitting}>
             {submitting ? "Posting…" : "Post to LinkedIn"}

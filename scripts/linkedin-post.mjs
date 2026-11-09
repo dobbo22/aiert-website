@@ -30,6 +30,7 @@ const MAX_COMMENTARY_LENGTH = 3000;
 
 const ACCESS_TOKEN = process.env.LINKEDIN_ACCESS_TOKEN;
 const ORG_URN = process.env.LINKEDIN_ORG_URN;
+const PERSON_URN = process.env.LINKEDIN_PERSON_URN;
 
 if (!ACCESS_TOKEN || !ORG_URN) {
   console.error("Missing LINKEDIN_ACCESS_TOKEN or LINKEDIN_ORG_URN in .env.local");
@@ -57,6 +58,12 @@ const takeFlag = (name) => {
   argv.splice(i, 2);
   return v;
 };
+const postAs = takeFlag("--as"); // "person" posts from your own profile (needs LINKEDIN_PERSON_URN)
+if (postAs === "person" && !PERSON_URN) {
+  console.error("--as person needs LINKEDIN_PERSON_URN in .env.local");
+  process.exit(1);
+}
+const AUTHOR = postAs === "person" ? PERSON_URN : ORG_URN;
 const articleUrl = takeFlag("--article");
 const articleTitle = takeFlag("--title");
 const articleDesc = takeFlag("--desc");
@@ -112,7 +119,7 @@ async function uploadImage(path) {
     method: "POST",
     headers: headers({ "Content-Type": "application/json" }),
     body: JSON.stringify({
-      initializeUploadRequest: { owner: ORG_URN },
+      initializeUploadRequest: { owner: AUTHOR },
     }),
   });
 
@@ -146,7 +153,7 @@ async function uploadVideo(path) {
     method: "POST",
     headers: headers({ "Content-Type": "application/json" }),
     body: JSON.stringify({
-      initializeUploadRequest: { owner: ORG_URN, fileSizeBytes: fileBytes.length, uploadCaptions: false, uploadThumbnail: false },
+      initializeUploadRequest: { owner: AUTHOR, fileSizeBytes: fileBytes.length, uploadCaptions: false, uploadThumbnail: false },
     }),
   });
   if (!init.ok) throw new Error(`Video init failed: ${init.status} ${await init.text()}`);
@@ -200,7 +207,7 @@ async function createPost(body) {
 }
 
 const postBody = {
-  author: ORG_URN,
+  author: AUTHOR,
   commentary,
   visibility: "PUBLIC",
   distribution: {

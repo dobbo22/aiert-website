@@ -6,6 +6,8 @@
 // Gotcha: without rw_organization_admin every write returns 403.
 
 import { unstable_cache } from "next/cache";
+import { validatePoll, type PollInput } from "./linkedinPoll";
+export { validatePoll, type PollInput };
 
 const API_BASE = "https://api.linkedin.com/rest";
 const LINKEDIN_VERSION = "202604"; // YYYYMM; LinkedIn sunsets old versions, bump periodically
@@ -75,8 +77,49 @@ async function uploadImage(token: string, org: string, bytes: Buffer): Promise<s
 
 export type CreatePostResult = { urn: string; url: string };
 
-export async function createLinkedInPost(text: string, image?: { bytes: Buffer }): Promise<CreatePostResult> {
-  const { token, org } = config();
+export type PostAs = "page" | "person";
+export type PostOptions = {
+  as?: PostAs; // default: the AIERT LTD page. "person" posts from Martin's own profile (needs w_member_social + LINKEDIN_PERSON_URN).
+  image?: { bytes: Buffer };
+  document?: { bytes: Buffer; title: string }; // PDF/PPT/DOC: shows as a swipeable carousel
+  poll?: PollInput;
+};
+
+export function authorUrn(as: PostAs = "page"): string {
+  if (as === "person") {
+    const person = process.env.LINKEDIN_PERSON_URN;
+    if (!person) throw new Error("Missing LINKEDIN_PERSON_URN environment variable (needed to post from your own profile)");
+    return person;
+  }
+  return config().org;
+}
+
+async function uploadDocument(token: string, owner: string, bytes: Buffer): Promise<string> {
+  const init = await fetch(`${API_BASE}/documents?action=initializeUpload`, {
+    method: "POST",
+    headers: headers(token, { "Content-Type": "application/json" }),
+    body: JSON.stringify({ initializeUploadRequest: { owner } }),
+  });
+  if (!init.ok) throw await failure("LinkedIn document init", init);
+  const { value } = await init.json();
+  const put = await fetch(value.uploadUrl, { method: "PUT", headers: { Authorization: `Bearer ${token}` }, body: new Uint8Array(bytes) });
+  if (!put.ok) throw await failure("LinkedIn document upload", put);
+  // Processing is asynchronous: wait until the document is available before attaching it.
+  for (let i = 0; i < 15; i++) {
+    const st = await fetch(`${API_BASE}/documents/${encodeURIComponent(value.document)}`, { headers: headers(token), cache: "no-store" });
+    const status = st.ok ? ((await st.json()) as { status?: string }).status : undefined;
+    if (status === "AVAILABLE") return value.document as string;
+    if (status === "PROCESSING_FAILED") throw new Error("LinkedIn could not process the document");
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  throw new Error("Timed out waiting for LinkedIn to process the document");
+}
+
+// Keeps the old call shape: createLinkedInPost(text, { bytes }) still posts an image from the page.
+export async function createLinkedInPost(text: string, imageOrOptions?: { bytes: Buffer } | PostOptions): Promise<CreatePostResult> {
+  const opts: PostOptions = imageOrOptions && "bytes" in imageOrOptions ? { image: imageOrOptions } : (imageOrOptions ?? {});
+  const { token } = config();
+  const author = authorUrn(opts.as);
   const commentary = escapeCommentary(text.trim());
   if (!commentary) throw new Error("Post text is required");
   if (commentary.length > MAX_COMMENTARY_LENGTH) {
@@ -84,14 +127,28 @@ export async function createLinkedInPost(text: string, image?: { bytes: Buffer }
   }
 
   const body: Record<string, unknown> = {
-    author: org,
+    author,
     commentary,
     visibility: "PUBLIC",
     distribution: { feedDistribution: "MAIN_FEED", targetEntities: [], thirdPartyDistributionChannels: [] },
     lifecycleState: "PUBLISHED",
     isReshareDisabledByAuthor: false,
   };
-  if (image) body.content = { media: { id: await uploadImage(token, org, image.bytes) } };
+  if (opts.poll) {
+    const bad = validatePoll(opts.poll);
+    if (bad) throw new Error(bad);
+    body.content = {
+      poll: {
+        question: opts.poll.question.trim(),
+        options: opts.poll.options.map((o) => o.trim()).filter(Boolean).map((text) => ({ text })),
+        settings: { duration: opts.poll.duration },
+      },
+    };
+  } else if (opts.document) {
+    body.content = { media: { title: opts.document.title, id: await uploadDocument(token, author, opts.document.bytes) } };
+  } else if (opts.image) {
+    body.content = { media: { id: await uploadImage(token, author, opts.image.bytes) } };
+  }
 
   const res = await fetch(`${API_BASE}/posts`, {
     method: "POST",

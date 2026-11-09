@@ -2,7 +2,7 @@
 // questions from fixed templates, and queues everything else for Martin to approve (with a Claude draft when ANTHROPIC_API_KEY is set).
 // Runs from the cron route /api/cron/linkedin-comments. Development Tier allows 100 LinkedIn calls a day per member, so it only
 // looks at posts from the last 7 days and runs every few hours.
-import sql from "./db";
+import sql from "@/lib/db";
 import { listLinkedInPosts, listLinkedInComments, replyAsPage } from "./linkedinApi";
 import { classify, faqReply, MAX_AUTO_REPLIES_PER_DAY } from "./linkedinReplyRules";
 import { faqDraft, sanitise, topFaq } from "./linkedinFaq";
