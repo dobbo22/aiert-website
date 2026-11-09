@@ -1,5 +1,7 @@
 import { isAdminRequest } from "@/lib/adminRequest";
 import { weeklyNumbers } from "@/lib/weeklyNumbers";
+import { linkedinConfigured } from "@/lib/linkedinApi";
+import { getWindowTotals } from "@/lib/linkedinStats";
 
 export const metadata = { title: "Weekly numbers — Admin", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -14,6 +16,8 @@ export default async function NumbersPage({ searchParams }: { searchParams: Prom
   const days = Math.min(365, Math.max(1, Number((await searchParams).days) || 7));
   const d = await weeklyNumbers(days);
   const t = d.totals;
+  // LinkedIn is optional: if it is not set up or its call fails, the rest of the page still shows.
+  const li = linkedinConfigured() ? await getWindowTotals(days).catch(() => null) : null;
   const tiles: [string, number][] = [
     ["Cards", t.cards], [`New cards (${days}d)`, t.newCards], ["Card page views", t.views], ["…from a QR code", t.qr],
     ["Saved to contacts", t.saves], ["Followers", t.followers], ["Installs from a card", t.installs], ["Offers claimed", t.claims], ["Offers used", t.used],
@@ -71,6 +75,20 @@ export default async function NumbersPage({ searchParams }: { searchParams: Prom
             <tr key={campaign} style={row}><td style={left}>{campaign}</td><td style={cell}>{s.sent}</td><td style={cell}>{s.delivered}</td><td style={cell}>{s.bounced}</td>
               <td style={cell}>{s.previewed}</td><td style={cell}>{s.clickedAny}</td><td style={cell}>{s.clickedApp}</td><td style={cell}>{s.unsubscribed}</td><td style={cell}>{s.queued}</td></tr>))}</tbody>
         </table></div>
+      )}
+
+      <h2 style={h2}>LinkedIn ({days} days)</h2>
+      {!li ? <p>Not available.</p> : (
+        <>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+            {([["Followers (now)", li.followers], ["Page views (all time)", li.pageViews], ["Impressions", li.impressions], ["Clicks", li.clicks], ["Reactions", li.reactions], ["Comments", li.comments], ["Shares", li.shares]] as [string, number][]).map(([k, v]) => (
+              <div key={k} style={{ border: "1px solid rgba(255,255,255,.15)", borderRadius: 8, padding: "10px 16px", minWidth: 130 }}>
+                <div style={{ fontSize: "1.6rem", fontWeight: 700 }}>{v}</div><div>{k}</div>
+              </div>
+            ))}
+          </div>
+          <p style={{ marginTop: 8 }}>Completed days only, so today appears tomorrow. <a className="underline" href="/admin/social/linkedin">Per-post figures and audience</a></p>
+        </>
       )}
 
       <h2 style={h2}>Store numbers</h2>

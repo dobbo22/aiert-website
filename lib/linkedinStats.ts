@@ -133,3 +133,28 @@ export async function getPageOverview(): Promise<PageOverview> {
     followersBy: { industry: fi, seniority: fs, function: ff, country: fc },
   };
 }
+
+// Totals over the last `days` completed days, for the Weekly numbers page.
+export async function getWindowTotals(days: number): Promise<{ followers: number; pageViews: number; impressions: number; clicks: number; reactions: number; comments: number; shares: number }> {
+  const org = enc(orgUrn());
+  const now = Date.now();
+  const start = now - days * 24 * 3600 * 1000;
+  const [size, page, series] = await Promise.all([
+    linkedinGet(`networkSizes/${org}?edgeType=COMPANY_FOLLOWED_BY_MEMBER`).catch(() => ({})) as Promise<{ firstDegreeSize?: number }>,
+    linkedinGet(`organizationPageStatistics?q=organization&organization=${org}`).catch(() => ({})) as Promise<{ elements?: Row[] }>,
+    linkedinGet(
+      `organizationalEntityShareStatistics?q=organizationalEntity&organizationalEntity=${org}&timeIntervals=(timeGranularityType:DAY,timeRange:(start:${start},end:${now}))`,
+    ).catch(() => ({})) as Promise<{ elements?: Array<{ totalShareStatistics?: Totals }> }>,
+  ]);
+  const sum = (k: keyof Totals) => (series.elements ?? []).reduce((n, e) => n + (e.totalShareStatistics?.[k] ?? 0), 0);
+  const p = (page.elements?.[0] ?? {}) as Row;
+  return {
+    followers: size.firstDegreeSize ?? 0,
+    pageViews: ((p.totalPageStatistics as { views?: { allPageViews?: { pageViews?: number } } } | undefined)?.views?.allPageViews?.pageViews) ?? 0,
+    impressions: sum("impressionCount"),
+    clicks: sum("clickCount"),
+    reactions: sum("likeCount"),
+    comments: sum("commentCount"),
+    shares: sum("shareCount"),
+  };
+}
