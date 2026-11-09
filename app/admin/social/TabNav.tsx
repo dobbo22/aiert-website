@@ -9,7 +9,7 @@ const TABS = [
   { href: "/admin/social/facebook", label: "Facebook" },
   { href: "/admin/social/instagram", label: "Instagram" },
   { href: "/admin/social/threads", label: "Threads" },
-  { href: "/admin/social/linkedin", label: "LinkedIn", badge: "Soon" },
+  { href: "/admin/social/linkedin", label: "LinkedIn" },
   { href: "/admin/social/reddit", label: "Reddit" },
   { href: "/admin/social/links", label: "Links & Invites" },
   { href: "/admin/social/walk-in", label: "Walk-in demo" },
@@ -44,7 +44,6 @@ export default function TabNav() {
               className={`social-tab ${active ? "social-tab-active" : ""}`}
             >
               {tab.label}
-              {tab.badge && <span className="social-tab-badge">{tab.badge}</span>}
             </Link>
           );
         })}

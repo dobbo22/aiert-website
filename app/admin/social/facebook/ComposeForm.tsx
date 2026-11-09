@@ -53,7 +53,12 @@ export default function ComposeForm({ onPosted }: { onPosted: (post: FacebookPos
     const json = await res.json();
 
     if (res.ok) {
-      setStatus({ ok: true, text: "Posted to Facebook." });
+      const li = json.linkedin as { ok: boolean; url?: string; error?: string } | undefined;
+      setStatus(
+        li && !li.ok
+          ? { ok: false, text: `Posted to Facebook, but LinkedIn failed: ${li.error}` }
+          : { ok: true, text: li ? "Posted to Facebook and LinkedIn." : "Posted to Facebook." },
+      );
       onPosted({
         id: json.postId,
         message,
@@ -93,6 +98,10 @@ export default function ComposeForm({ onPosted }: { onPosted: (post: FacebookPos
           </button>
         </div>
       )}
+
+      <label className="social-format-hint">
+        <input type="checkbox" name="alsoLinkedIn" defaultChecked /> Also post to the AIERT LTD LinkedIn page
+      </label>
 
       <div className="social-compose-row">
         <input ref={fileInputRef} type="file" name="image" accept="image/*" onChange={handleFileChange} />

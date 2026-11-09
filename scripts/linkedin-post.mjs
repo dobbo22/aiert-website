@@ -36,7 +36,7 @@ if (!ACCESS_TOKEN || !ORG_URN) {
   process.exit(1);
 }
 
-const rawArgs = process.argv.slice(2);
+const rawArgs = process.argv.slice(2).filter((a) => a !== "--dry-run");
 
 let commentary;
 let imagePath;
@@ -53,6 +53,12 @@ if (!commentary) {
   console.error("   or: npm run linkedin:post -- --file scripts/posts/draft.txt [path/to/image.jpg]");
   process.exit(1);
 }
+
+// LinkedIn parses post text as "little text": ( ) [ ] { } < > | @ \\ # * _ ~ are markup and an
+// unescaped ( or [ can cut the post off. Escape them, but leave #hashtags alone.
+// (Same rule as lib/linkedinApi.ts escapeCommentary.)
+const rawCommentary = commentary;
+commentary = commentary.replace(/#(?=\w)|[\\|{}@\[\]()<>#*_~]/g, (ch) => (ch === "#" ? "#" : `\\${ch}`));
 
 if (commentary.length > MAX_COMMENTARY_LENGTH) {
   console.error(`Post text is ${commentary.length} characters — LinkedIn's limit is ${MAX_COMMENTARY_LENGTH}. Trim before posting.`);
@@ -100,6 +106,53 @@ async function uploadImage(path) {
   return imageUrn;
 }
 
+const isVideo = (path) => /\.(mp4|mov)$/i.test(path ?? "");
+
+async function uploadVideo(path) {
+  const fileBytes = await readFile(path);
+  const init = await fetch(`${API_BASE}/videos?action=initializeUpload`, {
+    method: "POST",
+    headers: headers({ "Content-Type": "application/json" }),
+    body: JSON.stringify({
+      initializeUploadRequest: { owner: ORG_URN, fileSizeBytes: fileBytes.length, uploadCaptions: false, uploadThumbnail: false },
+    }),
+  });
+  if (!init.ok) throw new Error(`Video init failed: ${init.status} ${await init.text()}`);
+  const { value } = await init.json();
+
+  // Each instruction is a byte range; upload them in turn and keep every part's ETag.
+  const etags = [];
+  for (const part of value.uploadInstructions) {
+    const chunk = fileBytes.subarray(part.firstByte, part.lastByte + 1);
+    const put = await fetch(part.uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": "application/octet-stream" },
+      body: chunk,
+    });
+    if (!put.ok) throw new Error(`Video part upload failed: ${put.status} ${await put.text()}`);
+    etags.push(put.headers.get("etag"));
+  }
+
+  const fin = await fetch(`${API_BASE}/videos?action=finalizeUpload`, {
+    method: "POST",
+    headers: headers({ "Content-Type": "application/json" }),
+    body: JSON.stringify({
+      finalizeUploadRequest: { video: value.video, uploadToken: value.uploadToken ?? "", uploadedPartIds: etags },
+    }),
+  });
+  if (!fin.ok) throw new Error(`Video finalize failed: ${fin.status} ${await fin.text()}`);
+
+  // Processing is asynchronous; wait until LinkedIn says the video is ready to attach.
+  for (let i = 0; i < 30; i++) {
+    const st = await fetch(`${API_BASE}/videos/${encodeURIComponent(value.video)}`, { headers: headers() });
+    const status = st.ok ? (await st.json()).status : "UNKNOWN";
+    if (status === "AVAILABLE") return value.video;
+    if (status === "PROCESSING_FAILED") throw new Error("LinkedIn could not process the video");
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  throw new Error("Timed out waiting for LinkedIn to process the video");
+}
+
 async function createPost(body) {
   const res = await fetch(`${API_BASE}/posts`, {
     method: "POST",
@@ -127,7 +180,18 @@ const postBody = {
   isReshareDisabledByAuthor: false,
 };
 
-if (imagePath) {
+if (process.argv.includes("--dry-run")) {
+  console.log("---- DRY RUN: nothing sent to LinkedIn ----");
+  console.log(`Media: ${imagePath ?? "none"}  Characters: ${commentary.length}`);
+  console.log("Links:", (rawCommentary.match(/https?:\/\/\S+/g) ?? []).join("  ") || "NONE");
+  console.log("\n" + rawCommentary);
+  process.exit(0);
+}
+
+if (imagePath && isVideo(imagePath)) {
+  console.log(`Uploading video: ${imagePath}`);
+  postBody.content = { media: { id: await uploadVideo(imagePath) } };
+} else if (imagePath) {
   console.log(`Uploading image: ${imagePath}`);
   const imageUrn = await uploadImage(imagePath);
   postBody.content = { media: { id: imageUrn } };
