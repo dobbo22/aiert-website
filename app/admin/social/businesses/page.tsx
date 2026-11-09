@@ -67,7 +67,8 @@ export default async function BusinessesPage({ searchParams }: { searchParams: P
         Quick filters: <a className="underline" href={`?${new URLSearchParams({ q: COFFEE_WORDS.join(","), little: "1" })}`}>Coffee houses, little used</a> ·{" "}
         <a className="underline" href={`?${new URLSearchParams({ q: COFFEE_WORDS.join(",") })}`}>Coffee houses, all</a> ·{" "}
         <a className="underline" href={`?${new URLSearchParams({ email: "own", notest: "1", app: "1", all: "1" })}`}>Real app users with an own-domain email</a> ·{" "}
-        <a className="underline" href={csv}>Download this list as CSV</a>
+        <a className="underline" href={csv}>Download this list as CSV</a> ·{" "}
+        <a className="underline" href="/admin/social/businesses/email">Preview the &ldquo;finish your card&rdquo; email</a>
       </p>
 
       <p style={{ marginBottom: 8 }}>Showing <strong>{rows.length}</strong> of {pool.length}.</p>

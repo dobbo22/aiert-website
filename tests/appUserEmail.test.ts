@@ -31,3 +31,19 @@ test("wording changes with how much the card has been shared", () => {
   assert.match(done.subject, /nearly there/);
   assert.equal(buildEmail({ ...base, firstName: "" }).text.startsWith("Hi,"), true);
 });
+
+test("first names are only taken when the card clearly holds a person's name", async () => {
+  const { installStubs } = await import("./helpers/pgdb");
+  installStubs();
+  const { firstNameOf, missingOf } = await import("../lib/appUserCampaign");
+  assert.equal(firstNameOf("Andy Smith", "Focused Financial Advice"), "Andy");
+  assert.equal(firstNameOf("Administrative Team", "Krontroine Limited"), "", "not a person");
+  assert.equal(firstNameOf("MICHAEL JONES", "Belfius"), "Michael", "capitals are tidied");
+  assert.equal(firstNameOf("ATP Creative", "ATP"), "", "an acronym is not a name");
+  assert.equal(firstNameOf("Hard Rock Hotel", "Hard Rock Hotel"), "", "the company itself");
+  assert.equal(firstNameOf("Cher", ""), "", "a single word is not enough to be sure");
+  const blank = { id: "x", title: "", phone: "", website: "", photo_url: null, linkedin_url: "", twitter_url: "", instagram_url: "", facebook_url: "", tiktok_url: "", whatsapp_url: "", address: "", links: "[]" };
+  assert.ok(missingOf(blank, true).includes("photo"));
+  assert.ok(!missingOf({ ...blank, website: "https://x.co.uk" }, false).includes("photo"), "a business with a site gets its logo from it");
+  assert.ok(missingOf({ ...blank, website: "https://x.co.uk" }, true).includes("photo"), "a personal card still needs a photo");
+});
