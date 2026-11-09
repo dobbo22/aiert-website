@@ -76,6 +76,8 @@ export const TRACKED_LINKS: Record<string, TrackedLink> = {
   // The Get the App handout page (www.aiert.co.uk/get-app): its QR codes point here, so every scan is counted.
   // The local Facebook pages / groups video posts. Use https://tapcard.aiert.co.uk/go/tapcard-web-local-video?src=<page-name>.
   "tapcard-web-local-video": { label: "Local pages video → Get TapCard", to: "https://apps.apple.com/app/id6816003159", appStoreId: "6816003159", playPackage: "com.mailbroom.tapcard", campaign: "local-video", playSource: "facebook", playMedium: "local-page", perSource: true },
+  // The Download link in the TapCard Facebook Page's About > Links.
+  "tapcard-web-facebook-page": { label: "TapCard Facebook Page → Get TapCard", to: "https://apps.apple.com/app/id6816003159", appStoreId: "6816003159", playPackage: "com.mailbroom.tapcard", campaign: "facebook-page", playSource: "facebook", playMedium: "page-links" },
   "tapcard-web-referral-business": { label: "Card page: customer refers a business → build a card", to: "https://tapcard.aiert.co.uk/demo?utm_source=referral&utm_medium=card-page" },
   "tapcard-web-qr-tapcard": { label: "Get-app QR → TapCard", to: "https://apps.apple.com/app/id6816003159", appStoreId: "6816003159", playPackage: "com.mailbroom.tapcard", campaign: "qr-handout", playSource: "qr", playMedium: "handout" },
   "tapcard-web-qr-powersearch": { label: "Get-app QR → PowerSearch", to: "https://apps.apple.com/app/powersearch/id6807772868", appStoreId: "6807772868", playPackage: "mailbroom.app", campaign: "qr-handout", playSource: "qr", playMedium: "handout" },
