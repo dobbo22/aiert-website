@@ -3,6 +3,8 @@ import { linkedinConfigured, listLinkedInPosts, type LinkedInPost } from "@/lib/
 import { getPageOverview, getPostStats, type PageOverview, type PostStats } from "@/lib/linkedinStats";
 import LinkedInFeed from "./LinkedInFeed";
 import LinkedInOverview from "./LinkedInOverview";
+import ReplyQueue from "./ReplyQueue";
+import { pendingReplies, recentHandled, type QueueItem } from "@/lib/linkedinReplies";
 
 export const dynamic = "force-dynamic";
 
@@ -30,8 +32,18 @@ export default async function LinkedInTabPage() {
     /* leave blank */
   }
 
+  // The reply queue lives in our own database, so it needs no LinkedIn calls.
+  let pending: QueueItem[] = [];
+  let handled: QueueItem[] = [];
+  try {
+    [pending, handled] = await Promise.all([pendingReplies(), recentHandled(10)]);
+  } catch {
+    /* leave blank */
+  }
+
   return (
     <>
+      <ReplyQueue initial={pending} recent={handled} />
       {error && <p className="social-compose-error">{error}</p>}
       {overview && <LinkedInOverview overview={overview} />}
       <LinkedInFeed initialPosts={posts} stats={stats} />

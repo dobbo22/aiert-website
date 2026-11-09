@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import DocPage from "../DocPage";
 import StoreBadges from "../../StoreBadges";
 import JsonLd from "../JsonLd";
+import { HOW_IT_WORKS_FAQ as FAQ } from "@/lib/tapcardFaq";
 
 const DESCRIPTION =
   "Your business card on your phone: share it with a QR code or a link, swap details in seconds, and stay in sync automatically — even after it's saved.";
@@ -23,17 +24,6 @@ export const metadata: Metadata = {
 const APP_STORE_URL = "https://apps.apple.com/app/id6816003159?pt=128647066&ct=how-it-works&mt=8";
 const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.mailbroom.tapcard&referrer=utm_source%3Dtapcard-web%26utm_medium%3Dhow-it-works";
 
-// Each answer repeats what the page says below; keep them in step.
-const FAQ = [
-  ["Does the person I share my card with need the TapCard app?", "No. Your card opens in their browser and they tap Save Contact to put your details into their phone's contacts. Only people who want to receive your offers and news need the app."],
-  ["How do I get their details back?", "Anyone who opens your card on the web, or in the iPhone App Clip, can tap Share your details and leave their name and a phone number or email, with no app and no sign-up. They appear in your Contacts marked New. If they install TapCard, the app offers to send you their own card in one tap. You can switch this off for a card in Edit card."],
-  ["Can I share my TapCard with no signal?", "Yes. Tap Offline QR to show a QR code that holds your contact details themselves, so it works with no signal and no app on their phone. You can also send your contact file by AirDrop."],
-  ["Can I put my business card in Apple Wallet or Google Wallet?", "Yes. Add your card to your phone's Wallet so it is always to hand, and pick a design in the app so your Wallet card matches."],
-  ["Do I need an account to make a TapCard?", "No. There is nothing to sign up for. Answer what the card is for, add your details, and share it."],
-  ["Can TapCard fill in my card for me?", "Yes, if you ask. When a business card is missing a phone number, opening hours, an address, a booking or menu link or social profiles, TapCard looks them up from Apple Maps (iPhone), public business listings and your website, and shows them in a Review screen. Nothing is added until you tap Add, a detail you skip is not offered again, and Google is not used."],
-  ["Can I send a contact their own TapCard?", "Yes. Tap Send card on a contact you added: a switch under it (on by default) also sends them a second link to a ready-made TapCard built from the details you hold for them. They check it and keep it. It is kept for 30 days and you can switch it off for any send."],
-  ["Does TapCard take payments for offers?", "No. You give the discount yourself; TapCard does not take payments. Promote, which lets a business post offers and news, starts with 3 months free, then costs £49.99 a year or £9.99 a month."],
-] as const;
 
 const FAQ_JSON_LD = {
   "@context": "https://schema.org",
