@@ -16,6 +16,7 @@ const TABS = [
   { href: "/admin/social/walk-in", label: "Walk-in demo" },
   { href: "/admin/social/demo", label: "Demo leads" },
   { href: "/admin/social/numbers", label: "Weekly numbers" },
+  { href: "/admin/social/businesses", label: "Businesses" },
   { href: "/admin/social/funnel", label: "Setup funnel" },
   { href: "/admin/social/moderation", label: "Moderation" },
   { href: "/admin/social/verifications", label: "Verifications" },
