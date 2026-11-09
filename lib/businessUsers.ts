@@ -3,6 +3,7 @@
 // a single business card with a complimentary Promote grant, or a single business card with no Promote yet ("free").
 import sql from "@/lib/db";
 import { TRIAL_DAYS } from "@/lib/tapcardBizBilling";
+import { businessDomain, emailOnDomain } from "@/lib/tapcardDomain";
 
 export type SignupType = "company" | "store" | "grant" | "free";
 export const SIGNUP_LABEL: Record<SignupType, string> = {
@@ -37,7 +38,15 @@ export type BizRow = {
   grant_until: string | null;
   signup: SignupType;
   detail: string;
+  emailKind: EmailKind;
+  emailDomain: string;
+  emailOnSite: boolean; // the email's domain is the same as the card's website: a strong sign of a real business
+  looksTest: boolean; // a demo/test card, or one of our own addresses
+  fromApp: boolean; // made in the TapCard app (carries an install id), not the web demo
+  isPersonal: boolean;
 };
+
+export type EmailKind = "none" | "free" | "own";
 
 const fmt = (d: string | Date) => new Date(d).toISOString().slice(0, 10);
 
@@ -59,6 +68,29 @@ export function signupOf(r: {
   return { signup: "free", detail: "" };
 }
 
+// UK and other shared mail providers that tapcardDomain's list does not cover: an address there says nothing about the business.
+const MORE_FREE_MAIL = new Set([
+  "live.co.uk", "outlook.co.uk", "msn.com", "talktalk.net", "virginmedia.com", "ntlworld.com", "blueyonder.co.uk", "tiscali.co.uk", "gmx.com", "gmx.co.uk",
+  "mail.com", "yahoo.ie", "yahoo.fr", "hotmail.fr", "hotmail.it", "hotmail.de", "icloud.co.uk", "mac.com", "pm.me", "hey.com", "zoho.com", "fastmail.com", "plus.net", "sky.co.uk",
+  "privaterelay.appleid.com", "telenet.be", "skynet.be", "proximus.be", "orange.fr", "free.fr", "wanadoo.fr", "web.de", "t-online.de", "libero.it", "mail.ru", "yandex.ru", "bluewin.ch", "bigpond.com", "optusnet.com.au", "shaw.ca", "rogers.com",
+]);
+
+// Our own addresses (and AIERT staff): never a prospect.
+const OUR_DOMAINS = new Set(["aiert.co.uk", "mailbroom.app"]);
+
+export function emailInfo(email: string, website: string): { kind: EmailKind; domain: string; onSite: boolean } {
+  const e = email.trim().toLowerCase();
+  const domain = e.includes("@") ? e.split("@")[1] : "";
+  if (!domain) return { kind: "none", domain: "", onSite: false };
+  if (MORE_FREE_MAIL.has(domain) || !businessDomain(domain)) return { kind: "free", domain, onSite: false };
+  return { kind: "own", domain, onSite: emailOnDomain(e, businessDomain(website)) };
+}
+
+// Names and sites that look like demo or test cards (Acme, Test, Sample...), which are not real prospects.
+const TESTISH = /\b(acme|test|testing|demo|sample|example|lorem|asdf|qwerty|dummy|placeholder|my business|your business)\b/i;
+export const looksTest = (r: { name: string; company: string; website: string; email?: string }) =>
+  TESTISH.test(`${r.company} ${r.name}`) || /example\.(com|org)|test\.com|acme/i.test(r.website) || OUR_DOMAINS.has((r.email ?? "").split("@")[1]?.toLowerCase() ?? "");
+
 export const COFFEE_WORDS = ["coffee", "cafe", "café", "espresso", "roast", "barista", "bean", "brew", "caffe", "coffeehouse"];
 
 // Pure: true when any keyword appears in the business name, company, label or website (case-insensitive).
@@ -75,13 +107,12 @@ const safe = async <T,>(p: Promise<T>): Promise<T | null> => p.catch(() => null)
 
 export async function allBusinesses(): Promise<{ rows: BizRow[]; personalCards: number }> {
   const base = (await sql`
-    SELECT c.id, c.name, c.company, c.email, c.website, c.label, c.created_at, c.view_count AS views, c.qr_view_count AS qr, c.save_count AS saves,
+    SELECT c.id, c.name, c.company, c.email, c.website, c.label, c.card_kind, c.grouping_id, c.created_at, c.view_count AS views, c.qr_view_count AS qr, c.save_count AS saves,
       c.org_id, o.name AS org_name, o.billing_status, o.created_at AS org_created,
       (SELECT COUNT(*)::int FROM tapcard_followers f WHERE f.card_id = c.id) AS followers,
       (SELECT COUNT(*)::int FROM tapcard_offer_claims k JOIN tapcard_offers x ON x.id = k.offer_id WHERE x.card_id = c.id) AS claims
     FROM tapcard_cards c LEFT JOIN tapcard_biz_orgs o ON o.id = c.org_id
-    WHERE c.card_kind <> 'person' OR c.org_id IS NOT NULL
-    ORDER BY c.created_at DESC LIMIT 1000`) as Record<string, unknown>[];
+    ORDER BY c.created_at DESC LIMIT 2000`) as Record<string, unknown>[];
   const [promote, grants, offers, news, personal] = await Promise.all([
     safe(sql`SELECT card_id, until, trial, platform FROM tapcard_promote`),
     safe(sql`SELECT card_id, until FROM tapcard_promote_grants`),
@@ -110,25 +141,38 @@ export async function allBusinesses(): Promise<{ rows: BizRow[]; personalCards: 
       created_at: new Date(r.created_at as string).toISOString(), views: Number(r.views), qr: Number(r.qr), saves: Number(r.saves),
       followers: Number(r.followers), claims: Number(r.claims), offers: om.get(id)?.n ?? 0, news: nm.get(id)?.n ?? 0,
       ...joined, ...signupOf(joined),
+      ...((x) => ({ emailKind: x.kind, emailDomain: x.domain, emailOnSite: x.onSite }))(emailInfo(String(r.email || ""), String(r.website || ""))),
+      looksTest: looksTest({ name: String(r.name || ""), company: String(r.company || ""), website: String(r.website || ""), email: String(r.email || "") }),
+      fromApp: Boolean(r.grouping_id),
+      isPersonal: r.card_kind === "person" && !r.org_id,
     } satisfies BizRow;
   });
-  return { rows, personalCards: ((personal as { n: number }[] | null) ?? [{ n: 0 }])[0].n };
+  return { rows, personalCards: rows.filter((r) => r.isPersonal).length || ((personal as { n: number }[] | null) ?? [{ n: 0 }])[0].n };
 }
 
-export type Filters = { q: string; type: string; little: boolean };
+export type Filters = { q: string; type: string; little: boolean; email: string; notest: boolean; app: boolean; all: boolean };
 
-export function parseFilters(sp: { q?: string; type?: string; little?: string }): Filters {
-  return { q: (sp.q ?? "").trim(), type: sp.type ?? "", little: sp.little === "1" };
+export function parseFilters(sp: { q?: string; type?: string; little?: string; email?: string; notest?: string; app?: string; all?: string }): Filters {
+  return { q: (sp.q ?? "").trim(), type: sp.type ?? "", little: sp.little === "1", email: ["own", "free", "none", "any"].includes(sp.email ?? "") ? (sp.email as string) : "", notest: sp.notest === "1", app: sp.app === "1", all: sp.all === "1" };
 }
 
 export function applyFilters(rows: BizRow[], f: Filters): BizRow[] {
   const keywords = f.q.split(",").map((k) => k.trim()).filter(Boolean);
-  return rows.filter((r) => matchesKeywords(r, keywords) && (!f.type || r.signup === f.type) && (!f.little || littleUsed(r)));
+  return rows.filter(
+    (r) =>
+      matchesKeywords(r, keywords) &&
+      (!f.type || r.signup === f.type) &&
+      (!f.little || littleUsed(r)) &&
+      (!f.email || (f.email === "any" ? r.emailKind !== "none" : r.emailKind === f.email)) &&
+      (!f.notest || !r.looksTest) &&
+      (!f.app || r.fromApp) &&
+      (f.all || !r.isPersonal),
+  );
 }
 
 const csvCell = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
 export function toCsv(rows: BizRow[]): string {
-  const head = ["Business", "Contact name", "Email", "Website", "Sign-up type", "Detail", "Created", "Views", "QR scans", "Saves", "Followers", "Offers posted", "News posted", "Offers claimed", "Card link"];
-  const lines = rows.map((r) => [r.company || r.name, r.name, r.email, r.website, SIGNUP_LABEL[r.signup], r.detail, r.created_at.slice(0, 10), r.views, r.qr, r.saves, r.followers, r.offers, r.news, r.claims, `https://tapcard.aiert.co.uk/c/${r.id}`].map(csvCell).join(","));
+  const head = ["Business", "Contact name", "Email", "Website", "Sign-up type", "Detail", "Created", "Views", "QR scans", "Saves", "Followers", "Offers posted", "News posted", "Offers claimed", "Email type", "Email matches website", "Looks like a test or our own", "Made in app", "Card type", "Card link"];
+  const lines = rows.map((r) => [r.company || r.name, r.name, r.email, r.website, SIGNUP_LABEL[r.signup], r.detail, r.created_at.slice(0, 10), r.views, r.qr, r.saves, r.followers, r.offers, r.news, r.claims, r.emailKind === "own" ? "own domain" : r.emailKind === "free" ? "free mail" : "none", r.emailOnSite ? "yes" : "no", r.looksTest ? "yes" : "no", r.fromApp ? "yes" : "no", r.isPersonal ? "personal" : "business", `https://tapcard.aiert.co.uk/c/${r.id}`].map(csvCell).join(","));
   return [head.map(csvCell).join(","), ...lines].join("\n");
 }
