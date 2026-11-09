@@ -1,7 +1,12 @@
 // LinkedIn analytics for the AIERT LTD page via the Community Management API.
 // Needs the same token as lib/linkedinApi.ts (r_organization_social + rw_organization_admin).
 // LinkedIn only returns breakdowns once there are enough viewers, so small pages show few rows.
+import { unstable_cache } from "next/cache";
 import { linkedinGet, orgUrn } from "./linkedinApi";
+
+// LinkedIn Development Tier allows only 500 calls a day per app and 100 per member (posting counts too), and
+// batch lookups like geo?ids=List(...) just 2 a day. So: never use batch calls, and cache every analytics result.
+const ANALYTICS_TTL = 6 * 3600;
 
 export type PostStats = { impressions: number; uniqueImpressions: number; clicks: number; reactions: number; comments: number; shares: number; engagement: number };
 export type Breakdown = { label: string; value: number };
@@ -27,7 +32,7 @@ const toStats = (t: Totals = {}): PostStats => ({
 const enc = encodeURIComponent;
 
 // Stats per post. Plain posts are "share" URNs, video/media posts are "ugcPost" URNs; LinkedIn wants them in separate parameters.
-export async function getPostStats(urns: string[]): Promise<Record<string, PostStats>> {
+async function postStatsUncached(urns: string[]): Promise<Record<string, PostStats>> {
   const out: Record<string, PostStats> = {};
   const org = enc(orgUrn());
   const shares = urns.filter((u) => u.includes(":share:"));
@@ -67,16 +72,19 @@ async function nameOf(kind: "industries" | "functions" | "seniorities", urn: str
 }
 
 async function geoNames(urns: string[]): Promise<Record<string, string>> {
-  const ids = urns.map((u) => u.split(":").pop()).filter(Boolean);
-  if (!ids.length) return {};
-  try {
-    const j = (await linkedinGet(`geo?ids=List(${ids.join(",")})&locale=(language:en,country:US)`)) as {
-      results?: Record<string, { defaultLocalizedName?: { value?: string } }>;
-    };
-    return Object.fromEntries(urns.map((u) => [u, j.results?.[u.split(":").pop() ?? ""]?.defaultLocalizedName?.value ?? u]));
-  } catch {
-    return {};
-  }
+  // One GET per id (not the batch endpoint, whose quota is 2 a day); names are cached below with the whole overview.
+  const pairs = await Promise.all(
+    urns.map(async (u) => {
+      const id = u.split(":").pop();
+      try {
+        const j = (await linkedinGet(`geo/${id}?locale=(language:en,country:US)`)) as { defaultLocalizedName?: { value?: string } };
+        return [u, j.defaultLocalizedName?.value ?? u] as const;
+      } catch {
+        return [u, u] as const;
+      }
+    }),
+  );
+  return Object.fromEntries(pairs);
 }
 
 type Row = Record<string, unknown>;
@@ -96,7 +104,7 @@ async function toBreakdown(rows: Row[] | undefined, urnKey: string, valueOf: (r:
 const viewsOf = (r: Row) => ((r.pageStatistics as { views?: { allPageViews?: { pageViews?: number } } } | undefined)?.views?.allPageViews?.pageViews) ?? 0;
 const followersOf = (r: Row) => ((r.followerCounts as { organicFollowerCount?: number; paidFollowerCount?: number } | undefined)?.organicFollowerCount ?? 0) + ((r.followerCounts as { paidFollowerCount?: number } | undefined)?.paidFollowerCount ?? 0);
 
-export async function getPageOverview(): Promise<PageOverview> {
+async function pageOverviewUncached(): Promise<PageOverview> {
   const org = enc(orgUrn());
   const now = Date.now();
   const start = now - 30 * 24 * 3600 * 1000;
@@ -135,7 +143,7 @@ export async function getPageOverview(): Promise<PageOverview> {
 }
 
 // Totals over the last `days` completed days, for the Weekly numbers page.
-export async function getWindowTotals(days: number): Promise<{ followers: number; pageViews: number; impressions: number; clicks: number; reactions: number; comments: number; shares: number }> {
+async function windowTotalsUncached(days: number): Promise<{ followers: number; pageViews: number; impressions: number; clicks: number; reactions: number; comments: number; shares: number }> {
   const org = enc(orgUrn());
   const now = Date.now();
   const start = now - days * 24 * 3600 * 1000;
@@ -158,3 +166,7 @@ export async function getWindowTotals(days: number): Promise<{ followers: number
     shares: sum("shareCount"),
   };
 }
+
+export const getPostStats = unstable_cache(postStatsUncached, ["linkedin-post-stats"], { revalidate: ANALYTICS_TTL });
+export const getPageOverview = unstable_cache(pageOverviewUncached, ["linkedin-page-overview"], { revalidate: ANALYTICS_TTL });
+export const getWindowTotals = unstable_cache(windowTotalsUncached, ["linkedin-window-totals"], { revalidate: ANALYTICS_TTL });

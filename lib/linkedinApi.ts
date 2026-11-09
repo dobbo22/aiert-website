@@ -5,6 +5,8 @@
 //
 // Gotcha: without rw_organization_admin every write returns 403.
 
+import { unstable_cache } from "next/cache";
+
 const API_BASE = "https://api.linkedin.com/rest";
 const LINKEDIN_VERSION = "202604"; // YYYYMM; LinkedIn sunsets old versions, bump periodically
 export const MAX_COMMENTARY_LENGTH = 3000;
@@ -116,7 +118,7 @@ function readable(commentary: string): string {
     .replace(/\\([\\|{}@\[\]()<>#*_~])/g, "$1");
 }
 
-export async function listLinkedInPosts(count = 15): Promise<LinkedInPost[]> {
+async function listLinkedInPostsUncached(count = 15): Promise<LinkedInPost[]> {
   const { token, org } = config();
   const url = `${API_BASE}/posts?author=${encodeURIComponent(org)}&q=author&count=${count}&sortBy=LAST_MODIFIED`;
   const res = await fetch(url, { headers: headers(token), cache: "no-store" });
@@ -130,3 +132,6 @@ export async function listLinkedInPosts(count = 15): Promise<LinkedInPost[]> {
     hasMedia: Boolean(p.content),
   }));
 }
+
+// Development Tier allows 100 calls a day per member, so the posts list is cached for 10 minutes.
+export const listLinkedInPosts = unstable_cache(listLinkedInPostsUncached, ["linkedin-posts-list"], { revalidate: 600 });
