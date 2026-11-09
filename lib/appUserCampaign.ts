@@ -81,3 +81,95 @@ export async function sendTestCopies(to: string, emails: string[]): Promise<{ bu
   }
   return out;
 }
+
+
+// ---- The real send ----
+// One campaign, one email per address, never twice. Each address is claimed in app_user_email_log before sending, so overlapping
+// clicks cannot double-send, and a failed send is recorded but never retried automatically.
+export const CAMPAIGN = "finish-your-card-2026-11";
+
+let logReady: Promise<unknown> | null = null;
+function ensureLog() {
+  logReady ??= sql`
+    CREATE TABLE IF NOT EXISTS app_user_email_log (
+      campaign text NOT NULL,
+      email text NOT NULL,
+      business text NOT NULL DEFAULT '',
+      status text NOT NULL DEFAULT 'sending',
+      resend_id text,
+      error text,
+      sent_at timestamptz NOT NULL DEFAULT now(),
+      PRIMARY KEY (campaign, email)
+    )`;
+  return logReady;
+}
+
+// Pure: who is left to email once suppressed and already-sent addresses are removed.
+export function eligibleRecipients<T extends { email: string }>(list: T[], suppressed: Set<string>, alreadySent: Set<string>): { eligible: T[]; suppressedCount: number; alreadySentCount: number } {
+  const eligible: T[] = [];
+  let suppressedCount = 0;
+  let alreadySentCount = 0;
+  for (const r of list) {
+    const e = r.email.toLowerCase();
+    if (alreadySent.has(e)) alreadySentCount++;
+    else if (suppressed.has(e)) suppressedCount++;
+    else eligible.push(r);
+  }
+  return { eligible, suppressedCount, alreadySentCount };
+}
+
+export type SendLogRow = { email: string; business: string; status: string; error: string | null; sent_at: string };
+
+export async function campaignState(): Promise<{ eligible: Recipient[]; suppressedCount: number; alreadySentCount: number; log: SendLogRow[] }> {
+  await ensureLog();
+  const list = await buildAppUserEmails();
+  // Anyone who unsubscribed, bounced or was removed in the mailshot system is never emailed from here either.
+  const suppressedRows = (await sql`
+    SELECT lower(l.email) AS e FROM mk_leads l
+    WHERE l.state IN ('unsubscribed', 'removed')
+       OR EXISTS (SELECT 1 FROM mk_sends s WHERE s.lead_id = l.id AND s.bounced_at IS NOT NULL OR s.lead_id = l.id AND s.unsubscribed_at IS NOT NULL)`.catch(() => [])) as { e: string }[];
+  const sup = new Set<string>(suppressedRows.map((x) => x.e));
+  const log = (await sql`SELECT email, business, status, error, sent_at FROM app_user_email_log WHERE campaign = ${CAMPAIGN} ORDER BY sent_at DESC`) as SendLogRow[];
+  const done = new Set(log.map((l) => l.email.toLowerCase()));
+  return { ...eligibleRecipients(list, sup, done), log };
+}
+
+// Sends to everyone still eligible. `expected` must match how many that is right now, so a stale page cannot send a different list.
+export async function sendCampaign(expected: number): Promise<{ sent: number; failed: number; errors: string[] }> {
+  if (!process.env.RESEND_API_KEY) throw new Error("RESEND_API_KEY is not set");
+  const { eligible } = await campaignState();
+  if (eligible.length !== expected) throw new Error(`The list changed: ${eligible.length} people are eligible now, not ${expected}. Reload the page and check again.`);
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const from = process.env.MAILSHOT_FROM || process.env.TAPCARD_INVITE_FROM || "Martin Dobson <martin@aiert.co.uk>";
+  let sent = 0;
+  let failed = 0;
+  const errors: string[] = [];
+  for (const r of eligible) {
+    const claimed = (await sql`INSERT INTO app_user_email_log (campaign, email, business) VALUES (${CAMPAIGN}, ${r.email.toLowerCase()}, ${r.business}) ON CONFLICT DO NOTHING RETURNING email`) as unknown[];
+    if (!claimed.length) continue; // someone else already claimed it
+    const res = await resend.emails.send({
+      from, to: [r.email], subject: r.subject, html: r.html, text: r.text, replyTo: "martin@aiert.co.uk",
+      headers: { "List-Unsubscribe": "<mailto:martin@aiert.co.uk?subject=stop>" },
+      tags: [{ name: "campaign", value: "finish-your-card" }],
+    });
+    if (res.error) {
+      failed++;
+      errors.push(`${r.business}: ${res.error.message}`);
+      await sql`UPDATE app_user_email_log SET status = 'failed', error = ${res.error.message} WHERE campaign = ${CAMPAIGN} AND email = ${r.email.toLowerCase()}`;
+    } else {
+      sent++;
+      await sql`UPDATE app_user_email_log SET status = 'sent', resend_id = ${res.data?.id ?? null} WHERE campaign = ${CAMPAIGN} AND email = ${r.email.toLowerCase()}`;
+    }
+    await new Promise((ok) => setTimeout(ok, 700)); // stay under Resend's rate limit
+  }
+  // One summary to Martin, so he knows it has gone (and to whom). A failure to send the summary never hides the result.
+  try {
+    const rows = (await sql`SELECT email, business, status, error FROM app_user_email_log WHERE campaign = ${CAMPAIGN} ORDER BY sent_at`) as { email: string; business: string; status: string; error: string | null }[];
+    const lines = rows.map((l) => `${l.status === "sent" ? "SENT  " : "FAILED"}  ${l.business}  <${l.email}>${l.error ? `  (${l.error})` : ""}`);
+    await resend.emails.send({
+      from, to: ["martin@aiert.co.uk"], subject: `Finish-your-TapCard email sent: ${sent} sent, ${failed} failed`,
+      text: `The "finish your TapCard" email has gone out.\n\nSent: ${sent}\nFailed: ${failed}\n\nEveryone this campaign has been sent to:\n${lines.join("\n")}\n\nReplies will come to martin@aiert.co.uk. Delivery and bounces are shown at https://resend.com/emails .\nNobody is ever sent this email twice.`,
+    });
+  } catch { /* ignore */ }
+  return { sent, failed, errors };
+}

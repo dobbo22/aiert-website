@@ -1,6 +1,7 @@
 import { isAdminRequest } from "@/lib/adminRequest";
-import { buildAppUserEmails, TEST_ADDRESSES, type Recipient } from "@/lib/appUserCampaign";
+import { buildAppUserEmails, campaignState, TEST_ADDRESSES, type Recipient, type SendLogRow } from "@/lib/appUserCampaign";
 import TestSender from "./TestSender";
+import SendAll from "./SendAll";
 
 export const metadata = { title: "App-user email — Admin", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -13,15 +14,20 @@ export default async function AppUserEmailPage() {
   if (!(await isAdminRequest())) return null;
   let list: Recipient[] = [];
   let error: string | null = null;
-  try { list = await buildAppUserEmails(); } catch (e) { error = e instanceof Error ? e.message : "Failed to build the emails"; }
+  let state: { eligible: Recipient[]; suppressedCount: number; alreadySentCount: number; log: SendLogRow[] } | null = null;
+  try {
+    list = await buildAppUserEmails();
+    state = await campaignState();
+  } catch (e) { error = e instanceof Error ? e.message : "Failed to build the emails"; }
   return (
     <div className="text-cloud">
       {error && <p className="social-compose-error">{error}</p>}
       <p style={{ marginBottom: 8 }}><a className="underline" href="/admin/social/businesses">&larr; Businesses</a></p>
       <p style={{ marginBottom: 12 }}>
         <strong>&ldquo;Finish your TapCard&rdquo;</strong> email for <strong>{list.length}</strong> real app users with their own domain (one per address; Hobart Capital left out).
-        Each one is built from what is missing on that person&apos;s card. <strong>Nothing is sent to them from this page.</strong> You can preview each one and send test copies to yourself.
+        Each one is built from what is missing on that person&apos;s card. <strong>Test copies go only to your own addresses. The real send is the separate box below, and needs you to type SEND.</strong>
       </p>
+      {state && <SendAll eligible={state.eligible.map((r) => r.business)} suppressed={state.suppressedCount} alreadySent={state.alreadySentCount} log={state.log.map((l) => ({ ...l, sent_at: String(l.sent_at) }))} />}
       <TestSender addresses={TEST_ADDRESSES} recipients={list.map((r) => ({ email: r.email, business: r.business, firstName: r.firstName }))} />
       <div style={{ overflowX: "auto", marginTop: 16 }}>
         <table style={{ borderCollapse: "collapse", width: "100%" }}>

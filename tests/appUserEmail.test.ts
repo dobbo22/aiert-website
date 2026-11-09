@@ -66,3 +66,15 @@ test("every fix links to the guide step that shows how, and those steps exist", 
   for (const title of Object.values(GUIDE_STEPS)) assert.ok(guide.includes(`title: "${title}"`), `guide step missing: ${title}`);
   assert.match(guide, /id=\{s\.title\.toLowerCase\(\)/, "the guide gives each step an id");
 });
+
+test("the real send skips unsubscribed and already-sent addresses, case-insensitively", async () => {
+  const { installStubs } = await import("./helpers/pgdb");
+  installStubs();
+  const { eligibleRecipients } = await import("../lib/appUserCampaign");
+  const list = [{ email: "A@x.com" }, { email: "b@x.com" }, { email: "c@x.com" }, { email: "d@x.com" }];
+  const r = eligibleRecipients(list, new Set(["b@x.com"]), new Set(["a@x.com"]));
+  assert.deepEqual(r.eligible.map((x) => x.email), ["c@x.com", "d@x.com"]);
+  assert.equal(r.suppressedCount, 1);
+  assert.equal(r.alreadySentCount, 1);
+  assert.deepEqual(eligibleRecipients(list, new Set(), new Set()).eligible.length, 4);
+});
