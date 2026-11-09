@@ -135,3 +135,47 @@ async function listLinkedInPostsUncached(count = 15): Promise<LinkedInPost[]> {
 
 // Development Tier allows 100 calls a day per member, so the posts list is cached for 10 minutes.
 export const listLinkedInPosts = unstable_cache(listLinkedInPostsUncached, ["linkedin-posts-list"], { revalidate: 600 });
+
+// ---- Comments (needs r_organization_social_feed / w_organization_social_feed) ----
+// Loaded on demand only: Development Tier allows 100 calls a day per member.
+export type LinkedInComment = {
+  id: string;
+  commentUrn?: string;
+  text: string;
+  actor: string; // urn:li:person:... or our organization
+  byPage: boolean;
+  createdAt: string;
+  likes: number;
+};
+
+export async function listLinkedInComments(postUrn: string): Promise<LinkedInComment[]> {
+  const { org } = config();
+  const json = (await linkedinGet(`socialActions/${encodeURIComponent(postUrn)}/comments`)) as {
+    elements?: Array<{ id?: string; commentUrn?: string; $URN?: string; actor?: string; message?: { text?: string }; created?: { time?: number }; likesSummary?: { totalLikes?: number } }>;
+  };
+  return (json.elements ?? []).map((c) => ({
+    id: String(c.id ?? ""),
+    commentUrn: c.commentUrn ?? c.$URN,
+    text: c.message?.text ?? "",
+    actor: c.actor ?? "",
+    byPage: c.actor === org,
+    createdAt: new Date(c.created?.time ?? Date.now()).toISOString(),
+    likes: c.likesSummary?.totalLikes ?? 0,
+  }));
+}
+
+// Reply as the AIERT LTD page. With parentCommentUrn it nests under that comment; otherwise it is a new top-level comment.
+export async function replyAsPage(postUrn: string, text: string, parentCommentUrn?: string): Promise<void> {
+  const { token, org } = config();
+  const message = text.trim();
+  if (!message) throw new Error("Reply text is required");
+  if (message.length > 1250) throw new Error("A LinkedIn comment can be at most 1,250 characters");
+  const body: Record<string, unknown> = { actor: org, object: postUrn, message: { text: message } };
+  if (parentCommentUrn) body.parentComment = parentCommentUrn;
+  const res = await fetch(`${API_BASE}/socialActions/${encodeURIComponent(postUrn)}/comments`, {
+    method: "POST",
+    headers: headers(token, { "Content-Type": "application/json" }),
+    body: JSON.stringify(body),
+  });
+  if (res.status !== 201) throw await failure("LinkedIn reply", res);
+}

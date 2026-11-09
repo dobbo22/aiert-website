@@ -22,7 +22,7 @@ const CLIENT_ID = process.env.LINKEDIN_CLIENT_ID;
 const CLIENT_SECRET = process.env.LINKEDIN_CLIENT_SECRET;
 const PORT = 8765;
 const REDIRECT_URI = `http://localhost:${PORT}/callback`;
-const SCOPE = "w_organization_social r_organization_social rw_organization_admin w_member_social r_basicprofile";
+const SCOPE = "w_organization_social r_organization_social rw_organization_admin w_member_social r_basicprofile r_organization_social_feed w_organization_social_feed r_member_postAnalytics";
 
 if (!CLIENT_ID || !CLIENT_SECRET) {
   console.error("Missing LINKEDIN_CLIENT_ID or LINKEDIN_CLIENT_SECRET in .env.local");

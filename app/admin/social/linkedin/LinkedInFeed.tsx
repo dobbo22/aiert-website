@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import type { LinkedInPost } from "@/lib/linkedinApi";
 import type { PostStats } from "@/lib/linkedinStats";
+import PostComments from "./PostComments";
 
 export default function LinkedInFeed({ initialPosts, stats = {} }: { initialPosts: LinkedInPost[]; stats?: Record<string, PostStats> }) {
   const [posts, setPosts] = useState(initialPosts);
@@ -63,6 +64,7 @@ export default function LinkedInFeed({ initialPosts, stats = {} }: { initialPost
           ) : (
             <p className="social-empty">Stats: not available yet (LinkedIn takes a few hours).</p>
           )}
+          <PostComments urn={post.urn} />
         </div>
       ))}
     </div>
