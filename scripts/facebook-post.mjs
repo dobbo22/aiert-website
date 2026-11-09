@@ -1,4 +1,4 @@
-// Posts a text (and optionally single-photo) update to the MailBroom
+// Posts a text (and optionally single-photo) update to the TapCard (formerly MailBroom)
 // Facebook Page via the Graph API's Pages API. Requires a Page access token
 // with pages_manage_posts + pages_read_engagement (see "MailBroom Media" app
 // at developers.facebook.com).

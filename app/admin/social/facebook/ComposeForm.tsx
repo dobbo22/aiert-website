@@ -88,7 +88,7 @@ export default function ComposeForm({ onPosted }: { onPosted: (post: FacebookPos
         </button>
         <span className="social-format-hint">Select text first, or leave nothing selected to style the whole post</span>
       </div>
-      <textarea ref={textareaRef} name="message" placeholder="Write a post for the MailBroom Facebook Page…" required />
+      <textarea ref={textareaRef} name="message" placeholder="Write a post for the TapCard Facebook Page…" required />
 
       {previewUrl && (
         <div className="social-compose-preview">
