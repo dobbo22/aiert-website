@@ -49,10 +49,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   if (host.startsWith("ios.mailbroom.app")) {
     return iosRoutes.map(toEntry(IOS_BASE_URL));
   }
-  // Fallback (e.g. requested directly on aiert.co.uk): list both, since
-  // this host no longer canonically owns either page tree.
-  return [
-    ...businessRoutes.map(toEntry(BUSINESS_BASE_URL)),
-    ...iosRoutes.map(toEntry(IOS_BASE_URL)),
+  // aiert.co.uk / www.aiert.co.uk: only list pages that live (and are canonical) on this host. Listing mailbroom.app URLs here made Google
+  // ignore the whole sitemap as cross-domain (0 indexed of 37) and left the homepage out. TapCard and MailBroom have their own hosts above.
+  const aiertBase = "https://www.aiert.co.uk";
+  const aiertRoutes: Route[] = [
+    { path: "", priority: 1, changeFrequency: "monthly" },
+    { path: "/powersearch", priority: 0.8, changeFrequency: "monthly" },
+    { path: "/privacy", priority: 0.3, changeFrequency: "yearly" },
   ];
+  return aiertRoutes.map(toEntry(aiertBase));
 }
