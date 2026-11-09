@@ -1,0 +1,183 @@
+{
+  "_note": "fits = which post topics suit the Group (--topic tapcard|mailbroom|trading). Empty = poor fit, skipped for topic posts.",
+  "groups": [
+    {
+      "name": "Leadership Think Tank",
+      "members": 2259303,
+      "fits": [
+        "tapcard"
+      ]
+    },
+    {
+      "name": "Startup Founders, CEOs & Investors: AI Startups, SaaS, FinTech, Venture Capital & Entrepreneurship",
+      "members": 91695,
+      "fits": [
+        "tapcard",
+        "mailbroom"
+      ]
+    },
+    {
+      "name": "Tech Startup CEOs & Investors: Artificial Intelligence, Machine Learning, FinTech, SaaS, ChatGPT",
+      "members": 1374891,
+      "fits": [
+        "tapcard"
+      ]
+    },
+    {
+      "name": "Information Technology (IT) Professionals",
+      "members": 1395126,
+      "fits": [
+        "mailbroom"
+      ]
+    },
+    {
+      "name": "Cloud Computing, SaaS, Data Centre & Virtualization",
+      "members": 1248755,
+      "fits": [
+        "mailbroom"
+      ]
+    },
+    {
+      "name": "Software as a Service (SaaS) 2024",
+      "members": 30417,
+      "fits": [
+        "mailbroom"
+      ]
+    },
+    {
+      "name": "Microsoft 365 & SharePoint & Teams & Power Platform & Viva & Digital Transformation & Copilot & AI",
+      "members": 135004,
+      "fits": [
+        "mailbroom"
+      ]
+    },
+    {
+      "name": "Microsoft Exchange Group",
+      "members": 44667,
+      "fits": [
+        "mailbroom"
+      ]
+    },
+    {
+      "name": "Microsoft 365, Outlook Classic and New Outlook Group",
+      "members": 13412,
+      "fits": [
+        "mailbroom"
+      ]
+    },
+    {
+      "name": "Affiliate Marketing Groups",
+      "members": 9161,
+      "fits": [
+        "mailbroom"
+      ]
+    },
+    {
+      "name": "Affiliate Marketing Industry Community | Growth & Performance",
+      "members": 98572,
+      "fits": [
+        "mailbroom"
+      ]
+    },
+    {
+      "name": "Chartered Institute for Securities & Investment (CISI) Members Group",
+      "members": 17374,
+      "fits": [
+        "trading"
+      ]
+    },
+    {
+      "name": "Global Equity Sales, Salestrading & Trading",
+      "members": 3994,
+      "fits": [
+        "trading"
+      ]
+    },
+    {
+      "name": "Equity Brokers, Sales, Traders",
+      "members": 10689,
+      "fits": [
+        "trading"
+      ]
+    },
+    {
+      "name": "Electronic Trading Group",
+      "members": 50426,
+      "fits": [
+        "trading"
+      ]
+    },
+    {
+      "name": "BrokerSignals",
+      "members": 340,
+      "fits": [
+        "trading"
+      ]
+    },
+    {
+      "name": "Recruitment for Traders",
+      "members": 26526,
+      "fits": [
+        "trading"
+      ]
+    },
+    {
+      "name": "Dark Pools",
+      "members": 615,
+      "fits": [
+        "trading"
+      ]
+    },
+    {
+      "name": "Equity & Derivatives Sales & Trading Jobs",
+      "members": 2069,
+      "fits": [
+        "trading"
+      ]
+    },
+    {
+      "name": "Finance & Banking, Fintech, Regtech Professionals Worldwide",
+      "members": 1055645,
+      "fits": [
+        "trading"
+      ]
+    },
+    {
+      "name": "Family Office Club: Single & Multi-Family Office Investors, CIOs, Wealth Advisors & Allocators",
+      "members": 184514,
+      "fits": [
+        "trading"
+      ]
+    },
+    {
+      "name": "Excel & VBA with AI",
+      "members": 2067012,
+      "fits": []
+    },
+    {
+      "name": "C++ Developers Group",
+      "members": 39900,
+      "fits": []
+    },
+    {
+      "name": "Power BI: Business Intelligence Dashboards, Analysis for Analysts & Chief Operating Officers",
+      "members": 2125482,
+      "fits": []
+    },
+    {
+      "name": "Environmental Consulting Professionals",
+      "members": 255549,
+      "fits": []
+    },
+    {
+      "name": "PART TIME JOBS Work from Home Online Freelance Job Freelancer Remote Flexible Project Affiliate",
+      "members": 613420,
+      "fits": []
+    },
+    {
+      "name": "Remote Jobs, Digital Marketing Hub, Freelancing, Work from home, Part Time Jobs, Freelancer Remote",
+      "members": 124178,
+      "fits": []
+    }
+  ]
+}

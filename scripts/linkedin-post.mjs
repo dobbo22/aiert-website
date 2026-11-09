@@ -49,6 +49,9 @@ if (ri !== -1) {
   }
   argv.splice(ri, 2);
 }
+let topic = null;
+const ti = argv.indexOf("--topic");
+if (ti !== -1) { topic = argv[ti + 1]; argv.splice(ti, 2); }
 const rawArgs = argv;
 
 let commentary;
@@ -234,20 +237,22 @@ if (reshareComment) {
   }
 }
 
-const groups = (process.env.LINKEDIN_GROUPS || "")
-  .split(",")
-  .map((g) => g.trim())
-  .filter(Boolean);
+// Groups: no API exists, so print a manual checklist from scripts/linkedin-groups.json.
+// --topic tapcard|mailbroom|trading limits it to Groups that fit that topic.
+let groups = [];
+try {
+  const all = JSON.parse(await readFile(new URL("./linkedin-groups.json", import.meta.url), "utf-8")).groups;
+  groups = topic ? all.filter((g) => g.fits.includes(topic)) : all;
+} catch {
+  groups = (process.env.LINKEDIN_GROUPS || "").split("|").map((n) => ({ name: n.trim(), members: 0 })).filter((g) => g.name);
+}
 
 if (groups.length) {
-  console.log("\nNo Groups API exists. Share the post into each Group by hand:");
+  console.log(`\nNo Groups API exists. Share the post into each Group by hand${topic ? ` (topic: ${topic})` : ""}:`);
   console.log(`  1. Open https://www.linkedin.com/feed/update/${postUrn}/`);
   console.log("  2. Click Share, then Post in a group, add a line of your own (not just the link), and send.");
-  for (const g of groups) console.log(`  [ ] ${g}`);
-  console.log("  Tip: tailor each intro to the Group, most Groups remove plain promotion.");
-} else {
-  console.log(
-    "\nTip: set LINKEDIN_GROUPS in .env.local (comma-separated group names) " +
-    "to get a reshare checklist here after each post."
-  );
+  for (const g of groups) console.log(`  [ ] ${g.name}${g.members ? ` (${g.members.toLocaleString("en-GB")} members)` : ""}`);
+  console.log("  Tip: tailor each intro to the Group; most Groups remove plain promotion.");
+} else if (topic) {
+  console.log(`\nNo Groups in scripts/linkedin-groups.json fit the topic "${topic}".`);
 }
