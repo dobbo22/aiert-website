@@ -1,0 +1,17 @@
+{
+  "_note": "Manual log of Group shares (LinkedIn has no API for Groups). Fill in reactions/comments by hand when you check; add an entry each time you share a post into Groups.",
+  "shares": [
+    {
+      "date": "2026-11-09",
+      "post": "What TapCard can do for a local business (link card)",
+      "pageUrn": "urn:li:share:7525524814606946304",
+      "personalReshareUrn": "urn:li:share:7525524817660387329",
+      "groups": [
+        { "name": "Startup Founders, CEOs & Investors", "reactions": null, "comments": null, "notes": "" },
+        { "name": "Leadership Think Tank", "reactions": null, "comments": null, "notes": "" },
+        { "name": "Tech Startup CEOs & Investors", "reactions": null, "comments": null, "notes": "" }
+      ],
+      "checkAfter": "2026-11-12"
+    }
+  ]
+}
