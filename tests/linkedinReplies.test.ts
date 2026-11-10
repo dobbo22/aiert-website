@@ -30,3 +30,23 @@ test("FAQ drafts come from the website FAQ, only when relevant, and never say 'f
   assert.ok(topFaq("stamp card for a hairdresser", 1)[0].question.includes("stamp card"));
   assert.equal(sanitise("they need the free TapCard app"), "they need the TapCard app");
 });
+
+test("engagement parsing and connection note", async () => {
+  process.env.DATABASE_URL ??= "postgres://user:pass@localhost/none"; // the module imports the db layer; these checks never query
+  const { parseReactions, parsePeople, scoreOf, connectNote, profileUrl } = await import("../lib/linkedinEngagement");
+  const r = parseReactions({ elements: [
+    { reactionType: "LIKE", created: { actor: "urn:li:person:abc", time: 1000 } },
+    { reactionType: "PRAISE", created: { actor: "urn:li:organization:9", time: 2000 } },
+  ] }, "urn:li:share:1");
+  assert.equal(r.length, 1);
+  assert.equal(r[0].personId, "abc");
+  assert.equal(r[0].kind, "reaction:LIKE");
+  const p = parsePeople({ results: { "(id:abc)": { localizedFirstName: "Ann", localizedLastName: "Lee", localizedHeadline: "Owner", vanityName: "ann-lee" } } });
+  assert.deepEqual(p.get("abc"), { name: "Ann Lee", headline: "Owner", vanity: "ann-lee" });
+  assert.equal(scoreOf(["comment", "reaction:LIKE"]), 4);
+  assert.equal(profileUrl({ vanity: "ann-lee", person_id: "abc" }), "https://www.linkedin.com/in/ann-lee/");
+  assert.equal(profileUrl({ vanity: "", person_id: "abc" }), "");
+  assert.match(connectNote("Ann Lee", "reacted"), /^Hi Ann, thanks for the reaction/);
+  assert.match(connectNote("", "commented"), /^Hi, thanks for commenting/);
+  assert.ok(connectNote("Ann Lee", "reacted").length <= 300);
+});

@@ -4,6 +4,8 @@ import { getPageOverview, getPostStats, type PageOverview, type PostStats } from
 import LinkedInFeed from "./LinkedInFeed";
 import LinkedInOverview from "./LinkedInOverview";
 import ReplyQueue from "./ReplyQueue";
+import LinkedInLeads from "./LinkedInLeads";
+import { listLeads, listMentions, lastScanAt, type Lead, type Mention } from "@/lib/linkedinEngagement";
 import { pendingReplies, recentHandled, type QueueItem } from "@/lib/linkedinReplies";
 
 export const dynamic = "force-dynamic";
@@ -41,8 +43,18 @@ export default async function LinkedInTabPage() {
     /* leave blank */
   }
 
+  let leads: Lead[] = [];
+  let mentions: Mention[] = [];
+  let lastScan: string | null = null;
+  try {
+    [leads, mentions, lastScan] = await Promise.all([listLeads(), listMentions(), lastScanAt()]);
+  } catch {
+    /* leave blank */
+  }
+
   return (
     <>
+      <LinkedInLeads initial={leads} mentions={mentions} lastScan={lastScan} />
       <ReplyQueue initial={pending} recent={handled} />
       {error && <p className="social-compose-error">{error}</p>}
       {overview && <LinkedInOverview overview={overview} />}

@@ -21,6 +21,7 @@
     { "path": "/api/cron/demo-retention", "schedule": "30 3 * * *" },
     { "path": "/api/cron/stale-cards", "schedule": "45 3 * * *" },
     { "path": "/api/cron/linkedin-comments", "schedule": "0 */4 * * *" },
+    { "path": "/api/cron/linkedin-engagement", "schedule": "30 7 * * *" },
     { "path": "/api/cron/social-queue", "schedule": "*/15 * * * *" }
   ]
 }
