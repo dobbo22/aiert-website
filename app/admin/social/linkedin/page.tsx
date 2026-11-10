@@ -5,6 +5,8 @@ import LinkedInFeed from "./LinkedInFeed";
 import LinkedInOverview from "./LinkedInOverview";
 import ReplyQueue from "./ReplyQueue";
 import LinkedInLeads from "./LinkedInLeads";
+import CommentOnPost from "./CommentOnPost";
+import { recentOutbound } from "@/lib/linkedinOutbound";
 import { listLeads, listMentions, lastScanAt, type Lead, type Mention } from "@/lib/linkedinEngagement";
 import { pendingReplies, recentHandled, type QueueItem } from "@/lib/linkedinReplies";
 
@@ -43,6 +45,13 @@ export default async function LinkedInTabPage() {
     /* leave blank */
   }
 
+  let outbound: Awaited<ReturnType<typeof recentOutbound>> = [];
+  try {
+    outbound = await recentOutbound(10);
+  } catch {
+    /* leave blank */
+  }
+
   let leads: Lead[] = [];
   let mentions: Mention[] = [];
   let lastScan: string | null = null;
@@ -54,6 +63,7 @@ export default async function LinkedInTabPage() {
 
   return (
     <>
+      <CommentOnPost recent={outbound.map((o) => ({ ...o, created_at: new Date(o.created_at).toISOString() }))} />
       <LinkedInLeads initial={leads} mentions={mentions} lastScan={lastScan} />
       <ReplyQueue initial={pending} recent={handled} />
       {error && <p className="social-compose-error">{error}</p>}

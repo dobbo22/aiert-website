@@ -50,3 +50,21 @@ test("engagement parsing and connection note", async () => {
   assert.match(connectNote("", "commented"), /^Hi, thanks for commenting/);
   assert.ok(connectNote("Ann Lee", "reacted").length <= 300);
 });
+
+test("post links, previews and comment rules", async () => {
+  const { parsePostLink, parsePreview, starters, commentProblem } = await import("../lib/linkedinPostLink");
+  const l = parsePostLink("https://www.linkedin.com/posts/caileybarker1_steel-crimefiction-share-7523803853142630401-kKbT/?utm_source=share");
+  assert.equal(l?.key, "7523803853142630401");
+  assert.equal(l?.candidates[0], "urn:li:share:7523803853142630401");
+  assert.ok(l?.candidates.includes("urn:li:ugcPost:7523803853142630401"));
+  assert.equal(parsePostLink("https://www.linkedin.com/feed/update/urn:li:activity:7523803853142630401/")?.candidates[0], "urn:li:activity:7523803853142630401");
+  assert.equal(parsePostLink("https://evil.example.com/posts/x-share-7523803853142630401-a"), null);
+  assert.equal(parsePostLink("not a link"), null);
+  assert.deepEqual(parsePreview('<meta property="og:title" content="#steel | Cailey Barker"><meta property="og:description" content="2 DAYS &amp; GO">'), { author: "Cailey Barker", text: "2 DAYS & GO" });
+  assert.equal(parsePreview('<meta property="og:title" content="Sam Lee on LinkedIn: hello">').author, "Sam Lee");
+  assert.match(starters("Cailey Barker")[0].text, /Cailey/);
+  assert.equal(commentProblem("Good luck!"), null);
+  assert.ok(commentProblem("See https://tapcard.aiert.co.uk"));
+  assert.ok(commentProblem("try tapcard.aiert.co.uk today"));
+  assert.ok(commentProblem("   "));
+});
