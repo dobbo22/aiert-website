@@ -78,3 +78,13 @@ test("the real send skips unsubscribed and already-sent addresses, case-insensit
   assert.equal(r.alreadySentCount, 1);
   assert.deepEqual(eligibleRecipients(list, new Set(), new Set()).eligible.length, 4);
 });
+
+test("private audience uses its own campaign key and defaults to own-domain", async () => {
+  const { parseAudience, campaignFor, CAMPAIGN, CAMPAIGN_PRIVATE, PRIVATE_SKIP_DOMAINS } = await import("../lib/appUserCampaign");
+  assert.equal(parseAudience("private"), "private");
+  assert.equal(parseAudience(undefined), "own");
+  assert.equal(parseAudience("anything"), "own");
+  assert.equal(campaignFor("own"), CAMPAIGN);
+  assert.notEqual(CAMPAIGN_PRIVATE, CAMPAIGN);
+  assert.ok(PRIVATE_SKIP_DOMAINS.includes("privaterelay.appleid.com"));
+});

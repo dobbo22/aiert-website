@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 type LogRow = { email: string; business: string; status: string; error: string | null; sent_at: string };
 
-export default function SendAll({ eligible, suppressed, alreadySent, log }: { eligible: string[]; suppressed: number; alreadySent: number; log: LogRow[] }) {
+export default function SendAll({ eligible, suppressed, alreadySent, log, audience = "own" }: { audience?: string; eligible: string[]; suppressed: number; alreadySent: number; log: LogRow[] }) {
   const [reviewed, setReviewed] = useState(false);
   const [word, setWord] = useState("");
   const [busy, setBusy] = useState(false);
@@ -16,7 +16,7 @@ export default function SendAll({ eligible, suppressed, alreadySent, log }: { el
   async function send() {
     setBusy(true);
     setMsg(null);
-    const res = await fetch("/api/admin/social/businesses/send-all", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ expected: eligible.length, confirm: word }) });
+    const res = await fetch("/api/admin/social/businesses/send-all", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ expected: eligible.length, confirm: word, audience }) });
     const json = await res.json().catch(() => ({}));
     if (res.ok) {
       setMsg({ ok: json.failed === 0, text: `Sent ${json.sent}. ${json.failed ? `${json.failed} failed: ${(json.errors as string[]).join("; ")}` : "None failed."}` });

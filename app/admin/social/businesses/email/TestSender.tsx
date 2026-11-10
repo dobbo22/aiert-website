@@ -4,7 +4,7 @@ import { useState } from "react";
 
 type R = { email: string; business: string; firstName: string };
 
-export default function TestSender({ addresses, recipients }: { addresses: string[]; recipients: R[] }) {
+export default function TestSender({ addresses, recipients, audience = "own" }: { addresses: string[]; recipients: R[]; audience?: string }) {
   const preset = recipients.filter((r) => /kpmg|focused financial/i.test(r.business)).map((r) => r.email);
   const [picked, setPicked] = useState<string[]>(preset.length ? preset : recipients.slice(0, 2).map((r) => r.email));
   const [to, setTo] = useState(addresses[0]);
@@ -15,7 +15,7 @@ export default function TestSender({ addresses, recipients }: { addresses: strin
   async function send() {
     setBusy(true);
     setMsg(null);
-    const res = await fetch("/api/admin/social/businesses/test-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ to, emails: picked }) });
+    const res = await fetch("/api/admin/social/businesses/test-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ to, emails: picked, audience }) });
     const json = await res.json().catch(() => ({}));
     if (res.ok) {
       const bad = (json.results as { business: string; ok: boolean; error?: string }[]).filter((r) => !r.ok);
