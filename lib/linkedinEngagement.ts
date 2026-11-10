@@ -3,6 +3,8 @@
 // Nothing is ever sent from here (LinkedIn's API has no connection requests or messages for us); this only reads and stores.
 // Development Tier allows 100 LinkedIn calls a day per member, so one daily cron scans the last 30 days of posts (at most 10).
 import sql from "@/lib/db";
+import { connectNote, profileUrl } from "./linkedinLeadText";
+export { connectNote, profileUrl };
 import { listLinkedInPosts, listLinkedInComments, linkedinGet, orgUrn } from "./linkedinApi";
 
 export type LeadStatus = "new" | "contacted" | "ignore";
@@ -53,18 +55,6 @@ export function parsePeople(json: unknown): Map<string, { name: string; headline
 }
 
 export const scoreOf = (kinds: string[]) => kinds.reduce((n, k) => n + (k === "comment" ? 3 : 1), 0);
-
-export function profileUrl(l: { vanity: string; person_id: string }): string {
-  return l.vanity ? `https://www.linkedin.com/in/${l.vanity}/` : "";
-}
-
-// A short, honest connection note (LinkedIn allows about 200 characters on a free invite). Never claims more than "thanks for engaging".
-export function connectNote(name: string, actions: string): string {
-  const first = name.trim().split(/\s+/)[0];
-  const hi = first ? `Hi ${first}, thanks` : "Hi, thanks";
-  const what = actions.includes("comment") ? "for commenting on" : "for the reaction to";
-  return `${hi} ${what} our TapCard post. I'm building TapCard, a digital card that lets small businesses send offers to their followers' phones. Good to connect. Martin`.slice(0, 300);
-}
 
 // ---- Scan ----
 const MAX_POSTS = 10;

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Lead, Mention } from "@/lib/linkedinEngagement";
-import { connectNote, profileUrl } from "@/lib/linkedinEngagement";
+import { connectNote, profileUrl } from "@/lib/linkedinLeadText";
 
 export default function LinkedInLeads({ initial, mentions, lastScan }: { initial: Lead[]; mentions: Mention[]; lastScan: string | null }) {
   const [leads, setLeads] = useState(initial);
