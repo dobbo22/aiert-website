@@ -63,10 +63,10 @@ export default async function LinkedInTabPage() {
 
   return (
     <>
-      <CommentOnPost recent={outbound.map((o) => ({ ...o, created_at: new Date(o.created_at).toISOString() }))} />
-      <LinkedInLeads initial={leads} mentions={mentions} lastScan={lastScan} />
-      <ReplyQueue initial={pending} recent={handled} />
       {error && <p className="social-compose-error">{error}</p>}
+      <ReplyQueue initial={pending} recent={handled} />
+      <LinkedInLeads initial={leads} mentions={mentions} lastScan={lastScan} />
+      <CommentOnPost recent={outbound.map((o) => ({ ...o, created_at: new Date(o.created_at).toISOString() }))} />
       {overview && <LinkedInOverview overview={overview} />}
       <LinkedInFeed initialPosts={posts} stats={stats} />
     </>

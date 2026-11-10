@@ -32,53 +32,63 @@ export default function LinkedInLeads({ initial, mentions, lastScan }: { initial
 
   const shown = leads.filter((l) => showAll || l.status === "new");
   const newCount = leads.filter((l) => l.status === "new").length;
+  const scanned = lastScan ? new Date(lastScan).toLocaleString("en-GB", { timeZone: "Europe/London", dateStyle: "medium", timeStyle: "short" }) : "not yet";
 
   return (
-    <div className="social-post-card">
-      <p className="social-post-message"><b>{newCount}</b> new warm lead{newCount === 1 ? "" : "s"} on LinkedIn</p>
-      <p className="social-empty">
-        People who reacted to or commented on the page&apos;s posts. Scanned once a day{lastScan ? ` (last: ${new Date(lastScan).toLocaleString("en-GB", { timeZone: "Europe/London", dateStyle: "medium", timeStyle: "short" })})` : ""}.
-        Open their profile, send a connection request with the note below, then mark them Contacted. Reactions on your personal-profile posts can&apos;t be seen by the API.
+    <div className="social-post-card lk-card">
+      <p className="lk-title">Warm leads: {newCount} new</p>
+      <p className="lk-note">
+        People who reacted to or commented on the page&apos;s posts. Open their profile, send a connection request with the note, then mark them Contacted.
+        Reactions on your personal-profile posts can&apos;t be seen by the API.
       </p>
-      <div className="social-compose-row">
+      <div className="lk-row">
         <button type="button" className="social-post-btn" disabled={busy} onClick={scan}>{busy ? "Scanning…" : "Scan now"}</button>
-        <label style={{ fontSize: ".88rem" }}><input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} /> Show contacted and ignored</label>
+        <span className="lk-note">Last scan: {scanned} (runs daily)</span>
+        <label className="lk-check"><input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} /> Show contacted and ignored</label>
       </div>
-      {msg && <p className="social-empty">{msg}</p>}
-      {shown.length === 0 && <p className="social-empty">No new leads yet. Reactions and comments show up after the next scan.</p>}
-      {shown.map((l) => {
-        const note = connectNote(l.name, l.actions);
-        const url = profileUrl(l);
-        return (
-          <div key={l.person_id} className="social-comment">
-            <p className="social-post-message">
-              <b>{l.name || "(name not available)"}</b> · {l.actions}{l.status !== "new" ? ` · ${l.status}` : ""}
-            </p>
-            {l.headline && <p className="social-empty">{l.headline}</p>}
-            {l.actions.includes("commented") && l.last_detail && <p className="social-empty">&ldquo;{l.last_detail}&rdquo;</p>}
-            <p className="social-post-meta">
-              <span>{new Date(l.last_at).toLocaleDateString("en-GB")}</span>
-              {url ? <a href={url} target="_blank" rel="noreferrer">Open profile</a> : <span>No profile link available</span>}
-            </p>
-            <p className="social-empty" style={{ textAlign: "left" }}>{note}</p>
-            <div className="social-compose-row">
-              <button type="button" className="social-comments-toggle" onClick={() => copy(note)}>Copy note</button>
-              {l.status !== "contacted" && <button type="button" className="social-post-btn" onClick={() => setStatus(l.person_id, "contacted")}>Mark contacted</button>}
-              {l.status !== "ignore" && <button type="button" className="social-comments-toggle" onClick={() => setStatus(l.person_id, "ignore")}>Not relevant</button>}
-              {l.status !== "new" && <button type="button" className="social-comments-toggle" onClick={() => setStatus(l.person_id, "new")}>Back to new</button>}
-            </div>
-          </div>
-        );
-      })}
+      {msg && <p className="lk-note">{msg}</p>}
+      {shown.length === 0 && <p className="lk-note">No new leads yet. Reactions and comments show up after the next scan.</p>}
+      {shown.length > 0 && (
+        <div className="lk-list">
+          {shown.map((l) => {
+            const note = connectNote(l.name, l.actions);
+            const url = profileUrl(l);
+            return (
+              <div key={l.person_id} className="lk-item">
+                <div className="lk-head">
+                  <p className="lk-name">{l.name || "(name not available)"}</p>
+                  <span className={`lk-chip ${l.status === "new" ? "lk-chip-new" : ""}`}>{l.status === "new" ? l.actions : `${l.status} · ${l.actions}`}</span>
+                </div>
+                {l.headline && <p className="lk-note">{l.headline}</p>}
+                {l.actions.includes("commented") && l.last_detail && <p className="lk-quote">&ldquo;{l.last_detail}&rdquo;</p>}
+                <p className="lk-meta">
+                  <span>{new Date(l.last_at).toLocaleDateString("en-GB")}</span>
+                  {url ? <a href={url} target="_blank" rel="noreferrer">Open profile</a> : <span>No profile link available</span>}
+                </p>
+                <p className="lk-draft">{note}</p>
+                <div className="lk-row">
+                  <button type="button" className="social-comments-toggle" onClick={() => copy(note)}>Copy note</button>
+                  {l.status !== "contacted" && <button type="button" className="social-post-btn" onClick={() => setStatus(l.person_id, "contacted")}>Mark contacted</button>}
+                  {l.status !== "ignore" && <button type="button" className="social-comments-toggle" onClick={() => setStatus(l.person_id, "ignore")}>Not relevant</button>}
+                  {l.status !== "new" && <button type="button" className="social-comments-toggle" onClick={() => setStatus(l.person_id, "new")}>Back to new</button>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
       {mentions.length > 0 && (
         <details>
-          <summary className="social-empty">Mentions of the page ({mentions.length})</summary>
-          <p className="social-empty" style={{ textAlign: "left" }}>LinkedIn only tells us that someone mentioned AIERT LTD, not who. Open the page&apos;s notifications on LinkedIn to see and reply.</p>
-          {mentions.map((m) => (
-            <p key={m.notification_id} className="social-empty" style={{ textAlign: "left" }}>
-              {new Date(m.occurred_at).toLocaleDateString("en-GB")} · <a href="https://www.linkedin.com/notifications/" target="_blank" rel="noreferrer">Open notifications</a>
-            </p>
-          ))}
+          <summary>Mentions of the page ({mentions.length})</summary>
+          <p className="lk-note">LinkedIn only tells us that someone mentioned AIERT LTD, not who. Open the page&apos;s notifications on LinkedIn to see and reply.</p>
+          <div className="lk-list" style={{ marginTop: "0.6rem" }}>
+            {mentions.map((m) => (
+              <p key={m.notification_id} className="lk-meta">
+                <span>{new Date(m.occurred_at).toLocaleDateString("en-GB")}</span>
+                <a href="https://www.linkedin.com/notifications/" target="_blank" rel="noreferrer">Open notifications</a>
+              </p>
+            ))}
+          </div>
         </details>
       )}
     </div>

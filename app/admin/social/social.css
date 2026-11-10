@@ -335,3 +335,34 @@
 .sch-tags span { border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 999px; padding: 0.1rem 0.6rem; font-size: 0.74rem; color: #94a3b8; }
 .sch-poll-view { margin: 0 0 0.6rem; padding-left: 1.1rem; color: #cbd5e1; font-size: 0.85rem; }
 @media (max-width: 640px) { .sch-form { padding: 1rem; } .sch-seg button, .sch-card { flex-basis: 100%; } }
+
+/* ---- LinkedIn tab: readable cards (full-contrast text, left aligned, even spacing) ---- */
+.lk-card { display: flex; flex-direction: column; gap: 0.85rem; padding: 1.25rem 1.4rem; }
+.lk-title { margin: 0; font-size: 1.02rem; font-weight: 700; color: #f8fafc; }
+.lk-note { margin: 0; color: #e2e8f0; font-size: 0.86rem; line-height: 1.55; text-align: left; max-width: 72ch; }
+.lk-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+.lk-check { display: inline-flex; align-items: center; gap: 0.4rem; color: #e2e8f0; font-size: 0.86rem; }
+.lk-input { flex: 1 1 260px; min-width: 0; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(148, 163, 184, 0.45); border-radius: 6px; color: #f8fafc; padding: 0.55rem 0.75rem; font-size: 0.9rem; font-family: inherit; }
+.lk-card textarea { width: 100%; min-height: 84px; box-sizing: border-box; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(148, 163, 184, 0.45); border-radius: 6px; color: #f8fafc; padding: 0.6rem 0.75rem; font-size: 0.9rem; font-family: inherit; resize: vertical; }
+.lk-card .social-comments-toggle { color: #e2e8f0; border-color: rgba(148, 163, 184, 0.55); padding: 0.4rem 0.8rem; font-size: 0.82rem; }
+.lk-card .social-post-btn { padding: 0.5rem 1.1rem; }
+.lk-list { display: flex; flex-direction: column; gap: 0.75rem; }
+.lk-item { display: flex; flex-direction: column; gap: 0.55rem; background: rgba(45, 55, 72, 0.28); border: 1px solid rgba(45, 55, 72, 0.7); border-radius: 8px; padding: 0.95rem 1.1rem; }
+.lk-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; }
+.lk-name { margin: 0; color: #f8fafc; font-weight: 700; font-size: 0.97rem; }
+.lk-chip { display: inline-block; border-radius: 999px; padding: 0.1rem 0.65rem; font-size: 0.72rem; font-weight: 700; background: rgba(148, 163, 184, 0.22); color: #f8fafc; }
+.lk-chip-new { background: rgba(52, 211, 153, 0.22); color: #d1fae5; }
+.lk-meta { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin: 0; color: #e2e8f0; font-size: 0.8rem; }
+.lk-meta a { color: #f8fafc; text-decoration: underline; }
+.lk-quote { margin: 0; border-left: 3px solid rgba(148, 163, 184, 0.5); padding-left: 0.75rem; color: #f8fafc; font-size: 0.88rem; line-height: 1.5; }
+.lk-draft { margin: 0; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 6px; padding: 0.6rem 0.8rem; color: #f8fafc; font-size: 0.86rem; line-height: 1.5; }
+.lk-card details > summary { cursor: pointer; color: #f8fafc; font-size: 0.86rem; font-weight: 600; }
+.lk-card details[open] > summary { margin-bottom: 0.6rem; }
+.lk-figures { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.6rem; }
+.lk-figure { display: flex; flex-direction: column; gap: 0.15rem; background: rgba(45, 55, 72, 0.28); border: 1px solid rgba(45, 55, 72, 0.7); border-radius: 8px; padding: 0.65rem 0.8rem; }
+.lk-figure b { color: #f8fafc; font-size: 1.35rem; line-height: 1.1; }
+.lk-figure span { color: #e2e8f0; font-size: 0.76rem; }
+.lk-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 0.9rem 1.5rem; padding-top: 0.85rem; border-top: 1px solid rgba(45, 55, 72, 0.6); }
+.lk-stat-title { margin: 0 0 0.35rem; color: #f8fafc; font-size: 0.8rem; font-weight: 700; }
+.lk-stat-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.2rem; color: #e2e8f0; font-size: 0.86rem; }
+.lk-stat-list b { color: #f8fafc; }

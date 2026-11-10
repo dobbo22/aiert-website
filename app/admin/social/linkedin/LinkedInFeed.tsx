@@ -51,7 +51,7 @@ export default function LinkedInFeed({ initialPosts, stats = {} }: { initialPost
           <p className={`social-compose-status ${status.ok ? "social-compose-success" : "social-compose-error"}`}>{status.text}</p>
         )}
       </form>
-      {posts.length === 0 && <p className="social-empty">No posts yet.</p>}
+      {posts.length === 0 && <p className="lk-note">No posts yet.</p>}
       {posts.map((post) => (
         <div key={post.urn} className="social-post-card">
           <div className="social-post-meta">
@@ -61,15 +61,15 @@ export default function LinkedInFeed({ initialPosts, stats = {} }: { initialPost
             </a>
           </div>
           <p className="social-post-message">{post.text || "(no text)"}</p>
-          {post.hasMedia && <p className="social-empty">Includes an image or video.</p>}
+          {post.hasMedia && <p className="lk-note">Includes an image or video.</p>}
           {stats[post.urn] ? (
-            <p className="social-empty">
+            <p className="lk-note">
               {stats[post.urn].impressions} impressions ({stats[post.urn].uniqueImpressions} people) · {stats[post.urn].clicks} clicks ·{" "}
               {stats[post.urn].reactions} reactions · {stats[post.urn].comments} comments · {stats[post.urn].shares} shares ·{" "}
               {(stats[post.urn].engagement * 100).toFixed(1)}% engagement
             </p>
           ) : (
-            <p className="social-empty">Stats: not available yet (LinkedIn takes a few hours).</p>
+            <p className="lk-note">Stats: not available yet (LinkedIn takes a few hours).</p>
           )}
           <PostComments urn={post.urn} />
         </div>

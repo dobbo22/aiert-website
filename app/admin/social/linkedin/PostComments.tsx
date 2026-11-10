@@ -56,9 +56,9 @@ export default function PostComments({ urn }: { urn: string }) {
       </button>
       {open && (
         <div className="social-comments-list">
-          {loading && <p className="social-empty">Loading comments…</p>}
+          {loading && <p className="lk-note">Loading comments…</p>}
           {error && <p className="social-compose-error">{error}</p>}
-          {!loading && comments?.length === 0 && <p className="social-empty">No comments yet.</p>}
+          {!loading && comments?.length === 0 && <p className="lk-note">No comments yet.</p>}
           {comments?.map((c) => (
             <div key={c.id || c.createdAt} className="social-comment">
               <p className="social-post-meta">

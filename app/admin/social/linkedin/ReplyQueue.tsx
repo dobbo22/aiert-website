@@ -24,11 +24,9 @@ export default function ReplyQueue({ initial, recent }: { initial: QueueItem[]; 
   }
 
   return (
-    <div className="social-post-card">
-      <p className="social-post-message">
-        <b>{items.length}</b> comment{items.length === 1 ? "" : "s"} waiting for your reply
-      </p>
-      <p className="social-empty">
+    <div className="social-post-card lk-card">
+      <p className="lk-title">Replies waiting: {items.length}</p>
+      <p className="lk-note">
         Checked every few hours. Basic pricing and download questions are answered automatically; everything else waits here for you to approve.
       </p>
       {error && <p className="social-compose-error">{error}</p>}
@@ -41,7 +39,7 @@ export default function ReplyQueue({ initial, recent }: { initial: QueueItem[]; 
             </a>
           </p>
           <p className="social-post-message">&ldquo;{i.comment_text}&rdquo;</p>
-          {i.note && <p className="social-empty">{i.note}</p>}
+          {i.note && <p className="lk-note">{i.note}</p>}
           <textarea
             value={drafts[i.comment_id] ?? ""}
             onChange={(e) => setDrafts((d) => ({ ...d, [i.comment_id]: e.target.value }))}
@@ -60,12 +58,12 @@ export default function ReplyQueue({ initial, recent }: { initial: QueueItem[]; 
       ))}
       {recent.length > 0 && (
         <details>
-          <summary className="social-empty">Recently replied ({recent.length})</summary>
+          <summary className="lk-note">Recently replied ({recent.length})</summary>
           {recent.map((r) => (
             <div key={r.comment_id} className="social-comment">
-              <p className="social-empty">{r.status === "auto_sent" ? "Automatic reply" : r.status === "failed" ? "Failed to send" : "You replied"}</p>
+              <p className="lk-note">{r.status === "auto_sent" ? "Automatic reply" : r.status === "failed" ? "Failed to send" : "You replied"}</p>
               <p className="social-post-message">&ldquo;{r.comment_text}&rdquo;</p>
-              {r.draft && <p className="social-empty">{r.draft}</p>}
+              {r.draft && <p className="lk-note">{r.draft}</p>}
             </div>
           ))}
         </details>
