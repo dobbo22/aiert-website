@@ -153,3 +153,13 @@ test("a gym's trial button gives a Book a free trial row, but its package button
   assert.equal(r.links.filter((l) => /book/i.test(l.label)).length, 1, "nothing else is offered as a booking");
   assert.ok(!r.links.some((l) => /stripe/.test(l.value)), "a payment link is not offered");
 });
+
+test("a gym on Glofox gives its trial class, and ignores Join us and Buy credits", async () => {
+  const { findSiteLinks } = await import("../lib/siteLinks");
+  const html = `<html><body><a href="https://app.glofox.com/portal/#/branch/aaa/memberships?header=members">Join Us</a>
+    <a href="https://app.glofox.com/portal/#/branch/bbb/memberships/trial1">PURCHASE TRIAL CLASS</a>
+    <a href="https://app.glofox.com/portal/#/branch/bbb/memberships/cred1">BUY CREDITS</a></body></html>`;
+  const r = await findSiteLinks("https://gym.example", "1 High St, London W1A 1AA", "Gym", { html, url: "https://gym.example/" });
+  assert.ok(r.links.some((l) => l.label === "Book a trial class" && l.value.includes("trial1")), "trial class found");
+  assert.ok(!r.links.some((l) => l.value.includes("branch/aaa") || l.value.includes("cred1")), "membership and credits links are left out");
+});

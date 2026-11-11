@@ -10,6 +10,9 @@ const MAX_HTML = 2 * 1024 * 1024;
 
 const BOOK_HOSTS = /(^|\.)(opentable\.[a-z.]+|resy\.com|sevenrooms\.com|exploretock\.com|tock\.com|thefork\.[a-z.]+|quandoo\.[a-z.]+|resdiary\.com|bookatable\.[a-z.]+|designmynight\.com|tablein\.com|bookingbug\.com)$/i;
 const ROOM_HOSTS = /(^|\.)(booking\.com|synxis\.com|littlehotelier\.com|thebookingbutton\.[a-z.]+)$/i;
+// Gym and class booking platforms (Glofox, Mindbody and similar). One site links to them for joining, buying credits and booking,
+// sometimes for another branch, so only a link whose text says trial / book / class / timetable counts; "Join us" and "Buy credits" do not.
+const GYM_HOSTS = /(^|\.)(glofox\.com|mindbodyonline\.com|bookwhen\.com|momence\.com|wellnessliving\.com|teamup\.com|gettimely\.com|vagaro\.com|booksy\.com)$/i;
 const APPT_HOSTS = /(^|\.)(fresha\.com|treatwell\.[a-z.]+|calendly\.com|setmore\.com|square\.site|acuityscheduling\.com|simplybook\.me)$/i;
 const ORDER_HOSTS = /(^|\.)(deliveroo\.[a-z.]+|ubereats\.com|just-eat\.[a-z.]+|justeat\.[a-z.]+|toasttab\.com|order\.online|orderyoyo\.com|foodhub\.[a-z.]+)$/i;
 
@@ -432,13 +435,17 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
     const same = h === siteHost;
     // A link back to the homepage itself (or a section of it) is not a menu or booking page.
     if (same && (path === "/" || path === "")) continue;
-    const thirdParty = /(^|\.)tripadvisor\./i.test(h) || BOOK_HOSTS.test(h) || ROOM_HOSTS.test(h) || APPT_HOSTS.test(h) || ORDER_HOSTS.test(h);
+    const thirdParty = /(^|\.)tripadvisor\./i.test(h) || BOOK_HOSTS.test(h) || ROOM_HOSTS.test(h) || APPT_HOSTS.test(h) || GYM_HOSTS.test(h) || ORDER_HOSTS.test(h);
     if (thirdParty && inOtherBranch(at)) continue;
     if (/(^|\.)tripadvisor\./i.test(h)) pick(found, "tripadvisor", href);
     else if (/(^|\.)g\.page$/i.test(h) || (/(^|\.)google\.[a-z.]+$/i.test(h) && /\/(maps\/.*review|local\/writereview)/.test(path))) pick(found, "google_review", href);
     else if (BOOK_HOSTS.test(h)) pick(found, "book_table", href);
     else if (ROOM_HOSTS.test(h)) pick(found, "book_room", href);
     else if (APPT_HOSTS.test(h)) pick(found, "appointment", href);
+    else if (GYM_HOSTS.test(h)) {
+      if (/\b(trial|taster|intro(ductory)?)\b/.test(t) && !/^(buy|purchase)\b.*\bcredits\b/.test(t)) addExtra("Book a trial class", href);
+      else if (/\b(book|booking|classes|class|timetable|schedule|reserve)\b/.test(t) && !/\b(buy|purchase|join)\b/.test(t)) pick(found, "appointment", href);
+    }
     else if (ORDER_HOSTS.test(h)) pick(found, "order", href);
     else if (same) {
       if (/^(book(ing)?s?( a)? ?table|reserve( a table)?|reservations?|book online)$/.test(t) || /\/(reservations?|book-a-table|booking)\/?$/.test(path)) pick(found, "book_table", href);
