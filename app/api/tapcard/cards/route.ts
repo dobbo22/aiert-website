@@ -10,6 +10,7 @@ import { resolveSiteBranding } from "@/lib/siteBrandColor";
 import { applyOrgLocks } from "@/lib/tapcardBiz";
 import { isBusinessLabel, sanitizeLinks } from "@/lib/tapcardLinks";
 import { sendCardUpdatedEmail } from "@/lib/tapcardRecipientEmail";
+import { proposedIdMatchesToken } from "@/lib/tapcardCardId";
 import { MAX_CARDS_PER_INSTALL, makeRoomForInstall } from "@/lib/tapcardCardLimits";
 
 // Fields worth quietly notifying recipients about — avatar/colour tweaks
@@ -18,6 +19,9 @@ const NOTIFY_WATCHLIST = ["title", "company", "phone", "email"] as const;
 
 interface CardBody {
   id?: string;
+  /// The card's id worked out by the phone from its edit token, so an offline QR can carry the link before the upload.
+  /// Accepted only when it matches the token sent with the request (lib/tapcardCardId.ts).
+  proposedId?: string;
   cardKind?: string;
   acceptShareBack?: boolean;
   label?: string;
@@ -128,6 +132,17 @@ export async function POST(req: NextRequest) {
   }
   let fields = sanitize(body);
 
+  // A phone-chosen id must be the one this very token produces, so nobody else can claim a link that is already on show in an
+  // offline QR code, or take over a card. Anything else is refused outright, never quietly replaced.
+  let wantedId: string | undefined;
+  if (body.proposedId !== undefined && body.proposedId !== null) {
+    if (!proposedIdMatchesToken(body.proposedId, token) || (body.id !== undefined && body.id !== body.proposedId)) {
+      return NextResponse.json({ error: "invalid card id" }, { status: 400 });
+    }
+    wantedId = body.proposedId;
+    body.id = wantedId; // an upload of a card that already exists is a normal update (edit token still checked below)
+  }
+
   if (body.id) {
     const existing = await getCard(body.id);
     if (existing) {
@@ -182,7 +197,12 @@ export async function POST(req: NextRequest) {
   if (!(await makeRoomForInstall(fields.grouping_id).catch(() => true))) {
     return NextResponse.json({ error: `This phone already has ${MAX_CARDS_PER_INSTALL} shared cards. Delete one you no longer use, then try again.`, code: "too_many_cards" }, { status: 409 });
   }
-  const id = await createCard(fields, hashSecret(token), ipHash);
+  const id = await createCard(fields, hashSecret(token), ipHash, wantedId);
+  // A same-moment retry of the same upload: the card is already there, and only its owner's token gets here with this id.
+  if (wantedId) {
+    const row = await getCard(wantedId);
+    if (!row || !(await canEdit(row, token))) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
   // Resolved after responding — the app gets its id back immediately and
   // picks up the colour/address on its next GET of the card (a few seconds
   // later, same deferred pattern as the Google Wallet pass refresh above).

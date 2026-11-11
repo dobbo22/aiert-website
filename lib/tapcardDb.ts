@@ -187,17 +187,23 @@ export async function replaceEditToken(cardId: string, editTokenHash: string): P
   await sql`UPDATE tapcard_cards SET edit_token_hash = ${editTokenHash}, updated_at = now() WHERE id = ${cardId}`;
 }
 
-export async function createCard(input: TapCardInput, editTokenHash: string, creatorIpHash: string): Promise<string> {
+/// `wantedId`: an id the phone worked out from its own edit token (lib/tapcardCardId.ts), already checked by the caller.
+/// Returns the id, and whether a row was really inserted (false when a retry of the same upload got there first).
+export async function createCard(input: TapCardInput, editTokenHash: string, creatorIpHash: string, wantedId?: string): Promise<string> {
   await ensureSchema();
-  const id = newCardId();
-  await sql`
+  const id = wantedId ?? newCardId();
+  const rows = await sql`
     INSERT INTO tapcard_cards (id, label, grouping_id, name, title, company, phone, email, website, address, linkedin_url,
                                twitter_url, instagram_url, facebook_url, facebook_is_page, tiktok_url, whatsapp_url, photo_url,
                                edit_token_hash, creator_ip_hash, pass_style, links, card_kind)
     VALUES (${id}, ${input.label}, ${input.grouping_id}, ${input.name}, ${input.title}, ${input.company}, ${input.phone}, ${input.email}, ${input.website}, ${input.address}, ${input.linkedin_url},
             ${input.twitter_url}, ${input.instagram_url}, ${input.facebook_url}, ${input.facebook_is_page}, ${input.tiktok_url}, ${input.whatsapp_url}, ${input.photo_url ?? null},
             ${editTokenHash}, ${creatorIpHash}, ${input.pass_style ?? "artwork"}, ${input.links ?? "[]"}, ${input.card_kind ?? ""})
+    ON CONFLICT (id) DO NOTHING
+    RETURNING id
   `;
+  // Only possible with a phone-chosen id: two uploads of the same card at once. The card is there; the later one adds nothing.
+  if (rows.length === 0) return id;
   if (input.accept_share_back === false) await sql`UPDATE tapcard_cards SET accept_share_back = false WHERE id = ${id}`;
   return id;
 }
