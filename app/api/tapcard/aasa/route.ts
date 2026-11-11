@@ -11,12 +11,16 @@ import { NextResponse } from "next/server";
 const APP_ID = "ATMHQQQQ5S.com.mailbroom.tapcard";
 // The App Clip (TapCardClip target): opens instantly from a business's QR code, with nothing to install.
 const CLIP_ID = "ATMHQQQQ5S.com.mailbroom.tapcard.Clip";
+// PowerSearch (a separate app): TapCard opens it with https://www.aiert.co.uk/powersearch/sender#… and …/details#…, so iPhone doesn't
+// ask "Open in PowerSearch?". Listed on www.aiert.co.uk only. The details after the "#" (they include email addresses) never reach us.
+const POWERSEARCH_ID = "ATMHQQQQ5S.com.mailbroom.powersearch";
 
 export function GET(req: Request) {
   // The Host header, not req.url — proxy.ts's rewrite leaves req.url on the
   // internal origin.
   const host = req.headers.get("host") ?? "";
-  const prefix = host.startsWith("tapcard.") ? "" : "/tapcard";
+  const onTapcardHost = host.startsWith("tapcard.");
+  const prefix = onTapcardHost ? "" : "/tapcard";
   return NextResponse.json({
     appclips: { apps: [CLIP_ID] },
     applinks: {
@@ -33,8 +37,10 @@ export function GET(req: Request) {
           // a plain /c/<id> link). Match the literal /vcard suffix instead.
           // Business invites are /business/claim#<invite> — the invite is a
           // fragment, which path matching ignores, so the bare path.
-          paths: [`NOT ${prefix}/c/*/vcard`, `${prefix}/c/*`, `${prefix}/business/claim`, `${prefix}/start/*`],
+          // /details#… is PowerSearch handing found details back to TapCard (the details are in the fragment, which path matching ignores).
+          paths: [`NOT ${prefix}/c/*/vcard`, `${prefix}/c/*`, `${prefix}/business/claim`, `${prefix}/start/*`, `${prefix}/details`],
         },
+        ...(onTapcardHost ? [] : [{ appID: POWERSEARCH_ID, paths: ["/powersearch/sender", "/powersearch/details"] }]),
       ],
     },
   });
