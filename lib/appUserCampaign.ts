@@ -3,6 +3,7 @@
 import sql from "@/lib/db";
 import { Resend } from "resend";
 import { allBusinesses, applyFilters, parseFilters } from "@/lib/businessUsers";
+import { unsubPostUrl, unsubPageUrl, unsubscribedEmails } from "@/lib/appUserUnsub";
 import { buildEmail, topFixes, type GapKey } from "@/lib/appUserEmail";
 
 export const IMAGE_BASE = "https://www.aiert.co.uk/tapcard-email";
@@ -60,7 +61,7 @@ export async function buildAppUserEmails(audience: Audience = "own"): Promise<Re
     const missing = missingOf(byId.get(r.id)!, r.isPersonal);
     const firstName = firstNameOf(r.name, r.company);
     const sentTo = sent.get(r.id) ?? 0;
-    const mail = buildEmail({ firstName, business: r.company || r.name, personal: r.isPersonal, missing, sentTo, imageBase: IMAGE_BASE, guideUrl: GUIDE_URL, replyTo: "martin@aiert.co.uk" });
+    const mail = buildEmail({ firstName, business: r.company || r.name, personal: r.isPersonal, missing, sentTo, imageBase: IMAGE_BASE, guideUrl: GUIDE_URL, replyTo: "martin@aiert.co.uk", unsubscribeUrl: unsubPageUrl(r.email) });
     return { email: r.email, firstName, business: r.company || r.name, subject: mail.subject, fixes: topFixes(missing, r.isPersonal), sentTo, cardId: r.id, html: mail.html, text: mail.text };
   });
 }
@@ -135,7 +136,8 @@ export async function campaignState(audience: Audience = "own"): Promise<{ eligi
     SELECT lower(l.email) AS e FROM mk_leads l
     WHERE l.state IN ('unsubscribed', 'removed')
        OR EXISTS (SELECT 1 FROM mk_sends s WHERE s.lead_id = l.id AND s.bounced_at IS NOT NULL OR s.lead_id = l.id AND s.unsubscribed_at IS NOT NULL)`.catch(() => [])) as { e: string }[];
-  const sup = new Set<string>(suppressedRows.map((x) => x.e));
+  // ...and so is anyone who used this email's own unsubscribe link (or whose "stop" reply was added by hand).
+  const sup = new Set<string>([...suppressedRows.map((x) => x.e), ...(await unsubscribedEmails())]);
   const log = (await sql`SELECT email, business, status, error, sent_at FROM app_user_email_log WHERE campaign = ${campaignFor(audience)} ORDER BY sent_at DESC`) as SendLogRow[];
   // Whatever campaign it went out under, an address that was emailed once is never emailed again.
   const everSent = (await sql`SELECT lower(email) AS e FROM app_user_email_log WHERE status = 'sent'`) as { e: string }[];
@@ -159,7 +161,7 @@ export async function sendCampaign(expected: number, audience: Audience = "own")
     if (!claimed.length) continue; // someone else already claimed it
     const res = await resend.emails.send({
       from, to: [r.email], subject: r.subject, html: r.html, text: r.text, replyTo: "martin@aiert.co.uk",
-      headers: { "List-Unsubscribe": "<mailto:martin@aiert.co.uk?subject=stop>" },
+      headers: { "List-Unsubscribe": `<${unsubPostUrl(r.email)}>, <mailto:martin@aiert.co.uk?subject=stop>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" },
       tags: [{ name: "campaign", value: audience === "private" ? "finish-your-card-private" : "finish-your-card" }],
     });
     if (res.error) {

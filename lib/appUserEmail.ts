@@ -36,6 +36,7 @@ export type EmailInput = {
   imageBase: string; // where the screenshots are hosted, no trailing slash
   guideUrl: string;
   replyTo: string;
+  unsubscribeUrl?: string; // one-click opt-out page; when absent the footer only asks for a reply
 };
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -96,7 +97,7 @@ ${p("Sharing is free for life for the first 1,000 people on each store, and thos
 <p style="margin:22px 0">${cta(i.guideUrl, "Finish your card")}</p>
 ${p(`Stuck, or not sure what to add? Reply to this email with your website and I'll help you set it up. ${esc(i.replyTo)}`)}
 ${p("Martin Dobson<br>AIERT Ltd")}
-<p style="font-size:12px;color:#7a7794;margin-top:26px;line-height:1.5">You're getting this because you made a TapCard. If you'd rather not hear from me again, reply with the word stop and I won't email you.</p>
+<p style="font-size:12px;color:#7a7794;margin-top:26px;line-height:1.5">You're getting this because you made a TapCard. If you'd rather not hear from me again, ${i.unsubscribeUrl ? `<a href="${esc(i.unsubscribeUrl)}" style="color:#7a7794">unsubscribe here</a> or reply` : "reply"} with the word stop and I won't email you.</p>
 </td></tr></table></td></tr></table></body></html>`;
 
   const text = [
@@ -108,7 +109,7 @@ ${p("Martin Dobson<br>AIERT Ltd")}
     "You can keep up to three cards on one phone, for example your own and one for each business you run. If you'd like cards for your whole team, reply and I'll show you TapCard for Business.",
     "Sharing is free for life for the first 1,000 people on each store, and those places are still open.", "",
     `Stuck? Reply with your website and I'll help you set it up. ${i.replyTo}`, "", "Martin Dobson", "AIERT Ltd", "",
-    "You're getting this because you made a TapCard. If you'd rather not hear from me again, reply with the word stop and I won't email you.",
+    `You're getting this because you made a TapCard. If you'd rather not hear from me again, ${i.unsubscribeUrl ? `unsubscribe here: ${i.unsubscribeUrl} or reply` : "reply"} with the word stop and I won't email you.`,
   ].join("\n");
 
   return { subject, html, text };
