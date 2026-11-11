@@ -143,3 +143,13 @@ test("an address that runs two venues together is not offered", async () => {
   const r = await findSiteLinks("https://g.example/pages/paddington", "5 Kingdom Street, London W2 6BD", "G", { html, url: "https://g.example/pages/paddington" });
   assert.ok(!r.details.address || new Set((r.details.address.match(/[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}/gi) ?? []).map((x) => x.replace(/\s/g, ""))).size <= 1);
 });
+
+test("a gym's trial button gives a Book a free trial row, but its package buttons and vague calls to action do not", async () => {
+  const { findSiteLinks } = await import("../lib/siteLinks");
+  const html = `<html><body><a href="/contact">Book Your Trial</a> <a href="/contact">Start Journey Today!</a> <a href="/services">Book Here</a>
+    <a href="https://buy.stripe.com/abc">Purchase Here</a></body></html>`;
+  const r = await findSiteLinks("https://gym.example", "1 High St, London W1A 1AA", "Gym", { html, url: "https://gym.example/" });
+  assert.ok(r.links.some((l) => l.label === "Book a free trial" && l.value === "https://gym.example/contact"), "trial link found");
+  assert.equal(r.links.filter((l) => /book/i.test(l.label)).length, 1, "nothing else is offered as a booking");
+  assert.ok(!r.links.some((l) => /stripe/.test(l.value)), "a payment link is not offered");
+});
