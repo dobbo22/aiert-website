@@ -123,7 +123,7 @@ export default async function BusinessesPage({ searchParams }: { searchParams: P
                 </td>
                 <td className="biz-num">{r.created_at.slice(0, 10)}</td>
                 <Num n={r.views} /><Num n={r.followers} /><Num n={r.offers} /><Num n={r.news} /><Num n={r.claims} />
-                <td><a className="biz-btn biz-btn-sm" href={`https://tapcard.aiert.co.uk/c/${r.id}`} target="_blank" rel="noreferrer">Open card ↗</a></td>
+                <td><a className="biz-btn biz-btn-sm" href={`https://tapcard.aiert.co.uk/c/${r.id}?preview=1`} target="_blank" rel="noreferrer">Open card ↗</a></td>
               </tr>
             ))}
           </tbody>

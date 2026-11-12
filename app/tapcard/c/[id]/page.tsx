@@ -68,12 +68,14 @@ export default async function CardPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ send?: string; via?: string; a?: string }>;
+  searchParams: Promise<{ send?: string; via?: string; a?: string; preview?: string }>;
 }) {
   const { id } = await params;
   // The store links carry this business: on Android through the Play install referrer, on iPhone by copying its link when tapped.
   const TAPCARD_APP_STORE_URL = `${TAPCARD_APP_STORE_PATH}?card=${encodeURIComponent(id)}`;
-  const { send, via, a: acceptToken } = await searchParams;
+  // ?preview=1 is for our own looking (the admin pages and checks): it never counts as a view or marks a sent card as opened.
+  const { send, via, a: acceptToken, preview } = await searchParams;
+  const isPreview = preview === "1";
   const card = await getCard(id);
   if (!card) notFound();
 
@@ -110,11 +112,11 @@ export default async function CardPage({
   // Robots (link previews, search engines) are not people looking at the card.
   const viewUa = requestHeaders.get("user-agent") ?? "";
   const isRobot = !viewUa || /bot|crawl|spider|preview|whatsapp|facebookexternalhit|slurp|headless|lighthouse|googleimageproxy|linkpresentation|python|curl|wget/i.test(viewUa);
-  if (!isRobot) after(() => incrementViewCount(id, via === "qr"));
+  if (!isRobot && !isPreview) after(() => incrementViewCount(id, via === "qr"));
   // A card link sent to one person (it carries their personal code): note that they opened it, so the owner
   // can see "Opened". Link-preview and search robots are ignored, or every send would look opened at once.
   const ua = requestHeaders.get("user-agent") ?? "";
-  if (acceptToken && ua && !/bot|crawl|spider|preview|whatsapp|facebookexternalhit|slurp|headless|lighthouse|googleimageproxy|linkpresentation|python|curl|wget/i.test(ua)) {
+  if (acceptToken && ua && !isPreview && !/bot|crawl|spider|preview|whatsapp|facebookexternalhit|slurp|headless|lighthouse|googleimageproxy|linkpresentation|python|curl|wget/i.test(ua)) {
     after(() => markRecipientOpened(acceptToken));
   }
 
