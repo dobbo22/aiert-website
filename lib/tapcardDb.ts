@@ -163,6 +163,11 @@ function ensureSchema(): Promise<unknown> {
       // When the person first opened the card link they were sent (never counts link-preview robots).
       .then(() => sql`ALTER TABLE tapcard_card_recipients ADD COLUMN IF NOT EXISTS opened_at TIMESTAMPTZ`)
       .then(() => sql`ALTER TABLE tapcard_card_recipients ADD COLUMN IF NOT EXISTS open_count INTEGER NOT NULL DEFAULT 0`)
+      // Whether the card was really sent. The app registers a recipient BEFORE the share sheet opens (to get the personal link), so a
+      // dismissed sheet used to leave a "recipient". Newer apps report back when the sheet finishes: sent_at is set then. Rows made
+      // before this (and by older apps, which never report) keep sent_legacy = true, so they behave exactly as before.
+      .then(() => sql`ALTER TABLE tapcard_card_recipients ADD COLUMN IF NOT EXISTS sent_at TIMESTAMPTZ`)
+      .then(() => sql`ALTER TABLE tapcard_card_recipients ADD COLUMN IF NOT EXISTS sent_legacy BOOLEAN NOT NULL DEFAULT true`)
       // 'owner' = the owner sent their card to this person; 'web' = a stranger who opened the public card page and
       // chose "Share your details" (see addWebShareBack). Web rows are never emailed (do_not_contact).
       .then(() => sql`ALTER TABLE tapcard_card_recipients ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'owner'`)
@@ -407,18 +412,29 @@ export interface TapCardRecipient {
   accepted_website: string;
   opened_at: Date | string | null;
   open_count: number;
+  sent_at?: Date | string | null;
+  sent_legacy?: boolean;
+}
+
+/// The app reports how the share sheet ended. Sent: the card really went (sent_at set once). Dismissed: if it never went, the
+/// registration is removed so it is not counted or emailed. A card that already went once is never removed.
+export async function reportRecipientSend(cardId: string, recipientId: number, sent: boolean): Promise<void> {
+  await ensureSchema();
+  if (sent) await sql`UPDATE tapcard_card_recipients SET sent_at = COALESCE(sent_at, now()) WHERE id = ${recipientId} AND card_id = ${cardId}`;
+  else await sql`DELETE FROM tapcard_card_recipients WHERE id = ${recipientId} AND card_id = ${cardId} AND sent_at IS NULL AND sent_legacy = false`;
 }
 
 /// Re-sending to the same person (same card + phone/email) just refreshes
 /// the name rather than creating a duplicate row — see the UNIQUE constraint
 /// in ensureSchema.
-export async function addCardRecipient(cardId: string, name: string, phone: string, email: string): Promise<TapCardRecipient> {
+export async function addCardRecipient(cardId: string, name: string, phone: string, email: string, willReportSend = false): Promise<TapCardRecipient> {
   await ensureSchema();
   const token = crypto.randomBytes(6).toString("base64url");
   const acceptToken = crypto.randomBytes(6).toString("base64url");
+  // An app that says it will report the outcome (willReportSend) makes a row that only counts once reported; an older app does not.
   const rows = (await sql`
-    INSERT INTO tapcard_card_recipients (card_id, name, phone, email, unsubscribe_token, accept_token)
-    VALUES (${cardId}, ${name}, ${phone}, ${email}, ${token}, ${acceptToken})
+    INSERT INTO tapcard_card_recipients (card_id, name, phone, email, unsubscribe_token, accept_token, sent_legacy)
+    VALUES (${cardId}, ${name}, ${phone}, ${email}, ${token}, ${acceptToken}, ${!willReportSend})
     ON CONFLICT (card_id, phone, email) DO UPDATE SET name = EXCLUDED.name
     RETURNING *
   `) as TapCardRecipient[];
@@ -509,7 +525,7 @@ export async function listNotifiableRecipients(cardId: string): Promise<TapCardR
   await ensureSchema();
   return (await sql`
     SELECT * FROM tapcard_card_recipients
-    WHERE card_id = ${cardId} AND do_not_contact = false AND email <> ''
+    WHERE card_id = ${cardId} AND do_not_contact = false AND email <> '' AND (sent_at IS NOT NULL OR sent_legacy)
   `) as TapCardRecipient[];
 }
 

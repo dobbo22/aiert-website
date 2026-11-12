@@ -12,6 +12,8 @@ export const FUNNEL_STEPS = [
   "web_offer_claimed", "web_get_app_tapped",
   // Getting the card back: a stranger sharing details on the web card page, and a new app user asked to send their card back.
   "web_shareback", "opened_sender_card", "sendback_prompted", "sendback_sent", "sendback_skipped",
+  // The share sheet when sending a card to a contact: opened, really sent, or dismissed.
+  "share_started", "share_completed", "share_dismissed",
   // Inside the App Clip.
   "clip_shared_details", "clip_wallet_card", "clip_wallet_offer", "clip_card_made",
 ] as const;

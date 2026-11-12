@@ -6,6 +6,8 @@ interface Body {
   name?: string;
   phone?: string;
   email?: string;
+  /// Newer apps say they will report whether the share sheet really sent (PUT .../recipients/<id>).
+  reportsSend?: boolean;
 }
 
 // The owner's view of everyone they've sent this card to directly, with
@@ -35,6 +37,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       acceptedWebsite: r.accepted_website,
       openedAt: r.opened_at,
       openCount: r.open_count,
+      sent: !!r.sent_at || r.sent_legacy !== false,
+      sentAt: r.sent_at ?? null,
       source: r.source ?? "owner",
       createdAt: r.created_at,
     })),
@@ -67,7 +71,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "a phone number or email is required" }, { status: 400 });
   }
 
-  const recipient = await addCardRecipient(id, name, phone, email);
+  const recipient = await addCardRecipient(id, name, phone, email, body.reportsSend === true);
   // The accept token on the link is what lets AcceptRecipientForm (on the
   // public card page) identify which recipient row a "share your details
   // back" submission belongs to.
