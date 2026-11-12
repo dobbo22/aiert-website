@@ -32,6 +32,7 @@ function ensureSchema(): Promise<unknown> {
 export const verifyEnforced = () => process.env.TAPCARD_VERIFY_ENFORCE === "1";
 
 import { businessDomain } from "@/lib/tapcardDomain";
+import { domainAliases } from "@/lib/tapcardDomainAliases";
 import { getOrg, isOrgActive, orgHasConfirmedAdminOnDomain } from "@/lib/tapcardBiz";
 export { businessDomain };
 
@@ -91,7 +92,8 @@ export async function startVerification(card: TapCardRecord, emailRaw: string): 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return { ok: false, error: "Enter a full email address.", code: "bad_email" };
   const domain = businessDomain(card.website);
   if (!domain) return { ok: false, error: "Add your own website to the card first (not a social page). The code goes to an address on that website's domain.", code: "no_domain" };
-  if (!emailDomainMatches(email, domain)) return { ok: false, error: `The address must end in @${domain}, so we know the business is yours.`, code: "wrong_domain" };
+  const acceptable = [domain, ...(await domainAliases(domain))];
+  if (!acceptable.some((d) => emailDomainMatches(email, d))) return { ok: false, error: `The address must end in @${domain}, so we know the business is yours.`, code: "wrong_domain" };
   const taken = (await sql`SELECT id FROM tapcard_cards WHERE verified_domain = ${domain} AND id <> ${card.id} LIMIT 1`) as { id: string }[];
   if (taken.length) return { ok: false, error: "Another TapCard for this business is already verified. Contact TapCard support if it is yours.", code: "domain_taken" };
   const recent = (await sql`SELECT count(*)::int AS n FROM tapcard_verifications WHERE card_id = ${card.id} AND created_at > now() - interval '1 hour'`) as { n: number }[];

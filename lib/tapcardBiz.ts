@@ -56,6 +56,7 @@ export interface BizOrg {
 import { DEFAULT_LOCKED_FIELDS, LOCKABLE_FIELDS } from "@/lib/tapcardBizFields";
 import { TRIAL_DAYS } from "@/lib/tapcardBizBilling";
 import { emailOnDomain } from "@/lib/tapcardDomain";
+import { domainAliases } from "@/lib/tapcardDomainAliases";
 export { DEFAULT_LOCKED_FIELDS, LOCKABLE_FIELDS };
 
 let schemaReady: Promise<unknown> | null = null;
@@ -219,8 +220,9 @@ export async function confirmAdminEmail(orgId: string, email: string): Promise<v
 
 /// The rule behind company verification: at least one admin has opened their emailed sign-in link (so controls that mailbox) and that
 /// mailbox is on, or under, the business domain. Pure so it can be tested.
-export function adminsConfirmDomain(admins: { email: string; confirmed_at: string | Date | null }[], domain: string): boolean {
-  return !!domain && admins.some((a) => !!a.confirmed_at && emailOnDomain(a.email, domain));
+export function adminsConfirmDomain(admins: { email: string; confirmed_at: string | Date | null }[], domain: string | string[]): boolean {
+  const domains = (Array.isArray(domain) ? domain : [domain]).filter(Boolean);
+  return domains.length > 0 && admins.some((a) => !!a.confirmed_at && domains.some((d) => emailOnDomain(a.email, d)));
 }
 
 /// Has someone with a confirmed mailbox on this business domain signed in to the company? That is the company's proof that it
@@ -228,7 +230,9 @@ export function adminsConfirmDomain(admins: { email: string; confirmed_at: strin
 export async function orgHasConfirmedAdminOnDomain(orgId: string, domain: string): Promise<boolean> {
   if (!domain) return false;
   // Only admins prove the company owns its domain, never a shop manager.
-  return adminsConfirmDomain((await listAdmins(orgId)).filter((a) => a.role !== "manager"), domain);
+  // The website's own domain, plus any email domain added by hand for it (see tapcardDomainAliases).
+  const domains = [domain, ...(await domainAliases(domain))];
+  return adminsConfirmDomain((await listAdmins(orgId)).filter((a) => a.role !== "manager"), domains);
 }
 
 /// Claims the right to send a company its welcome email ("trial" once at sign-up, "paid" once when a plan starts), so a repeated
