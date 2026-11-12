@@ -4,9 +4,8 @@ import { allBusinesses, applyFilters, parseFilters, COFFEE_WORDS, SIGNUP_LABEL, 
 export const metadata = { title: "Businesses — Admin", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
-const cell: React.CSSProperties = { padding: "6px 10px", textAlign: "right", whiteSpace: "nowrap" };
-const left: React.CSSProperties = { ...cell, textAlign: "left", whiteSpace: "normal" };
-const row: React.CSSProperties = { borderTop: "1px solid rgba(255,255,255,.1)" };
+// A number that is zero fades back, so the cards that have followers, offers or claims stand out.
+const Num = ({ n }: { n: number }) => <td className={`biz-num${n ? "" : " biz-zero"}`}>{n}</td>;
 
 export default async function BusinessesPage({ searchParams }: { searchParams: Promise<{ q?: string; type?: string; little?: string; email?: string; notest?: string; app?: string; all?: string }> }) {
   // The login screen comes from the layout, but the page's data must not be fetched, or sent in the page source, for anyone else.
@@ -31,62 +30,105 @@ export default async function BusinessesPage({ searchParams }: { searchParams: P
   return (
     <div className="text-cloud">
       {error && <p className="social-compose-error">{error}</p>}
-      <p style={{ marginBottom: "1rem" }}>
-        Every card, and how it signed up. <strong>{all.length - personal}</strong> business cards and {personal} personal cards ({f.all ? "personal cards included" : "personal cards hidden: tick Include personal cards to see them"}).
+      <p className="biz-summary">
+        Every card, and how it signed up. <strong>{all.length - personal}</strong> business cards and <strong>{personal}</strong> personal cards
+        {" "}({f.all ? "personal cards included" : "personal cards hidden: switch on Include personal cards to see them"}).
       </p>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
+
+      <div className="biz-tiles">
         {counts.map(([t, n]) => (
-          <a key={t} href={`?${qs({ type: t })}`} style={{ border: "1px solid rgba(255,255,255,.15)", borderRadius: 8, padding: "10px 16px", minWidth: 190, textDecoration: "none", color: "inherit" }}>
-            <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>{n}</div>
-            <div style={{ fontSize: ".82rem" }}>{SIGNUP_LABEL[t]}</div>
+          <a key={t} href={f.type === t ? `?${qs({ type: "" })}` : `?${qs({ type: t })}`} className={`biz-tile biz-tile-${t}${f.type === t ? " biz-tile-active" : ""}`} aria-current={f.type === t ? "true" : undefined} title={f.type === t ? "Showing only this type. Click to show every type again." : "Click to show only this type"}>
+            <div className="biz-tile-n">{n}</div>
+            <div className="biz-tile-l">{SIGNUP_LABEL[t]}</div>
           </a>
         ))}
       </div>
 
-      <form method="get" style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", marginBottom: 12 }}>
-        <input name="q" defaultValue={f.q} placeholder="Name contains (comma separated)" style={{ minWidth: 280, background: "rgba(255,255,255,.05)", border: "1px solid rgba(148,163,184,.4)", borderRadius: 6, color: "inherit", padding: "6px 10px" }} />
-        <select name="type" defaultValue={f.type} style={{ background: "#0f172a", border: "1px solid rgba(148,163,184,.4)", borderRadius: 6, color: "inherit", padding: "6px 10px" }}>
-          <option value="">All sign-up types</option>
-          {(Object.keys(SIGNUP_LABEL) as SignupType[]).map((t) => <option key={t} value={t}>{SIGNUP_LABEL[t]}</option>)}
-        </select>
-        <select name="email" defaultValue={f.email} style={{ background: "#0f172a", border: "1px solid rgba(148,163,184,.4)", borderRadius: 6, color: "inherit", padding: "6px 10px" }}>
-          <option value="">Any email status</option>
-          <option value="own">Own-domain email only (not Gmail etc.)</option>
-          <option value="free">Free-mail only</option>
-          <option value="any">Has any email</option>
-          <option value="none">No email</option>
-        </select>
-        <label><input type="checkbox" name="notest" value="1" defaultChecked={f.notest} /> Hide test cards and our own</label>
-        <label><input type="checkbox" name="app" value="1" defaultChecked={f.app} /> Made in the app</label>
-        <label><input type="checkbox" name="all" value="1" defaultChecked={f.all} /> Include personal cards</label>
-        <label><input type="checkbox" name="little" value="1" defaultChecked={f.little} /> Little used (no offers, under 5 followers)</label>
-        <button type="submit" className="social-post-btn">Filter</button>
-        <a className="underline" href="?">Clear</a>
+      <form method="get" className="biz-panel">
+        <div className="biz-fields">
+          <input name="q" defaultValue={f.q} placeholder="Search by name (separate several with commas)" aria-label="Name contains" className="biz-input" />
+          <select name="type" defaultValue={f.type} aria-label="Sign-up type" className="biz-select">
+            <option value="">All sign-up types</option>
+            {(Object.keys(SIGNUP_LABEL) as SignupType[]).map((t) => <option key={t} value={t}>{SIGNUP_LABEL[t]}</option>)}
+          </select>
+          <select name="email" defaultValue={f.email} aria-label="Email status" className="biz-select">
+            <option value="">Any email status</option>
+            <option value="own">Own-domain email only (not Gmail etc.)</option>
+            <option value="free">Free-mail only</option>
+            <option value="any">Has any email</option>
+            <option value="none">No email</option>
+          </select>
+        </div>
+        <div className="biz-chips">
+          <label className="biz-chip"><input type="checkbox" name="notest" value="1" defaultChecked={f.notest} /><span>Hide test cards and our own</span></label>
+          <label className="biz-chip"><input type="checkbox" name="app" value="1" defaultChecked={f.app} /><span>Made in the app</span></label>
+          <label className="biz-chip"><input type="checkbox" name="all" value="1" defaultChecked={f.all} /><span>Include personal cards</span></label>
+          <label className="biz-chip"><input type="checkbox" name="little" value="1" defaultChecked={f.little} /><span>Little used (no offers, under 5 followers)</span></label>
+        </div>
+        <div className="biz-buttons">
+          <button type="submit" className="biz-btn biz-btn-primary">Apply filters</button>
+          <a className="biz-btn biz-btn-ghost" href="?">Clear all</a>
+        </div>
       </form>
-      <p style={{ marginBottom: 12 }}>
-        Quick filters: <a className="underline" href={`?${new URLSearchParams({ q: COFFEE_WORDS.join(","), little: "1" })}`}>Coffee houses, little used</a> ·{" "}
-        <a className="underline" href={`?${new URLSearchParams({ q: COFFEE_WORDS.join(",") })}`}>Coffee houses, all</a> ·{" "}
-        <a className="underline" href={`?${new URLSearchParams({ email: "own", notest: "1", app: "1", all: "1" })}`}>Real app users with an own-domain email</a> ·{" "}
-        <a className="underline" href={csv}>Download this list as CSV</a> ·{" "}
-        <a className="underline" href="/admin/social/businesses/email">Preview the &ldquo;finish your card&rdquo; email</a>
-      </p>
 
-      <p style={{ marginBottom: 8 }}>Showing <strong>{rows.length}</strong> of {pool.length}.</p>
-      <div style={{ overflowX: "auto" }}>
-        <table style={{ borderCollapse: "collapse", width: "100%" }}>
-          <thead><tr><th style={left}>Business</th><th style={left}>Contact</th><th style={left}>Signed up as</th><th style={cell}>Created</th><th style={cell}>Views</th><th style={cell}>Followers</th><th style={cell}>Offers</th><th style={cell}>News</th><th style={cell}>Claimed</th></tr></thead>
+      <div className="biz-toolbar">
+        <div className="biz-quick">
+          <span className="biz-quick-label">Quick filters</span>
+          <a className="biz-pill" href={`?${new URLSearchParams({ q: COFFEE_WORDS.join(","), little: "1" })}`}>Coffee houses, little used</a>
+          <a className="biz-pill" href={`?${new URLSearchParams({ q: COFFEE_WORDS.join(",") })}`}>Coffee houses, all</a>
+          <a className="biz-pill" href={`?${new URLSearchParams({ email: "own", notest: "1", app: "1", all: "1" })}`}>Real app users with an own-domain email</a>
+        </div>
+        <div className="biz-actions">
+          <a className="biz-btn" href={csv}>↓ Download as CSV</a>
+          <a className="biz-btn" href="/admin/social/businesses/email">✉ Preview the &ldquo;finish your card&rdquo; email</a>
+        </div>
+      </div>
+
+      <p className="biz-count">Showing <strong>{rows.length}</strong> of {pool.length}</p>
+      <div className="biz-scroll">
+        <table className="biz-table">
+          <thead>
+            <tr>
+              <th>Business</th><th>Contact</th><th>Signed up as</th><th className="biz-num">Created</th>
+              <th className="biz-num">Views</th><th className="biz-num">Followers</th><th className="biz-num">Offers</th><th className="biz-num">News</th><th className="biz-num">Claimed</th><th><span className="sr-only">Card</span></th>
+            </tr>
+          </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.id} style={row}>
-                <td style={left}><a className="underline" href={`https://tapcard.aiert.co.uk/c/${r.id}`} target="_blank" rel="noreferrer">{r.company || r.name || r.id}</a>{r.company && r.name ? <div style={{ fontSize: ".78rem", opacity: 0.7 }}>{r.name}</div> : null}</td>
-                <td style={left}>{r.email || <span style={{ opacity: 0.5 }}>no email</span>}{r.email ? <div style={{ fontSize: ".74rem", opacity: 0.7 }}>{r.emailKind === "own" ? (r.emailOnSite ? "own domain, matches website" : "own domain") : "free mail"}{r.looksTest ? " · test or our own" : ""}</div> : r.looksTest ? <div style={{ fontSize: ".74rem", opacity: 0.7 }}>looks like a test card</div> : null}</td>
-                <td style={left}><strong>{r.isPersonal && r.signup === "free" ? "Personal card" : SIGNUP_LABEL[r.signup]}</strong>{r.fromApp ? <span style={{ opacity: 0.7 }}> · app</span> : <span style={{ opacity: 0.7 }}> · web</span>}{r.detail ? <div style={{ fontSize: ".78rem", opacity: 0.75 }}>{r.detail}</div> : null}</td>
-                <td style={cell}>{r.created_at.slice(0, 10)}</td><td style={cell}>{r.views}</td><td style={cell}>{r.followers}</td><td style={cell}>{r.offers}</td><td style={cell}>{r.news}</td><td style={cell}>{r.claims}</td>
+              <tr key={r.id}>
+                <td>
+                  <div className="biz-name">{r.company || r.name || r.id}</div>
+                  {r.company && r.name ? <div className="biz-sub">{r.name}</div> : null}
+                </td>
+                <td>
+                  {r.email ? (
+                    <>
+                      <div>{r.email}</div>
+                      <div className="biz-tags">
+                        {r.emailKind === "own" ? <span className="biz-tag biz-tag-good">{r.emailOnSite ? "own domain, matches website" : "own domain"}</span> : <span className="biz-tag biz-tag-warn">free mail</span>}
+                        {r.looksTest ? <span className="biz-tag">test or our own</span> : null}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <span className="biz-none">no email</span>
+                      {r.looksTest ? <div className="biz-tags"><span className="biz-tag">looks like a test card</span></div> : null}
+                    </>
+                  )}
+                </td>
+                <td>
+                  <span className={`biz-badge biz-badge-${r.signup}`}>{r.isPersonal && r.signup === "free" ? "Personal card" : SIGNUP_LABEL[r.signup]}</span>
+                  <div className="biz-tags"><span className="biz-tag">{r.fromApp ? "made in the app" : "made on the web"}</span></div>
+                  {r.detail ? <div className="biz-sub">{r.detail}</div> : null}
+                </td>
+                <td className="biz-num">{r.created_at.slice(0, 10)}</td>
+                <Num n={r.views} /><Num n={r.followers} /><Num n={r.offers} /><Num n={r.news} /><Num n={r.claims} />
+                <td><a className="biz-btn biz-btn-sm" href={`https://tapcard.aiert.co.uk/c/${r.id}`} target="_blank" rel="noreferrer">Open card ↗</a></td>
               </tr>
             ))}
           </tbody>
         </table>
-        {rows.length === 0 && !error && <p style={{ marginTop: 12 }}>No businesses match.</p>}
+        {rows.length === 0 && !error && <p className="biz-empty">No cards match these filters. Try <a className="underline" href="?">clearing them</a>.</p>}
       </div>
     </div>
   );

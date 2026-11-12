@@ -368,3 +368,72 @@
 .lk-stat-title { margin: 0 0 0.35rem; color: #f8fafc; font-size: 0.8rem; font-weight: 700; }
 .lk-stat-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.2rem; color: #e2e8f0; font-size: 0.86rem; }
 .lk-stat-list b { color: #f8fafc; }
+
+/* ---- Businesses page: every card and how it signed up ---- */
+.biz-summary { margin: 0 0 1.1rem; color: #e2e8f0; line-height: 1.5; }
+.biz-summary strong { color: #f8fafc; }
+
+.biz-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem; }
+.biz-tile { display: block; padding: 0.85rem 1rem; border-radius: 10px; border: 1px solid rgba(148, 163, 184, 0.25); border-left-width: 4px; background: rgba(18, 24, 40, 0.85); color: #e2e8f0; text-decoration: none; transition: background 0.15s, border-color 0.15s; }
+.biz-tile:hover { background: rgba(30, 41, 59, 0.95); border-color: rgba(203, 213, 225, 0.55); }
+.biz-tile-n { font-size: 1.7rem; font-weight: 800; line-height: 1.1; color: #f8fafc; }
+.biz-tile-l { font-size: 0.82rem; margin-top: 0.2rem; color: #cbd5e1; }
+.biz-tile-active { background: rgba(51, 65, 85, 0.7); border-color: #e2e8f0; }
+.biz-tile-company { border-left-color: #a78bfa; }
+.biz-tile-store { border-left-color: #60a5fa; }
+.biz-tile-grant { border-left-color: #4ade80; }
+.biz-tile-free { border-left-color: #94a3b8; }
+
+.biz-panel { background: rgba(18, 24, 40, 0.85); border: 1px solid rgba(45, 55, 72, 0.7); border-radius: 10px; padding: 1rem; margin-bottom: 1rem; }
+.biz-fields { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 0.75rem; }
+.biz-input, .biz-select { background: #0f172a; border: 1px solid rgba(148, 163, 184, 0.4); border-radius: 8px; color: #f8fafc; padding: 0.5rem 0.75rem; font-size: 0.9rem; }
+.biz-input { flex: 1 1 280px; min-width: 220px; }
+.biz-select { flex: 0 1 240px; }
+.biz-input:focus, .biz-select:focus { outline: 2px solid #94a3b8; outline-offset: 1px; }
+.biz-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.9rem; }
+.biz-chip { cursor: pointer; }
+.biz-chip input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.biz-chip span { display: inline-block; padding: 0.35rem 0.8rem; border-radius: 999px; border: 1px solid rgba(148, 163, 184, 0.4); color: #e2e8f0; font-size: 0.85rem; background: rgba(15, 23, 42, 0.6); }
+.biz-chip:hover span { border-color: #cbd5e1; }
+.biz-chip input:checked + span { background: #e2e8f0; color: #0f172a; border-color: #e2e8f0; font-weight: 600; }
+.biz-chip input:checked + span::before { content: "✓ "; }
+.biz-chip input:focus-visible + span { outline: 2px solid #94a3b8; outline-offset: 2px; }
+.biz-buttons { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+
+.biz-btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid rgba(148, 163, 184, 0.5); background: rgba(148, 163, 184, 0.12); color: #f8fafc; font-size: 0.88rem; font-weight: 600; text-decoration: none; cursor: pointer; line-height: 1.2; }
+.biz-btn:hover { background: rgba(148, 163, 184, 0.25); border-color: #cbd5e1; }
+.biz-btn-primary { background: #e2e8f0; color: #0f172a; border-color: #e2e8f0; }
+.biz-btn-primary:hover { background: #fff; }
+.biz-btn-ghost { background: transparent; }
+.biz-btn-sm { padding: 0.3rem 0.65rem; font-size: 0.78rem; }
+
+.biz-toolbar { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.biz-quick { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center; }
+.biz-quick-label { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #cbd5e1; margin-right: 0.2rem; }
+.biz-pill { display: inline-block; padding: 0.35rem 0.8rem; border-radius: 999px; border: 1px solid rgba(148, 163, 184, 0.4); background: rgba(148, 163, 184, 0.1); color: #f1f5f9; font-size: 0.82rem; text-decoration: none; }
+.biz-pill:hover { background: rgba(148, 163, 184, 0.25); border-color: #cbd5e1; }
+.biz-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+.biz-count { margin: 0 0 0.6rem; color: #e2e8f0; }
+.biz-scroll { overflow: auto; max-height: 72vh; border: 1px solid rgba(45, 55, 72, 0.8); border-radius: 10px; background: rgba(12, 17, 30, 0.8); }
+.biz-table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1020px; font-size: 0.9rem; }
+.biz-table th { position: sticky; top: 0; z-index: 1; background: #1e293b; color: #f1f5f9; font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.65rem 0.8rem; text-align: left; border-bottom: 1px solid rgba(148, 163, 184, 0.35); white-space: nowrap; }
+.biz-table td { padding: 0.7rem 0.8rem; border-top: 1px solid rgba(255, 255, 255, 0.07); vertical-align: top; color: #e2e8f0; }
+.biz-table tbody tr:hover td { background: rgba(148, 163, 184, 0.08); }
+.biz-table .biz-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.biz-table th.biz-num { text-align: right; }
+.biz-zero { opacity: 0.32; }
+.biz-name { font-weight: 700; color: #f8fafc; }
+.biz-sub { font-size: 0.78rem; color: #cbd5e1; margin-top: 0.15rem; }
+.biz-none { color: #94a3b8; }
+.biz-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.3rem; }
+.biz-tag { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; border: 1px solid rgba(148, 163, 184, 0.4); color: #e2e8f0; background: rgba(148, 163, 184, 0.12); }
+.biz-tag-good { border-color: rgba(74, 222, 128, 0.55); color: #86efac; background: rgba(74, 222, 128, 0.1); }
+.biz-tag-warn { border-color: rgba(251, 191, 36, 0.55); color: #fcd34d; background: rgba(251, 191, 36, 0.1); }
+.biz-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.76rem; font-weight: 700; border: 1px solid transparent; }
+.biz-badge-company { background: rgba(167, 139, 250, 0.16); color: #ddd6fe; border-color: rgba(167, 139, 250, 0.5); }
+.biz-badge-store { background: rgba(96, 165, 250, 0.16); color: #bfdbfe; border-color: rgba(96, 165, 250, 0.5); }
+.biz-badge-grant { background: rgba(74, 222, 128, 0.14); color: #bbf7d0; border-color: rgba(74, 222, 128, 0.5); }
+.biz-badge-free { background: rgba(148, 163, 184, 0.14); color: #e2e8f0; border-color: rgba(148, 163, 184, 0.45); }
+.biz-empty { padding: 2rem 1rem; text-align: center; color: #e2e8f0; }
+@media (max-width: 640px) { .biz-input, .biz-select { flex: 1 1 100%; } .biz-tile-n { font-size: 1.45rem; } }
