@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 // are (app/tapcard/business/admin/*) — update it alongside them.
 export default function TapCardBusinessGuidePage() {
   return (
-    <DocPage title="TapCard for Business: Admin Guide" updated="26 October 2026">
+    <DocPage title="TapCard for Business: Admin Guide" updated="12 November 2026">
       <section>
         <h2>Overview</h2>
         <p>Setting up your team takes three steps:</p>
@@ -191,8 +191,9 @@ Sam Patel,sam@yourcompany.com,Account Manager`}</pre>
             Offers and news belong to that card, and customers follow it.
           </li>
           <li>
-            For each manager, under <strong>Can post offers and news for</strong>, tick the shop or shops they may post
-            for. Staff with no ticks cannot post.
+            To let a shop&apos;s own phone post, under <strong>Can post offers and news for</strong> tick that shop on its card.
+            For a manager with web access, tick their shops on the <strong>Admins</strong> tab. Anyone with no ticks cannot post.
+            (Posting from a staff member&apos;s own card on their own phone is coming in an app update.)
           </li>
           <li>
             Set the staff PIN when an offer is created and tell your staff, so any of them can confirm a customer&apos;s
@@ -338,11 +339,14 @@ Sam Patel,sam@yourcompany.com,Account Manager`}</pre>
             offers and news go to everyone who follows that shop, however many staff post for it.
           </li>
           <li>
-            <strong>Who can post.</strong> Under <strong>Can post offers and news for</strong>, tick the shop or shops
-            each person may post for, for example two managers per shop. They post from their own TapCard app on the
-            shop&apos;s behalf. Someone with no ticks can&apos;t post at all, whatever they try, and new cards start with
-            none. You can also post for any shop yourself from the <strong>Offers &amp; numbers</strong> tab, whatever
-            the ticks say.
+            <strong>Who can post.</strong> There are three ways, and you choose who. <strong>1.</strong> You, as admin, from
+            the <strong>Offers &amp; numbers</strong> tab, for any shop, whatever the ticks say. <strong>2.</strong> A shop
+            manager with web access (<strong>Admins</strong> tab, under <strong>Managers</strong>), who posts for their own
+            shops from the same <strong>Offers &amp; numbers</strong> tab. <strong>3.</strong> The phone that holds a shop&apos;s
+            card: on the <strong>Employees</strong> tab, under <strong>Can post offers and news for</strong>, tick that shop on
+            its card. Someone with no ticks can&apos;t post at all, and new cards start with none. Posting from a staff
+            member&apos;s own card on their own phone, for a shop that isn&apos;t theirs, is coming in an app update, so for now
+            use these three ways.
           </li>
           <li>
             <strong>One live offer per shop.</strong> A shop has only one valid offer at a time. The person who posted
