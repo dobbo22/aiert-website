@@ -112,3 +112,17 @@ test("a null id next to a proposed id is not a conflict (Android sends id: null 
   assert.equal(idConflictsWithProposed("abc", "abc"), false);
   assert.equal(idConflictsWithProposed("other", "abc"), true);
 });
+
+test("the message prepared for a contact carries the card's id on its Get the app link, so a download is credited to the card", async () => {
+  const t = token(30), id = deriveCardId(t);
+  assert.equal((await post(t, card({ proposedId: id }))).status, 200);
+  const { POST } = await import("../app/api/tapcard/cards/[id]/recipients/route");
+  const res = await POST(
+    new NextRequest(`https://tapcard.test/api/cards/${id}/recipients`, { method: "POST", body: JSON.stringify({ name: "Pat", phone: "07700900123", email: "", reportsSend: true }), headers: { "content-type": "application/json", authorization: `Bearer ${t}` } }),
+    { params: Promise.resolve({ id }) },
+  );
+  assert.equal(res.status, 200);
+  const { shareText } = (await res.json()) as { shareText: string };
+  assert.ok(shareText.includes(`/go/tapcard-web-share-get-tapcard?card=${id}`), "the download link names this card");
+  assert.ok(shareText.includes(`/c/${id}?a=`), "the card link still carries the personal code");
+});

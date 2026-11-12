@@ -76,8 +76,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   // public card page) identify which recipient row a "share your details
   // back" submission belongs to.
   const link = `https://tapcard.aiert.co.uk/c/${id}${recipient.accept_token ? `?a=${recipient.accept_token}` : ""}`;
+  // The card id rides on the download link, so an Android install from this message is credited to this card (Play install referrer).
   const ownerName = card.name || "I";
-  const shareText = `This is my TapCard — ${ownerName}'s digital business card: ${link}. It always shows my latest contact details, even if I change job or number, so you'll never have an old version.\n\nGet the app: https://tapcard.aiert.co.uk/go/tapcard-web-share-get-tapcard`;
+  const shareText = `This is my TapCard — ${ownerName}'s digital business card: ${link}. It always shows my latest contact details, even if I change job or number, so you'll never have an old version.\n\nGet the app: https://tapcard.aiert.co.uk/go/tapcard-web-share-get-tapcard?card=${id}`;
 
   // The id column is a bigint, which the database driver returns as text; the iPhone app decodes it as a number and failed to ("Couldn't send to that contact").
   return NextResponse.json({ id: Number(recipient.id), shareText });
