@@ -10,7 +10,7 @@ import { resolveSiteBranding } from "@/lib/siteBrandColor";
 import { applyOrgLocks } from "@/lib/tapcardBiz";
 import { isBusinessLabel, sanitizeLinks } from "@/lib/tapcardLinks";
 import { sendCardUpdatedEmail } from "@/lib/tapcardRecipientEmail";
-import { proposedIdMatchesToken } from "@/lib/tapcardCardId";
+import { idConflictsWithProposed, proposedIdMatchesToken } from "@/lib/tapcardCardId";
 import { MAX_CARDS_PER_INSTALL, makeRoomForInstall } from "@/lib/tapcardCardLimits";
 
 // Fields worth quietly notifying recipients about — avatar/colour tweaks
@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
   // offline QR code, or take over a card. Anything else is refused outright, never quietly replaced.
   let wantedId: string | undefined;
   if (body.proposedId !== undefined && body.proposedId !== null) {
-    if (!proposedIdMatchesToken(body.proposedId, token) || (body.id !== undefined && body.id !== body.proposedId)) {
+    if (!proposedIdMatchesToken(body.proposedId, token) || idConflictsWithProposed(body.id, body.proposedId)) {
       return NextResponse.json({ error: "invalid card id" }, { status: 400 });
     }
     wantedId = body.proposedId;

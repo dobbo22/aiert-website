@@ -27,3 +27,9 @@ export function proposedIdMatchesToken(proposedId: unknown, editToken: string): 
   const given = Buffer.from(proposedId);
   return given.length === expected.length && crypto.timingSafeEqual(given, expected);
 }
+
+/** A card upload may carry an `id` as well as a `proposedId`. An absent or null `id` (Android sends `"id": null` on a first upload) is
+ *  no id at all; only a real, different `id` is a conflict. */
+export function idConflictsWithProposed(id: unknown, proposedId: unknown): boolean {
+  return id !== undefined && id !== null && id !== proposedId;
+}

@@ -104,3 +104,11 @@ test("a null proposed id counts as none, and the id a phone computes matches the
   // Fixed vector, also computed by the iPhone and Android code: both must give this.
   assert.equal(deriveCardId("0123456789012345678901234567890123456789ABC"), "SlEAHdA-ti0_dMaMzYhDen");
 });
+
+test("a null id next to a proposed id is not a conflict (Android sends id: null on a first upload); a different real id is", async () => {
+  const { idConflictsWithProposed } = await import("../lib/tapcardCardId");
+  assert.equal(idConflictsWithProposed(undefined, "abc"), false);
+  assert.equal(idConflictsWithProposed(null, "abc"), false);
+  assert.equal(idConflictsWithProposed("abc", "abc"), false);
+  assert.equal(idConflictsWithProposed("other", "abc"), true);
+});
