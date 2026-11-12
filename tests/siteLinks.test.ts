@@ -163,3 +163,20 @@ test("a gym on Glofox gives its trial class, and ignores Join us and Buy credits
   assert.ok(r.links.some((l) => l.label === "Book a trial class" && l.value.includes("trial1")), "trial class found");
   assert.ok(!r.links.some((l) => l.value.includes("branch/aaa") || l.value.includes("cred1")), "membership and credits links are left out");
 });
+
+test("a coworking space's own booking portal gives tour, meeting room and day pass links", async () => {
+  const { findSiteLinks } = await import("../lib/siteLinks");
+  const html = `<html><body><nav>
+    <a href="https://portal.cowork.example/space/bookings/meeting-rooms/list">Meeting &amp; Event Hire</a>
+    <a href="https://portal.cowork.example/space/book-a-tour?action=tour">Book a tour →</a>
+    <a href="https://portal.cowork.example/space/bookings/day-passes/list">Book here</a>
+    <a href="https://portal.cowork.example/space/login">Sign in</a>
+    <a href="https://other.example/book-a-tour">Book a tour</a></nav></body></html>`;
+  const r = await findSiteLinks("https://www.cowork.example", "1 High St, London W2 1AA", "Cowork", { html, url: "https://www.cowork.example/" });
+  const labels = r.links.map((l) => l.label);
+  assert.ok(labels.includes("Book a tour"), "tour link");
+  assert.ok(labels.includes("Hire a meeting room"), "meeting room link");
+  assert.ok(!labels.includes("Sign in"), "sign-in is not a link");
+  assert.equal(r.links.filter((l) => l.label === "Book a tour").length, 1);
+  assert.ok(r.links.find((l) => l.label === "Book a tour")!.value.startsWith("https://portal.cowork.example/"), "the portal's tour link, not another site's");
+});

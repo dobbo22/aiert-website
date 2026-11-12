@@ -447,6 +447,13 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
       else if (/\b(book|booking|classes|class|timetable|schedule|reserve)\b/.test(t) && !/\b(buy|purchase|join)\b/.test(t)) pick(found, "appointment", href);
     }
     else if (ORDER_HOSTS.test(h)) pick(found, "order", href);
+    else if (!same && siteHost && (h.endsWith(`.${siteHost}`) || /(^|\.)nexudus\.com$/i.test(h))) {
+      // A coworking or studio space's own booking portal (portal.<its domain>, or Nexudus): tours, meeting rooms and day passes.
+      const tt = t.replace(/[→»>]+/g, "").trim();
+      if (/^book (a|your) (tour|visit|viewing)$/.test(tt)) addExtra("Book a tour", href);
+      else if (/^(meeting (&|and) event hire|meeting rooms?( hire)?|(book|hire) a meeting room)$/.test(tt)) addExtra("Hire a meeting room", href);
+      else if (/^(book )?(a )?day pass(es)?$/.test(tt) || (/day-passes/.test(path) && /^book/.test(tt))) addExtra("Book a day pass", href);
+    }
     else if (same) {
       if (/^(book(ing)?s?( a)? ?table|reserve( a table)?|reservations?|book online)$/.test(t) || /\/(reservations?|book-a-table|booking)\/?$/.test(path)) pick(found, "book_table", href);
       else if (/^(book (a )?room|rooms? (&|and) rates|check availability|rooms?|bedrooms?|stay( with us)?|our rooms|accommodation)$/.test(t) || /^\/(rooms?|bedrooms?|stay|accommodation|our-rooms)\/?$/.test(path)) pick(found, "book_room", href);
