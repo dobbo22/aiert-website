@@ -37,7 +37,7 @@ export default async function BizBillingPage() {
         <div className="mt-6">
           <p className="text-cloud">
             {org.seat_band === "trial"
-              ? "You're on the 30-day free trial (one card). Before it ends, choose how many locations to keep your cards covered and add your team:"
+              ? `You're on a free trial${trialEndsAt(org) ? ` until ${trialEndsAt(org)!.toLocaleDateString("en-GB")}` : ""}. Before it ends, choose how many locations to keep your cards covered and add your team:`
               : "No payment method on file yet. Choose how many locations to get started:"}
           </p>
           <UpgradePicker />
