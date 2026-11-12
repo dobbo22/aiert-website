@@ -2,6 +2,7 @@ import { rateLimited } from "@/lib/rateLimit";
 import { NextRequest, NextResponse } from "next/server";
 import { findSiteLogo, normalizeDomain } from "@/lib/siteIcon";
 import { orgLogoUrlForDomain } from "@/lib/tapcardBiz";
+import { domainLogoUrl } from "@/lib/tapcardDomainLogos";
 
 // Company logo for a card's website: tapcard.aiert.co.uk/api/logo?domain=example.com
 // — the logo the site declares or shows in its header (lib/siteIcon
@@ -15,8 +16,8 @@ export async function GET(req: NextRequest) {
   const domain = normalizeDomain(req.nextUrl.searchParams.get("domain") ?? "");
   if (!domain) return NextResponse.json({ error: "invalid domain" }, { status: 400 });
 
-  // A TapCard for Business company that uploaded its logo: that one, ahead of anything read from its website.
-  const own = await orgLogoUrlForDomain(domain).catch(() => null);
+  // A TapCard for Business company that uploaded its logo, or a logo set by hand for the domain: that one, ahead of anything read from its website.
+  const own = (await orgLogoUrlForDomain(domain).catch(() => null)) ?? (await domainLogoUrl(domain));
   if (own) {
     const res = await fetch(own, { signal: AbortSignal.timeout(4000) }).catch(() => null);
     if (res?.ok) {
