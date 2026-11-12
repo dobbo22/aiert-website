@@ -16,14 +16,24 @@ export async function GET(req: NextRequest) {
   if (!company) return NextResponse.json({ error: "not found" }, { status: 404 });
   const hit = cache.get(isin);
   if (hit && Date.now() - hit.at < 24 * 3600_000) return NextResponse.json(hit.body);
-  const hits = await searchBusinesses(`${company.n} head office`, null, false, "", true).catch(() => []);
-  const picked = pickListedHit(company, hits.length ? hits : await searchBusinesses(company.n, null, false, "", true).catch(() => []));
+  const debug = req.nextUrl.searchParams.get("debug") === "1";
+  const tried: { q: string; hits: { name: string; website: string }[] }[] = [];
+  let picked = null as Awaited<ReturnType<typeof searchBusinesses>>[number] | null;
+  for (const q of [`${company.n} head office`, company.n, `${company.n} investor relations`]) {
+    const hits = await searchBusinesses(q, null, false, "", true).catch(() => []);
+    tried.push({ q, hits: hits.map((h) => ({ name: h.name, website: h.website })) });
+    picked = pickListedHit(company, hits);
+    if (picked) break;
+  }
   const body = {
     company, website: picked?.website ?? "", address: picked?.address ?? "", phone: picked?.phone ?? "",
     // Every listed company has an RNS page by ticker on Investegate (a third party, so labelled as such), even when its own site cannot be read.
     links: [{ kind: "custom", label: "RNS announcements (Investegate)", value: `https://www.investegate.co.uk/company/${encodeURIComponent(company.t)}` }],
   };
-  if (cache.size > 2000) cache.clear();
-  cache.set(isin, { at: Date.now(), body });
-  return NextResponse.json(body);
+  // Only an answer with a website is remembered: an empty one is tried again next time.
+  if (picked?.website) {
+    if (cache.size > 2000) cache.clear();
+    cache.set(isin, { at: Date.now(), body });
+  }
+  return NextResponse.json(debug ? { ...body, tried } : body);
 }
