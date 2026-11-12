@@ -3,6 +3,7 @@
 // and replacing the file updates it. It holds only the issuer's name, ticker, ISIN and market; a company's website and investor
 // links are found when someone picks it (the site finder), never stored here.
 import data from "@/lib/data/lse-equities.json";
+import websites from "@/lib/data/listed-websites.json";
 
 export interface ListedCompany { n: string; t: string; i: string; m: "Main" | "AIM"; c: string }
 
@@ -51,4 +52,24 @@ export function pickListedHit<T extends { name: string; website: string }>(compa
     if (want.filter((w) => have.has(w)).length >= need) return h;
   }
   return null;
+}
+
+/// A website set by hand for this ISIN (lib/data/listed-websites.json), or "".
+export function manualWebsite(isin: string): string {
+  return (websites as { websites: Record<string, string> }).websites[isin.trim().toUpperCase()] ?? "";
+}
+
+/// The company's official website from Wikidata, found by its ISIN (free, no key). Larger companies are mostly there, small AIM ones often
+/// are not. Only an https/http address is accepted; "" when none or when Wikidata does not answer in time.
+export async function wikidataWebsite(isin: string): Promise<string> {
+  if (!/^[A-Z]{2}[A-Z0-9]{9}\d$/.test(isin)) return "";
+  try {
+    const url = "https://query.wikidata.org/sparql?format=json&query=" + encodeURIComponent(`SELECT ?w WHERE { ?c wdt:P946 "${isin}"; wdt:P856 ?w } LIMIT 3`);
+    const res = await fetch(url, { headers: { Accept: "application/sparql-results+json", "User-Agent": "TapCard/1.0 (enquiries@aiert.co.uk)" }, signal: AbortSignal.timeout(4000) });
+    if (!res.ok) return "";
+    const j = (await res.json()) as { results?: { bindings?: { w?: { value?: string } }[] } };
+    return (j.results?.bindings ?? []).map((b) => b.w?.value ?? "").find((v) => /^https?:\/\//i.test(v)) ?? "";
+  } catch {
+    return "";
+  }
 }

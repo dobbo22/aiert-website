@@ -26,3 +26,10 @@ test("a map listing is accepted only when it is the same company and has a websi
   assert.equal(pickListedHit(steppe, [{ name: "Steppe Cement Ltd", website: "" }]), null, "no website, nothing to show");
   assert.equal(pickListedHit({ n: "Anglo American Resources plc" }, [{ name: "Anglo American plc", website: "https://angloamerican.com" }])?.website, "https://angloamerican.com");
 });
+
+import { manualWebsite } from "../lib/tapcardListed";
+test("a website set by hand is found by ISIN, and an unknown ISIN has none", () => {
+  assert.equal(manualWebsite("GB00BD8GP619"), "https://www.kefi-goldandcopper.com/");
+  assert.equal(manualWebsite("gb00bd8gp619"), "https://www.kefi-goldandcopper.com/", "case does not matter");
+  assert.equal(manualWebsite("XX0000000000"), "");
+});
