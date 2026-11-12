@@ -437,3 +437,6 @@
 .biz-badge-free { background: rgba(148, 163, 184, 0.14); color: #e2e8f0; border-color: rgba(148, 163, 184, 0.45); }
 .biz-empty { padding: 2rem 1rem; text-align: center; color: #e2e8f0; }
 @media (max-width: 640px) { .biz-input, .biz-select { flex: 1 1 100%; } .biz-tile-n { font-size: 1.45rem; } }
+.biz-note { margin: 0 0 0.7rem; font-size: 0.85rem; line-height: 1.5; color: #cbd5e1; max-width: 70rem; }
+.biz-note strong { color: #f1f5f9; }
+.biz-table { min-width: 1240px; }

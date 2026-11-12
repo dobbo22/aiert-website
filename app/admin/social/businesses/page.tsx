@@ -85,12 +85,16 @@ export default async function BusinessesPage({ searchParams }: { searchParams: P
       </div>
 
       <p className="biz-count">Showing <strong>{rows.length}</strong> of {pool.length}</p>
+      <p className="biz-note">
+        <strong>Sent</strong> is cards the owner sent to a contact from the app, and <strong>Opened</strong> is how many of those were opened from the link.
+        {" "}<strong>Installs</strong> is app downloads credited to the card: the person tapped Get TapCard on its page or QR sign. A download can&rsquo;t be tied to one particular send, and one that came another way isn&rsquo;t counted. Views count people opening the card&rsquo;s web page only.
+      </p>
       <div className="biz-scroll">
         <table className="biz-table">
           <thead>
             <tr>
               <th>Business</th><th>Contact</th><th>Signed up as</th><th className="biz-num">Created</th>
-              <th className="biz-num">Views</th><th className="biz-num">Followers</th><th className="biz-num">Offers</th><th className="biz-num">News</th><th className="biz-num">Claimed</th><th><span className="sr-only">Card</span></th>
+              <th className="biz-num">Views</th><th className="biz-num">Followers</th><th className="biz-num">Offers</th><th className="biz-num">News</th><th className="biz-num">Claimed</th><th className="biz-num" title="Cards the owner sent to a contact from the app (only counted when the share sheet really sent it)">Sent</th><th className="biz-num" title="Of those sent, how many were opened from the link">Opened</th><th className="biz-num" title="App downloads credited to this card: the person tapped Get TapCard on this card's page or QR sign">Installs</th><th><span className="sr-only">Card</span></th>
             </tr>
           </thead>
           <tbody>
@@ -122,7 +126,7 @@ export default async function BusinessesPage({ searchParams }: { searchParams: P
                   {r.detail ? <div className="biz-sub">{r.detail}</div> : null}
                 </td>
                 <td className="biz-num">{r.created_at.slice(0, 10)}</td>
-                <Num n={r.views} /><Num n={r.followers} /><Num n={r.offers} /><Num n={r.news} /><Num n={r.claims} />
+                <Num n={r.views} /><Num n={r.followers} /><Num n={r.offers} /><Num n={r.news} /><Num n={r.claims} /><Num n={r.sent} /><Num n={r.opened} /><Num n={r.installs} />
                 <td><a className="biz-btn biz-btn-sm" href={`https://tapcard.aiert.co.uk/c/${r.id}?preview=1`} target="_blank" rel="noreferrer">Open card ↗</a></td>
               </tr>
             ))}

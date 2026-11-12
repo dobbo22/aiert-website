@@ -28,6 +28,10 @@ export type BizRow = {
   claims: number;
   offers: number;
   news: number;
+  /// Cards the owner sent to a contact from the app (really sent), how many of those were opened from the link, and app installs credited to this card.
+  sent: number;
+  opened: number;
+  installs: number;
   org_id: string | null;
   org_name: string | null;
   billing_status: string | null;
@@ -118,18 +122,29 @@ export async function allBusinesses(): Promise<{ rows: BizRow[]; personalCards: 
       (SELECT COUNT(*)::int FROM tapcard_offer_claims k JOIN tapcard_offers x ON x.id = k.offer_id WHERE x.card_id = c.id AND k.claimant_hash <> ALL(${OWN_CLAIMANTS}::text[])) AS claims
     FROM tapcard_cards c LEFT JOIN tapcard_biz_orgs o ON o.id = c.org_id
     ORDER BY c.created_at DESC LIMIT 2000`) as Record<string, unknown>[];
-  const [promote, grants, offers, news, personal] = await Promise.all([
+  // Shares: cards sent to a contact and opened. A database without the newer sent_at columns falls back to counting every send.
+  const sharesQuery = (async () =>
+    (await safe(sql`SELECT card_id,
+        COUNT(*) FILTER (WHERE source = 'owner' AND (sent_at IS NOT NULL OR sent_legacy))::int AS sent,
+        COUNT(*) FILTER (WHERE source = 'owner' AND (sent_at IS NOT NULL OR sent_legacy) AND opened_at IS NOT NULL)::int AS opened
+      FROM tapcard_card_recipients GROUP BY card_id`)) ??
+    (await safe(sql`SELECT card_id, COUNT(*) FILTER (WHERE source = 'owner')::int AS sent, COUNT(*) FILTER (WHERE source = 'owner' AND opened_at IS NOT NULL)::int AS opened FROM tapcard_card_recipients GROUP BY card_id`)))();
+  const [promote, grants, offers, news, personal, shares, installs] = await Promise.all([
     safe(sql`SELECT card_id, until, trial, platform FROM tapcard_promote`),
     safe(sql`SELECT card_id, until FROM tapcard_promote_grants`),
     safe(sql`SELECT card_id, COUNT(*)::int AS n FROM tapcard_offers GROUP BY card_id`),
     safe(sql`SELECT card_id, COUNT(*)::int AS n FROM tapcard_announcements WHERE withdrawn = false GROUP BY card_id`),
     safe(sql`SELECT COUNT(*)::int AS n FROM tapcard_cards WHERE card_kind = 'person' AND org_id IS NULL`),
+    sharesQuery,
+    safe(sql`SELECT card_id, COUNT(*)::int AS n FROM tapcard_card_installs GROUP BY card_id`),
   ]);
   const by = <T extends { card_id: string }>(list: T[] | null) => new Map((list ?? []).map((x) => [x.card_id, x]));
   const pm = by(promote as { card_id: string; until: string; trial: boolean; platform: string }[] | null);
   const gm = by(grants as { card_id: string; until: string }[] | null);
   const om = by(offers as { card_id: string; n: number }[] | null);
   const nm = by(news as { card_id: string; n: number }[] | null);
+  const sm = by(shares as { card_id: string; sent: number; opened: number }[] | null);
+  const im = by(installs as { card_id: string; n: number }[] | null);
 
   const rows = base.map((r) => {
     const id = String(r.id);
@@ -145,6 +160,7 @@ export async function allBusinesses(): Promise<{ rows: BizRow[]; personalCards: 
       id, name: String(r.name || ""), company: String(r.company || ""), email: String(r.email || ""), website: String(r.website || ""), label: String(r.label || ""),
       created_at: new Date(r.created_at as string).toISOString(), views: Number(r.views), qr: Number(r.qr), saves: Number(r.saves),
       followers: Number(r.followers), claims: Number(r.claims), offers: om.get(id)?.n ?? 0, news: nm.get(id)?.n ?? 0,
+      sent: Number(sm.get(id)?.sent ?? 0), opened: Number(sm.get(id)?.opened ?? 0), installs: Number(im.get(id)?.n ?? 0),
       ...joined, ...signupOf(joined),
       ...((x) => ({ emailKind: x.kind, emailDomain: x.domain, emailOnSite: x.onSite }))(emailInfo(String(r.email || ""), String(r.website || ""))),
       looksTest: looksTest({ name: String(r.name || ""), company: String(r.company || ""), website: String(r.website || ""), email: String(r.email || "") }),
@@ -177,7 +193,7 @@ export function applyFilters(rows: BizRow[], f: Filters): BizRow[] {
 
 const csvCell = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
 export function toCsv(rows: BizRow[]): string {
-  const head = ["Business", "Contact name", "Email", "Website", "Sign-up type", "Detail", "Created", "Views", "QR scans", "Saves", "Followers", "Offers posted", "News posted", "Offers claimed", "Email type", "Email matches website", "Looks like a test or our own", "Made in app", "Card type", "Card link"];
-  const lines = rows.map((r) => [r.company || r.name, r.name, r.email, r.website, SIGNUP_LABEL[r.signup], r.detail, r.created_at.slice(0, 10), r.views, r.qr, r.saves, r.followers, r.offers, r.news, r.claims, r.emailKind === "own" ? "own domain" : r.emailKind === "free" ? "free mail" : "none", r.emailOnSite ? "yes" : "no", r.looksTest ? "yes" : "no", r.fromApp ? "yes" : "no", r.isPersonal ? "personal" : "business", `https://tapcard.aiert.co.uk/c/${r.id}`].map(csvCell).join(","));
+  const head = ["Business", "Contact name", "Email", "Website", "Sign-up type", "Detail", "Created", "Views", "QR scans", "Saves", "Followers", "Offers posted", "News posted", "Offers claimed", "Cards sent to contacts", "Sent cards opened", "App installs credited", "Email type", "Email matches website", "Looks like a test or our own", "Made in app", "Card type", "Card link"];
+  const lines = rows.map((r) => [r.company || r.name, r.name, r.email, r.website, SIGNUP_LABEL[r.signup], r.detail, r.created_at.slice(0, 10), r.views, r.qr, r.saves, r.followers, r.offers, r.news, r.claims, r.sent, r.opened, r.installs, r.emailKind === "own" ? "own domain" : r.emailKind === "free" ? "free mail" : "none", r.emailOnSite ? "yes" : "no", r.looksTest ? "yes" : "no", r.fromApp ? "yes" : "no", r.isPersonal ? "personal" : "business", `https://tapcard.aiert.co.uk/c/${r.id}`].map(csvCell).join(","));
   return [head.map(csvCell).join(","), ...lines].join("\n");
 }
