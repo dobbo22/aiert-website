@@ -76,6 +76,20 @@ export async function sendBizTrialReminderEmail(email: string, company: string, 
     `Your free TapCard for Business trial for ${company} ends on ${endsOn}.\n\nAfter that, invites stop and your company cards are no longer covered for Promote. To keep everything working, choose a plan: ${link}\n\nTapCard for Business is £42 a year per location plus VAT for 2 to 4 locations (less each from 5 locations), with up to 10 staff cards per location and Promote included. If you're not going to carry on, there's nothing to do.`);
 }
 
+export async function sendBizFreeEndingEmail(email: string, company: string, endsOn: string, daysLeft: number, locations: number): Promise<void> {
+  const link = "https://tapcard.aiert.co.uk/business/admin/billing";
+  const price = locations * 42;
+  const when = daysLeft >= 28 ? "in about a month" : `in ${daysLeft} days`;
+  const html = `
+    <p>The free period for <strong>${company.replace(/</g, "&lt;")}</strong> on TapCard for Business ends ${when}, on <strong>${endsOn}</strong>.</p>
+    <p>To keep your cards, offers and news working, choose your plan and pay by card on your Billing page:</p>
+    <p><a href="${link}">${link}</a> (sign in with your admin email; we send you a link, there is no password).</p>
+    <p>For ${locations} location${locations === 1 ? "" : "s"} it is £${price} a year plus VAT, billed once a year, with up to 10 staff cards per location and Promote included. Reply to this email if you have any questions or want to change the number of locations.</p>
+  `;
+  await send(email, `Your free TapCard for Business period ends on ${endsOn}`, html,
+    `The free period for ${company} on TapCard for Business ends ${when}, on ${endsOn}.\n\nTo keep your cards, offers and news working, choose your plan and pay by card on your Billing page: ${link} (sign in with your admin email; we send you a link, there is no password).\n\nFor ${locations} location${locations === 1 ? "" : "s"} it is £${price} a year plus VAT, billed once a year, with up to 10 staff cards per location and Promote included. Reply to this email if you have any questions or want to change the number of locations.`);
+}
+
 const ORIGIN = "https://tapcard.aiert.co.uk";
 const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 

@@ -91,6 +91,8 @@ export function ensureSchema(): Promise<unknown> {
     `
       .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS trial_used BOOLEAN NOT NULL DEFAULT false`)
       .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS trial_reminded_at TIMESTAMPTZ`)
+      .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS free_until TIMESTAMPTZ`)
+      .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS free_reminders TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS locations INTEGER NOT NULL DEFAULT 0`)
       .then(() => sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS welcome_sent TEXT`)
       // AIERT's decision that this company is free for ever (a founding partner): nothing may switch its billing off or ask it to pay.
