@@ -460,6 +460,12 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
       else if ((t.includes("menu") && t.length <= 30 && !/gift|cookie|privacy|vouchers?/.test(t)) || /^\/(menus?|food-and-drink|our-menu)\/?$/.test(path) || /menu[^/]*\.pdf$/.test(path)) pick(found, "menu", href);
       else if (/^(order( online| now)?|takeaway|click (&|and) collect)$/.test(t) || /\/(order|order-online)\/?$/.test(path)) pick(found, "order", href);
       else if (/^(news|latest news|news (&|and) events|blog|our blog|the blog|what'?s on|events|journal|updates)$/.test(t) || /^\/(news|blog|latest-news|whats-on|events|journal)\/?$/.test(path)) addExtra("Latest news", href);
+      // A listed company's investor pages (RNS, reports, shareholder information, share price), found by what the link says or by its address.
+      else if (/^(rns|rns announcements?|regulatory (news|announcements?)|stock exchange announcements?)$/.test(t) || /^\/investors?\/(rns|regulatory|announcements)[^/]*\/?$/.test(path)) addExtra("RNS announcements", href);
+      else if (/^(investors?|investor relations|investor centre|for investors|investors? (&|and) shareholders)$/.test(t) || /^\/(investors?|investor-relations)\/?$/.test(path)) addExtra("Investor relations", href);
+      else if (/^(reports?|reports (&|and) (results|presentations)|results (&|and) reports|financial (reports?|results)|annual reports?)$/.test(t) && /^\/(investors?|investor-relations)\//.test(path)) addExtra("Reports and results", href);
+      else if (/^(shareholder (information|centre|services)|shareholding information)$/.test(t) && /^\/(investors?|investor-relations)\//.test(path)) addExtra("Shareholder information", href);
+      else if (/^(share price|stock quote|share price (&|and) charts?)$/.test(t) && /^\/(investors?|investor-relations)\//.test(path)) addExtra("Share price", href);
       else if (/^(prices?|pricing|price list|full price list|see (our )?prices|our prices)$/.test(t) || /^\/(pricing|prices|price-list)\/?$/.test(path)) addExtra("View prices", href);
       else if (/^(book|claim|get|request)( (your|a|my))?( free)? (trial|taster|intro(ductory)?|consultation|first)( session| class| lesson| visit)?[!.]?$|^(free )?(trial|taster) (session|class)[!.]?$|^try (a|us for a)( free)? (class|session|trial)[!.]?$/.test(t)) addExtra("Book a free trial", href);
       else if (/^(book( now| online)?|schedule( a)?( pick ?up| collection| delivery| visit)?|make a booking|book (an )?appointment|book a visit)$/.test(t) || /^\/(book|booking|bookings|book-?now|appointments?|schedule)\/?$/.test(path)) addExtra(t ? t.replace(/\b\w/g, (c) => c.toUpperCase()).slice(0, 40) : "Book now", href);
@@ -566,6 +572,9 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
     // An address with two postcodes is two places run together (a group page that lists several venues): none is better than a wrong one.
     if (details.address && new Set([...details.address.matchAll(/\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/gi)].map((m) => m[0].replace(/\s+/g, "").toUpperCase())).size > 1) delete details.address;
   }
+
+  // A share registrar's address and number (Computershare, Equiniti, Link) sit on listed companies' contact pages: they are not the company's own.
+  if (details.address && /\b(registrar|computershare|equiniti|link (group|market services)|transfer agent|share register)\b/i.test(details.address)) { delete details.address; delete details.phone; }
 
   // A plain tel: / mailto: link: used when the page lists one place (several branches would make it a guess).
   const contact = contactLinks(html, domain, venueTokens);

@@ -180,3 +180,19 @@ test("a coworking space's own booking portal gives tour, meeting room and day pa
   assert.equal(r.links.filter((l) => l.label === "Book a tour").length, 1);
   assert.ok(r.links.find((l) => l.label === "Book a tour")!.value.startsWith("https://portal.cowork.example/"), "the portal's tour link, not another site's");
 });
+
+test("a listed company's investor pages become links, and its share registrar is not taken as its address", async () => {
+  const { findSiteLinks } = await import("../lib/siteLinks");
+  const html = `<html><body><nav>
+    <a href="/investors/shareholding-information/">Shareholding Information</a>
+    <a href="/investors/rns-announcements/">RNS Announcements</a>
+    <a href="/investors/reports/">Reports</a>
+    <a href="/investors/stock-quote/">Stock Quote</a>
+    <a href="/media/news/">News</a></nav>
+    <p>Share Registrar Computershare Investor Services PLC The Pavilions, Bridgwater Road Bristol BS99 6ZZ +44 (0870) 703 6101</p></body></html>`;
+  const r = await findSiteLinks("https://listed.example", undefined, "Listed plc", { html, url: "https://listed.example/" });
+  const labels = r.links.map((l) => l.label);
+  for (const want of ["RNS announcements", "Reports and results", "Shareholder information", "Share price", "Latest news"]) assert.ok(labels.includes(want), `${want} is found`);
+  assert.ok(!r.details.address?.includes("Computershare"), "the registrar's address is not the company's");
+  assert.ok(!r.details.phone, "nor its phone number");
+});
