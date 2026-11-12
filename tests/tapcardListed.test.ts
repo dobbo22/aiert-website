@@ -17,3 +17,12 @@ test("only share lines on the main market and AIM are in the list", () => {
   assert.ok(sample.length > 0 && sample.every((c) => c.m === "Main" || c.m === "AIM"));
   assert.equal(listedByIsin("not an isin"), undefined);
 });
+
+import { pickListedHit } from "../lib/tapcardListed";
+test("a map listing is accepted only when it is the same company and has a website", () => {
+  const steppe = { n: "Steppe Cement Ltd" };
+  assert.equal(pickListedHit(steppe, [{ name: "Steppe Cement Limited", website: "https://www.steppecement.com/" }])?.website, "https://www.steppecement.com/");
+  assert.equal(pickListedHit(steppe, [{ name: "Steppe Travel Ltd", website: "https://travel.example" }]), null, "another company with one word in common");
+  assert.equal(pickListedHit(steppe, [{ name: "Steppe Cement Ltd", website: "" }]), null, "no website, nothing to show");
+  assert.equal(pickListedHit({ n: "Anglo American Resources plc" }, [{ name: "Anglo American plc", website: "https://angloamerican.com" }])?.website, "https://angloamerican.com");
+});
