@@ -105,12 +105,17 @@ export const littleUsed = (r: Pick<BizRow, "offers" | "followers">) => r.offers 
 
 const safe = async <T,>(p: Promise<T>): Promise<T | null> => p.catch(() => null);
 
+/// Claims made from our own devices are tests, not customers, so the Claimed column leaves them out. 8d08699f... is the iPhone simulator
+/// that takes the pitch screenshots (its -claim launch flag claims the sample offer through the API). If that simulator is ever erased it
+/// gets a new id: add the new hash here (find it with: SELECT DISTINCT claimant_hash FROM tapcard_offer_claims WHERE via='app' ORDER BY 1).
+export const OWN_CLAIMANTS = ["8d08699f74ee4605b9c543ed1e465945ab32cb1b74fbd42e9a2a6d3c0dbd885d"];
+
 export async function allBusinesses(): Promise<{ rows: BizRow[]; personalCards: number }> {
   const base = (await sql`
     SELECT c.id, c.name, c.company, c.email, c.website, c.label, c.card_kind, c.grouping_id, c.created_at, c.view_count AS views, c.qr_view_count AS qr, c.save_count AS saves,
       c.org_id, o.name AS org_name, o.billing_status, o.created_at AS org_created,
       (SELECT COUNT(*)::int FROM tapcard_followers f WHERE f.card_id = c.id) AS followers,
-      (SELECT COUNT(*)::int FROM tapcard_offer_claims k JOIN tapcard_offers x ON x.id = k.offer_id WHERE x.card_id = c.id) AS claims
+      (SELECT COUNT(*)::int FROM tapcard_offer_claims k JOIN tapcard_offers x ON x.id = k.offer_id WHERE x.card_id = c.id AND k.claimant_hash <> ALL(${OWN_CLAIMANTS}::text[])) AS claims
     FROM tapcard_cards c LEFT JOIN tapcard_biz_orgs o ON o.id = c.org_id
     ORDER BY c.created_at DESC LIMIT 2000`) as Record<string, unknown>[];
   const [promote, grants, offers, news, personal] = await Promise.all([
