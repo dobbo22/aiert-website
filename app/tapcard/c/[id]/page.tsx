@@ -5,7 +5,9 @@ import { headers } from "next/headers";
 import { after } from "next/server";
 import { getCard, incrementViewCount, markRecipientOpened } from "@/lib/tapcardDb";
 import { paletteFor } from "@/lib/brandPalette";
-import { orgLogoUrlForCard } from "@/lib/tapcardBiz";
+import { cardOrgId, orgLogoUrlForCard } from "@/lib/tapcardBiz";
+import { orgIsListed } from "@/lib/tapcardListedAdmin";
+import { isListedCard } from "@/lib/tapcardShare";
 import { BannerBrand, BrandProvider, FaviconBadge } from "../../CardBrand";
 import ContactIcon, { type ContactIconName } from "../../ContactIcon";
 import AcceptRecipientForm from "../../AcceptRecipientForm";
@@ -166,6 +168,12 @@ export default async function CardPage({
   // label + round icon badge show instead — see CardBrand). Absolute, since
   // this page is also served at www.aiert.co.uk/tapcard/c/….
   const orgLogo = await orgLogoUrlForCard(card).catch(() => null);
+  // A listed company's card, or one of its people's: the save notice says announcements need the app.
+  const listedCard = await (async () => {
+    if (await isListedCard(id).catch(() => false)) return true;
+    const org = await cardOrgId(id).catch(() => null);
+    return org ? await orgIsListed(org) : false;
+  })();
   const bannerLogo =
     orgLogo ?? (companyDomain ? `https://tapcard.aiert.co.uk/api/logo?domain=${encodeURIComponent(companyDomain)}` : null);
   const palette = paletteFor(card.brand_color);
@@ -238,6 +246,7 @@ export default async function CardPage({
               openInAppHref={via === "qr" || (isMobile && acceptToken) ? openInAppHref : undefined}
               firstName={firstName}
               goToStore={isMobile}
+              listed={listedCard}
             />
 
             {SEND_BACK_ENABLED && (

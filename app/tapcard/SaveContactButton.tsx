@@ -13,6 +13,7 @@ export default function SaveContactButton({
   openInAppHref,
   firstName,
   goToStore,
+  listed,
 }: {
   cardId: string;
   /// This card's own link: on iPhone it is copied before the store opens (see CarryCardToInstall), so TapCard can open on this business after installing.
@@ -22,6 +23,8 @@ export default function SaveContactButton({
   openInAppHref?: string;
   firstName: string;
   goToStore: boolean;
+  /// A listed company's card (or one of its people): the notice says RNS announcements need the app.
+  listed?: boolean;
 }) {
   // Read once on the phone; false on the server and during hydration.
   const android = useSyncExternalStore(
@@ -46,6 +49,16 @@ export default function SaveContactButton({
     <img src="https://www.aiert.co.uk/tapcard-icon.png" alt="" className="h-9 w-9 rounded-xl" />
   );
 
+  // Saving to contacts is a one-off copy: no notifications and no updates without the app. Say so plainly.
+  const appNotice = (
+    <p className="mt-2 rounded-xl bg-white/[0.07] px-3 py-2 text-center text-xs text-white">
+      <strong>Saving to contacts is a one-off copy.</strong>{" "}
+      {listed
+        ? "You will not receive the company's announcements, or any updates to these details, unless you download the free TapCard app and follow."
+        : "You will not get notifications or updates when these details change unless you download the free TapCard app."}
+    </p>
+  );
+
   if (!goToStore) {
     return (
       <div className="mt-5">
@@ -53,6 +66,7 @@ export default function SaveContactButton({
           {icon}
           Save {firstName} to contacts
         </a>
+        {appNotice}
         {openInAppHref && (
           <p className="mt-2 text-center text-xs text-white">
             Already have TapCard?{" "}
@@ -73,6 +87,7 @@ export default function SaveContactButton({
       <p className="mt-3 text-center text-sm text-white">
         <a href={vcardHref} className="font-semibold underline">Just save {firstName} to contacts</a>
       </p>
+      {appNotice}
       {openInAppHref && (
         <p className="mt-2 text-center text-xs text-white">
           Already have TapCard?{" "}
