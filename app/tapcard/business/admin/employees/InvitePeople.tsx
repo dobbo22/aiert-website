@@ -78,7 +78,7 @@ const newRow = (): Row => ({ key: rowKey++, name: "", email: "", title: "", emai
 export interface ShopChoice { id: string; label: string }
 
 /// `shops`: the shops these staff can belong to. A manager's list is their own shops (one is always chosen); an admin may leave it on "No shop".
-export default function InvitePeople({ billingActive, orgName, domain, shops = [], shopRequired = false }: { billingActive: boolean; orgName: string; domain: string; shops?: ShopChoice[]; shopRequired?: boolean }) {
+export default function InvitePeople({ billingActive, orgName, domain, shops = [], shopRequired = false, listed = false }: { billingActive: boolean; orgName: string; domain: string; shops?: ShopChoice[]; shopRequired?: boolean; listed?: boolean }) {
   const [shopId, setShopId] = useState(shopRequired ? shops[0]?.id ?? "" : "");
   const [rows, setRows] = useState<Row[]>([newRow()]);
   const [pattern, setPattern] = useState<Pattern>("first.last");
@@ -194,6 +194,12 @@ export default function InvitePeople({ billingActive, orgName, domain, shops = [
           </select>
         </label>
       )}
+      {listed && (
+        <p className="mt-1 text-sm text-mist">
+          For directors and others who speak for the company, such as the CEO or investor relations contact. Their cards share contact details and keep them up to date.
+          Anyone who follows one of these cards follows the company&apos;s announcements, with the choice to share their own details. Other news goes to people directly, by email or message.
+        </p>
+      )}
       <p className="mt-1 text-sm text-mist">
         Type each person&apos;s name and we fill in the email{domain ? ` (@${domain})` : ""}. Change the first one if your company
         uses a different format, for example j.smith, and the rest follow it. You get one invite link per person to send from
@@ -224,7 +230,7 @@ export default function InvitePeople({ billingActive, orgName, domain, shops = [
             />
             <input
               value={r.title} onChange={(e) => setTitle(r.key, e.target.value)} disabled={!billingActive}
-              placeholder="e.g. Manager" aria-label="Job title"
+              placeholder={listed ? "e.g. Chief Executive" : "e.g. Manager"} aria-label="Job title"
               onKeyDown={(e) => { if (e.key === "Enter" && idx === rows.length - 1 && r.name.trim()) { e.preventDefault(); addRow(); } }}
               className="rounded-xl bg-slate/40 px-3 py-2 text-cloud"
             />
@@ -238,7 +244,7 @@ export default function InvitePeople({ billingActive, orgName, domain, shops = [
 
       <div className="mt-4">
         <button type="button" onClick={() => setShowImport(!showImport)} className="text-sm text-mist underline">
-          {showImport ? "Hide list import" : "Have a staff list instead? Import a .vcf or CSV"}
+          {showImport ? "Hide list import" : (listed ? "Have a list instead? Import a .vcf or CSV" : "Have a staff list instead? Import a .vcf or CSV")}
         </button>
         {showImport && (
           <div className="mt-2 flex flex-wrap items-center gap-4">

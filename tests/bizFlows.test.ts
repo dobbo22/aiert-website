@@ -283,6 +283,27 @@ test("welcome email for a listed company talks about followers and RNS, not shop
   assert.ok(!m.html.includes("<b>Gold</b>"), "company name is escaped");
 });
 
+test("following a person's card in a listed company follows the company card; elsewhere follows itself", async () => {
+  const { createManagedCompany } = await import("../lib/tapcardBizSupport");
+  const { markListedCard, followTargetFor } = await import("../lib/tapcardShare");
+  const org = await createManagedCompany({ name: "Listed Co", adminEmail: "ir@listedco.example", locations: 1, listed: true });
+  const company = await newCard("t".repeat(45), { company: "Listed Co", name: "Listed Co" });
+  const ceo = await newCard("u".repeat(45), { company: "Listed Co", name: "Chief Exec" });
+  const lone = await newCard("v".repeat(45), { company: "Elsewhere", name: "Someone" });
+  await sql`UPDATE tapcard_cards SET org_id = ${org.id} WHERE id IN (${company}, ${ceo})`;
+  assert.equal(await followTargetFor(ceo), ceo, "nothing is listed yet, so it follows itself");
+  await markListedCard(company, "GB00TEST", "TST");
+  assert.equal(await followTargetFor(company), company);
+  assert.equal(await followTargetFor(ceo), company, "the CEO's card follows the company card");
+  assert.equal(await followTargetFor(lone), lone, "an unrelated card follows itself");
+  const { POST } = await import("../app/api/tapcard/cards/[id]/follow/route");
+  const r = await json(await POST(req(`/api/tapcard/cards/${ceo}/follow`, { body: { follower: "f".repeat(30), follow: true, share: { name: "Pat Smith", email: "pat@x.com" } } }), { params: Promise.resolve({ id: ceo }) }));
+  assert.equal(r.followedCardId, company);
+  assert.equal(r.shared, true);
+  const rows = (await sql`SELECT card_id FROM tapcard_follower_details WHERE card_id IN (${company}, ${ceo})`) as { card_id: string }[];
+  assert.deepEqual(rows.map((x) => x.card_id), [company], "details are stored against the company card only");
+});
+
 test("QR sign: wording is saved per shop, cleaned, and only by that company", async () => {
   const { createManagedCompany } = await import("../lib/tapcardBizSupport");
   const { parseSign, DEFAULT_SIGN } = await import("../lib/tapcardBizLocations");

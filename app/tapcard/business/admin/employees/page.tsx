@@ -5,6 +5,7 @@ import InvitePeople from "./InvitePeople";
 import PostControls from "./PostControls";
 import RemoveCardButton from "./RemoveCardButton";
 import StaffShop from "./StaffShop";
+import { listedSummary, orgIsListed } from "@/lib/tapcardListedAdmin";
 
 // TapCard keeps no staff list (see lib/tapcardBizInvite.ts) — this page
 // only knows the cards people have actually activated.
@@ -50,12 +51,15 @@ export default async function BizEmployeesPage() {
   }
 
   const cards = await listOrgCards(org.id);
+  // A listed (investor relations) company: no shops or offers. Staff cards are for contact details, and anyone who follows one follows the company.
+  const listed = await orgIsListed(org.id);
+  const companyIds = listed ? new Set((await listedSummary(org.id)).cards.filter((c) => c.isCompany).map((c) => c.id)) : new Set<string>();
   // Shops / locations: the cards the admin has marked, which offers and news belong to.
   const locations = cards.filter((c) => c.card_kind === "business").map((c) => ({ id: c.id, name: c.name }));
 
   return (
     <div className="space-y-8">
-      <InvitePeople billingActive={isOrgActive(org)} orgName={org.name} domain={org.domain} shops={allShops.map((l) => ({ id: l.id, label: shopLabel(l.address, l.name) }))} />
+      <InvitePeople billingActive={isOrgActive(org)} orgName={org.name} domain={org.domain} listed={listed} shops={listed ? [] : allShops.map((l) => ({ id: l.id, label: shopLabel(l.address, l.name) }))} />
 
       <div className="rounded-2xl bg-charcoal ring-1 ring-white/10">
         <div className="flex items-baseline justify-between px-4 pt-4">
@@ -70,15 +74,17 @@ export default async function BizEmployeesPage() {
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Title</th>
-              <th className="px-4 py-3">Shop</th>
-              <th className="px-4 py-3">Offers and news</th>
+              {listed ? <th className="px-4 py-3">Following this card</th> : (<>
+                <th className="px-4 py-3">Shop</th>
+                <th className="px-4 py-3">Offers and news</th>
+              </>)}
               <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody>
             {cards.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-mist">
+                <td colSpan={listed ? 5 : 6} className="px-4 py-6 text-mist">
                   No one has activated their card yet.
                 </td>
               </tr>
@@ -88,8 +94,12 @@ export default async function BizEmployeesPage() {
                 <td className="px-4 py-3">{c.name}</td>
                 <td className="px-4 py-3">{c.email}</td>
                 <td className="px-4 py-3">{c.title}</td>
+                {listed ? (
+                  <td className="px-4 py-3 text-sm">{companyIds.has(c.id) ? "The company's announcements" : "Follows the company's announcements"}</td>
+                ) : (<>
                 <td className="px-4 py-3">{c.card_kind === "business" ? "" : <StaffShop cardId={c.id} shopId={c.org_location_id} shops={allShops.map((l) => ({ id: l.id, label: shopLabel(l.address, l.name) }))} />}</td>
                 <td className="px-4 py-3"><PostControls cardId={c.id} isLocationInitial={c.card_kind === "business"} postsForInitial={c.can_post && c.card_kind === "business" ? [...c.posts_for, c.id] : c.posts_for} locations={locations} /></td>
+                </>)}
                 <td className="px-4 py-3 text-right">
                   <RemoveCardButton cardId={c.id} name={c.name} />
                 </td>

@@ -47,6 +47,20 @@ export async function isListedCard(cardId: string): Promise<boolean> {
   return ((await sql`SELECT 1 FROM tapcard_listed_cards WHERE card_id = ${cardId}`) as unknown[]).length > 0;
 }
 
+/// Where a follow on this card goes. A listed company's card follows itself. A person's card (CEO, IR contact) in a company that has a
+/// listed card follows the company card, so there is one follower list, one set of shared details and one RNS feed. Anything else follows itself.
+export async function followTargetFor(cardId: string): Promise<string> {
+  await ensureShareSchema();
+  if (await isListedCard(cardId)) return cardId;
+  const rows = (await sql`
+    SELECT l.card_id FROM tapcard_cards me
+    JOIN tapcard_cards c ON c.org_id = me.org_id
+    JOIN tapcard_listed_cards l ON l.card_id = c.id
+    WHERE me.id = ${cardId} AND me.org_id IS NOT NULL
+    ORDER BY c.created_at LIMIT 1`) as { card_id: string }[];
+  return rows[0]?.card_id ?? cardId;
+}
+
 /// AIERT marks a card as a listed company's. (Run from the admin side or SQL; the apps cannot do this.)
 export async function markListedCard(cardId: string, isin = "", ticker = ""): Promise<void> {
   await ensureShareSchema();
