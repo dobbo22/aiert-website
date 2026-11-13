@@ -101,9 +101,10 @@ export function CreateCompany() {
   const router = useRouter();
   const [name, setName] = useState(""), [email, setEmail] = useState(""), [locations, setLocations] = useState("3");
   const [sendEmail, setSendEmail] = useState(false), [busy, setBusy] = useState(false), [note, setNote] = useState("");
+  const [listed, setListed] = useState(false);
   async function create() {
     setBusy(true); setNote(sendEmail ? "Creating and sending the emails…" : "Creating…");
-    const r = await call({ action: "create", name, adminEmail: email, locations: Number(locations), sendEmail });
+    const r = await call({ action: "create", name, adminEmail: email, locations: listed ? 1 : Number(locations), sendEmail, listed });
     setBusy(false);
     setNote(r.ok ? `Created. ${sendEmail ? "Sign-in and welcome emails sent." : "No email sent; open it below as support, or sign in from their admin page."}` : r.data.error ?? "Failed");
     if (r.ok) { setName(""); setEmail(""); router.refresh(); }
@@ -114,9 +115,10 @@ export function CreateCompany() {
       <div style={{ display: "grid", gridTemplateColumns: "minmax(200px, 2fr) minmax(200px, 2fr) 100px", gap: 12 }}>
         <label><span style={fieldLabel}>Company name</span><input style={{ ...input, width: "100%" }} value={name} onChange={(e) => setName(e.target.value)} /></label>
         <label><span style={fieldLabel}>Admin email</span><input style={{ ...input, width: "100%" }} value={email} onChange={(e) => setEmail(e.target.value)} /></label>
-        <label><span style={fieldLabel}>Locations</span><input style={{ ...input, width: "100%" }} value={locations} onChange={(e) => setLocations(e.target.value)} inputMode="numeric" /></label>
+        <label><span style={fieldLabel}>Locations</span><input style={{ ...input, width: "100%", opacity: listed ? 0.6 : 1 }} value={listed ? "1" : locations} disabled={listed} onChange={(e) => setLocations(e.target.value)} inputMode="numeric" /></label>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 14, flexWrap: "wrap" }}>
+        <label style={{ fontSize: 14, display: "flex", alignItems: "center", gap: 6 }}><input type="checkbox" checked={listed} onChange={(e) => setListed(e.target.checked)} /> Listed company (investor relations admin)</label>
         <label style={{ fontSize: 14, display: "flex", alignItems: "center", gap: 6 }}><input type="checkbox" checked={sendEmail} onChange={(e) => setSendEmail(e.target.checked)} /> Email them the sign-in link and welcome</label>
         <Pill disabled={busy || !name.trim() || !email.trim()} onClick={create}>{busy ? "Working…" : "Create company"}</Pill>
       </div>
@@ -164,6 +166,27 @@ export function LifeToggle({ orgId, on }: { orgId: string; on: boolean }) {
   return (
     <div style={{ marginTop: 6 }}>
       <Pill small disabled={busy} onClick={toggle}>{busy ? "Working…" : on ? "✓ Free for life (remove)" : "Mark free for life"}</Pill>
+      {error && <div style={{ color: "#fca5a5", fontSize: 12 }}>{error}</div>}
+    </div>
+  );
+}
+
+/// Which admin the company sees: the investor relations one for a listed company (followers, post a headline, cards and QR), or the shop one.
+export function ListedToggle({ orgId, on }: { orgId: string; on: boolean }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  async function toggle() {
+    if (!confirm(on ? "Switch this company back to the ordinary company admin?" : "Switch this company to the listed company (investor relations) admin?")) return;
+    setBusy(true); setError("");
+    const r = await call({ action: "listed", orgId, on: !on });
+    setBusy(false);
+    if (!r.ok) { setError(r.data.error ?? "That didn't work. Try again."); return; }
+    router.refresh();
+  }
+  return (
+    <div style={{ marginTop: 6 }}>
+      <Pill small disabled={busy} onClick={toggle}>{busy ? "Working…" : on ? "✓ Listed company admin (switch off)" : "Use listed company admin"}</Pill>
       {error && <div style={{ color: "#fca5a5", fontSize: 12 }}>{error}</div>}
     </div>
   );

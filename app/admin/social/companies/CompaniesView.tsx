@@ -1,4 +1,4 @@
-import { CompanyTools, CreateCompany, LifeToggle, RemoveManager } from "./Tools";
+import { CompanyTools, CreateCompany, LifeToggle, ListedToggle, RemoveManager } from "./Tools";
 import { capFor } from "@/lib/providerCaps";
 import type { SupportCompanyRow } from "@/lib/tapcardBizSupport";
 
@@ -33,6 +33,7 @@ export default function CompaniesView({ companies, log, listError, nameOf, used,
                     <p style={{ fontSize: 14, margin: "4px 0 0" }}>Created {fmt(c.created_at)}</p>
                   </div>
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    {c.listed && <span style={pill("#fbbf24")}>Listed company</span>}
                     <span style={pill("#5eead4")}>{plan}</span>
                     <span style={pill("#e2e8f0")}>{c.billing_status}</span>
                     <span style={pill(open ? "#86efac" : "#fca5a5")}>{open ? `Support access until ${fmt(c.support_access_until!)}` : "Support access not allowed"}</span>
@@ -44,6 +45,7 @@ export default function CompaniesView({ companies, log, listError, nameOf, used,
                     <p style={{ fontWeight: 700, fontSize: 14, margin: "0 0 6px" }}>Cards</p>
                     <p style={{ margin: 0, fontSize: 16 }}>{c.cards} of {c.seat_limit}</p>
                     <LifeToggle orgId={c.id} on={!!c.free_for_life} />
+                    <ListedToggle orgId={c.id} on={!!c.listed} />
                   </div>
                   <div>
                     <p style={{ fontWeight: 700, fontSize: 14, margin: "0 0 6px" }}>People</p>

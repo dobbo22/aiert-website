@@ -3,6 +3,7 @@ import { getOrg } from "@/lib/tapcardBiz";
 import LoginForm from "./LoginForm";
 import AdminNav from "./AdminNav";
 import LogoutButton from "./LogoutButton";
+import { orgIsListed } from "@/lib/tapcardListedAdmin";
 
 export const metadata = {
   title: "TapCard for Business — Admin",
@@ -18,6 +19,7 @@ export default async function BizAdminLayout({ children }: { children: React.Rea
   const org = await getOrg(session.orgId);
   if (!org) return <LoginForm />;
 
+  const listed = await orgIsListed(org.id);
   return (
     <main className="min-h-screen px-4 py-10">
       <div className="mx-auto max-w-4xl">
@@ -28,12 +30,12 @@ export default async function BizAdminLayout({ children }: { children: React.Rea
         )}
         <header className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-teal">TapCard for Business</p>
+            <p className="text-sm font-semibold uppercase tracking-wider text-teal">{listed ? "TapCard for investor relations" : "TapCard for Business"}</p>
             <h1 className="mt-1 text-2xl font-black text-cloud">{org.name}</h1>
           </div>
           <LogoutButton />
         </header>
-        <AdminNav role={session.role} />
+        <AdminNav role={session.role} listed={listed} />
         <div className="mt-8">{children}</div>
         <footer className="mt-12 border-t border-slate pt-6 text-sm text-mist">
           <a href="/business/guide" className="text-gold underline">Admin guide</a> ·{" "}

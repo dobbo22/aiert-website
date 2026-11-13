@@ -8,19 +8,20 @@ import { sendBizAdminInviteEmail, sendBizLoginEmail, sendBizManagerInviteEmail, 
 import { cardAllowance } from "@/lib/tapcardBizPricing";
 import { createManagedCompany, logSupport, supportAccessOpen, SUPPORT_ACTOR, SUPPORT_PREFIX } from "@/lib/tapcardBizSupport";
 import sql from "@/lib/db";
+import { setOrgListed } from "@/lib/tapcardListedAdmin";
 
 // AIERT's Companies page (admin only): set a company up on its behalf, open a company's admin as support, or make a company free.
 // Opening or changing a company needs ITS support-access window to be open (the company allows it on its Admins tab, or AIERT set it
 // up and the 30 days have not passed).
 export async function POST(req: NextRequest) {
   if (!(await isAdminRequest())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const body = (await req.json().catch(() => null)) as { action?: string; orgId?: string; name?: string; adminEmail?: string; locations?: number; sendEmail?: boolean; email?: string; personName?: string; makeOwner?: boolean } | null;
+  const body = (await req.json().catch(() => null)) as { action?: string; orgId?: string; name?: string; adminEmail?: string; locations?: number; sendEmail?: boolean; email?: string; personName?: string; makeOwner?: boolean; listed?: boolean; on?: boolean } | null;
   if (!body) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
 
   if (body.action === "create") {
     const name = (body.name ?? "").trim(), email = (body.adminEmail ?? "").trim().toLowerCase();
     if (!name || !/^\S+@\S+\.\S+$/.test(email)) return NextResponse.json({ error: "A company name and the admin's email are required" }, { status: 400 });
-    const org = await createManagedCompany({ name, adminEmail: email, locations: Number(body.locations) || 2 });
+    const org = await createManagedCompany({ name, adminEmail: email, locations: body.listed ? 1 : Number(body.locations) || 2, listed: body.listed === true });
     if (body.sendEmail) {
       const token = await createLoginToken(email, org.id);
       await sendBizLoginEmail(email, `https://tapcard.aiert.co.uk/api/biz/login/${token}`).catch((e) => console.error("support setup login email failed", e));
@@ -32,6 +33,13 @@ export async function POST(req: NextRequest) {
   const orgId = body.orgId ?? "";
   const org = orgId ? await getOrg(orgId) : null;
   if (!org) return NextResponse.json({ error: "Company not found" }, { status: 404 });
+
+  // AIERT's own decision about which admin a company sees: the investor relations one for a listed company.
+  if (body.action === "listed") {
+    await setOrgListed(orgId, body.on !== false);
+    await logSupport(orgId, SUPPORT_ACTOR, body.on !== false ? "switched to the listed company admin" : "switched to the ordinary company admin");
+    return NextResponse.json({ ok: true });
+  }
 
   // AIERT's own decision about its own pricing: no company consent window is involved, so no support access is needed.
   if (body.action === "freeForLife") {

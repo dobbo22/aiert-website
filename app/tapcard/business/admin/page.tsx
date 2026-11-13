@@ -1,6 +1,8 @@
 import { requireBizUser } from "@/lib/tapcardBizSession";
 import { countOrgCards, getOrg, isComplimentary, isOrgActive, orgStatusLabel } from "@/lib/tapcardBiz";
 import { listLocations } from "@/lib/tapcardBizLocations";
+import { orgIsListed } from "@/lib/tapcardListedAdmin";
+import ListedOverview from "./ListedOverview";
 
 export default async function BizAdminOverview() {
   const session = await requireBizUser();
@@ -32,6 +34,9 @@ export default async function BizAdminOverview() {
       </div>
     );
   }
+
+  // A listed company (investor relations) has its own overview: numbers, who shared, and posting a headline.
+  if (await orgIsListed(org.id)) return <ListedOverview orgId={org.id} orgName={org.name} />;
 
   const activeCards = await countOrgCards(org.id);
   const locations = await listLocations(org.id).catch(() => []);

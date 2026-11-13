@@ -2,6 +2,7 @@ import sql from "@/lib/db";
 import { addAdmin, createOrg, domainOf, ensureSchema, type BizOrg } from "@/lib/tapcardBiz";
 import { cardAllowance } from "@/lib/tapcardBizPricing";
 import { isFreeMailDomain } from "@/lib/tapcardDomain";
+import { orgIsListed, setOrgListed } from "@/lib/tapcardListedAdmin";
 
 // AIERT support access to a company's admin. Secure by design: a company is only ever opened when ITS OWN admin has allowed support
 // access for a limited time (Admins tab), or when AIERT set the company up on its behalf (Companies page, 30 days). The session is
@@ -58,14 +59,17 @@ export interface SupportCompanyRow {
   id: string; name: string; seat_band: string; locations: number; seat_limit: number; billing_status: string; created_at: string;
   cards: number; admins: number; support_access_until: string | null;
   free_for_life: boolean;
+  /// True for a listed company's (investor relations) setup.
+  listed: boolean;
   /// Everyone who can sign in to the company: admins and shop managers.
   people: { email: string; role: string; confirmed: boolean }[];
 }
 
 export async function listCompaniesForSupport(): Promise<SupportCompanyRow[]> {
   await ensureSupportSchema();
+  await orgIsListed("none"); // makes sure the kind column exists
   return (await sql`
-    SELECT o.id, o.name, o.seat_band, o.locations, o.seat_limit, o.billing_status, o.created_at, o.support_access_until, o.free_for_life,
+    SELECT (o.kind = 'listed' OR EXISTS (SELECT 1 FROM tapcard_listed_cards l JOIN tapcard_cards lc ON lc.id = l.card_id WHERE lc.org_id = o.id)) AS listed, o.id, o.name, o.seat_band, o.locations, o.seat_limit, o.billing_status, o.created_at, o.support_access_until, o.free_for_life,
            (SELECT count(*) FROM tapcard_cards c WHERE c.org_id = o.id)::int AS cards,
            (SELECT count(*) FROM tapcard_biz_admins a WHERE a.org_id = o.id)::int AS admins,
            COALESCE((SELECT json_agg(json_build_object('email', a.email, 'role', a.role, 'confirmed', a.confirmed_at IS NOT NULL) ORDER BY a.created_at) FROM tapcard_biz_admins a WHERE a.org_id = o.id), '[]'::json) AS people
@@ -80,7 +84,7 @@ export async function recentSupportLog(limit = 30): Promise<{ org_id: string; ac
 
 /// Sets a company up on its behalf: free access for N locations (the same fields the paid plan uses, with no Stripe subscription and no
 /// renewal date), its admin added, and support access open for 30 days so the setup can be checked. Returns the new company.
-export async function createManagedCompany(input: { name: string; adminEmail: string; locations: number }): Promise<BizOrg> {
+export async function createManagedCompany(input: { name: string; adminEmail: string; locations: number; listed?: boolean }): Promise<BizOrg> {
   await ensureSupportSchema();
   const email = input.adminEmail.trim().toLowerCase();
   const domain = domainOf(email);
@@ -92,7 +96,8 @@ export async function createManagedCompany(input: { name: string; adminEmail: st
         current_period_end = NULL, trial_used = true, welcome_sent = 'paid'
     WHERE id = ${org.id}`;
   await addAdmin(org.id, email, "admin");
+  if (input.listed) await setOrgListed(org.id, true);
   await setSupportAccess(org.id, 30, "aiert-setup");
-  await logSupport(org.id, SUPPORT_ACTOR, "company set up for them", `${locations} locations, admin ${email}`);
+  await logSupport(org.id, SUPPORT_ACTOR, "company set up for them", `${locations} locations, admin ${email}${input.listed ? ", listed company" : ""}`);
   return org;
 }
