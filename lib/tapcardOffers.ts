@@ -516,13 +516,21 @@ const MIN_ANNOUNCEMENT_GAP_MS = 6 * 60 * 60 * 1000;
 /// A listed company posts as often as it announces: only a short gap, to stop an accidental double post.
 const LISTED_ANNOUNCEMENT_GAP_MS = 30 * 1000;
 
+/// A listed company's announcement link goes through TapCard (/a/<id>) so taps through to the release can be counted, then on to the
+/// company's own page. Ordinary business cards keep their link as it is.
+async function trackedLink(cardId: string, id: number, link: string | null): Promise<string | null> {
+  if (!link) return null;
+  const { isListedCard } = await import("@/lib/tapcardShare");
+  return (await isListedCard(cardId).catch(() => false)) ? `https://tapcard.aiert.co.uk/a/${id}` : link;
+}
+
 export async function publicAnnouncement(cardId: string) {
   await ensureOfferSchema();
   const row = ((await sql`
     SELECT id, text, link, created_at, withdrawn FROM tapcard_announcements WHERE card_id = ${cardId} ORDER BY id DESC LIMIT 1
   `) as { id: number; text: string; link: string | null; created_at: string; withdrawn: boolean }[])[0];
   if (!row || row.withdrawn) return null;
-  return { id: Number(row.id), text: row.text, link: row.link || null, postedAt: new Date(row.created_at).toISOString() };
+  return { id: Number(row.id), text: row.text, link: await trackedLink(cardId, Number(row.id), row.link || null), postedAt: new Date(row.created_at).toISOString() };
 }
 
 // An optional "read more" page for a news item: https only, no credentials, sensible length.
@@ -543,7 +551,7 @@ export async function recentAnnouncements(cardId: string, limit = 20) {
     SELECT id, text, link, created_at FROM tapcard_announcements
     WHERE card_id = ${cardId} AND withdrawn = false ORDER BY id DESC LIMIT ${Math.min(Math.max(limit, 1), 50)}
   `) as { id: number; text: string; link: string | null; created_at: string }[];
-  return rows.map((r) => ({ id: Number(r.id), text: r.text, link: r.link || null, postedAt: new Date(r.created_at).toISOString() }));
+  return Promise.all(rows.map(async (r) => ({ id: Number(r.id), text: r.text, link: await trackedLink(cardId, Number(r.id), r.link || null), postedAt: new Date(r.created_at).toISOString() })));
 }
 
 export async function setAnnouncement(cardId: string, textRaw: unknown, linkRaw?: unknown): Promise<{ ok: true } | { ok: false; error: string }> {

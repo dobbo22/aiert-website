@@ -118,6 +118,13 @@ export default async function CardPage({
   const viewUa = requestHeaders.get("user-agent") ?? "";
   const isRobot = !viewUa || /bot|crawl|spider|preview|whatsapp|facebookexternalhit|slurp|headless|lighthouse|googleimageproxy|linkpresentation|python|curl|wget/i.test(viewUa);
   if (!isRobot && !isPreview) after(() => incrementViewCount(id, via === "qr"));
+  // An open of an event QR link (?e=<code>) is counted for that event, if the code is a real event of this card's company.
+  if (!isRobot && !isPreview && eventCode) {
+    after(async () => {
+      const ev = await (await import("@/lib/tapcardEvents")).eventCodeForOrg(eventCode, await cardOrgId(id).catch(() => null)).catch(() => "");
+      if (ev) await (await import("@/lib/tapcardInsights")).recordEventView(ev).catch(() => {});
+    });
+  }
   // A card link sent to one person (it carries their personal code): note that they opened it, so the owner
   // can see "Opened". Link-preview and search robots are ignored, or every send would look opened at once.
   const ua = requestHeaders.get("user-agent") ?? "";

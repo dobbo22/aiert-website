@@ -356,6 +356,54 @@ test("event QR codes: tag a follow with the event, ignore codes from another com
   assert.equal((await listEvents(org.id)).length, 2);
 });
 
+test("insights: event opens, followers and shares per event, announcement taps, tracked links only for a listed company, robots not counted", async () => {
+  const { createManagedCompany } = await import("../lib/tapcardBizSupport");
+  const { markListedCard } = await import("../lib/tapcardShare");
+  const { createEvent } = await import("../lib/tapcardEvents");
+  const { recordEventView, recordAnnouncementOpen, getInsights, isRobotAgent } = await import("../lib/tapcardInsights");
+  const { publicAnnouncement } = await import("../lib/tapcardOffers");
+  const org = await createManagedCompany({ name: "Insight Co", adminEmail: "ir@insightco.example", locations: 1, listed: true });
+  const company = await newCard("i".repeat(45), { company: "Insight Co", name: "Insight Co" });
+  const plain = await newCard("j".repeat(45), { company: "Plain Cafe", name: "Plain Cafe" });
+  await sql`UPDATE tapcard_cards SET org_id = ${org.id} WHERE id = ${company}`;
+  await markListedCard(company, "GB00INSI", "INS");
+  const print = await createEvent(org.id, "Annual report, print");
+  const web = await createEvent(org.id, "Annual report, web PDF");
+  assert.ok(print.ok && web.ok);
+  const pc = (print as { code: string }).code, wc = (web as { code: string }).code;
+  for (let i = 0; i < 10; i++) await recordEventView(pc);
+  for (let i = 0; i < 4; i++) await recordEventView(wc);
+  const { POST } = await import("../app/api/tapcard/cards/[id]/follow/route");
+  const call = (f: string, body: Record<string, unknown>) => POST(req(`/api/tapcard/cards/${company}/follow`, { body: { follower: f.repeat(30), follow: true, ...body } }), { params: Promise.resolve({ id: company }) });
+  await call("p", { event: pc, share: { name: "Pat Print", email: "pat@print.example" } });
+  await call("q", { event: pc });
+  await call("w", { event: wc, share: { name: "Will Web", email: "will@web.example" } });
+  await call("n", {});
+  // Announcements: an ordinary card keeps its own link, a listed company's goes through /a/<id>.
+  await publicAnnouncement(company);
+  const ins = (await sql`INSERT INTO tapcard_announcements (card_id, text, link) VALUES (${company}, 'Full year results', 'https://insight.example/results.pdf') RETURNING id`) as { id: number }[];
+  const plainIns = (await sql`INSERT INTO tapcard_announcements (card_id, text, link) VALUES (${plain}, 'Cafe news', 'https://plain.example/news') RETURNING id`) as { id: number }[];
+  assert.equal((await publicAnnouncement(company))?.link, `https://tapcard.aiert.co.uk/a/${Number(ins[0].id)}`);
+  assert.equal((await publicAnnouncement(plain))?.link, "https://plain.example/news");
+  await recordAnnouncementOpen(Number(ins[0].id)); await recordAnnouncementOpen(Number(ins[0].id));
+  void plainIns;
+  const data = await getInsights(org.id);
+  const sp = data.sources.find((r) => r.code === pc)!, sw = data.sources.find((r) => r.code === wc)!;
+  assert.deepEqual([sp.opens, sp.followers, sp.shared, sp.rate], [10, 2, 1, 20]);
+  assert.deepEqual([sw.opens, sw.followers, sw.shared, sw.rate], [4, 1, 1, 25]);
+  assert.equal(data.totals.following, 4);
+  assert.equal(data.totals.eventTagged, 3);
+  assert.equal(data.totals.shared, 2);
+  assert.equal(data.announcements[0].opens, 2);
+  assert.ok(isRobotAgent("WhatsApp/2.23") && isRobotAgent("") && !isRobotAgent("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0) Safari/605.1.15"));
+  // The redirect: a real link is followed, an unknown id is not.
+  const { GET } = await import("../app/tapcard/a/[id]/route");
+  const hit = await GET(new NextRequest(`https://tapcard.test/a/${ins[0].id}`, { headers: { "user-agent": "Mozilla/5.0 (iPhone) Safari" } }), { params: Promise.resolve({ id: String(ins[0].id) }) });
+  assert.equal(hit.status, 302);
+  assert.equal(hit.headers.get("location"), "https://insight.example/results.pdf");
+  assert.equal((await GET(new NextRequest("https://tapcard.test/a/999999999"), { params: Promise.resolve({ id: "999999999" }) })).status, 404);
+});
+
 test("QR sign: wording is saved per shop, cleaned, and only by that company", async () => {
   const { createManagedCompany } = await import("../lib/tapcardBizSupport");
   const { parseSign, DEFAULT_SIGN } = await import("../lib/tapcardBizLocations");
