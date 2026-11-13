@@ -171,6 +171,8 @@ function ensureSchema(): Promise<unknown> {
       // 'owner' = the owner sent their card to this person; 'web' = a stranger who opened the public card page and
       // chose "Share your details" (see addWebShareBack). Web rows are never emailed (do_not_contact).
       .then(() => sql`ALTER TABLE tapcard_card_recipients ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'owner'`)
+      // Set when the row is the owner's copy of what a follower chose to share with a listed company (see addFollowShareCopy).
+      .then(() => sql`ALTER TABLE tapcard_card_recipients ADD COLUMN IF NOT EXISTS follower_hash TEXT`)
       .catch((err) => {
         schemaReady = null; // let the next call retry rather than caching a failure
         throw err;
@@ -518,6 +520,33 @@ export async function addWebShareBack(
       accepted_company = EXCLUDED.accepted_company, accepted_website = EXCLUDED.accepted_website
   `;
   return true;
+}
+
+/// A follower of a listed company chose "Follow and share my details" on a PERSON's card (CEO, IR contact): the person gets a copy too, as a
+/// web-style contact (shows as New in their Contacts). Tied to the follower so withdrawing removes it. Returns false if switched off or spam-guarded.
+export async function addFollowShareCopy(cardId: string, followerHash: string, d: { name: string; phone: string; email: string }): Promise<boolean> {
+  await ensureSchema();
+  const recent = (await sql`
+    SELECT count(*)::int AS n FROM tapcard_card_recipients
+    WHERE card_id = ${cardId} AND source = 'web' AND created_at > now() - interval '1 hour'
+  `) as { n: number }[];
+  if ((recent[0]?.n ?? 0) >= 30) return false;
+  await sql`DELETE FROM tapcard_card_recipients WHERE card_id = ${cardId} AND follower_hash = ${followerHash}`;
+  await sql`
+    INSERT INTO tapcard_card_recipients
+      (card_id, name, phone, email, unsubscribe_token, accept_token, do_not_contact, source, accepted_at,
+       accepted_name, accepted_phone, accepted_email, follower_hash)
+    VALUES (${cardId}, ${d.name}, ${d.phone}, ${d.email}, ${crypto.randomBytes(6).toString("base64url")},
+            ${crypto.randomBytes(6).toString("base64url")}, true, 'web', now(),
+            ${d.name}, ${d.phone}, ${d.email}, ${followerHash})
+    ON CONFLICT (card_id, phone, email) DO UPDATE SET accepted_at = now(), accepted_name = EXCLUDED.accepted_name, follower_hash = EXCLUDED.follower_hash
+  `;
+  return true;
+}
+
+export async function removeFollowShareCopy(cardId: string, followerHash: string): Promise<void> {
+  await ensureSchema();
+  await sql`DELETE FROM tapcard_card_recipients WHERE card_id = ${cardId} AND follower_hash = ${followerHash}`;
 }
 
 /// Recipients worth emailing about a change: haven't unsubscribed and gave

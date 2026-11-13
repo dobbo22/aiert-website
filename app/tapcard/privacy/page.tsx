@@ -147,6 +147,10 @@ export default function TapCardPrivacyPage() {
         <ul className="list-disc space-y-2 pl-6">
           <li><strong>Who receives them:</strong> the listed company whose card you followed. It decides how to use your details and is
             responsible for them; we store them for the company and pass them on at your request.</li>
+          <li><strong>If you followed through a person&apos;s card</strong> (for example the chief executive or an investor relations contact),
+            following means following the company, and the app tells you that person will also receive your details. They then appear
+            in that person&apos;s own contacts, as well as the company&apos;s list. Choosing <strong>Follow only</strong>, or withdrawing, removes both copies
+            from our systems. A copy the person has already saved to their own phone is theirs to remove.</li>
           <li><strong>What is shared:</strong> the name and email address you give, and a phone number if you add one. Nothing else
             from your phone.</li>
           <li><strong>Why:</strong> so the company can contact you about its announcements and shareholder information. Anything

@@ -118,3 +118,13 @@ export async function deleteShareDataForCard(cardId: string): Promise<void> {
   await sql`DELETE FROM tapcard_follower_details WHERE card_id = ${cardId}`;
   await sql`DELETE FROM tapcard_listed_cards WHERE card_id = ${cardId}`;
 }
+
+/// The person's own copy (CEO / IR contact) of what a follower shared with the company: saved and removed together with the company copy.
+export async function saveOwnerCopy(personCardId: string, follower: string, d: ShareDetails): Promise<boolean> {
+  const { addFollowShareCopy } = await import("@/lib/tapcardDb");
+  return addFollowShareCopy(personCardId, followerHash(follower), d);
+}
+export async function removeOwnerCopy(personCardId: string, follower: string): Promise<void> {
+  const { removeFollowShareCopy } = await import("@/lib/tapcardDb");
+  await removeFollowShareCopy(personCardId, followerHash(follower));
+}

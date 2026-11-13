@@ -301,7 +301,14 @@ test("following a person's card in a listed company follows the company card; el
   assert.equal(r.followedCardId, company);
   assert.equal(r.shared, true);
   const rows = (await sql`SELECT card_id FROM tapcard_follower_details WHERE card_id IN (${company}, ${ceo})`) as { card_id: string }[];
-  assert.deepEqual(rows.map((x) => x.card_id), [company], "details are stored against the company card only");
+  assert.deepEqual(rows.map((x) => x.card_id), [company], "the company list holds them");
+  const copy = (await sql`SELECT name, email, source FROM tapcard_card_recipients WHERE card_id = ${ceo}`) as { name: string; email: string; source: string }[];
+  assert.equal(copy.length, 1, "the CEO's own card gets a copy too");
+  assert.equal(copy[0].email, "pat@x.com");
+  assert.equal(copy[0].source, "web");
+  await POST(req(`/api/tapcard/cards/${ceo}/follow`, { body: { follower: "f".repeat(30), follow: true, share: null } }), { params: Promise.resolve({ id: ceo }) });
+  assert.equal(((await sql`SELECT 1 FROM tapcard_follower_details WHERE card_id = ${company}`) as unknown[]).length, 0, "withdrawn from the company list");
+  assert.equal(((await sql`SELECT 1 FROM tapcard_card_recipients WHERE card_id = ${ceo}`) as unknown[]).length, 0, "and from the CEO's copy");
 });
 
 test("QR sign: wording is saved per shop, cleaned, and only by that company", async () => {
