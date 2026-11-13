@@ -45,11 +45,11 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
         <p className="mt-2 text-cloud">Post after the announcement is public, and say nothing that is not in it. A headline and a link to the full RNS is enough.
           {followers > 0 ? ` ${followers} ${followers === 1 ? "follower" : "followers"} can be notified.` : " Nobody can be notified yet."}</p>
         <label className="mt-4 block text-cloud">Headline
-          <input className={field} value={text} maxLength={MAX} onChange={(e) => setText(e.target.value)} placeholder="Conditional Approval of Development at Jibal Qutman (RNS)" />
+          <input className={field} value={text} maxLength={MAX} onChange={(e) => setText(e.target.value)} placeholder="For example: Full year results announced (RNS)" />
           <span className="mt-1 block text-sm text-cloud">{text.length} of {MAX} characters</span>
         </label>
         <label className="mt-3 block text-cloud">Link to the announcement
-          <input className={field} value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://www.example.com/news/announcements" inputMode="url" />
+          <input className={field} value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://www.yourcompany.com/announcements/results.pdf" inputMode="url" />
         </label>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <button type="button" disabled={busy || !active || text.trim().length < 3} onClick={() => send({ action: "news", text: text.trim(), link: link.trim() || undefined }, "Posted. Followers are being notified.")}
