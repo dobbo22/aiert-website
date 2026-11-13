@@ -26,7 +26,6 @@ export default function FollowersView({ rows }: { rows: SharedFollower[] }) {
                 <tr className="border-b border-slate">
                   <th className="py-2 pr-4">Name</th>
                   <th className="py-2 pr-4">Email</th>
-                  <th className="py-2 pr-4">Phone</th>
                   <th className="py-2 pr-4">Followed through</th>
                   <th className="py-2">Shared on</th>
                 </tr>
@@ -36,7 +35,6 @@ export default function FollowersView({ rows }: { rows: SharedFollower[] }) {
                   <tr key={r.cardId + r.email} className="border-b border-slate/50">
                     <td className="py-2 pr-4">{r.name}</td>
                     <td className="py-2 pr-4">{r.email}</td>
-                    <td className="py-2 pr-4">{r.phone || "–"}</td>
                     <td className="py-2 pr-4">{r.followedThrough}</td>
                     <td className="py-2">{new Date(r.consentedAt).toLocaleDateString("en-GB")}</td>
                   </tr>
