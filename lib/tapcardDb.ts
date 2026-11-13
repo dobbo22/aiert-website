@@ -270,6 +270,8 @@ export async function deleteCard(id: string): Promise<boolean> {
   await sql`DELETE FROM tapcard_exchanges WHERE to_card_id = ${id} OR from_card_id = ${id}`;
   // The people this card was sent to (name, phone, email) go with it, and so does anyone left behind by an earlier deletion.
   await sql`DELETE FROM tapcard_card_recipients r WHERE r.card_id = ${id} OR NOT EXISTS (SELECT 1 FROM tapcard_cards c WHERE c.id = r.card_id)`.catch(() => {});
+  // Shareholders' shared details and the listed-company mark go with the card.
+  await (await import("@/lib/tapcardShare")).deleteShareDataForCard(id).catch(() => {});
   return rows.length > 0;
 }
 

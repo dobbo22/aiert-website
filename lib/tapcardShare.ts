@@ -1,0 +1,106 @@
+import sql from "@/lib/db";
+import { hashSecret } from "@/lib/tapcardAuth";
+import type { ShareDetails } from "@/lib/tapcardShareRules";
+export { validateShare } from "@/lib/tapcardShareRules";
+export type { ShareDetails } from "@/lib/tapcardShareRules";
+
+// "Follow and share" for LISTED-COMPANY (investor relations) cards only. A shareholder who follows such a card may choose, by tapping a
+// button, to share a name and email (and optionally a phone number) with the company. Ordinary business cards never take this: their
+// followers stay anonymous. Consent is the tap; withdrawing (or unfollowing, or deleting the card) removes the details.
+//
+// The card is marked listed by AIERT (a row in tapcard_listed_cards), never by client input.
+
+let ready: Promise<unknown> | null = null;
+function ensureShareSchema(): Promise<unknown> {
+  if (!ready) {
+    ready = sql`
+      CREATE TABLE IF NOT EXISTS tapcard_listed_cards (
+        card_id TEXT PRIMARY KEY,
+        isin TEXT NOT NULL DEFAULT '',
+        ticker TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`
+      .then(
+        () => sql`
+        CREATE TABLE IF NOT EXISTS tapcard_follower_details (
+          card_id TEXT NOT NULL,
+          follower_hash TEXT NOT NULL,
+          name TEXT NOT NULL,
+          email TEXT NOT NULL,
+          phone TEXT NOT NULL DEFAULT '',
+          consented_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          PRIMARY KEY (card_id, follower_hash)
+        )`,
+      )
+      .catch((e) => {
+        ready = null;
+        throw e;
+      });
+  }
+  return ready;
+}
+
+const followerHash = (follower: string) => hashSecret(`tapcard-follower:${follower}`);
+
+export async function isListedCard(cardId: string): Promise<boolean> {
+  await ensureShareSchema();
+  return ((await sql`SELECT 1 FROM tapcard_listed_cards WHERE card_id = ${cardId}`) as unknown[]).length > 0;
+}
+
+/// AIERT marks a card as a listed company's. (Run from the admin side or SQL; the apps cannot do this.)
+export async function markListedCard(cardId: string, isin = "", ticker = ""): Promise<void> {
+  await ensureShareSchema();
+  await sql`INSERT INTO tapcard_listed_cards (card_id, isin, ticker) VALUES (${cardId}, ${isin.slice(0, 20)}, ${ticker.slice(0, 12)})
+            ON CONFLICT (card_id) DO UPDATE SET isin = EXCLUDED.isin, ticker = EXCLUDED.ticker`;
+}
+
+/// Stores the details a follower chose to share. Only for a listed card; returns false (stores nothing) otherwise.
+export async function saveFollowerDetails(cardId: string, follower: string, d: ShareDetails): Promise<boolean> {
+  if (!(await isListedCard(cardId))) return false;
+  await sql`
+    INSERT INTO tapcard_follower_details (card_id, follower_hash, name, email, phone) VALUES (${cardId}, ${followerHash(follower)}, ${d.name}, ${d.email}, ${d.phone})
+    ON CONFLICT (card_id, follower_hash) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email, phone = EXCLUDED.phone, consented_at = now()`;
+  return true;
+}
+
+/// Consent withdrawn, or the person stopped following: their details are removed.
+export async function withdrawFollowerDetails(cardId: string, follower: string): Promise<void> {
+  await ensureShareSchema();
+  await sql`DELETE FROM tapcard_follower_details WHERE card_id = ${cardId} AND follower_hash = ${followerHash(follower)}`;
+}
+
+/// Everything the card's own page and exports need: the people who opted in, newest first.
+export interface SharedFollower {
+  cardId: string;
+  company: string;
+  name: string;
+  email: string;
+  phone: string;
+  consentedAt: string;
+}
+
+export async function listSharedFollowers(orgId: string): Promise<SharedFollower[]> {
+  await ensureShareSchema();
+  const rows = (await sql`
+    SELECT d.card_id, c.company, c.name AS card_name, d.name, d.email, d.phone, d.consented_at
+    FROM tapcard_follower_details d
+    JOIN tapcard_listed_cards l ON l.card_id = d.card_id
+    JOIN tapcard_cards c ON c.id = d.card_id
+    WHERE c.org_id = ${orgId}
+    ORDER BY d.consented_at DESC`) as { card_id: string; company: string; card_name: string; name: string; email: string; phone: string; consented_at: string }[];
+  return rows.map((r) => ({ cardId: r.card_id, company: r.company || r.card_name, name: r.name, email: r.email, phone: r.phone, consentedAt: new Date(r.consented_at).toISOString() }));
+}
+
+/// How many of the card's followers have chosen to share (for the admin page and the follower numbers).
+export async function sharedFollowerCount(cardId: string): Promise<number> {
+  await ensureShareSchema();
+  const r = (await sql`SELECT COUNT(*)::int AS n FROM tapcard_follower_details WHERE card_id = ${cardId}`) as { n: number }[];
+  return Number(r[0]?.n ?? 0);
+}
+
+/// Called when a card is deleted: its listing mark and every shared detail go with it.
+export async function deleteShareDataForCard(cardId: string): Promise<void> {
+  await ensureShareSchema();
+  await sql`DELETE FROM tapcard_follower_details WHERE card_id = ${cardId}`;
+  await sql`DELETE FROM tapcard_listed_cards WHERE card_id = ${cardId}`;
+}

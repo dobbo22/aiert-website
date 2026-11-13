@@ -11,6 +11,7 @@ const TABS = [
   { href: "/business/admin/qr-sign", label: "QR sign" },
   { href: "/business/admin/employees", label: "Employees" },
   { href: "/business/admin/promote", label: "Offers & numbers" },
+  { href: "/business/admin/followers", label: "Followers" },
   { href: "/business/admin/admins", label: "Admins" },
   { href: "/business/admin/billing", label: "Billing" },
 ];
