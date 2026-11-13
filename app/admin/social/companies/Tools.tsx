@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-const input = { background: "#fff", color: "#111", border: "1px solid #9ca3af", borderRadius: 8, padding: "8px 12px", marginRight: 8, marginBottom: 8 } as const;
+const input = { background: "#fff", color: "#111", border: "1px solid #9ca3af", borderRadius: 8, padding: "9px 12px", fontSize: 14, minWidth: 0 } as const;
+const fieldLabel = { fontSize: 13, fontWeight: 600, color: "#e2e8f0", marginBottom: 4, display: "block" } as const;
 
 async function call(body: Record<string, unknown>) {
   try {
@@ -47,36 +48,47 @@ export function CompanyTools({ orgId, open, locations }: { orgId: string; open: 
     router.refresh();
   }
 
-  if (!open) return <span style={{ opacity: .6 }}>The company must allow support access first</span>;
+  if (!open) return <p style={{ fontSize: 14 }}>The company must allow support access before you can open or change it.</p>;
   const b = (label: string) => (busy === label ? "Working…" : label);
-  const row = { display: "flex", alignItems: "center", gap: 10, marginBottom: 10, flexWrap: "nowrap" } as const;
-  const label = { fontSize: 13, opacity: 0.75, minWidth: 96 } as const;
+  const group = { display: "grid", gridTemplateColumns: "120px 1fr", gap: 10, alignItems: "center", padding: "12px 0", borderTop: "1px solid rgba(255,255,255,.15)" } as const;
+  const wrap = { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" } as const;
+  const check = { fontSize: 14, display: "flex", alignItems: "center", gap: 6 } as const;
   return (
-    <div style={{ minWidth: 420 }}>
-      <div style={row}>
-        <span style={label}>Company admin</span>
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <Pill disabled={!!busy} onClick={() => run("Open admin (support)", { action: "open" }, () => "Sign-in link ready (it works once and lasts 15 minutes).")}>{b("Open admin (support)")}</Pill>
       </div>
-      <div style={row}>
-        <span style={label}>Locations</span>
-        <input style={{ ...input, width: 64, marginRight: 0, marginBottom: 0 }} value={n} onChange={(e) => setN(e.target.value)} inputMode="numeric" aria-label="Number of locations" />
-        <Pill disabled={!!busy} onClick={() => confirm(`Set this company to ${n} locations (free)? It is ${locations} now.`) && run("Set locations", { action: "free", locations: Number(n) }, () => `Done: free for ${n} locations.`)}>{b("Set locations")}</Pill>
-      </div>
-      <div style={{ ...row, flexWrap: "wrap" }}>
-        <span style={label}>Add admin</span>
-        <input style={{ ...input, width: 130, marginRight: 0, marginBottom: 0 }} placeholder="Their name" value={admName} onChange={(e) => setAdmName(e.target.value)} />
-        <input style={{ ...input, width: 190, marginRight: 0, marginBottom: 0 }} placeholder="Admin's email" value={adm} onChange={(e) => setAdm(e.target.value)} />
-        <label style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 4 }}><input type="checkbox" checked={owner} onChange={(e) => setOwner(e.target.checked)} /> Make owner</label>
-        <label style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 4 }}><input type="checkbox" checked={welcome} onChange={(e) => setWelcome(e.target.checked)} /> Send full welcome</label>
-        <Pill disabled={!!busy || !adm.includes("@")} onClick={() => run("Add admin", { action: "addAdmin", email: adm, personName: admName, makeOwner: owner, sendEmail: welcome }, () => `Added ${adm}${owner ? " as the owner" : " as an admin"}. They have been emailed a sign-in link${welcome ? " and the welcome" : ""}.`, () => { setAdm(""); setAdmName(""); })}>{b("Add admin")}</Pill>
-      </div>
-      <div style={row}>
-        <span style={label}>Add manager</span>
-        <input style={{ ...input, width: 190, marginRight: 0, marginBottom: 0 }} placeholder="Manager's email (all shops)" value={mgr} onChange={(e) => setMgr(e.target.value)} />
-        <Pill disabled={!!busy || !mgr.includes("@")} onClick={() => run("Add manager", { action: "manager", email: mgr }, () => `Added ${mgr} as a manager of every shop. They have been emailed what they can do and their shop card links.`, () => setMgr(""))}>{b("Add manager")}</Pill>
-      </div>
+      <details style={{ marginTop: 14 }}>
+        <summary style={{ cursor: "pointer", fontWeight: 700, fontSize: 14 }}>Change this company</summary>
+        <div style={{ marginTop: 8 }}>
+          <div style={group}>
+            <span style={fieldLabel}>Locations</span>
+            <div style={wrap}>
+              <input style={{ ...input, width: 80 }} value={n} onChange={(e) => setN(e.target.value)} inputMode="numeric" aria-label="Number of locations" />
+              <Pill disabled={!!busy} onClick={() => confirm(`Set this company to ${n} locations (free)? It is ${locations} now.`) && run("Set locations", { action: "free", locations: Number(n) }, () => `Done: free for ${n} locations.`)}>{b("Set locations")}</Pill>
+            </div>
+          </div>
+          <div style={group}>
+            <span style={fieldLabel}>Add an admin</span>
+            <div style={wrap}>
+              <input style={{ ...input, width: 160 }} placeholder="Their name" value={admName} onChange={(e) => setAdmName(e.target.value)} />
+              <input style={{ ...input, width: 220 }} placeholder="Their email" value={adm} onChange={(e) => setAdm(e.target.value)} />
+              <label style={check}><input type="checkbox" checked={owner} onChange={(e) => setOwner(e.target.checked)} /> Make owner</label>
+              <label style={check}><input type="checkbox" checked={welcome} onChange={(e) => setWelcome(e.target.checked)} /> Send full welcome</label>
+              <Pill disabled={!!busy || !adm.includes("@")} onClick={() => run("Add admin", { action: "addAdmin", email: adm, personName: admName, makeOwner: owner, sendEmail: welcome }, () => `Added ${adm}${owner ? " as the owner" : " as an admin"}. They have been emailed a sign-in link${welcome ? " and the welcome" : ""}.`, () => { setAdm(""); setAdmName(""); })}>{b("Add admin")}</Pill>
+            </div>
+          </div>
+          <div style={group}>
+            <span style={fieldLabel}>Add a manager</span>
+            <div style={wrap}>
+              <input style={{ ...input, width: 260 }} placeholder="Manager's email (all shops)" value={mgr} onChange={(e) => setMgr(e.target.value)} />
+              <Pill disabled={!!busy || !mgr.includes("@")} onClick={() => run("Add manager", { action: "manager", email: mgr }, () => `Added ${mgr} as a manager of every shop. They have been emailed what they can do and their shop card links.`, () => setMgr(""))}>{b("Add manager")}</Pill>
+            </div>
+          </div>
+        </div>
+      </details>
       {note && (
-        <p style={{ marginTop: 6, padding: "6px 10px", borderRadius: 8, fontSize: 14, background: note.ok ? "rgba(34,197,94,.18)" : "rgba(248,113,113,.2)", border: `1px solid ${note.ok ? "rgba(34,197,94,.5)" : "rgba(248,113,113,.6)"}` }} role="status">
+        <p style={{ marginTop: 10, padding: "8px 12px", borderRadius: 8, fontSize: 14, background: note.ok ? "rgba(34,197,94,.18)" : "rgba(248,113,113,.2)", border: `1px solid ${note.ok ? "rgba(34,197,94,.5)" : "rgba(248,113,113,.6)"}` }} role="status">
           {note.ok && !busy ? "✓ " : note.ok ? "" : "✗ "}{note.text}
           {note.link && <> <a href={note.link} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "underline", fontWeight: 700 }}>Open the company admin</a></>}
         </p>
@@ -98,14 +110,18 @@ export function CreateCompany() {
   }
   return (
     <div>
-      <p style={{ marginBottom: ".5rem", fontSize: 14 }}>Creates the company free (no trial, no renewal) for the locations you choose, adds their admin, and opens support access for 30 days so you can check the setup.</p>
-      <input style={input} placeholder="Company name" value={name} onChange={(e) => setName(e.target.value)} />
-      <input style={input} placeholder="Admin email" value={email} onChange={(e) => setEmail(e.target.value)} />
-      <input style={{ ...input, width: 60 }} value={locations} onChange={(e) => setLocations(e.target.value)} inputMode="numeric" aria-label="Locations" />
-      <label style={{ marginRight: 8 }}><input type="checkbox" checked={sendEmail} onChange={(e) => setSendEmail(e.target.checked)} /> Email them the sign-in link and welcome</label>
-      <Pill disabled={busy || !name.trim() || !email.trim()} onClick={create}>{busy ? "…" : "Create"}</Pill>
+      <p style={{ marginBottom: 14, fontSize: 14 }}>Creates the company free (no trial, no renewal) for the locations you choose, adds their admin, and opens support access for 30 days so you can check the setup.</p>
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(200px, 2fr) minmax(200px, 2fr) 100px", gap: 12 }}>
+        <label><span style={fieldLabel}>Company name</span><input style={{ ...input, width: "100%" }} value={name} onChange={(e) => setName(e.target.value)} /></label>
+        <label><span style={fieldLabel}>Admin email</span><input style={{ ...input, width: "100%" }} value={email} onChange={(e) => setEmail(e.target.value)} /></label>
+        <label><span style={fieldLabel}>Locations</span><input style={{ ...input, width: "100%" }} value={locations} onChange={(e) => setLocations(e.target.value)} inputMode="numeric" /></label>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 14, flexWrap: "wrap" }}>
+        <label style={{ fontSize: 14, display: "flex", alignItems: "center", gap: 6 }}><input type="checkbox" checked={sendEmail} onChange={(e) => setSendEmail(e.target.checked)} /> Email them the sign-in link and welcome</label>
+        <Pill disabled={busy || !name.trim() || !email.trim()} onClick={create}>{busy ? "Working…" : "Create company"}</Pill>
+      </div>
       {note && (
-        <p style={{ marginTop: 8, padding: "6px 10px", borderRadius: 8, fontSize: 14, background: /^Created/.test(note) || /^Creating/.test(note) ? "rgba(34,197,94,.18)" : "rgba(248,113,113,.2)" }} role="status">{note}</p>
+        <p style={{ marginTop: 10, padding: "8px 12px", borderRadius: 8, fontSize: 14, background: /^Created/.test(note) || /^Creating/.test(note) ? "rgba(34,197,94,.18)" : "rgba(248,113,113,.2)" }} role="status">{note}</p>
       )}
     </div>
   );
