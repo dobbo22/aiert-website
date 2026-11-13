@@ -151,7 +151,7 @@ export default function TapCardPrivacyPage() {
             following means following the company, and the app tells you that person will also receive your details. They then appear
             in that person&apos;s own contacts, as well as the company&apos;s list. Choosing <strong>Follow only</strong>, or withdrawing, removes both copies
             from our systems. A copy the person has already saved to their own phone is theirs to remove.</li>
-          <li><strong>What is shared:</strong> the name and email address you give, and a phone number if you add one. Nothing else
+          <li><strong>What is shared:</strong> the name and email address you give. Nothing else
             from your phone.</li>
           <li><strong>Why:</strong> so the company can contact you about its announcements and shareholder information. Anything
             promotional needs your separate consent and an unsubscribe.</li>
@@ -246,7 +246,7 @@ export default function TapCardPrivacyPage() {
         <p>
           <strong>Listed companies (investor relations cards) only.</strong> When you follow a listed company that has set up
           its own TapCard, the app asks you to choose. <strong>Follow and share my details</strong> sends the company your name and
-          email address (and your phone number, if you add one) so it can contact you about its news and shareholder information.
+          email address so it can contact you about its news and shareholder information.
           <strong> Follow only</strong> shares nothing about you: you get the notifications and the company sees only the follower
           number. Nothing is shared unless you tap the first button, and you can change your mind at any time (see{" "}
           <em>When you share your details with a listed company</em>).
