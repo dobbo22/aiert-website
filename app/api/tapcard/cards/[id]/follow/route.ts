@@ -8,14 +8,18 @@ import { followTargetFor, isListedCard, removeOwnerCopy, saveFollowerDetails, sa
 // number. `follower` is a random id the app keeps on the device; it is hashed, never listed or linked to a person.
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const body = (await req.json().catch(() => null)) as { follower?: unknown; follow?: unknown; prefs?: { offers?: unknown; ending?: unknown; changes?: unknown; news?: unknown }; share?: unknown } | null;
+  const body = (await req.json().catch(() => null)) as { follower?: unknown; follow?: unknown; prefs?: { offers?: unknown; ending?: unknown; changes?: unknown; news?: unknown }; share?: unknown; event?: unknown } | null;
   const follower = typeof body?.follower === "string" ? body.follower : "";
   if (follower.length < 16 || follower.length > 200) return NextResponse.json({ error: "follower is required" }, { status: 400 });
   const card = await getCard(id);
   if (!card) return NextResponse.json({ error: "not found" }, { status: 404 });
   // A person's card in a listed company: the follow goes to the company card (see followTargetFor).
   const target = await followTargetFor(id);
-  await setFollower(target, follower, body?.follow === true);
+  // An event QR code of a listed company the follow came through (kept only if it is a real event of that company).
+  const { cardOrgId } = await import("@/lib/tapcardBiz");
+  const { eventCodeForOrg } = await import("@/lib/tapcardEvents");
+  const eventCode = body?.follow === true ? await eventCodeForOrg(body?.event, await cardOrgId(target).catch(() => null)).catch(() => "") : "";
+  await setFollower(target, follower, body?.follow === true, eventCode);
   const p = body?.prefs;
   await setPushPrefs(target, follower, body?.follow === true, p ? { offers: p.offers !== false, ending: p.ending !== false, changes: p.changes !== false, news: p.news !== false } : undefined).catch(() => {});
   // Listed-company cards only: the follower may choose, by tapping "Follow and share my details", to give the company a name and
@@ -29,7 +33,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     } else if (body?.share) {
       const v = validateShare(body.share);
       if (!v.ok) return NextResponse.json({ error: v.error }, { status: 400 });
-      shared = await saveFollowerDetails(target, follower, v.details, id);
+      shared = await saveFollowerDetails(target, follower, v.details, id, eventCode);
       // Followed through a person's card: that person gets a copy as well (the share screen says so), unless their card isn't taking details.
       if (shared && target !== id && card.accept_share_back !== false) {
         const copied = await saveOwnerCopy(id, follower, v.details).catch(() => false);

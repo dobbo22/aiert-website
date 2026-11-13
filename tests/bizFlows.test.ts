@@ -313,6 +313,34 @@ test("following a person's card in a listed company follows the company card; el
   assert.equal(((await sql`SELECT 1 FROM tapcard_card_recipients WHERE card_id = ${ceo}`) as unknown[]).length, 0, "and from the CEO's copy");
 });
 
+test("event QR codes: tag a follow with the event, ignore codes from another company, list counts and the event on the followers list", async () => {
+  const { createManagedCompany } = await import("../lib/tapcardBizSupport");
+  const { markListedCard, listSharedFollowers } = await import("../lib/tapcardShare");
+  const { createEvent, listEvents, deleteEvent, cleanEventLabel } = await import("../lib/tapcardEvents");
+  const org = await createManagedCompany({ name: "Events Co", adminEmail: "ir@eventsco.example", locations: 1, listed: true });
+  const other = await createManagedCompany({ name: "Other Co", adminEmail: "ir@otherco.example", locations: 1, listed: true });
+  const company = await newCard("e".repeat(45), { company: "Events Co", name: "Events Co" });
+  await sql`UPDATE tapcard_cards SET org_id = ${org.id} WHERE id = ${company}`;
+  await markListedCard(company, "GB00EVNT", "EVT");
+  assert.equal(cleanEventLabel("  AGM \n 2026  "), "AGM 2026");
+  assert.equal((await createEvent(org.id, "x")).ok, false, "a name is needed");
+  const agm = await createEvent(org.id, "AGM 2026");
+  const foreign = await createEvent(other.id, "Someone else's event");
+  assert.ok(agm.ok && foreign.ok);
+  const { POST } = await import("../app/api/tapcard/cards/[id]/follow/route");
+  const call = (follower: string, body: Record<string, unknown>) => POST(req(`/api/tapcard/cards/${company}/follow`, { body: { follower: follower.repeat(30), follow: true, ...body } }), { params: Promise.resolve({ id: company }) });
+  await call("a", { event: (agm as { code: string }).code, share: { name: "Pat Smith", email: "pat@x.com" } });
+  await call("b", { event: (foreign as { code: string }).code });
+  await call("c", { event: "not-a-code" });
+  await call("d", {});
+  const evs = await listEvents(org.id);
+  assert.equal(evs.length, 1);
+  assert.equal(evs[0].followers, 1, "only the follow through this company's own event is tagged");
+  assert.equal((await listSharedFollowers(org.id))[0].event, "AGM 2026");
+  await deleteEvent(org.id, (agm as { code: string }).code);
+  assert.equal((await listEvents(org.id)).length, 0);
+});
+
 test("QR sign: wording is saved per shop, cleaned, and only by that company", async () => {
   const { createManagedCompany } = await import("../lib/tapcardBizSupport");
   const { parseSign, DEFAULT_SIGN } = await import("../lib/tapcardBizLocations");

@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 
-export default function CardQr({ id, title, subtitle }: { id: string; title: string; subtitle: string }) {
-  const link = `https://tapcard.aiert.co.uk/c/${id}?via=qr`;
+export default function CardQr({ id, title, subtitle, eventCode }: { id: string; title: string; subtitle: string; eventCode?: string }) {
+  // An event code rides in the link, so each follow can be tagged with the meeting or event it came from.
+  const link = `https://tapcard.aiert.co.uk/c/${id}?via=qr${eventCode ? `&e=${eventCode}` : ""}`;
   const [src, setSrc] = useState("");
   const [copied, setCopied] = useState(false);
   useEffect(() => {
@@ -22,9 +23,9 @@ export default function CardQr({ id, title, subtitle }: { id: string; title: str
           <img src={src} alt={`QR code for ${title}`} className="h-40 w-40 rounded-xl bg-white" />
         ) : <div className="h-40 w-40 rounded-xl bg-white/10" />}
         <div className="space-y-2">
-          <a href={src} download={`tapcard-${id}.png`} className="btn-gold inline-block rounded-xl px-4 py-2 font-semibold">Download QR code</a>
+          <a href={src} download={`tapcard-${eventCode ? "event-" + eventCode : id}.png`} className="btn-gold inline-block rounded-xl px-4 py-2 font-semibold">Download QR code</a>
           <button type="button" className="block rounded-xl px-4 py-2 font-semibold text-cloud ring-1 ring-slate"
-            onClick={() => { navigator.clipboard?.writeText(`https://tapcard.aiert.co.uk/c/${id}`).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }).catch(() => {}); }}>{copied ? "Copied" : "Copy link"}</button>
+            onClick={() => { navigator.clipboard?.writeText(eventCode ? `https://tapcard.aiert.co.uk/c/${id}?e=${eventCode}` : `https://tapcard.aiert.co.uk/c/${id}`).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }).catch(() => {}); }}>{copied ? "Copied" : "Copy link"}</button>
           <a href={`/c/${id}?preview=1`} target="_blank" rel="noopener noreferrer" className="block text-gold underline">Open the card</a>
         </div>
       </div>

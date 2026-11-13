@@ -270,10 +270,16 @@ export async function claimOffer(cardId: string, claimant: string, viaRaw: unkno
 }
 
 /// Followers are only ever a count: a one-way hash of a random per-install id, never shown or listed.
-export async function setFollower(cardId: string, follower: string, follow: boolean): Promise<void> {
+export async function setFollower(cardId: string, follower: string, follow: boolean, eventCode = ""): Promise<void> {
   await ensureOfferSchema();
   const who = hashSecret(`tapcard-follower:${follower}`);
-  if (follow) await sql`INSERT INTO tapcard_followers (card_id, follower_hash) VALUES (${cardId}, ${who}) ON CONFLICT DO NOTHING`;
+  if (follow && eventCode) {
+    // The event a follow came through (an event QR of a listed company): kept from the first follow that carried one.
+    const { ensureFollowerEventColumn } = await import("@/lib/tapcardEvents");
+    await ensureFollowerEventColumn();
+    await sql`INSERT INTO tapcard_followers (card_id, follower_hash, event_code) VALUES (${cardId}, ${who}, ${eventCode})
+              ON CONFLICT (card_id, follower_hash) DO UPDATE SET event_code = CASE WHEN tapcard_followers.event_code = '' THEN EXCLUDED.event_code ELSE tapcard_followers.event_code END`;
+  } else if (follow) await sql`INSERT INTO tapcard_followers (card_id, follower_hash) VALUES (${cardId}, ${who}) ON CONFLICT DO NOTHING`;
   else await sql`DELETE FROM tapcard_followers WHERE card_id = ${cardId} AND follower_hash = ${who}`;
 }
 

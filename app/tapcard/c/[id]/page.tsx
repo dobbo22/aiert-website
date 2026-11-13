@@ -70,13 +70,16 @@ export default async function CardPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ send?: string; via?: string; a?: string; preview?: string }>;
+  searchParams: Promise<{ send?: string; via?: string; a?: string; preview?: string; e?: string }>;
 }) {
   const { id } = await params;
   // The store links carry this business: on Android through the Play install referrer, on iPhone by copying its link when tapped.
-  const TAPCARD_APP_STORE_URL = `${TAPCARD_APP_STORE_PATH}?card=${encodeURIComponent(id)}`;
   // ?preview=1 is for our own looking (the admin pages and checks): it never counts as a view or marks a sent card as opened.
-  const { send, via, a: acceptToken, preview } = await searchParams;
+  const { send, via, a: acceptToken, preview, e: eventParam } = await searchParams;
+  // An event QR code of a listed company (?e=<code>): carried into the app links so the follow can be tagged with that event.
+  const eventCode = typeof eventParam === "string" && /^[A-Za-z0-9_-]{4,12}$/.test(eventParam) ? eventParam : "";
+  const eventQuery = eventCode ? `?e=${eventCode}` : "";
+  const TAPCARD_APP_STORE_URL = `${TAPCARD_APP_STORE_PATH}?card=${encodeURIComponent(id)}${eventCode ? `&e=${eventCode}` : ""}`;
   const isPreview = preview === "1";
   const card = await getCard(id);
   if (!card) notFound();
@@ -105,8 +108,8 @@ export default async function CardPage({
   // links in the app directly, so this only shows if that didn't happen.
   const openInAppHref =
     /android/i.test(requestHeaders.get("user-agent") ?? "") || !host.startsWith("tapcard.")
-      ? `${TAPCARD_ORIGIN}/c/${id}`
-      : `https://www.aiert.co.uk/tapcard/c/${id}`;
+      ? `${TAPCARD_ORIGIN}/c/${id}${eventQuery}`
+      : `https://www.aiert.co.uk/tapcard/c/${id}${eventQuery}`;
 
   // Counted here rather than via a client-side beacon so it also captures
   // link previews / crawlers minus render — acceptable for a rough "how many
@@ -239,7 +242,7 @@ export default async function CardPage({
 
             <CarryCardToInstall cardLink={`${TAPCARD_ORIGIN}/c/${id}`} />
             <SaveContactButton
-              cardLink={`${TAPCARD_ORIGIN}/c/${id}`}
+              cardLink={`${TAPCARD_ORIGIN}/c/${id}${eventQuery}`}
               vcardHref={`${TAPCARD_ORIGIN}/c/${id}/vcard`}
               storeHref={TAPCARD_APP_STORE_URL}
               cardId={id}

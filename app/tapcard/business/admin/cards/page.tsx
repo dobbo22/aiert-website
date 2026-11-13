@@ -2,6 +2,8 @@ import { requireBizSession } from "@/lib/tapcardBizSession";
 import { getOrg } from "@/lib/tapcardBiz";
 import { listedSummary } from "@/lib/tapcardListedAdmin";
 import CardQr from "./CardQr";
+import EventQrs from "./EventQrs";
+import { listEvents } from "@/lib/tapcardEvents";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +14,7 @@ export default async function BizCardsPage() {
   const org = await getOrg(session.orgId);
   if (!org) return null;
   const s = await listedSummary(org.id);
+  const events = await listEvents(org.id).catch(() => []);
   return (
     <div className="space-y-6">
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
@@ -24,6 +27,7 @@ export default async function BizCardsPage() {
           <CardQr key={c.id} id={c.id} title={c.isCompany ? (c.company || c.name) : c.name || "Card"} subtitle={c.isCompany ? "Company card" : c.title || "Team card"} />
         ))}
       </div>
+      {s.primaryCardId && <EventQrs companyCardId={s.primaryCardId} events={events} />}
     </div>
   );
 }
