@@ -13,6 +13,8 @@ export type PushKind = "offers" | "ending" | "changes" | "news";
 export interface PushPrefs { offers: boolean; ending: boolean; changes: boolean; news: boolean }
 
 const WEEKLY_CAP = 2;
+/// A listed company's followers chose its announcements, so they are not held to two a week; this ceiling a day only protects them from a fault.
+const LISTED_DAILY_CAP = 20;
 const MAX_PER_SEND = 5000;
 const BUNDLE_ID = "com.mailbroom.tapcard";
 
@@ -210,12 +212,16 @@ export async function pushToFollowers(cardId: string, kind: PushKind, msg: PushM
   try {
     if (!apnsConfigured() && !fcmConfigured()) return { sent: 0, skipped: true };
     await ensureSchema();
+    // A listed company's followers chose its announcements: a daily safety ceiling replaces the two-a-week cap.
+    const listed = await (await import("@/lib/tapcardShare")).isListedCard(cardId).catch(() => false);
+    const capDays = listed ? 1 : 7;
+    const capMax = listed ? LISTED_DAILY_CAP : WEEKLY_CAP;
     const rows = (await sql`
       SELECT p.follower_hash, d.platform, d.token
       FROM tapcard_push_prefs p JOIN tapcard_push_devices d ON d.follower_hash = p.follower_hash
       WHERE p.card_id = ${cardId}
         AND (CASE ${kind} WHEN 'offers' THEN p.offers WHEN 'ending' THEN p.ending WHEN 'changes' THEN p.changes ELSE p.news END)
-        AND (SELECT COUNT(*) FROM tapcard_push_log l WHERE l.card_id = p.card_id AND l.follower_hash = p.follower_hash AND l.sent_at > now() - interval '7 days') < ${WEEKLY_CAP}
+        AND (SELECT COUNT(*) FROM tapcard_push_log l WHERE l.card_id = p.card_id AND l.follower_hash = p.follower_hash AND l.sent_at > now() - make_interval(days => ${capDays})) < ${capMax}
         AND NOT EXISTS (SELECT 1 FROM tapcard_push_log l WHERE l.card_id = p.card_id AND l.follower_hash = p.follower_hash AND l.kind = ${kind} AND l.ref = ${msg.ref})
       LIMIT ${MAX_PER_SEND}
     `) as { follower_hash: string; platform: string; token: string }[];

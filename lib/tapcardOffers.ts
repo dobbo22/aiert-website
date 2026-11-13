@@ -498,6 +498,8 @@ export async function rewardCode(code: string, pin: unknown): Promise<StampResul
 export const MAX_ANNOUNCEMENT_TEXT = 140;
 // A restaurant can post a new one at most this often (stops a card turning into a spam source).
 const MIN_ANNOUNCEMENT_GAP_MS = 6 * 60 * 60 * 1000;
+/// A listed company posts as often as it announces: only a short gap, to stop an accidental double post.
+const LISTED_ANNOUNCEMENT_GAP_MS = 30 * 1000;
 
 export async function publicAnnouncement(cardId: string) {
   await ensureOfferSchema();
@@ -536,8 +538,9 @@ export async function setAnnouncement(cardId: string, textRaw: unknown, linkRaw?
   const text = typeof textRaw === "string" ? textRaw.trim().slice(0, MAX_ANNOUNCEMENT_TEXT) : "";
   if (!text) return { ok: false, error: "announcement text is required" };
   const last = ((await sql`SELECT created_at FROM tapcard_announcements WHERE card_id = ${cardId} ORDER BY id DESC LIMIT 1`) as { created_at: string }[])[0];
-  if (last && Date.now() - new Date(last.created_at).getTime() < MIN_ANNOUNCEMENT_GAP_MS) {
-    return { ok: false, error: "You can post one announcement every 6 hours" };
+  const listed = !!last && (await (await import("@/lib/tapcardShare")).isListedCard(cardId).catch(() => false));
+  if (last && Date.now() - new Date(last.created_at).getTime() < (listed ? LISTED_ANNOUNCEMENT_GAP_MS : MIN_ANNOUNCEMENT_GAP_MS)) {
+    return { ok: false, error: listed ? "That was posted a moment ago. Wait half a minute to post again." : "You can post one announcement every 6 hours" };
   }
   const link = cleanNewsLink(linkRaw);
   if (typeof linkRaw === "string" && linkRaw.trim() && !link) return { ok: false, error: "The story link must be a secure https:// web address" };
