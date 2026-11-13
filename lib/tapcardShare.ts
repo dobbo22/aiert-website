@@ -32,6 +32,8 @@ function ensureShareSchema(): Promise<unknown> {
           PRIMARY KEY (card_id, follower_hash)
         )`,
       )
+      // Which card the person actually followed through (a CEO's card, say); empty means the company card itself.
+      .then(() => sql`ALTER TABLE tapcard_follower_details ADD COLUMN IF NOT EXISTS via_card_id TEXT NOT NULL DEFAULT ''`)
       .catch((e) => {
         ready = null;
         throw e;
@@ -69,11 +71,12 @@ export async function markListedCard(cardId: string, isin = "", ticker = ""): Pr
 }
 
 /// Stores the details a follower chose to share. Only for a listed card; returns false (stores nothing) otherwise.
-export async function saveFollowerDetails(cardId: string, follower: string, d: ShareDetails): Promise<boolean> {
+export async function saveFollowerDetails(cardId: string, follower: string, d: ShareDetails, viaCardId = ""): Promise<boolean> {
   if (!(await isListedCard(cardId))) return false;
+  const via = viaCardId && viaCardId !== cardId ? viaCardId : "";
   await sql`
-    INSERT INTO tapcard_follower_details (card_id, follower_hash, name, email, phone) VALUES (${cardId}, ${followerHash(follower)}, ${d.name}, ${d.email}, ${d.phone})
-    ON CONFLICT (card_id, follower_hash) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email, phone = EXCLUDED.phone, consented_at = now()`;
+    INSERT INTO tapcard_follower_details (card_id, follower_hash, name, email, phone, via_card_id) VALUES (${cardId}, ${followerHash(follower)}, ${d.name}, ${d.email}, ${d.phone}, ${via})
+    ON CONFLICT (card_id, follower_hash) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email, phone = EXCLUDED.phone, via_card_id = EXCLUDED.via_card_id, consented_at = now()`;
   return true;
 }
 
@@ -91,18 +94,21 @@ export interface SharedFollower {
   email: string;
   phone: string;
   consentedAt: string;
+  /// Where the contact was made: the person's card they followed through ("Jane Smith, Chief Executive"), or "Company card" (QR code or link).
+  followedThrough: string;
 }
 
 export async function listSharedFollowers(orgId: string): Promise<SharedFollower[]> {
   await ensureShareSchema();
   const rows = (await sql`
-    SELECT d.card_id, c.company, c.name AS card_name, d.name, d.email, d.phone, d.consented_at
+    SELECT d.card_id, c.company, c.name AS card_name, d.name, d.email, d.phone, d.consented_at, v.name AS via_name, v.title AS via_title
     FROM tapcard_follower_details d
     JOIN tapcard_listed_cards l ON l.card_id = d.card_id
     JOIN tapcard_cards c ON c.id = d.card_id
+    LEFT JOIN tapcard_cards v ON v.id = NULLIF(d.via_card_id, '')
     WHERE c.org_id = ${orgId}
-    ORDER BY d.consented_at DESC`) as { card_id: string; company: string; card_name: string; name: string; email: string; phone: string; consented_at: string }[];
-  return rows.map((r) => ({ cardId: r.card_id, company: r.company || r.card_name, name: r.name, email: r.email, phone: r.phone, consentedAt: new Date(r.consented_at).toISOString() }));
+    ORDER BY d.consented_at DESC`) as { card_id: string; company: string; card_name: string; name: string; email: string; phone: string; consented_at: string; via_name: string | null; via_title: string | null }[];
+  return rows.map((r) => ({ cardId: r.card_id, company: r.company || r.card_name, name: r.name, email: r.email, phone: r.phone, consentedAt: new Date(r.consented_at).toISOString(), followedThrough: r.via_name ? [r.via_name, r.via_title].filter(Boolean).join(", ") : "Company card" }));
 }
 
 /// How many of the card's followers have chosen to share (for the admin page and the follower numbers).

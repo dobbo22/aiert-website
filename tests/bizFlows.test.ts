@@ -306,6 +306,8 @@ test("following a person's card in a listed company follows the company card; el
   assert.equal(copy.length, 1, "the CEO's own card gets a copy too");
   assert.equal(copy[0].email, "pat@x.com");
   assert.equal(copy[0].source, "web");
+  const { listSharedFollowers } = await import("../lib/tapcardShare");
+  assert.equal((await listSharedFollowers(org.id))[0].followedThrough, "Chief Exec", "the admin list records which card the contact was made through");
   await POST(req(`/api/tapcard/cards/${ceo}/follow`, { body: { follower: "f".repeat(30), follow: true, share: null } }), { params: Promise.resolve({ id: ceo }) });
   assert.equal(((await sql`SELECT 1 FROM tapcard_follower_details WHERE card_id = ${company}`) as unknown[]).length, 0, "withdrawn from the company list");
   assert.equal(((await sql`SELECT 1 FROM tapcard_card_recipients WHERE card_id = ${ceo}`) as unknown[]).length, 0, "and from the CEO's copy");

@@ -29,7 +29,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     } else if (body?.share) {
       const v = validateShare(body.share);
       if (!v.ok) return NextResponse.json({ error: v.error }, { status: 400 });
-      shared = await saveFollowerDetails(target, follower, v.details);
+      shared = await saveFollowerDetails(target, follower, v.details, id);
       // Followed through a person's card: that person gets a copy as well (the share screen says so), unless their card isn't taking details.
       if (shared && target !== id && card.accept_share_back !== false) {
         const copied = await saveOwnerCopy(id, follower, v.details).catch(() => false);

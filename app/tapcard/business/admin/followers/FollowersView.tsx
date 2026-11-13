@@ -6,7 +6,7 @@ export default function FollowersView({ rows }: { rows: SharedFollower[] }) {
       <h2 className="text-lg font-bold text-cloud">Followers who shared their details</h2>
       <p className="mt-2 text-cloud">
         These people followed one of your investor relations cards and tapped <strong>Follow and share my details</strong>. Anyone who followed
-        without sharing is counted on Offers &amp; numbers but never listed here. Someone who stops following, or withdraws, disappears from this list.
+        without sharing is counted on Offers &amp; numbers but never listed here. The <strong>Followed through</strong> column shows where the contact was made: your company card (a QR code or link), or the card of the person they met. Someone who stops following, or withdraws, disappears from this list.
       </p>
       <p className="mt-2 text-cloud">
         You decide how to use these details, and you are responsible for that: they were given so you can contact the person about your news and
@@ -27,7 +27,7 @@ export default function FollowersView({ rows }: { rows: SharedFollower[] }) {
                   <th className="py-2 pr-4">Name</th>
                   <th className="py-2 pr-4">Email</th>
                   <th className="py-2 pr-4">Phone</th>
-                  <th className="py-2 pr-4">Card</th>
+                  <th className="py-2 pr-4">Followed through</th>
                   <th className="py-2">Shared on</th>
                 </tr>
               </thead>
@@ -37,7 +37,7 @@ export default function FollowersView({ rows }: { rows: SharedFollower[] }) {
                     <td className="py-2 pr-4">{r.name}</td>
                     <td className="py-2 pr-4">{r.email}</td>
                     <td className="py-2 pr-4">{r.phone || "–"}</td>
-                    <td className="py-2 pr-4">{r.company}</td>
+                    <td className="py-2 pr-4">{r.followedThrough}</td>
                     <td className="py-2">{new Date(r.consentedAt).toLocaleDateString("en-GB")}</td>
                   </tr>
                 ))}
