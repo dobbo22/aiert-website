@@ -143,6 +143,24 @@ export default function TapCardPrivacyPage() {
       </section>
 
       <section>
+        <h2>When you share your details with a listed company</h2>
+        <ul className="list-disc space-y-2 pl-6">
+          <li><strong>Who receives them:</strong> the listed company whose card you followed. It decides how to use your details and is
+            responsible for them; we store them for the company and pass them on at your request.</li>
+          <li><strong>What is shared:</strong> the name and email address you give, and a phone number if you add one. Nothing else
+            from your phone.</li>
+          <li><strong>Why:</strong> so the company can contact you about its announcements and shareholder information. Anything
+            promotional needs your separate consent and an unsubscribe.</li>
+          <li><strong>Our basis:</strong> your consent, given by tapping <strong>Follow and share my details</strong>.</li>
+          <li><strong>Withdrawing:</strong> switch to <strong>Follow only</strong> in the app (the &ldquo;...&rdquo; menu on the company&apos;s card),
+            stop following, or email{" "}
+            <a href="mailto:enquiries@aiert.co.uk">enquiries@aiert.co.uk</a>. We remove your details from the company&apos;s list within 30 days.
+            Details the company has already copied are then the company&apos;s responsibility.</li>
+          <li><strong>Deleted:</strong> when you withdraw, when you stop following, or when the company&apos;s card is deleted.</li>
+        </ul>
+      </section>
+
+      <section>
         <h2>When someone shares their details with you</h2>
         <p>
           If you leave <strong>Let people share their details with me</strong> switched on for a card, anyone who opens its
@@ -220,6 +238,14 @@ export default function TapCardPrivacyPage() {
           phone follows it, using a random id the app keeps on your phone (not your name, email, phone number or
           card), which we store in scrambled (hashed) form so it cannot be turned back into anything about you. The
           business sees a single number, how many people follow it, and never who.
+        </p>
+        <p>
+          <strong>Listed companies (investor relations cards) only.</strong> When you follow a listed company that has set up
+          its own TapCard, the app asks you to choose. <strong>Follow and share my details</strong> sends the company your name and
+          email address (and your phone number, if you add one) so it can contact you about its news and shareholder information.
+          <strong> Follow only</strong> shares nothing about you: you get the notifications and the company sees only the follower
+          number. Nothing is shared unless you tap the first button, and you can change your mind at any time (see{" "}
+          <em>When you share your details with a listed company</em>).
         </p>
         <p>
           <strong>Notifications.</strong> To send you offers and news the moment they are posted, our server uses

@@ -26,7 +26,7 @@ const STEPS = [
 
 const POINTS = [
   { title: "It doesn't replace the RNS", body: "The announcement still goes out through your normal channels. TapCard is for telling people it has happened and pointing them to it. We suggest a post goes out only after an announcement is public and says nothing that is not in it. What you may and may not say, and when, is for you and your advisers." },
-  { title: "Anonymous followers", body: "You see how many people follow and how many can receive a notification. You never see who they are, so following gives the company no shareholder data to look after." },
+  { title: "Followers who choose to share", body: "You see how many people follow and how many can receive a notification. A shareholder can also choose to share their name and email with you when they follow; you see only those who do, and they can withdraw at any time. Followers who don't share stay anonymous." },
   { title: "Your investor pages, in one tap", body: "RNS announcements, reports and results, shareholder information, investor presentations and share price all sit on the card as one-tap links to your own website. Nothing is copied; change your website and the links still work." },
   { title: "Several voices", body: "Cards for the chair, CEO, CFO and IR contact, all in the company's branding, on one account. The company decides who may post." },
 ];
@@ -39,7 +39,7 @@ const TIERS = [
 
 const FAQ: [string, string][] = [
   ["What does a shareholder need?", "To scan the QR code they need only their phone's camera, and the card opens in the browser. To follow the company and receive its headlines as notifications they install the free TapCard app (iPhone and Android) and choose to follow."],
-  ["Do we see who follows us?", "No. You see a count of followers and of how many can receive a notification, never names, email addresses or phone numbers. If someone chooses to leave their details through the card's share form you will see that they did, but following alone gives you nothing about the person."],
+  ["Do we see who follows us?", "By default, no: you see a count of followers and of how many can receive a notification. A shareholder who follows your investor relations card can choose Follow and share my details, which gives you their name and email (and phone number if they add one). You see only the people who chose to, and they can withdraw at any time. What you do with those details is your responsibility."],
   ["Does this replace RNS or our investor relations website?", "No. It sits beside them. The card links to your own investor pages and to the RNS list, and a post is a short headline with a link."],
   ["Can we post before the announcement is public?", "We recommend not, and the service is built around posting after the announcement. Whatever you post is your decision and your responsibility; please take your own advice on market abuse and disclosure rules."],
   ["How is it priced?", "Yearly, in pounds, plus VAT, for UK companies. The three plans above are a guide: we agree the plan with you when we set the company up. The first five companies get a founding price of £395 for the first year."],
