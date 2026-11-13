@@ -20,12 +20,12 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const g = await gate();
   if (g.error) return g.error;
-  const body = (await req.json().catch(() => null)) as { label?: unknown; delete?: unknown } | null;
+  const body = (await req.json().catch(() => null)) as { label?: unknown; delete?: unknown; startsAt?: unknown; endsAt?: unknown } | null;
   if (typeof body?.delete === "string") {
     await deleteEvent(g.session!.orgId, body.delete);
     return NextResponse.json({ ok: true });
   }
-  const r = await createEvent(g.session!.orgId, String(body?.label ?? ""));
+  const r = await createEvent(g.session!.orgId, String(body?.label ?? ""), body?.startsAt, body?.endsAt);
   if (!r.ok) return NextResponse.json({ error: r.error }, { status: 400 });
   return NextResponse.json({ ok: true, code: r.code });
 }

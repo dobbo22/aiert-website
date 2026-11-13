@@ -36,6 +36,7 @@ function ensureShareSchema(): Promise<unknown> {
       // Which card the person actually followed through (a CEO's card, say); empty means the company card itself.
       .then(() => sql`ALTER TABLE tapcard_follower_details ADD COLUMN IF NOT EXISTS via_card_id TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_follower_details ADD COLUMN IF NOT EXISTS event_code TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_follower_details ADD COLUMN IF NOT EXISTS event_via TEXT NOT NULL DEFAULT ''`)
       .catch((e) => {
         ready = null;
         throw e;
@@ -73,12 +74,12 @@ export async function markListedCard(cardId: string, isin = "", ticker = ""): Pr
 }
 
 /// Stores the details a follower chose to share. Only for a listed card; returns false (stores nothing) otherwise.
-export async function saveFollowerDetails(cardId: string, follower: string, d: ShareDetails, viaCardId = "", eventCode = ""): Promise<boolean> {
+export async function saveFollowerDetails(cardId: string, follower: string, d: ShareDetails, viaCardId = "", eventCode = "", eventVia = ""): Promise<boolean> {
   if (!(await isListedCard(cardId))) return false;
   const via = viaCardId && viaCardId !== cardId ? viaCardId : "";
   await sql`
-    INSERT INTO tapcard_follower_details (card_id, follower_hash, name, email, phone, via_card_id, event_code) VALUES (${cardId}, ${followerHash(follower)}, ${d.name}, ${d.email}, ${d.phone}, ${via}, ${eventCode})
-    ON CONFLICT (card_id, follower_hash) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email, phone = EXCLUDED.phone, via_card_id = EXCLUDED.via_card_id, event_code = CASE WHEN EXCLUDED.event_code <> '' THEN EXCLUDED.event_code ELSE tapcard_follower_details.event_code END, consented_at = now()`;
+    INSERT INTO tapcard_follower_details (card_id, follower_hash, name, email, phone, via_card_id, event_code, event_via) VALUES (${cardId}, ${followerHash(follower)}, ${d.name}, ${d.email}, ${d.phone}, ${via}, ${eventCode}, ${eventVia})
+    ON CONFLICT (card_id, follower_hash) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email, phone = EXCLUDED.phone, via_card_id = EXCLUDED.via_card_id, event_via = CASE WHEN EXCLUDED.event_code <> '' AND (EXCLUDED.event_via = 'code' OR tapcard_follower_details.event_code = '') THEN EXCLUDED.event_via ELSE tapcard_follower_details.event_via END, event_code = CASE WHEN EXCLUDED.event_code <> '' AND (EXCLUDED.event_via = 'code' OR tapcard_follower_details.event_code = '') THEN EXCLUDED.event_code ELSE tapcard_follower_details.event_code END, consented_at = now()`;
   return true;
 }
 
@@ -105,15 +106,15 @@ export interface SharedFollower {
 export async function listSharedFollowers(orgId: string): Promise<SharedFollower[]> {
   await ensureShareSchema();
   const rows = (await sql`
-    SELECT d.card_id, c.company, c.name AS card_name, d.name, d.email, d.phone, d.consented_at, v.name AS via_name, v.title AS via_title, ev.label AS event_label
+    SELECT d.card_id, c.company, c.name AS card_name, d.name, d.email, d.phone, d.consented_at, v.name AS via_name, v.title AS via_title, ev.label AS event_label, d.event_via
     FROM tapcard_follower_details d
     JOIN tapcard_listed_cards l ON l.card_id = d.card_id
     JOIN tapcard_cards c ON c.id = d.card_id
     LEFT JOIN tapcard_cards v ON v.id = NULLIF(d.via_card_id, '')
     LEFT JOIN tapcard_listed_events ev ON ev.code = NULLIF(d.event_code, '') AND ev.org_id = c.org_id
     WHERE c.org_id = ${orgId}
-    ORDER BY d.consented_at DESC`) as { card_id: string; company: string; card_name: string; name: string; email: string; phone: string; consented_at: string; via_name: string | null; via_title: string | null; event_label: string | null }[];
-  return rows.map((r) => ({ cardId: r.card_id, company: r.company || r.card_name, name: r.name, email: r.email, phone: r.phone, consentedAt: new Date(r.consented_at).toISOString(), followedThrough: r.via_name ? [r.via_name, r.via_title].filter(Boolean).join(", ") : "Company card", event: r.event_label ?? "" }));
+    ORDER BY d.consented_at DESC`) as { card_id: string; company: string; card_name: string; name: string; email: string; phone: string; consented_at: string; via_name: string | null; via_title: string | null; event_label: string | null; event_via: string }[];
+  return rows.map((r) => ({ cardId: r.card_id, company: r.company || r.card_name, name: r.name, email: r.email, phone: r.phone, consentedAt: new Date(r.consented_at).toISOString(), followedThrough: r.via_name ? [r.via_name, r.via_title].filter(Boolean).join(", ") : "Company card", event: r.event_label ? (r.event_via === "window" ? `${r.event_label} (event window)` : r.event_label) : "" }));
 }
 
 /// How many of the card's followers have chosen to share (for the admin page and the follower numbers).

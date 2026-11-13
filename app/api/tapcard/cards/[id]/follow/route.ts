@@ -1,6 +1,6 @@
 import { after, NextRequest, NextResponse } from "next/server";
 import { getCard } from "@/lib/tapcardDb";
-import { setFollower } from "@/lib/tapcardOffers";
+import { alreadyFollowing, setFollower } from "@/lib/tapcardOffers";
 import { pushToOwner, setPushPrefs } from "@/lib/tapcardPush";
 import { followTargetFor, isListedCard, removeOwnerCopy, saveFollowerDetails, saveOwnerCopy, validateShare, withdrawFollowerDetails } from "@/lib/tapcardShare";
 
@@ -17,9 +17,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const target = await followTargetFor(id);
   // An event QR code of a listed company the follow came through (kept only if it is a real event of that company).
   const { cardOrgId } = await import("@/lib/tapcardBiz");
-  const { eventCodeForOrg } = await import("@/lib/tapcardEvents");
-  const eventCode = body?.follow === true ? await eventCodeForOrg(body?.event, await cardOrgId(target).catch(() => null)).catch(() => "") : "";
-  await setFollower(target, follower, body?.follow === true, eventCode);
+  const { eventCodeForOrg, activeEventForOrg } = await import("@/lib/tapcardEvents");
+  const orgForEvent = await cardOrgId(target).catch(() => null);
+  let eventCode = body?.follow === true ? await eventCodeForOrg(body?.event, orgForEvent).catch(() => "") : "";
+  // No code scanned: a follow during a running event window (set by the company) is tagged with that event.
+  let eventVia: "code" | "window" = "code";
+  // Only a brand-new follow is tagged this way: the apps re-send current follows when they open, which must not retag old followers.
+  if (body?.follow === true && !eventCode && !(await alreadyFollowing(target, follower).catch(() => true))) {
+    eventCode = await activeEventForOrg(orgForEvent).catch(() => "");
+    eventVia = "window";
+  }
+  await setFollower(target, follower, body?.follow === true, eventCode, eventVia);
   const p = body?.prefs;
   await setPushPrefs(target, follower, body?.follow === true, p ? { offers: p.offers !== false, ending: p.ending !== false, changes: p.changes !== false, news: p.news !== false } : undefined).catch(() => {});
   // Listed-company cards only: the follower may choose, by tapping "Follow and share my details", to give the company a name and
@@ -33,7 +41,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     } else if (body?.share) {
       const v = validateShare(body.share);
       if (!v.ok) return NextResponse.json({ error: v.error }, { status: 400 });
-      shared = await saveFollowerDetails(target, follower, v.details, id, eventCode);
+      shared = await saveFollowerDetails(target, follower, v.details, id, eventCode, eventCode ? eventVia : "");
       // Followed through a person's card: that person gets a copy as well (the share screen says so), unless their card isn't taking details.
       if (shared && target !== id && card.accept_share_back !== false) {
         const copied = await saveOwnerCopy(id, follower, v.details).catch(() => false);

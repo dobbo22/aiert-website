@@ -337,8 +337,23 @@ test("event QR codes: tag a follow with the event, ignore codes from another com
   assert.equal(evs.length, 1);
   assert.equal(evs[0].followers, 1, "only the follow through this company's own event is tagged");
   assert.equal((await listSharedFollowers(org.id))[0].event, "AGM 2026");
+  // An event window: a NEW follow during it is tagged "(event window)", an old follower re-syncing is not, a follow outside it is not.
+  const { parseWindow, activeEventForOrg } = await import("../lib/tapcardEvents");
+  assert.ok("error" in (parseWindow("2026-11-12T10:00:00Z", "") as object), "both ends or neither");
+  assert.ok("error" in (parseWindow("2026-11-12T12:00:00Z", "2026-11-12T10:00:00Z") as object), "end after start");
+  assert.ok("error" in (parseWindow("2026-11-01T10:00:00Z", "2026-12-01T10:00:00Z") as object), "at most two weeks");
+  const nowMs = Date.now();
+  const roadshow = await createEvent(org.id, "Roadshow", new Date(nowMs - 3600_000).toISOString(), new Date(nowMs + 3600_000).toISOString());
+  const past = await createEvent(org.id, "Old meeting", new Date(nowMs - 9 * 3600_000).toISOString(), new Date(nowMs - 8 * 3600_000).toISOString());
+  assert.ok(roadshow.ok && past.ok);
+  assert.equal(await activeEventForOrg(org.id), (roadshow as { code: string }).code);
+  await call("e", { share: { name: "Window Person", email: "window@x.com" } });
+  await call("d", { share: { name: "Old Follower", email: "old@x.com" } });
+  const shared = await listSharedFollowers(org.id);
+  assert.equal(shared.find((x) => x.email === "window@x.com")?.event, "Roadshow (event window)");
+  assert.equal(shared.find((x) => x.email === "old@x.com")?.event, "", "d followed before the window, so is not retagged");
   await deleteEvent(org.id, (agm as { code: string }).code);
-  assert.equal((await listEvents(org.id)).length, 0);
+  assert.equal((await listEvents(org.id)).length, 2);
 });
 
 test("QR sign: wording is saved per shop, cleaned, and only by that company", async () => {

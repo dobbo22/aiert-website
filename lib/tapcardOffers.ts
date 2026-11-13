@@ -270,17 +270,26 @@ export async function claimOffer(cardId: string, claimant: string, viaRaw: unkno
 }
 
 /// Followers are only ever a count: a one-way hash of a random per-install id, never shown or listed.
-export async function setFollower(cardId: string, follower: string, follow: boolean, eventCode = ""): Promise<void> {
+export async function setFollower(cardId: string, follower: string, follow: boolean, eventCode = "", eventVia: "code" | "window" = "code"): Promise<void> {
   await ensureOfferSchema();
   const who = hashSecret(`tapcard-follower:${follower}`);
   if (follow && eventCode) {
     // The event a follow came through (an event QR of a listed company): kept from the first follow that carried one.
     const { ensureFollowerEventColumn } = await import("@/lib/tapcardEvents");
     await ensureFollowerEventColumn();
-    await sql`INSERT INTO tapcard_followers (card_id, follower_hash, event_code) VALUES (${cardId}, ${who}, ${eventCode})
-              ON CONFLICT (card_id, follower_hash) DO UPDATE SET event_code = CASE WHEN tapcard_followers.event_code = '' THEN EXCLUDED.event_code ELSE tapcard_followers.event_code END`;
+    await sql`INSERT INTO tapcard_followers (card_id, follower_hash, event_code, event_via) VALUES (${cardId}, ${who}, ${eventCode}, ${eventVia})
+              ON CONFLICT (card_id, follower_hash) DO UPDATE SET
+                event_via = CASE WHEN tapcard_followers.event_code = '' THEN EXCLUDED.event_via ELSE tapcard_followers.event_via END,
+                event_code = CASE WHEN tapcard_followers.event_code = '' THEN EXCLUDED.event_code ELSE tapcard_followers.event_code END`;
   } else if (follow) await sql`INSERT INTO tapcard_followers (card_id, follower_hash) VALUES (${cardId}, ${who}) ON CONFLICT DO NOTHING`;
   else await sql`DELETE FROM tapcard_followers WHERE card_id = ${cardId} AND follower_hash = ${who}`;
+}
+
+/// Whether this install already follows the card (so a re-sync at app launch is not mistaken for a new follow).
+export async function alreadyFollowing(cardId: string, follower: string): Promise<boolean> {
+  await ensureOfferSchema();
+  const who = hashSecret(`tapcard-follower:${follower}`);
+  return ((await sql`SELECT 1 FROM tapcard_followers WHERE card_id = ${cardId} AND follower_hash = ${who}`) as unknown[]).length > 0;
 }
 
 /// An install that came from scanning this business's QR code or link: the app was installed after a visit to the business's
