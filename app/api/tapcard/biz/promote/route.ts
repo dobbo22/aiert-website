@@ -3,7 +3,7 @@ import { pushToFollowers } from "@/lib/tapcardPush";
 import sql from "@/lib/db";
 import { requireBizUser } from "@/lib/tapcardBizSession";
 import { getOrg, isOrgActive } from "@/lib/tapcardBiz";
-import { clearAnnouncement, clearOffers, setAnnouncement, setOffer } from "@/lib/tapcardOffers";
+import { clearAnnouncement, clearOffers, publicAnnouncement, setAnnouncement, setOffer } from "@/lib/tapcardOffers";
 
 // An admin posts or withdraws any shop's offer or news from the web; a manager only for their own shops. Only for the company's own
 // cards, and only while the company's billing is active.
@@ -39,7 +39,9 @@ export async function POST(req: Request) {
       const r = await setAnnouncement(cardId, body.text, body.link);
       if (!r.ok) return NextResponse.json({ error: r.error }, { status: 400 });
       const card = ((await sql`SELECT name, company FROM tapcard_cards WHERE id = ${cardId}`) as { name: string; company: string }[])[0];
-      after(() => pushToFollowers(cardId, "news", { title: card?.company || card?.name || "News", body: String(body.text ?? "").trim().slice(0, 140), ref: `a${Date.now()}` }));
+      const posted = await publicAnnouncement(cardId);
+      after(() => pushToFollowers(cardId, "news", { title: card?.company || card?.name || "News", body: posted?.text ?? String(body.text ?? "").trim().slice(0, 140), ref: posted ? String(posted.id) : `a${Date.now()}`,
+        extra: posted ? { announcementId: posted.id, link: posted.link ?? "", postedAt: posted.postedAt } : undefined }));
       return NextResponse.json({ ok: true });
     }
     case "withdrawNews":

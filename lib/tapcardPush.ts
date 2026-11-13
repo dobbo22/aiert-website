@@ -178,7 +178,7 @@ async function fcmSend(token: string, title: string, body: string, data: Record<
     const r = await fetch(`https://fcm.googleapis.com/v1/projects/${auth.project}/messages:send`, {
       method: "POST",
       headers: { Authorization: `Bearer ${auth.token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ message: { token, data: { title, body, ...data }, android: { priority: "HIGH" } } }),
+      body: JSON.stringify({ message: { token, data: { title, body, ...Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])) }, android: { priority: "HIGH" } } }),
     });
     if (r.ok) return { result: "ok" };
     const text = await r.text();
@@ -190,7 +190,8 @@ async function fcmSend(token: string, title: string, body: string, data: Record<
 
 // ---- sending
 
-export interface PushMessage { title: string; body: string; ref: string }
+/// `extra` rides along in the notification data (a news post carries its id, link and time so the apps can show it at once).
+export interface PushMessage { title: string; body: string; ref: string; extra?: Record<string, string | number> }
 
 /// Pushes one message to everyone who follows `cardId`, wants this kind, hasn't had two from this business this week,
 /// and hasn't already had this one (same kind + ref). Never throws: a failed push must not fail the post that caused it.
@@ -227,7 +228,7 @@ export async function pushToFollowers(cardId: string, kind: PushKind, msg: PushM
     `) as { follower_hash: string; platform: string; token: string }[];
     if (!rows.length) return { sent: 0, skipped: false };
 
-    const data = { cardId, kind, ref: msg.ref };
+    const data = { cardId, kind, ref: msg.ref, ...(msg.extra ?? {}) };
     const aps = { aps: { alert: { title: msg.title, body: msg.body }, sound: "default", "thread-id": cardId }, tapcard: data };
     const client = apnsConfigured() && rows.some((r) => r.platform === "ios") ? http2.connect("https://api.push.apple.com") : null;
     client?.on("error", () => {});

@@ -26,7 +26,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const r = await setAnnouncement(id, body?.text, body?.link);
   if (!r.ok) return NextResponse.json({ error: r.error }, { status: 400 });
   const posted = await publicAnnouncement(id);
-  if (posted) after(() => pushToFollowers(id, "news", { title: card.company || card.name, body: posted.text, ref: String(posted.id) }));
+  if (posted) after(() => pushToFollowers(id, "news", { title: card.company || card.name, body: posted.text, ref: String(posted.id), extra: { announcementId: posted.id, link: posted.link ?? "", postedAt: posted.postedAt } }));
   return NextResponse.json({ ok: true, announcement: posted });
 }
 
