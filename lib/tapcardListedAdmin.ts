@@ -6,7 +6,9 @@ import { sharedFollowerCount } from "@/lib/tapcardShare";
 let ready: Promise<unknown> | null = null;
 function ensureKindColumn(): Promise<unknown> {
   if (!ready) {
-    ready = sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS kind TEXT NOT NULL DEFAULT 'business'`.catch((e) => { ready = null; throw e; });
+    ready = sql`ALTER TABLE tapcard_biz_orgs ADD COLUMN IF NOT EXISTS kind TEXT NOT NULL DEFAULT 'business'`
+      .then(() => sql`CREATE TABLE IF NOT EXISTS tapcard_listed_cards (card_id TEXT PRIMARY KEY, isin TEXT NOT NULL DEFAULT '', ticker TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now())`)
+      .catch((e) => { ready = null; throw e; });
   }
   return ready;
 }
