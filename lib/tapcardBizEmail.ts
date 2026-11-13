@@ -102,9 +102,10 @@ export async function sendBizWelcomeEmail(email: string, company: string, opts: 
   await send(email, m.subject, m.html, m.text);
 }
 
-export type BizWelcomeOpts = ({ kind: "trial"; endsOn: string } | { kind: "paid"; locations: number }) & { name?: string; cardLink?: string };
+export type BizWelcomeOpts = ({ kind: "trial"; endsOn: string } | { kind: "paid"; locations: number }) & { name?: string; cardLink?: string; listed?: boolean };
 
 export function buildBizWelcomeEmail(email: string, company: string, opts: BizWelcomeOpts): { subject: string; html: string; text: string } {
+  if (opts.listed) return buildListedWelcomeEmail(email, company, opts.name);
   // Addressed by the first name they gave (never guessed from the email address).
   const first = (opts.name ?? "").trim().split(/\s+/)[0]?.slice(0, 40) ?? "";
   const hello = first ? `Hi ${esc(first)},` : "Hello,";
@@ -239,4 +240,64 @@ export async function sendBizShopLinksEmail(email: string, company: string, link
   `;
   await send(email, `Shop card links for ${company}`, html,
     `Card links for the shops at ${company} that are waiting for their manager. Open on a phone with the TapCard app (or without it: the link takes you to the store and the card sets itself up when the app opens). Each link works once and lasts 30 days.\n\n${links.map((c) => `${c.shop}: ${c.link}`).join("\n")}`);
+}
+
+/// Welcome for the admin of a LISTED company (investor relations): followers and RNS headlines, not shops, staff offers or locations.
+/// No prices (those are agreed separately). Keep in step with the listed admin tabs (AdminNav LISTED_TABS).
+export function buildListedWelcomeEmail(email: string, company: string, personName?: string): { subject: string; html: string; text: string } {
+  const first = (personName ?? "").trim().split(/\s+/)[0]?.slice(0, 40) ?? "";
+  const hello = first ? `Hi ${esc(first)},` : "Hello,";
+  const helloText = first ? `Hi ${first},` : "Hello,";
+  const name = esc(company || "your company");
+  const plain = company || "your company";
+  const admin = `${ORIGIN}/business/admin`;
+  const steps: WelcomeSteps[] = [
+    { title: "Sign in to your admin",
+      body: `Go to <a href="${admin}">${admin}</a> and enter <strong>${esc(email)}</strong>. We email you a sign-in link (there is no password). Each link works once and lasts 15 minutes; ask for a new one any time.` },
+    { title: "Put your QR code where shareholders will see it",
+      body: `On the <strong>Cards &amp; QR</strong> tab you will find your company card and its QR code. Add it to results slides, the annual report, the AGM notice or the investor page of your website. A shareholder scans it, saves the card and taps <strong>Follow</strong> in the TapCard app.` },
+    { title: "Post a headline when you announce",
+      body: `On the <strong>Post news</strong> tab, paste a short headline and the link to the announcement on your own website, then post. Followers get it as a notification on their phone. The tab can also read your own announcements page and offer each new announcement as a one-tap post (<strong>Use as headline</strong>), so you only choose and check. Please post only after the announcement is public, and say nothing that is not in it.` },
+    { title: "See who chose to share their details",
+      body: `When someone follows, they choose between <strong>Follow and share my details</strong> and <strong>Follow only</strong>. On the <strong>Followers</strong> tab you see the number of followers and, for those who chose to share, their name, email and optional phone, with a CSV download. Followers who chose Follow only stay anonymous. If someone stops sharing or unfollows, their details are removed.` },
+    { title: "Add the people who speak for the company",
+      body: `On the <strong>People</strong> tab invite directors, the CEO or your investor relations contact so each has their own TapCard, based on the company template. On the <strong>Admins</strong> tab you can add colleagues, or your investor relations adviser, who may run this account for you. You can remove anyone's access whenever you choose.` },
+  ];
+  const html = `
+    <div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;font-size:15px;line-height:1.5;color:#111;max-width:600px">
+      <p style="font-size:18px"><strong>Welcome to TapCard for investor relations</strong></p>
+      <p>${hello}</p>
+      <p>Thank you for choosing TapCard for <strong>${name}</strong>. Your company account is set up. Shareholders and other investors can follow ${name} on their phone and receive your announcement headlines as notifications, each linking to the announcement on your own website.</p>
+      <p>Your admin area: <a href="${admin}">${admin}</a> (sign in with ${esc(email)})</p>
+      <h3 style="margin:22px 0 6px">Getting started</h3>
+      <ol style="padding-left:20px">
+        ${steps.map((st) => `<li style="margin-bottom:10px"><strong>${st.title}.</strong> ${st.body}</li>`).join("\n")}
+      </ol>
+      <p><strong>What your followers need.</strong> Anyone can scan your QR code or tap your link to see and save your card. To get headlines as notifications they install the TapCard app and follow ${name}. Sharing their details with you is always their own choice.</p>
+      <p><strong>Your data.</strong> ${name} decides who may use this account and how shared details are used. AIERT stores them for you and uses them for nothing else.</p>
+      <p><strong>Need a hand?</strong> Just reply to this email and a person will answer.</p>
+      <p>Best wishes,<br>The TapCard team at AIERT Ltd</p>
+    </div>`;
+  const text = [
+    "Welcome to TapCard for investor relations",
+    "",
+    helloText,
+    "",
+    `Thank you for choosing TapCard for ${plain}. Your company account is set up. Shareholders and other investors can follow ${plain} on their phone and receive your announcement headlines as notifications, each linking to the announcement on your own website.`,
+    "",
+    `Your admin area: ${admin} (sign in with ${email})`,
+    "",
+    "GETTING STARTED",
+    ...steps.map((st, i) => `${i + 1}. ${st.title}. ${st.body.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&")}`),
+    "",
+    `What your followers need. Anyone can scan your QR code or tap your link to see and save your card. To get headlines as notifications they install the TapCard app and follow ${plain}. Sharing their details with you is always their own choice.`,
+    "",
+    `Your data. ${plain} decides who may use this account and how shared details are used. AIERT stores them for you and uses them for nothing else.`,
+    "",
+    "Need a hand? Just reply to this email and a person will answer.",
+    "",
+    "Best wishes,",
+    "The TapCard team at AIERT Ltd",
+  ].join("\n");
+  return { subject: `Welcome to TapCard for investor relations: ${plain}`, html, text };
 }

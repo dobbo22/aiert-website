@@ -7,6 +7,7 @@ import { listLocations, shopCardLinks } from "@/lib/tapcardBizLocations";
 import { sendBizAdminInviteEmail, sendBizLoginEmail, sendBizManagerInviteEmail, sendBizWelcomeEmail } from "@/lib/tapcardBizEmail";
 import { cardAllowance } from "@/lib/tapcardBizPricing";
 import { createManagedCompany, logSupport, supportAccessOpen, SUPPORT_ACTOR, SUPPORT_PREFIX } from "@/lib/tapcardBizSupport";
+import { orgIsListed } from "@/lib/tapcardListedAdmin";
 import sql from "@/lib/db";
 import { setOrgListed } from "@/lib/tapcardListedAdmin";
 
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
     if (body.sendEmail) {
       const token = await createLoginToken(email, org.id);
       await sendBizLoginEmail(email, `https://tapcard.aiert.co.uk/api/biz/login/${token}`).catch((e) => console.error("support setup login email failed", e));
-      await sendBizWelcomeEmail(email, org.name, { kind: "paid", locations: Number(body.locations) || 2 }).catch((e) => console.error("support setup welcome email failed", e));
+      await sendBizWelcomeEmail(email, org.name, { kind: "paid", locations: Number(body.locations) || 2, listed: body.listed === true }).catch((e) => console.error("support setup welcome email failed", e));
     }
     return NextResponse.json({ ok: true, orgId: org.id });
   }
@@ -97,7 +98,7 @@ export async function POST(req: NextRequest) {
     const token = await createLoginToken(email, org.id);
     const link = `https://tapcard.aiert.co.uk/api/biz/login/${token}`;
     await sendBizAdminInviteEmail(email, org.name, "AIERT", link).catch((e) => console.error("support admin email failed", e));
-    if (body.sendEmail) await sendBizWelcomeEmail(email, org.name, { kind: "paid", locations: org.locations || 1, name: body.personName }).catch((e) => console.error("support admin welcome failed", e));
+    if (body.sendEmail) await sendBizWelcomeEmail(email, org.name, { kind: "paid", locations: org.locations || 1, name: body.personName, listed: await orgIsListed(org.id) }).catch((e) => console.error("support admin welcome failed", e));
     return NextResponse.json({ ok: true });
   }
 

@@ -274,6 +274,15 @@ test("welcome email: personal, escaped, right for trial and paid", async () => {
   assert.ok(!nasty.html.includes("<script>"), "an address with markup in it is escaped in the HTML");
 });
 
+test("welcome email for a listed company talks about followers and RNS, not shops or locations", async () => {
+  const { buildBizWelcomeEmail } = await import("../lib/tapcardBizEmail");
+  const m = buildBizWelcomeEmail("ir@kefi.example", "KEFI <b>Gold</b>", { kind: "paid", locations: 1, listed: true, name: "Sam" });
+  assert.match(m.html, /investor relations/);
+  assert.match(m.html, /Follow and share my details/);
+  assert.ok(!/locations|shop|staff PIN|Promote|£/i.test(m.text), "no business-plan wording or prices");
+  assert.ok(!m.html.includes("<b>Gold</b>"), "company name is escaped");
+});
+
 test("QR sign: wording is saved per shop, cleaned, and only by that company", async () => {
   const { createManagedCompany } = await import("../lib/tapcardBizSupport");
   const { parseSign, DEFAULT_SIGN } = await import("../lib/tapcardBizLocations");
