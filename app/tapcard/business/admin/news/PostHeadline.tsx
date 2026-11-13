@@ -61,7 +61,7 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
 
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">On your website</h2>
-        <p className="mt-2 text-cloud">We read your own announcements page and list what is on it, so each new announcement is one tap away. We never read Investegate or the London Stock Exchange.</p>
+        <p className="mt-2 text-cloud">All data is taken from your own website only.</p>
         {editingPage ? (
           <div className="mt-4">
             <label className="block text-cloud">Your announcements page
