@@ -39,7 +39,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     if (code) {
       const { cardOrgId } = await import("@/lib/tapcardBiz");
       const { eventInfoForOrg } = await import("@/lib/tapcardEvents");
-      const ev = await eventInfoForOrg(code, await cardOrgId(target).catch(() => null)).catch(() => null);
+      // `at` = when the person scanned (ms): so a late registration names the slot it was made in, not the slot running now.
+      const { cleanScanTime } = await import("@/lib/tapcardShareRules");
+      const scanned = cleanScanTime(Number(new URL(req.url).searchParams.get("at")) || null);
+      const ev = await eventInfoForOrg(code, await cardOrgId(target).catch(() => null), scanned ?? new Date()).catch(() => null);
       if (ev) extra.event = { code: ev.code, label: ev.label, slot: ev.slot };
     }
   }
