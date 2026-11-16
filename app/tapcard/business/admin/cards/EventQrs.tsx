@@ -79,15 +79,15 @@ export default function EventQrs({ companyCardId, companyName, events }: { compa
           {mode !== "none" && (
             <div className="flex flex-wrap items-end gap-3">
               <label className="text-sm font-semibold text-cloud">Day
-                <input type="date" value={day} onChange={(e) => setDay(e.target.value)} className="event-picker mt-1 block rounded-xl bg-white px-3 py-2 text-black ring-1 ring-slate" />
+                <input type="date" value={day} onChange={(e) => setDay(e.target.value)} className="mt-1 block rounded-xl bg-white px-3 py-2 text-black ring-1 ring-slate" />
               </label>
               {mode === "slot" && (
                 <>
                   <label className="text-sm font-semibold text-cloud">From
-                    <input type="time" value={from} onChange={(e) => setFrom(e.target.value)} className="event-picker mt-1 block rounded-xl bg-white px-3 py-2 text-black ring-1 ring-slate" />
+                    <input type="time" value={from} onChange={(e) => setFrom(e.target.value)} className="mt-1 block rounded-xl bg-white px-3 py-2 text-black ring-1 ring-slate" />
                   </label>
                   <label className="text-sm font-semibold text-cloud">To
-                    <input type="time" value={to} onChange={(e) => setTo(e.target.value)} className="event-picker mt-1 block rounded-xl bg-white px-3 py-2 text-black ring-1 ring-slate" />
+                    <input type="time" value={to} onChange={(e) => setTo(e.target.value)} className="mt-1 block rounded-xl bg-white px-3 py-2 text-black ring-1 ring-slate" />
                   </label>
                 </>
               )}
