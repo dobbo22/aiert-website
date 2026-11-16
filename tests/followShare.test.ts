@@ -20,3 +20,10 @@ test("missing or bad name and email are refused", () => {
   assert.equal(validateShare({ name: "Pat Smith", email: "p@x" }).ok, false);
   assert.equal(validateShare({ name: "x".repeat(130), email: "p@x.com" }).ok, false);
 });
+
+import { formatEventList } from "../lib/tapcardShareRules";
+test("every event a follower came through is listed, oldest first, windows marked", () => {
+  assert.equal(formatEventList([]), "");
+  assert.equal(formatEventList([{ label: "AGM 2026", via: "code" }]), "AGM 2026");
+  assert.equal(formatEventList([{ label: "AGM 2026", via: "code" }, { label: "Roadshow", via: "window" }]), "AGM 2026, Roadshow (event window)");
+});

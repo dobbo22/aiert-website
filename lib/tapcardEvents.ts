@@ -63,13 +63,51 @@ export async function deleteEvent(orgId: string, code: string): Promise<void> {
   await sql`DELETE FROM tapcard_listed_events WHERE code = ${code} AND org_id = ${orgId}`;
 }
 
+// EVERY event a follower came through is recorded (one row per follower and event), not only the first. Rows hold the hashed follower id
+// only; a name shows beside an event only when that person chose to share their details. Unfollowing or deleting the card removes them.
+let attReady: Promise<unknown> | null = null;
+export function ensureAttendanceTable(): Promise<unknown> {
+  if (!attReady) {
+    attReady = ensureFollowerEventColumn()
+      .then(() => sql`
+        CREATE TABLE IF NOT EXISTS tapcard_event_attendance (
+          card_id TEXT NOT NULL,
+          follower_hash TEXT NOT NULL,
+          event_code TEXT NOT NULL,
+          via TEXT NOT NULL DEFAULT 'code',
+          first_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          PRIMARY KEY (card_id, follower_hash, event_code)
+        )`)
+      .then(() => sql`CREATE INDEX IF NOT EXISTS tapcard_event_attendance_code ON tapcard_event_attendance (event_code)`)
+      // Earlier single tags become the first row (safe to repeat).
+      .then(() => sql`INSERT INTO tapcard_event_attendance (card_id, follower_hash, event_code, via, first_at)
+                      SELECT card_id, follower_hash, event_code, CASE WHEN event_via = 'window' THEN 'window' ELSE 'code' END, created_at
+                      FROM tapcard_followers WHERE event_code <> '' ON CONFLICT DO NOTHING`)
+      .catch((e) => { attReady = null; throw e; });
+  }
+  return attReady;
+}
+
+/// A follower came through an event (a scanned code, or a running event window). Repeats (the apps re-send at launch) change nothing.
+export async function recordAttendance(cardId: string, followerHash: string, eventCode: string, via: "code" | "window"): Promise<void> {
+  if (!eventCode) return;
+  await ensureAttendanceTable();
+  await sql`INSERT INTO tapcard_event_attendance (card_id, follower_hash, event_code, via) VALUES (${cardId}, ${followerHash}, ${eventCode}, ${via}) ON CONFLICT DO NOTHING`;
+}
+
+export async function removeAttendance(cardId: string, followerHash?: string): Promise<void> {
+  await ensureAttendanceTable();
+  if (followerHash) await sql`DELETE FROM tapcard_event_attendance WHERE card_id = ${cardId} AND follower_hash = ${followerHash}`;
+  else await sql`DELETE FROM tapcard_event_attendance WHERE card_id = ${cardId}`;
+}
+
 /// The company's events, newest first, with how many current followers came through each.
 export async function listEvents(orgId: string): Promise<ListedEvent[]> {
   await ensureEventSchema();
-  await ensureFollowerEventColumn();
+  await ensureAttendanceTable();
   const rows = (await sql`
     SELECT e.code, e.label, e.created_at, e.starts_at, e.ends_at,
-      (SELECT COUNT(*)::int FROM tapcard_followers f WHERE f.event_code = e.code) AS followers
+      (SELECT COUNT(*)::int FROM tapcard_event_attendance a WHERE a.event_code = e.code) AS followers
     FROM tapcard_listed_events e WHERE e.org_id = ${orgId} ORDER BY COALESCE(e.starts_at, e.created_at) DESC`) as { code: string; label: string; created_at: string; starts_at: string | null; ends_at: string | null; followers: number }[];
   return rows.map((r) => ({
     code: r.code, label: r.label, createdAt: new Date(r.created_at).toISOString(), followers: Number(r.followers),

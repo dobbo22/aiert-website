@@ -282,7 +282,16 @@ export async function setFollower(cardId: string, follower: string, follow: bool
                 event_via = CASE WHEN tapcard_followers.event_code = '' THEN EXCLUDED.event_via ELSE tapcard_followers.event_via END,
                 event_code = CASE WHEN tapcard_followers.event_code = '' THEN EXCLUDED.event_code ELSE tapcard_followers.event_code END`;
   } else if (follow) await sql`INSERT INTO tapcard_followers (card_id, follower_hash) VALUES (${cardId}, ${who}) ON CONFLICT DO NOTHING`;
-  else await sql`DELETE FROM tapcard_followers WHERE card_id = ${cardId} AND follower_hash = ${who}`;
+  else {
+    await sql`DELETE FROM tapcard_followers WHERE card_id = ${cardId} AND follower_hash = ${who}`;
+    const { removeAttendance } = await import("@/lib/tapcardEvents");
+    await removeAttendance(cardId, who).catch(() => {});
+  }
+  // Every event they came through is kept, not only the first (a person can attend the AGM and then a roadshow).
+  if (follow && eventCode) {
+    const { recordAttendance } = await import("@/lib/tapcardEvents");
+    await recordAttendance(cardId, who, eventCode, eventVia);
+  }
 }
 
 /// Whether this install already follows the card (so a re-sync at app launch is not mistaken for a new follow).

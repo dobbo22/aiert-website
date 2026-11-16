@@ -1,6 +1,6 @@
 import sql from "@/lib/db";
 import { hashSecret } from "@/lib/tapcardAuth";
-import type { ShareDetails } from "@/lib/tapcardShareRules";
+import { formatEventList, type ShareDetails } from "@/lib/tapcardShareRules";
 export { validateShare } from "@/lib/tapcardShareRules";
 export type { ShareDetails } from "@/lib/tapcardShareRules";
 
@@ -99,22 +99,23 @@ export interface SharedFollower {
   consentedAt: string;
   /// Where the contact was made: the person's card they followed through ("Jane Smith, Chief Executive"), or "Company card" (QR code or link).
   followedThrough: string;
-  /// The event QR code the follow came through ("AGM 2026"), or empty.
+  /// Every event the follow came through, oldest first ("AGM 2026, London roadshow"), or empty.
   event: string;
 }
 
 export async function listSharedFollowers(orgId: string): Promise<SharedFollower[]> {
   await ensureShareSchema();
+  await (await import("@/lib/tapcardEvents")).ensureAttendanceTable();
   const rows = (await sql`
-    SELECT d.card_id, c.company, c.name AS card_name, d.name, d.email, d.phone, d.consented_at, v.name AS via_name, v.title AS via_title, ev.label AS event_label, d.event_via
+    SELECT d.card_id, c.company, c.name AS card_name, d.name, d.email, d.phone, d.consented_at, v.name AS via_name, v.title AS via_title,
+      COALESCE((SELECT json_agg(json_build_object('label', e.label, 'via', a.via) ORDER BY a.first_at) FROM tapcard_event_attendance a JOIN tapcard_listed_events e ON e.code = a.event_code AND e.org_id = c.org_id WHERE a.card_id = d.card_id AND a.follower_hash = d.follower_hash), '[]'::json) AS events
     FROM tapcard_follower_details d
     JOIN tapcard_listed_cards l ON l.card_id = d.card_id
     JOIN tapcard_cards c ON c.id = d.card_id
     LEFT JOIN tapcard_cards v ON v.id = NULLIF(d.via_card_id, '')
-    LEFT JOIN tapcard_listed_events ev ON ev.code = NULLIF(d.event_code, '') AND ev.org_id = c.org_id
     WHERE c.org_id = ${orgId}
-    ORDER BY d.consented_at DESC`) as { card_id: string; company: string; card_name: string; name: string; email: string; phone: string; consented_at: string; via_name: string | null; via_title: string | null; event_label: string | null; event_via: string }[];
-  return rows.map((r) => ({ cardId: r.card_id, company: r.company || r.card_name, name: r.name, email: r.email, phone: r.phone, consentedAt: new Date(r.consented_at).toISOString(), followedThrough: r.via_name ? [r.via_name, r.via_title].filter(Boolean).join(", ") : "Company card", event: r.event_label ? (r.event_via === "window" ? `${r.event_label} (event window)` : r.event_label) : "" }));
+    ORDER BY d.consented_at DESC`) as { card_id: string; company: string; card_name: string; name: string; email: string; phone: string; consented_at: string; via_name: string | null; via_title: string | null; events: { label: string; via: string }[] }[];
+  return rows.map((r) => ({ cardId: r.card_id, company: r.company || r.card_name, name: r.name, email: r.email, phone: r.phone, consentedAt: new Date(r.consented_at).toISOString(), followedThrough: r.via_name ? [r.via_name, r.via_title].filter(Boolean).join(", ") : "Company card", event: formatEventList(r.events ?? []) }));
 }
 
 /// How many of the card's followers have chosen to share (for the admin page and the follower numbers).
@@ -128,6 +129,7 @@ export async function sharedFollowerCount(cardId: string): Promise<number> {
 export async function deleteShareDataForCard(cardId: string): Promise<void> {
   await ensureShareSchema();
   await sql`DELETE FROM tapcard_follower_details WHERE card_id = ${cardId}`;
+  await (await import("@/lib/tapcardEvents")).removeAttendance(cardId);
   await sql`DELETE FROM tapcard_listed_cards WHERE card_id = ${cardId}`;
 }
 

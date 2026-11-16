@@ -19,3 +19,8 @@ export function validateShare(input: unknown): { ok: true; details: ShareDetails
   // A phone number is deliberately never taken: only a name and an email are shared. (Older app builds may still send one; it is ignored.)
   return { ok: true, details: { name, email, phone: "" } };
 }
+
+/// "AGM 2026, London roadshow (event window)": the events one follower came through, oldest first.
+export function formatEventList(rows: { label: string; via: string }[]): string {
+  return rows.map((r) => (r.via === "window" ? `${r.label} (event window)` : r.label)).join(", ");
+}

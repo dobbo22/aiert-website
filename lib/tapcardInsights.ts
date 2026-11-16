@@ -49,12 +49,14 @@ export async function getInsights(orgId: string): Promise<Insights> {
   await ensureInsightSchema();
   const { ensureFollowerEventColumn } = await import("@/lib/tapcardEvents");
   await ensureFollowerEventColumn();
+  const { ensureAttendanceTable } = await import("@/lib/tapcardEvents");
+  await ensureAttendanceTable();
   const [t] = (await sql`
     SELECT
       COUNT(*)::int AS following,
       COUNT(*) FILTER (WHERE f.created_at > now() - interval '7 days')::int AS new7,
       COUNT(*) FILTER (WHERE f.created_at > now() - interval '30 days')::int AS new30,
-      COUNT(*) FILTER (WHERE f.event_code <> '')::int AS tagged
+      COUNT(*) FILTER (WHERE EXISTS (SELECT 1 FROM tapcard_event_attendance a WHERE a.card_id = f.card_id AND a.follower_hash = f.follower_hash))::int AS tagged
     FROM tapcard_followers f
     JOIN tapcard_listed_cards l ON l.card_id = f.card_id
     JOIN tapcard_cards c ON c.id = f.card_id
@@ -66,8 +68,8 @@ export async function getInsights(orgId: string): Promise<Insights> {
   const srcRows = (await sql`
     SELECT e.code, e.label, e.starts_at, e.ends_at,
       COALESCE((SELECT SUM(v.n) FROM tapcard_listed_event_views v WHERE v.code = e.code), 0)::int AS opens,
-      (SELECT COUNT(*)::int FROM tapcard_followers f WHERE f.event_code = e.code) AS followers,
-      (SELECT COUNT(*)::int FROM tapcard_follower_details d WHERE d.event_code = e.code) AS shared
+      (SELECT COUNT(*)::int FROM tapcard_event_attendance a WHERE a.event_code = e.code) AS followers,
+      (SELECT COUNT(*)::int FROM tapcard_event_attendance a JOIN tapcard_follower_details d ON d.card_id = a.card_id AND d.follower_hash = a.follower_hash WHERE a.event_code = e.code) AS shared
     FROM tapcard_listed_events e WHERE e.org_id = ${orgId} ORDER BY COALESCE(e.starts_at, e.created_at) DESC`) as
     { code: string; label: string; starts_at: string | null; ends_at: string | null; opens: number; followers: number; shared: number }[];
   const sources: SourceRow[] = srcRows.map((r) => ({
