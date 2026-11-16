@@ -33,11 +33,16 @@ export default async function BizAdminLayout({ children }: { children: React.Rea
             <p className="text-sm font-semibold uppercase tracking-wider text-teal">{listed ? "TapCard for investor relations" : "TapCard for Business"}</p>
             <h1 className="mt-1 text-2xl font-black text-cloud">{org.name}</h1>
           </div>
-          <LogoutButton />
+          <div className="flex items-center gap-2">
+            <a href={listed ? "/business/investor-guide" : "/business/guide"} target="_blank" rel="noopener noreferrer"
+              className="rounded-xl px-4 py-2 text-sm font-semibold text-cloud ring-1 ring-slate hover:ring-mist">Help</a>
+            <LogoutButton />
+          </div>
         </header>
         <AdminNav role={session.role} listed={listed} />
         <div className="mt-8">{children}</div>
         <footer className="mt-12 border-t border-slate pt-6 text-sm text-mist">
+          {listed && <><a href="/business/investor-guide" className="text-gold underline">Investor relations guide &amp; FAQs</a> ·{" "}</>}
           <a href="/business/guide" className="text-gold underline">Admin guide</a> ·{" "}
           <a href="/business/security" className="text-gold underline">Security &amp; privacy</a>
         </footer>
