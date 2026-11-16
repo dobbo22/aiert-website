@@ -183,6 +183,28 @@ export async function listEvents(orgId: string): Promise<ListedEvent[]> {
   return out;
 }
 
+export interface EventAttendee { name: string; email: string; slot: string; at: string }
+export interface EventAttendance { named: EventAttendee[]; anonymous: number }
+
+/// Who registered at each event: named only for the people who chose to share their details; everyone else is just counted.
+export async function listEventAttendees(orgId: string): Promise<Record<string, EventAttendance>> {
+  await ensureAttendanceTable();
+  const rows = (await sql`
+    SELECT a.event_code, a.first_at, sl.label AS slot, d.name, d.email
+    FROM tapcard_event_attendance a
+    JOIN tapcard_listed_events e ON e.code = a.event_code AND e.org_id = ${orgId}
+    LEFT JOIN tapcard_listed_event_slots sl ON sl.id = NULLIF(a.slot_id, 0)
+    LEFT JOIN tapcard_follower_details d ON d.card_id = a.card_id AND d.follower_hash = a.follower_hash
+    ORDER BY a.first_at DESC`) as { event_code: string; first_at: string; slot: string | null; name: string | null; email: string | null }[];
+  const out: Record<string, EventAttendance> = {};
+  for (const r of rows) {
+    const e = (out[r.event_code] ??= { named: [], anonymous: 0 });
+    if (r.name && r.email) e.named.push({ name: r.name, email: r.email, slot: r.slot ?? "", at: new Date(r.first_at).toISOString() });
+    else e.anonymous += 1;
+  }
+  return out;
+}
+
 /// A code the app sent is only kept if it is a real event of the company that owns the card being followed.
 export async function eventCodeForOrg(code: unknown, orgId: string | null): Promise<string> {
   if (typeof code !== "string" || !EVENT_CODE_RE.test(code) || !orgId) return "";

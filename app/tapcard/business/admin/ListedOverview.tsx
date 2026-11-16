@@ -16,6 +16,8 @@ export function ListedOverviewView({ s, orgName }: { s: ListedSummary; orgName: 
       text: "This is what a shareholder sees when they scan your QR code: your logo, investor pages and the follow button." },
     { done: false, href: "/business/admin/cards", title: "Put your QR code where shareholders already look",
       text: "Results slides, the annual report, the AGM notice, your website and roadshow decks. Download it from Cards & QR." },
+    { done: false, href: "/business/admin/events", title: "Make a QR code for your AGM or a roadshow",
+      text: "Each event gets its own code, with optional time slots for a day of visits. You see who registered, and the people who shared their details by name." },
     { done: s.cards.length > 1, href: "/business/admin/employees", title: "Add the people who speak for the company",
       text: "The chair, CEO, CFO and IR contact each get their own card and QR code, so a meeting ends with a follow and a direct contact." },
     { done: !!s.latestNews, href: "/business/admin/news", title: "Post a headline after your next RNS",
