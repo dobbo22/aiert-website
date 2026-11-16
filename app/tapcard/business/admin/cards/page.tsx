@@ -1,11 +1,10 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { requireBizSession } from "@/lib/tapcardBizSession";
 import { getOrg, isOrgActive, listOrgCards } from "@/lib/tapcardBiz";
 import { listedSummary } from "@/lib/tapcardListedAdmin";
 import { listEventAttendees, listEvents } from "@/lib/tapcardEvents";
-import { getPrivacyUrl } from "@/lib/tapcardShare";
 import CardQr from "./CardQr";
-import PrivacyLink from "./PrivacyLink";
 import EventQrs from "./EventQrs";
 import InvitePeople from "../employees/InvitePeople";
 import RemoveCardButton from "../employees/RemoveCardButton";
@@ -16,16 +15,16 @@ const TABS = [
   { key: "company", label: "Company card" },
   { key: "team", label: "Team cards" },
   { key: "events", label: "Events" },
-  { key: "privacy", label: "Privacy notice" },
 ] as const;
 
-// The company's cards, each with a QR code to download for slides, the annual report and the AGM notice, split into tabs: company, team, events and the privacy notice. Admins only.
+// The company's cards, each with a QR code to download for slides, the annual report and the AGM notice, split into tabs: company, team and events. Admins only.
 export default async function BizCardsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const session = await requireBizSession();
   if (!session) return null;
   const org = await getOrg(session.orgId);
   if (!org) return null;
   const { tab: tabParam } = await searchParams;
+  if (tabParam === "privacy") redirect("/business/admin/settings?tab=privacy");
   const tab = TABS.find((t) => t.key === tabParam)?.key ?? "company";
   const s = await listedSummary(org.id);
   const company = s.cards.filter((c) => c.isCompany);
@@ -34,7 +33,6 @@ export default async function BizCardsPage({ searchParams }: { searchParams: Pro
   const [events, attendance] = tab === "events" && s.primaryCardId ? await Promise.all([listEvents(org.id).catch(() => []), listEventAttendees(org.id).catch(() => ({}))]) : [[], {}];
   const orgCards = tab === "team" ? await listOrgCards(org.id) : [];
   const companyIds = new Set(company.map((c) => c.id));
-  const privacyUrl = s.primaryCardId ? await getPrivacyUrl(s.primaryCardId).catch(() => "") : "";
   return (
     <div className="space-y-6">
       <nav className="flex flex-wrap gap-2 border-b border-white/10 pb-3" aria-label="Cards and QR sections">
@@ -93,8 +91,6 @@ export default async function BizCardsPage({ searchParams }: { searchParams: Pro
       {tab === "events" && (s.primaryCardId
         ? <EventQrs companyCardId={s.primaryCardId} companyName={companyName} events={events} attendance={attendance} />
         : <p className="rounded-2xl bg-charcoal p-6 text-cloud ring-1 ring-white/10">There is no company card yet. Ask AIERT to set it up.</p>)}
-
-      {tab === "privacy" && (s.primaryCardId ? <PrivacyLink initial={privacyUrl} /> : <p className="rounded-2xl bg-charcoal p-6 text-cloud ring-1 ring-white/10">No company card yet.</p>)}
     </div>
   );
 }

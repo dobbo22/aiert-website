@@ -22,7 +22,7 @@ const FAQS: [string, React.ReactNode][] = [
   ["How often does News & RNS check my announcements page?", "When you open the page, when you press Refresh now, and every three minutes while the page stays open. Opening the page checks at most once a minute, and Refresh now at most once every 10 seconds. If your page changes layout and many items look new at once, they are treated as earlier items so they do not flood the list."],
   ["Someone asks to be removed. What do I do?", "They can stop following, or switch to Follow only, in the app, which removes their details from your list. If they email you instead, ask them to do that, or email enquiries@aiert.co.uk and we will remove them."],
   ["What happens to the details when someone stops following?", "Their name, email and event records are removed when they stop following, withdraw their sharing, or when the card is deleted."],
-  ["Who can sign in to the admin?", "The admins you add on the Admins tab, up to five. Each gets a sign-in link by email. There are no passwords."],
+  ["Who can sign in to the admin?", "The admins you add under Settings, Admins, up to five. Each gets a sign-in link by email. There are no passwords."],
   ["Is TapCard a substitute for the RNS?", "No. Post a headline only after the announcement is public on the market, and say nothing that is not in it. TapCard sends the headline and a link to your own announcements page. Check the rules that apply to you with your adviser."],
 ];
 
@@ -56,8 +56,8 @@ export default function InvestorGuidePage() {
           <li><strong>Followers</strong>: people who shared their name and email. <em>By company</em> groups them by email domain with a logo and a count; click a company for its names and emails. <em>Everyone</em> is a table you can filter by company, by private investors, by event, or search. Download CSV exports the whole list.</li>
           <li><strong>Insights</strong>: counts only, never a named person: followers over time, opens and registrations for each event and slot, and how many tapped through each headline.</li>
           <li><strong>News &amp; RNS</strong>: your announcements page is watched for new items, and each is one tap to post as a headline. You can also write your own.</li>
-          <li><strong>Cards &amp; QR</strong>: Company card, Team cards (add people, their QR codes and removing a card), Events (one QR code per AGM, roadshow or meeting, with time slots and a list of who registered) and your Privacy notice link.</li>
-          <li><strong>Admins</strong> and <strong>Billing</strong>: who can sign in, and your plan.</li>
+          <li><strong>Cards &amp; QR</strong>: Company card, Team cards (add people, their QR codes and removing a card), Events (one QR code per AGM, roadshow or meeting, with time slots and a list of who registered).</li>
+          <li><strong>Settings</strong>: Admins (who can sign in), Billing (your plan) and the Privacy notice link.</li>
         </ul>
       </section>
 
@@ -95,7 +95,7 @@ export default function InvestorGuidePage() {
         <ul>
           <li>Shareholders choose to share; they can withdraw at any time, and stopping following removes their details from your list.</li>
           <li>You decide how the details are used, and you are responsible for that. They were given so you can contact the person about your news and shareholder information. Anything promotional needs the usual consent and an unsubscribe.</li>
-          <li>Add the link to <strong>your own privacy notice</strong> on Cards &amp; QR, Privacy notice. The app shows it next to the name and email form.</li>
+          <li>Add the link to <strong>your own privacy notice</strong> under Settings, Privacy notice. The app shows it next to the name and email form.</li>
           <li>More in <a href="/business/security">Security &amp; privacy</a> and the <a href="/privacy">privacy policy</a>.</li>
         </ul>
       </section>

@@ -23,8 +23,7 @@ const LISTED_TABS = [
   { href: "/business/admin/insights", label: "Insights" },
   { href: "/business/admin/news", label: "News & RNS" },
   { href: "/business/admin/cards", label: "Cards & QR" },
-  { href: "/business/admin/admins", label: "Admins" },
-  { href: "/business/admin/billing", label: "Billing" },
+  { href: "/business/admin/settings", label: "Settings" },
 ];
 
 export default function AdminNav({ role = "admin", listed = false, current }: { role?: "admin" | "manager"; listed?: boolean; current?: string }) {
@@ -32,7 +31,7 @@ export default function AdminNav({ role = "admin", listed = false, current }: { 
   const pathname = current ?? livePath;
   const tabs = (listed ? LISTED_TABS : TABS).filter((t) => role === "admin" || MANAGER_TABS.includes(t.href));
   // The Overview tab is only active on its own page; every other tab is active on its page and anything beneath it.
-  const isActive = (href: string) => (href === "/business/admin" ? pathname === href : pathname === href || pathname.startsWith(href + "/"));
+  const isActive = (href: string) => (href === "/business/admin" ? pathname === href : pathname === href || pathname.startsWith(href + "/") || (listed && href === "/business/admin/settings" && /^\/business\/admin\/(admins|billing)(\/|$)/.test(pathname)));
   return (
     <nav className="mt-6 -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0" aria-label="Admin sections">
       {tabs.map((tab) => {
