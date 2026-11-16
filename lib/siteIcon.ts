@@ -86,10 +86,23 @@ export async function findSiteLogo(
             return null;
           }
         })
-        .filter((u): u is string => !!u && !/\.svg(\?|$)/i.test(u));
-      for (const url of [...new Set(candidates)].slice(0, MAX_CANDIDATES)) {
+        .filter((u): u is string => !!u);
+      const raster = [...new Set(candidates.filter((u) => !/\.svg(\?|$)/i.test(u)))].slice(0, MAX_CANDIDATES);
+      for (const url of raster) {
         const logo = await fetchIcon(url);
         if (logo && logo.contentType !== "image/x-icon" && (await looksLikeLogo(logo.bytes))) return logo;
+      }
+      // Many sites draw the logo as SVG (inline in the header, or an <img src=".svg">). It is drawn to a PNG here, so the apps and the
+      // web card get a plain picture and no SVG from another site is ever sent on.
+      for (const svg of inlineLogoSvgs(text)) {
+        const logo = await svgToPng(svg);
+        if (logo && (await looksLikeLogo(logo.bytes))) return logo;
+      }
+      for (const url of [...new Set(candidates.filter((u) => /\.svg(\?|$)/i.test(u)))].slice(0, 3)) {
+        const got = await safeFetch(url);
+        const bytes = got && (await readLimited(got.res, MAX_SVG_BYTES));
+        const logo = bytes && (await svgToPng(bytes.toString("utf8")));
+        if (logo && (await looksLikeLogo(logo.bytes))) return logo;
       }
     }
   }
@@ -149,6 +162,44 @@ function unwrapImageProxy(src: string): string {
   const next = /\/_next\/image\?(?:[^"']*&(?:amp;)?)?url=([^&"']+)/i.exec(src);
   if (next) { try { return decodeURIComponent(next[1]); } catch { /* keep the proxied one */ } }
   return src;
+}
+
+const MAX_SVG_BYTES = 200_000;
+
+/// An <svg> drawn inline inside a link or box that calls itself a logo (class, id or aria-label), in page order: the header's comes first.
+export function inlineLogoSvgs(html: string): string[] {
+  const found: string[] = [];
+  for (const m of html.matchAll(/<(?:a|div|span|h1|p)\b[^>]*logo[^>]*>\s*(?:<\?xml[^>]*\?>\s*)?(<svg\b[\s\S]*?<\/svg>)/gi)) {
+    if (m[1].length <= MAX_SVG_BYTES) found.push(m[1]);
+    if (found.length >= 3) break;
+  }
+  return found;
+}
+
+/// Refuses an SVG that could run script or pull in anything from elsewhere: scripts, embedded pages/images, external references, entities.
+export function isSafeSvg(svg: string): boolean {
+  if (svg.length > MAX_SVG_BYTES || !/<svg\b/i.test(svg)) return false;
+  if (/<\s*(script|foreignObject|image|iframe|object|embed|style\b[^>]*@import)|<!ENTITY|<!DOCTYPE\s[^>]*\[|\son[a-z]+\s*=|javascript:/i.test(svg)) return false;
+  for (const [, ref] of svg.matchAll(/(?:xlink:)?href\s*=\s*["']([^"']*)["']/gi)) if (!ref.startsWith("#")) return false;
+  if (/url\(\s*["']?(?!#)/i.test(svg)) return false;
+  return true;
+}
+
+/// Draws a safe SVG to a PNG (at most 800 x 400, transparent background). null if it is unsafe or cannot be drawn.
+export async function svgToPng(svg: string): Promise<{ bytes: Buffer; contentType: string } | null> {
+  const clean = svg.replace(/^\s*<\?xml[^>]*\?>/i, "").trim();
+  if (!isSafeSvg(clean)) return null;
+  try {
+    const sharp = (await import("sharp")).default;
+    const withNs = /<svg\b[^>]*\sxmlns\s*=/i.test(clean) ? clean : clean.replace(/<svg\b/i, '<svg xmlns="http://www.w3.org/2000/svg"');
+    const bytes = await sharp(Buffer.from(withNs), { density: 300, limitInputPixels: 20_000_000 })
+      .resize({ width: 800, height: 400, fit: "inside", withoutEnlargement: false })
+      .png()
+      .toBuffer();
+    return { bytes, contentType: "image/png" };
+  } catch {
+    return null;
+  }
 }
 
 /// A page background, hero or video poster that only mentions "logo" in its file name (spangel.co.uk: class "bg-image", edited-logo-video-3000x2160.jpg).
