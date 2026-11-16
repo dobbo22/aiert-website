@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import sql from "@/lib/db";
 import { requireBizSession } from "@/lib/tapcardBizSession";
-import { cleanPageUrl, saveFeedPage, setItemStatus } from "@/lib/tapcardIrFeed";
+import { cleanPageUrl, saveFeedPage, setItemStatus, syncFeed } from "@/lib/tapcardIrFeed";
 import { isListedCard } from "@/lib/tapcardShare";
 
 // A listed company's announcements page: save its address (and read it once), or ignore / restore one announcement. Admins only.
@@ -18,6 +18,11 @@ export async function POST(req: Request) {
     if (!pageUrl) return NextResponse.json({ error: "Enter the web address of the page that lists your announcements." }, { status: 400 });
     const r = await saveFeedPage(cardId, pageUrl);
     return r.ok ? NextResponse.json({ ok: true, found: r.found }) : NextResponse.json({ error: r.error }, { status: 400 });
+  }
+  // "Refresh now": read the page again (not more than once every 10 seconds) and say when it was last checked.
+  if (body?.action === "refresh") {
+    const cfg = await syncFeed(cardId, 10_000).catch(() => null);
+    return NextResponse.json({ ok: true, checkedAt: cfg?.lastCheckedAt ?? null, error: cfg?.lastError ?? "" });
   }
   if (body?.action === "ignore" || body?.action === "restore") {
     const url = String(body.url ?? "");

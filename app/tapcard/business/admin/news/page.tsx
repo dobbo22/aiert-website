@@ -29,6 +29,6 @@ export default async function BizNewsPage() {
 
   return (
     <PostHeadline cardId={card.id} cardName={card.company || card.name} active={isOrgActive(org)} latest={s.latestNews?.text ?? null} followers={s.canBeNotified}
-      feed={{ pageUrl: cfg?.pageUrl ?? null, suggested, lastError: cfg?.lastError ?? "", rows }} />
+      feed={{ pageUrl: cfg?.pageUrl ?? null, lastCheckedAt: cfg?.lastCheckedAt ?? null, suggested, lastError: cfg?.lastError ?? "", rows }} />
   );
 }

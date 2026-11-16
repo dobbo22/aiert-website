@@ -81,11 +81,11 @@ async function readPage(pageUrl: string): Promise<{ ok: true; items: FeedItem[] 
   }
 }
 
-/// Re-reads the page (at most once a minute per card) and records anything new. Returns the saved configuration.
-export async function syncFeed(cardId: string): Promise<FeedConfig | null> {
+/// Re-reads the page (at most once a minute per card, or once every `minAgeMs`) and records anything new. Returns the saved configuration.
+export async function syncFeed(cardId: string, minAgeMs = 60_000): Promise<FeedConfig | null> {
   const cfg = await getFeedConfig(cardId);
   if (!cfg) return null;
-  if (cfg.lastCheckedAt && Date.now() - new Date(cfg.lastCheckedAt).getTime() < 60_000) return cfg;
+  if (cfg.lastCheckedAt && Date.now() - new Date(cfg.lastCheckedAt).getTime() < minAgeMs) return cfg;
   const fetched = await readPage(cfg.pageUrl);
   if (!fetched.ok) {
     await sql`UPDATE tapcard_ir_feed SET last_checked_at = now(), last_error = ${fetched.error} WHERE card_id = ${cardId}`;

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const MAX = 140;
 
 export interface FeedRow { url: string; title: string; date: string | null; status: "new" | "earlier" | "ignored"; posted: boolean }
-export interface FeedProps { pageUrl: string | null; suggested: string; lastError: string; rows: FeedRow[] }
+export interface FeedProps { pageUrl: string | null; lastCheckedAt: string | null; suggested: string; lastError: string; rows: FeedRow[] }
 
 const headlineOf = (title: string) => { const x = title.replace(/\s+/g, " ").trim(); return x.length <= MAX ? x : x.slice(0, MAX - 3).trimEnd() + "..."; };
 
@@ -17,6 +18,35 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
   const [page, setPage] = useState(feed.pageUrl ?? feed.suggested);
   const [editingPage, setEditingPage] = useState(!feed.pageUrl);
   const [feedMsg, setFeedMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  // When the page was last read, and a refresh that happens by itself every 3 minutes while this page stays open.
+  const router = useRouter();
+  const [checkedAt, setCheckedAt] = useState<string | null>(feed.lastCheckedAt);
+  const [now, setNow] = useState(() => Date.now());
+  const [refreshing, setRefreshing] = useState(false);
+  async function refreshNow() {
+    if (!feed.pageUrl || refreshing) return;
+    setRefreshing(true);
+    const res = await fetch("/api/tapcard/biz/ir-feed", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cardId, action: "refresh" }) }).catch(() => null);
+    const data = (await res?.json().catch(() => null)) as { checkedAt?: string | null } | null;
+    if (data?.checkedAt) setCheckedAt(data.checkedAt);
+    setNow(Date.now());
+    router.refresh();
+    setRefreshing(false);
+  }
+  useEffect(() => {
+    if (!feed.pageUrl) return;
+    const tick = setInterval(() => setNow(Date.now()), 30_000);
+    const auto = setInterval(() => { void refreshNow(); }, 180_000);
+    return () => { clearInterval(tick); clearInterval(auto); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feed.pageUrl]);
+  const ago = (iso: string | null) => {
+    if (!iso) return "not yet";
+    const s = Math.max(0, Math.round((now - new Date(iso).getTime()) / 1000));
+    if (s < 60) return "just now";
+    const m = Math.round(s / 60);
+    return m < 60 ? `${m} minute${m === 1 ? "" : "s"} ago` : `${Math.round(m / 60)} hour${Math.round(m / 60) === 1 ? "" : "s"} ago`;
+  };
 
   async function feedCall(body: Record<string, unknown>, done?: string) {
     setBusy(true); setFeedMsg(null);
@@ -75,6 +105,12 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
           </div>
         ) : (
           <p className="mt-3 text-cloud">Watching <a className="text-gold underline" href={feed.pageUrl ?? "#"} target="_blank" rel="noopener noreferrer">{feed.pageUrl}</a> · <button type="button" className="text-gold underline" onClick={() => setEditingPage(true)}>Change page</button></p>
+        )}
+        {feed.pageUrl && !editingPage && (
+          <p className="mt-1 text-sm text-cloud">
+            Last checked {ago(checkedAt)} · <button type="button" disabled={refreshing} onClick={() => void refreshNow()} className="font-semibold text-gold underline disabled:opacity-60">{refreshing ? "Checking…" : "Refresh now"}</button>
+            <span className="block">It also checks by itself every few minutes while this page is open.</span>
+          </p>
         )}
         {feedMsg && <p className={`mt-3 rounded-lg px-3 py-2 ${feedMsg.ok ? "bg-teal/20" : "bg-red-500/20"} text-cloud`} role="status">{feedMsg.ok ? "✓ " : "✗ "}{feedMsg.text}</p>}
         {feed.lastError && <p className="mt-3 rounded-lg bg-red-500/20 px-3 py-2 text-cloud">The last check failed: {feed.lastError}</p>}
