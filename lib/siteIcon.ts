@@ -100,11 +100,14 @@ export async function findSiteLogo(
 
 /// Skips lazy-load placeholders and near-empty images: a real logo is at least 80 x 24 pixels and has visible marks
 /// (the pixels are not all one colour once flattened onto white). Fails open if the image can't be read.
+const MAX_LOGO_PIXELS = 2_500_000; // 1600 x 1600: bigger than any real logo file, so it is a photo or a hero picture
+
 async function looksLikeLogo(bytes: Buffer): Promise<boolean> {
   try {
     const sharp = (await import("sharp")).default;
     const meta = await sharp(bytes).metadata();
     if ((meta.width ?? 0) < 80 || (meta.height ?? 0) < 24) return false;
+    if ((meta.width ?? 0) * (meta.height ?? 0) > MAX_LOGO_PIXELS) return false;
     const stats = await sharp(bytes).flatten({ background: "#ffffff" }).stats();
     const spread = Math.max(...stats.channels.slice(0, 3).map((c) => c.stdev));
     return spread >= 6;
@@ -148,12 +151,23 @@ function unwrapImageProxy(src: string): string {
   return src;
 }
 
-function logoImages(html: string): string[] {
+/// A page background, hero or video poster that only mentions "logo" in its file name (spangel.co.uk: class "bg-image", edited-logo-video-3000x2160.jpg).
+/// Skipped by class/id words and by a large pixel size in the file name; looksLikeLogo also refuses very large pictures.
+export function isBackdropImage(cls: string, id: string, src: string): boolean {
+  if (/\b(bg|background|hero|banner|slide|slider|cover|poster|video|parallax)\b|(^|[-_ ])(bg|background|hero|banner|slide|poster|video)(?=[-_ .])/i.test(`${cls} ${id}`)) return true;
+  const file = src.split(/[?#]/)[0].split("/").pop() ?? "";
+  if (/(^|[-_])(hero|banner|background|video|slide|poster)([-_.]|$)/i.test(file)) return true;
+  const dim = /-(\d{3,5})x(\d{3,5})\.[a-z]+$/i.exec(file);
+  return !!dim && Number(dim[1]) * Number(dim[2]) > MAX_LOGO_PIXELS;
+}
+
+export function logoImages(html: string): string[] {
   const found: string[] = [];
   for (const [tag] of html.matchAll(/<img\b[^>]*>/gi)) {
     const attr = (name: string) => new RegExp(`\\s${name}\\s*=\\s*["']([^"']*)["']`, "i").exec(tag)?.[1] ?? "";
     const src = attr("data-src") || attr("src");
     if (!src || src.startsWith("data:")) continue;
+    if (isBackdropImage(attr("class"), attr("id"), src)) continue;
     if (/logo/i.test([attr("class"), attr("id"), attr("alt"), src].join(" "))) found.push(unwrapImageProxy(src));
   }
   return found;
