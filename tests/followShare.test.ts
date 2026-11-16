@@ -62,3 +62,14 @@ test("a company privacy link must be a plain https address", () => {
   assert.equal(cleanPrivacyUrl("https://localhost/x"), "", "needs a real domain");
   assert.equal(cleanPrivacyUrl(42), "");
 });
+
+import { emailGroup } from "../lib/tapcardShareRules";
+test("personal mail addresses are private investors, company addresses group by domain", () => {
+  for (const e of ["a@gmail.com", "a@GoogleMail.com", "a@hotmail.com", "a@hotmail.co.uk", "a@outlook.com", "a@outlook.fr", "a@live.co.uk", "a@yahoo.co.uk", "a@icloud.com", "a@btinternet.com", "a@btopenworld.com", "a@sky.com", "a@protonmail.com", "a@aol.com", "nonsense", ""])
+    assert.deepEqual(emailGroup(e), { kind: "private" }, e);
+  assert.deepEqual(emailGroup("jo@acme.co.uk"), { kind: "company", domain: "acme.co.uk" });
+  assert.deepEqual(emailGroup("jo@mail.acme.co.uk"), { kind: "company", domain: "acme.co.uk" });
+  assert.deepEqual(emailGroup("jo@www.acme.com"), { kind: "company", domain: "acme.com" });
+  assert.deepEqual(emailGroup("Jo@Hobart-Capital.com"), { kind: "company", domain: "hobart-capital.com" });
+  assert.deepEqual(emailGroup("jo@mailchimp.com"), { kind: "company", domain: "mailchimp.com" });
+});

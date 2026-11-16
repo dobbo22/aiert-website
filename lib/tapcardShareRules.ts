@@ -51,3 +51,24 @@ export function cleanPrivacyUrl(v: unknown): string {
   if (t.length > 300 || /\s/.test(t)) return "";
   try { const u = new URL(t); return u.protocol === "https:" && u.hostname.includes(".") ? u.toString() : ""; } catch { return ""; }
 }
+
+// Personal mail providers: a follower using one of these is a private (retail) investor, not someone writing from a company.
+const PRIVATE_DOMAINS = new Set([
+  "gmail.com", "googlemail.com", "icloud.com", "me.com", "mac.com", "aol.com", "aol.co.uk", "proton.me", "protonmail.com", "pm.me", "mail.com", "gmx.com", "gmx.co.uk", "gmx.net",
+  "btinternet.com", "btopenworld.com", "bt.com", "sky.com", "talktalk.net", "virginmedia.com", "ntlworld.com", "blueyonder.co.uk", "tiscali.co.uk", "plus.net", "fastmail.com", "fastmail.fm", "zoho.com",
+  "yandex.com", "qq.com", "163.com", "126.com", "tutanota.com", "hey.com",
+]);
+const PRIVATE_FIRST_LABELS = new Set(["hotmail", "outlook", "live", "msn", "yahoo", "ymail", "rocketmail", "googlemail", "icloud"]);
+
+export type EmailGroup = { kind: "private" } | { kind: "company"; domain: string };
+
+/// Which group an email address belongs to for the Followers filter: "private" for a personal mail address (gmail, hotmail, outlook, yahoo, icloud, BT and so on),
+/// otherwise the company's web domain (the part after the @, without www or mail).
+export function emailGroup(email: string): EmailGroup {
+  const at = email.lastIndexOf("@");
+  const domain = (at >= 0 ? email.slice(at + 1) : "").trim().toLowerCase().replace(/^(www|mail)\./, "");
+  if (!domain || !domain.includes(".")) return { kind: "private" };
+  if (PRIVATE_DOMAINS.has(domain) || PRIVATE_FIRST_LABELS.has(domain.split(".")[0])) return { kind: "private" };
+  return { kind: "company", domain };
+}
+

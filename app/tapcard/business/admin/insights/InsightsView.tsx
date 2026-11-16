@@ -16,10 +16,11 @@ export default function InsightsView({ data }: { data: Insights }) {
     <div className="space-y-6">
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">Insights</h2>
-        <p className="mt-2 text-cloud">
-          Totals only, never a named person. Scans and taps are counted as <strong>opens</strong>, not people: a person who opens a link twice counts twice, and link
-          previews and scanners are left out where we can tell.
-        </p>
+        <p className="mt-2 text-cloud">Totals only, never a named person.</p>
+        <details className="mt-2 text-sm text-cloud">
+          <summary className="cursor-pointer font-semibold">How these numbers are counted</summary>
+          <p className="mt-2">Scans and taps are counted as <strong>opens</strong>, not people: a person who opens a link twice counts twice, and link previews and scanners are left out where we can tell.</p>
+        </details>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
@@ -32,10 +33,7 @@ export default function InsightsView({ data }: { data: Insights }) {
 
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">Where followers came from</h2>
-        <p className="mt-2 text-cloud">
-          Make a QR code for each place it will appear (see <a className="text-gold underline" href="/business/admin/cards">Cards &amp; QR</a>), for example one for the printed annual report and one
-          for the web PDF. Compare how many opened each and how many of those followed.
-        </p>
+        <p className="mt-2 text-cloud">Opens and followers for each event QR code. Make codes on the <a className="text-gold underline" href="/business/admin/events">Events</a> tab.</p>
         {sources.length === 0 ? (
           <p className="mt-4 rounded-xl bg-white/10 px-4 py-3 text-cloud">No event codes yet.</p>
         ) : (
@@ -63,10 +61,7 @@ export default function InsightsView({ data }: { data: Insights }) {
 
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">Your announcements</h2>
-        <p className="mt-2 text-cloud">
-          For each headline: how many followers it was sent to, and how many tapped through to the release. A tap is counted when someone opens it from the app or the card page;
-          seeing the headline in a notification is not a tap.
-        </p>
+        <p className="mt-2 text-cloud">How many followers each headline was sent to, and how many tapped through to the release.</p>
         {announcements.length === 0 ? (
           <p className="mt-4 rounded-xl bg-white/10 px-4 py-3 text-cloud">Nothing posted yet.</p>
         ) : (
