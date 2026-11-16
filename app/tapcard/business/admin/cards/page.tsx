@@ -29,7 +29,6 @@ export default async function BizCardsPage({ searchParams }: { searchParams: Pro
   const tab = TABS.find((t) => t.key === tabParam)?.key ?? "company";
   const s = await listedSummary(org.id);
   const company = s.cards.filter((c) => c.isCompany);
-  const team = s.cards.filter((c) => !c.isCompany);
   const companyCard = company[0];
   const companyName = companyCard?.company || companyCard?.name || org.name;
   const [events, attendance] = tab === "events" && s.primaryCardId ? await Promise.all([listEvents(org.id).catch(() => []), listEventAttendees(org.id).catch(() => ({}))]) : [[], {}];
@@ -61,31 +60,31 @@ export default async function BizCardsPage({ searchParams }: { searchParams: Pro
         <>
           <p className="text-cloud">Each person who speaks for the company (chair, CEO, CFO, IR contact) has their own card and QR code, so a meeting ends with a follow and a direct contact. Anyone who follows a team card follows the company.</p>
           <InvitePeople billingActive={isOrgActive(org)} orgName={org.name} domain={org.domain} listed shops={[]} />
-          {team.length === 0 && <p className="rounded-2xl bg-charcoal p-6 text-cloud ring-1 ring-white/10">No team cards yet. Create a link above for each person and send it to them.</p>}
-          <div className="grid gap-4 md:grid-cols-2">
-            {team.map((c) => <CardQr key={c.id} id={c.id} title={c.name || "Card"} subtitle={c.title || "Team card"} />)}
-          </div>
-          {orgCards.length > 0 && (
+          {orgCards.filter((c) => !companyIds.has(c.id)).length === 0 ? (
+            <p className="rounded-2xl bg-charcoal p-6 text-cloud ring-1 ring-white/10">No team cards yet. Create a link above for each person and send it to them.</p>
+          ) : (
             <div className="rounded-2xl bg-charcoal ring-1 ring-white/10">
               <div className="flex items-baseline justify-between px-4 pt-4">
-                <h2 className="text-lg font-bold text-cloud">Manage cards</h2>
-                <span className="text-sm text-cloud">{orgCards.length} of {org.seat_limit || "–"} cards used</span>
+                <h2 className="text-lg font-bold text-cloud">Cards</h2>
+                <span className="text-sm text-cloud">{orgCards.length} of {org.seat_limit || "–"} cards used (including the company card)</span>
               </div>
-              <div className="overflow-x-auto">
-                <table className="mt-2 w-full text-left text-cloud">
-                  <thead><tr className="border-b border-slate text-sm"><th className="px-4 py-3">Name</th><th className="px-4 py-3">Email</th><th className="px-4 py-3">Title</th><th className="px-4 py-3" /></tr></thead>
-                  <tbody>
-                    {orgCards.map((c) => (
-                      <tr key={c.id} className="border-b border-slate/50">
-                        <td className="px-4 py-3">{c.name}{companyIds.has(c.id) ? " (company card)" : ""}</td>
-                        <td className="px-4 py-3">{c.email}</td>
-                        <td className="px-4 py-3">{c.title}</td>
-                        <td className="px-4 py-3 text-right"><RemoveCardButton cardId={c.id} name={c.name} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <ul className="mt-2">
+                {orgCards.filter((c) => !companyIds.has(c.id)).map((c) => (
+                  <li key={c.id} className="border-t border-slate/50 px-4 py-3">
+                    <details>
+                      <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-3 text-cloud">
+                        <span>
+                          <span className="font-semibold">{c.name}</span>
+                          <span className="block text-sm">{[c.title, c.email].filter(Boolean).join(" · ")}</span>
+                        </span>
+                        <span className="text-sm font-semibold text-gold underline">Show QR code</span>
+                      </summary>
+                      <div className="mt-3 max-w-md"><CardQr id={c.id} title={c.name || "Card"} subtitle={c.title || "Team card"} /></div>
+                      <div className="mt-2 text-right"><RemoveCardButton cardId={c.id} name={c.name} /></div>
+                    </details>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </>
