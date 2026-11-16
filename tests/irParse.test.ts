@@ -36,3 +36,17 @@ test("scripts, bad pages and long titles are handled", () => {
   assert.deepEqual(parseAnnouncements(TABLE, "not a url"), []);
   assert.ok(headlineOf("x".repeat(300)).length <= 140);
 });
+
+import { cleanTitle } from "../lib/tapcardIrParse";
+test("a card link keeps just the headline: no leading date and time, no trailing Read more (empiremetals.com)", () => {
+  assert.equal(cleanTitle("27 October 2026 07:00 Pilot-Scale Testing and Scoping Study Update Read more"), "Pilot-Scale Testing and Scoping Study Update");
+  assert.equal(cleanTitle("16 September 2026 07:00 Partnership with CMCI CRC Read more"), "Partnership with CMCI CRC");
+  assert.equal(cleanTitle("Interim Results for the Six Months Ended 30 June 2026"), "Interim Results for the Six Months Ended 30 June 2026");
+  assert.equal(cleanTitle("27 October 2026"), "27 October 2026");
+});
+test("an investors page of dated cards is read with clean headlines", () => {
+  const html = `<ul><li><a href="https://irtools.example/story/1">27 October 2026 07:00 Pilot-Scale Testing and Scoping Study Update Read more</a></li><li><a href="https://irtools.example/story/2">24 September 2026 07:00 Pitfield Product Development Update Read more</a></li></ul>`;
+  const items = parseAnnouncements(html, "https://www.example.com/investors/");
+  assert.deepEqual(items.map((i) => i.title), ["Pilot-Scale Testing and Scoping Study Update", "Pitfield Product Development Update"]);
+  assert.deepEqual(items.map((i) => i.date), ["2026-10-27", "2026-09-24"]);
+});

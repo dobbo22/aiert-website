@@ -64,7 +64,7 @@ export function parseAnnouncements(body: string, pageUrl: string, max = 30): Fee
     if (!date) continue;
     const anchors = [...b.matchAll(/<a\s[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)];
     for (const a of anchors) {
-      const title = text(a[2]);
+      const title = cleanTitle(text(a[2]));
       if (title.length < 8 || GENERIC.test(title) || !/[A-Za-z]{3}/.test(title)) continue;
       const url = absolute(a[1], base);
       if (!url) continue;
@@ -78,6 +78,16 @@ export function parseAnnouncements(body: string, pageUrl: string, max = 30): Fee
 function dedupe(items: FeedItem[]): FeedItem[] {
   const seen = new Set<string>();
   return items.filter((i) => (seen.has(i.url) ? false : (seen.add(i.url), true)));
+}
+
+/// A card-style link whose text is the whole card ("27 October 2026 07:00 Pilot-Scale Testing Update Read more", empiremetals.com): the leading
+/// date and time and the trailing "Read more" are not part of the headline. Leaves the title alone if nothing would be left.
+export function cleanTitle(title: string): string {
+  const t = title
+    .replace(/^\s*(?:\d{1,2}(?:st|nd|rd|th)?[\s-]+[A-Za-z]{3,9}[\s-]+\d{4}|\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4})(?:[ T]+\d{1,2}[:.]\d{2}(?::\d{2})?(?:\s*[ap]m)?)?\s*[-:|,]?\s*/i, "")
+    .replace(/\s*[-|]?\s*(?:read more|read the full (?:story|announcement)|read full announcement|view (?:more|announcement)|more)\.*\s*$/i, "")
+    .trim();
+  return t.length >= 8 && /[A-Za-z]{3}/.test(t) ? t : title;
 }
 
 /// What the admin needs to filter and display: a title short enough for a headline.
