@@ -94,10 +94,17 @@ export function ensureAttendanceTable(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_event_attendance DROP CONSTRAINT IF EXISTS tapcard_event_attendance_pkey`)
       .then(() => sql`CREATE UNIQUE INDEX IF NOT EXISTS tapcard_event_attendance_uniq ON tapcard_event_attendance (card_id, follower_hash, event_code, slot_id)`)
       .then(() => sql`CREATE INDEX IF NOT EXISTS tapcard_event_attendance_code ON tapcard_event_attendance (event_code)`)
-      // Earlier single tags become the first row (safe to repeat).
-      .then(() => sql`INSERT INTO tapcard_event_attendance (card_id, follower_hash, event_code, via, first_at)
-                      SELECT card_id, follower_hash, event_code, CASE WHEN event_via = 'window' THEN 'window' ELSE 'code' END, created_at
-                      FROM tapcard_followers f WHERE f.event_code <> '' AND NOT EXISTS (SELECT 1 FROM tapcard_event_attendance a WHERE a.card_id = f.card_id AND a.follower_hash = f.follower_hash AND a.event_code = f.event_code) ON CONFLICT DO NOTHING`)
+      // Earlier single tags become the first row, ONCE (a marker row says it is done). Running it on every cold start copied a tag written moments
+      // earlier by a follow into slot 0 with the wrong time, ahead of the slot logic.
+      .then(() => sql`CREATE TABLE IF NOT EXISTS tapcard_event_attendance_migrated (done BOOLEAN PRIMARY KEY)`)
+      .then(async () => {
+        const done = (await sql`SELECT 1 FROM tapcard_event_attendance_migrated`) as unknown[];
+        if (done.length) return;
+        await sql`INSERT INTO tapcard_event_attendance (card_id, follower_hash, event_code, via, first_at)
+                  SELECT card_id, follower_hash, event_code, CASE WHEN event_via = 'window' THEN 'window' ELSE 'code' END, created_at
+                  FROM tapcard_followers f WHERE f.event_code <> '' AND NOT EXISTS (SELECT 1 FROM tapcard_event_attendance a WHERE a.card_id = f.card_id AND a.follower_hash = f.follower_hash AND a.event_code = f.event_code) ON CONFLICT DO NOTHING`;
+        await sql`INSERT INTO tapcard_event_attendance_migrated (done) VALUES (true) ON CONFLICT DO NOTHING`;
+      })
       .catch((e) => { attReady = null; throw e; });
   }
   return attReady;

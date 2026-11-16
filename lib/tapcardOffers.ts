@@ -274,6 +274,8 @@ export async function setFollower(cardId: string, follower: string, follow: bool
   await ensureOfferSchema();
   const who = hashSecret(`tapcard-follower:${follower}`);
   if (follow && eventCode) {
+    // The attendance table (and its one-time copy of old tags) must exist BEFORE the old tag is written below.
+    await (await import("@/lib/tapcardEvents")).ensureAttendanceTable();
     // The event a follow came through (an event QR of a listed company): kept from the first follow that carried one.
     const { ensureFollowerEventColumn } = await import("@/lib/tapcardEvents");
     await ensureFollowerEventColumn();
