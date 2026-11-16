@@ -153,6 +153,10 @@ export default function TapCardPrivacyPage() {
             from our systems. A copy the person has already saved to their own phone is theirs to remove.</li>
           <li><strong>What is shared:</strong> the name and email address you give. Nothing else
             from your phone.</li>
+          <li><strong>Events:</strong> if you scan a company&apos;s event QR code (for example its AGM), we record which event it was,
+            for every event you scan. If you have chosen to share your details, the company sees the event names beside your name,
+            so it knows you attended. If you follow only, the events are counted without your name. No location is read. Stopping
+            following removes them.</li>
           <li><strong>Why:</strong> so the company can contact you about its announcements and shareholder information. Anything
             promotional needs your separate consent and an unsubscribe.</li>
           <li><strong>Our basis:</strong> your consent, given by tapping <strong>Follow and share my details</strong>.</li>
