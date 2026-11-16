@@ -43,7 +43,7 @@ export default function InvestorGuidePage() {
         <ol className="ml-5 mt-2 space-y-1.5 [&>li]:list-decimal!">
           <li><strong>Check your company card</strong> (Overview, then Open the card). This is what a shareholder sees after scanning: your logo, investor pages and the follow button.</li>
           <li><strong>Put the QR code where shareholders already look</strong>: results slides, the annual report, the AGM notice and your website. Download it on Cards &amp; QR, then Company card.</li>
-          <li><strong>Add your people</strong> on the People tab: chair, CEO, CFO and IR contact each get a card and QR code. A shareholder who follows through a person follows the company.</li>
+          <li><strong>Add your people</strong> under Cards &amp; QR, Team cards: chair, CEO, CFO and IR contact each get a card and QR code. A shareholder who follows through a person follows the company.</li>
           <li><strong>Make an event code</strong> for your AGM or a roadshow under Cards &amp; QR, Events (see below).</li>
           <li><strong>Post a headline after your next RNS</strong> on News &amp; RNS.</li>
         </ol>
@@ -56,8 +56,8 @@ export default function InvestorGuidePage() {
           <li><strong>Followers</strong>: people who shared their name and email. <em>By company</em> groups them by email domain with a logo and a count; click a company for its names and emails. <em>Everyone</em> is a table you can filter by company, by private investors, by event, or search. Download CSV exports the whole list.</li>
           <li><strong>Insights</strong>: counts only, never a named person: followers over time, opens and registrations for each event and slot, and how many tapped through each headline.</li>
           <li><strong>News &amp; RNS</strong>: your announcements page is watched for new items, and each is one tap to post as a headline. You can also write your own.</li>
-          <li><strong>Cards &amp; QR</strong>: Company card, Team cards, Events (one QR code per AGM, roadshow or meeting, with time slots and a list of who registered) and your Privacy notice link.</li>
-          <li><strong>People</strong>, <strong>Admins</strong> and <strong>Billing</strong>: who has a card, who can sign in, and your plan.</li>
+          <li><strong>Cards &amp; QR</strong>: Company card, Team cards (add people, their QR codes and removing a card), Events (one QR code per AGM, roadshow or meeting, with time slots and a list of who registered) and your Privacy notice link.</li>
+          <li><strong>Admins</strong> and <strong>Billing</strong>: who can sign in, and your plan.</li>
         </ul>
       </section>
 

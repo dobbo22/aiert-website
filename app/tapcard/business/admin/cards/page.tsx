@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { requireBizSession } from "@/lib/tapcardBizSession";
-import { getOrg } from "@/lib/tapcardBiz";
+import { getOrg, isOrgActive, listOrgCards } from "@/lib/tapcardBiz";
 import { listedSummary } from "@/lib/tapcardListedAdmin";
 import { listEventAttendees, listEvents } from "@/lib/tapcardEvents";
 import { getPrivacyUrl } from "@/lib/tapcardShare";
 import CardQr from "./CardQr";
 import PrivacyLink from "./PrivacyLink";
 import EventQrs from "./EventQrs";
+import InvitePeople from "../employees/InvitePeople";
+import RemoveCardButton from "../employees/RemoveCardButton";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +33,8 @@ export default async function BizCardsPage({ searchParams }: { searchParams: Pro
   const companyCard = company[0];
   const companyName = companyCard?.company || companyCard?.name || org.name;
   const [events, attendance] = tab === "events" && s.primaryCardId ? await Promise.all([listEvents(org.id).catch(() => []), listEventAttendees(org.id).catch(() => ({}))]) : [[], {}];
+  const orgCards = tab === "team" ? await listOrgCards(org.id) : [];
+  const companyIds = new Set(company.map((c) => c.id));
   const privacyUrl = s.primaryCardId ? await getPrivacyUrl(s.primaryCardId).catch(() => "") : "";
   return (
     <div className="space-y-6">
@@ -55,11 +59,35 @@ export default async function BizCardsPage({ searchParams }: { searchParams: Pro
 
       {tab === "team" && (
         <>
-          <p className="text-cloud">Each person who speaks for the company has their own card and QR code, so a meeting ends with a follow and a direct contact. Add people on the People tab.</p>
-          {team.length === 0 && <p className="rounded-2xl bg-charcoal p-6 text-cloud ring-1 ring-white/10">No team cards yet. Add the chair, CEO, CFO and IR contact on the People tab.</p>}
+          <p className="text-cloud">Each person who speaks for the company (chair, CEO, CFO, IR contact) has their own card and QR code, so a meeting ends with a follow and a direct contact. Anyone who follows a team card follows the company.</p>
+          <InvitePeople billingActive={isOrgActive(org)} orgName={org.name} domain={org.domain} listed shops={[]} />
+          {team.length === 0 && <p className="rounded-2xl bg-charcoal p-6 text-cloud ring-1 ring-white/10">No team cards yet. Create a link above for each person and send it to them.</p>}
           <div className="grid gap-4 md:grid-cols-2">
             {team.map((c) => <CardQr key={c.id} id={c.id} title={c.name || "Card"} subtitle={c.title || "Team card"} />)}
           </div>
+          {orgCards.length > 0 && (
+            <div className="rounded-2xl bg-charcoal ring-1 ring-white/10">
+              <div className="flex items-baseline justify-between px-4 pt-4">
+                <h2 className="text-lg font-bold text-cloud">Manage cards</h2>
+                <span className="text-sm text-cloud">{orgCards.length} of {org.seat_limit || "–"} cards used</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="mt-2 w-full text-left text-cloud">
+                  <thead><tr className="border-b border-slate text-sm"><th className="px-4 py-3">Name</th><th className="px-4 py-3">Email</th><th className="px-4 py-3">Title</th><th className="px-4 py-3" /></tr></thead>
+                  <tbody>
+                    {orgCards.map((c) => (
+                      <tr key={c.id} className="border-b border-slate/50">
+                        <td className="px-4 py-3">{c.name}{companyIds.has(c.id) ? " (company card)" : ""}</td>
+                        <td className="px-4 py-3">{c.email}</td>
+                        <td className="px-4 py-3">{c.title}</td>
+                        <td className="px-4 py-3 text-right"><RemoveCardButton cardId={c.id} name={c.name} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </>
       )}
 

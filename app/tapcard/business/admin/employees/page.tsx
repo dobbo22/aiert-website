@@ -1,6 +1,7 @@
 import { requireBizUser } from "@/lib/tapcardBizSession";
 import { getOrg, isOrgActive, listOrgCards, listStaffForLocations } from "@/lib/tapcardBiz";
 import { listLocations } from "@/lib/tapcardBizLocations";
+import { redirect } from "next/navigation";
 import InvitePeople from "./InvitePeople";
 import PostControls from "./PostControls";
 import RemoveCardButton from "./RemoveCardButton";
@@ -50,6 +51,8 @@ export default async function BizEmployeesPage() {
     );
   }
 
+  // A listed company manages its people under Cards & QR, Team cards.
+  if (await orgIsListed(org.id)) redirect("/business/admin/cards?tab=team");
   const cards = await listOrgCards(org.id);
   // A listed (investor relations) company: no shops or offers. Staff cards are for contact details, and anyone who follows one follows the company.
   const listed = await orgIsListed(org.id);

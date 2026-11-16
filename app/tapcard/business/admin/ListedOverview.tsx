@@ -24,7 +24,7 @@ export function ListedOverviewView({ s, orgName, events = [], people = [], now }
       text: "Results slides, the annual report, the AGM notice, your website and roadshow decks. Download it from Cards & QR." },
     { done: events.length > 0, href: "/business/admin/cards?tab=events", title: "Make a QR code for your AGM or a roadshow",
       text: "Each event gets its own code, with optional time slots for a day of visits. You see who registered, and the people who shared their details by name." },
-    { done: s.cards.length > 1, href: "/business/admin/employees", title: "Add the people who speak for the company",
+    { done: s.cards.length > 1, href: "/business/admin/cards?tab=team", title: "Add the people who speak for the company",
       text: "The chair, CEO, CFO and IR contact each get their own card and QR code, so a meeting ends with a follow and a direct contact." },
     { done: !!s.latestNews, href: "/business/admin/news", title: "Post a headline after your next RNS",
       text: "A one-line headline and a link to the announcement. Followers are notified. Post only after the RNS is public." },
