@@ -257,6 +257,8 @@ export async function pushToFollowers(cardId: string, kind: PushKind, msg: PushM
     sandbox?.close();
     if (done.length) {
       await sql`INSERT INTO tapcard_push_log (card_id, follower_hash, kind, ref) SELECT ${cardId}, h, ${kind}, ${msg.ref} FROM unnest(${done}::text[]) AS h`;
+      // An announcement's send count is kept (the log above is cleared after 14 days) so Insights can still show it.
+      if (kind === "news") await (await import("@/lib/tapcardInsights")).recordNewsSent(Number(msg.ref), done.length);
     }
     if (dead.length) await sql`DELETE FROM tapcard_push_devices WHERE follower_hash = ANY(${dead})`;
     return { sent, skipped: false };

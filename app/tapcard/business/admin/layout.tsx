@@ -24,11 +24,11 @@ export default async function BizAdminLayout({ children }: { children: React.Rea
     <main className="min-h-screen px-4 py-10">
       <div className="mx-auto max-w-4xl">
         {session.support && (
-          <p className="mb-4 rounded-xl bg-gold px-4 py-2 text-sm font-semibold text-black">
+          <p className="mb-4 rounded-xl bg-gold px-4 py-2 text-sm font-semibold text-black print:hidden">
             AIERT support is viewing this company (allowed by the company, two-hour session, billing locked, logged).
           </p>
         )}
-        <header className="flex items-center justify-between">
+        <header className="flex items-center justify-between print:hidden">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wider text-teal">{listed ? "TapCard for investor relations" : "TapCard for Business"}</p>
             <h1 className="mt-1 text-2xl font-black text-cloud">{org.name}</h1>
@@ -41,7 +41,7 @@ export default async function BizAdminLayout({ children }: { children: React.Rea
         </header>
         <AdminNav role={session.role} listed={listed} />
         <div className="mt-8">{children}</div>
-        <footer className="mt-12 border-t border-slate pt-6 text-sm text-mist">
+        <footer className="mt-12 border-t border-slate pt-6 text-sm text-mist print:hidden">
           {listed && <><a href="/business/investor-guide" className="text-gold underline">Investor relations guide &amp; FAQs</a> ·{" "}</>}
           <a href="/business/guide" className="text-gold underline">Admin guide</a> ·{" "}
           <a href="/business/security" className="text-gold underline">Security &amp; privacy</a>

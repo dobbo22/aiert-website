@@ -1,5 +1,6 @@
 import sql from "@/lib/db";
 import { buildSeries, lastDays, type DayPoint } from "@/lib/tapcardInsightsSeries";
+import { followChangeAfter, investorMix, type InvestorMix } from "@/lib/tapcardInsightsMath";
 
 // Insights for a LISTED company: counts only, never a named person. Scans of each event QR code, taps through to each announcement,
 // followers over time. Nothing here links a shareholder who shared their details to what they opened.
@@ -14,6 +15,12 @@ function ensureInsightSchema(): Promise<unknown> {
       .then(() => sql`CREATE TABLE IF NOT EXISTS tapcard_announcement_opens (
         announcement_id BIGINT NOT NULL, day DATE NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (announcement_id, day)
       )`)
+      // When taps through to an announcement happen: how soon after posting, and the hour of the day (UK time), counted from the day this was first created.
+      .then(() => sql`CREATE TABLE IF NOT EXISTS tapcard_announcement_open_log (
+        announcement_id BIGINT NOT NULL, delay TEXT NOT NULL, hod INTEGER NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (announcement_id, delay, hod)
+      )`)
+      // How many phones each announcement was pushed to. The push log is cleared after 14 days, so the count is kept here.
+      .then(() => sql`CREATE TABLE IF NOT EXISTS tapcard_announcement_sent (announcement_id BIGINT PRIMARY KEY, sent INTEGER NOT NULL DEFAULT 0)`)
       // A daily count of people who started and stopped following, so Insights can show drop-off. It starts counting the day this is first created.
       .then(() => sql`CREATE TABLE IF NOT EXISTS tapcard_follow_log (card_id TEXT NOT NULL, day DATE NOT NULL, joined INTEGER NOT NULL DEFAULT 0, "left" INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (card_id, day))`)
       .then(() => sql`CREATE TABLE IF NOT EXISTS tapcard_follow_log_meta (id BOOLEAN PRIMARY KEY DEFAULT true, started DATE NOT NULL DEFAULT CURRENT_DATE)`)
@@ -47,11 +54,35 @@ export async function recordAnnouncementOpen(id: number): Promise<void> {
   await ensureInsightSchema();
   await sql`INSERT INTO tapcard_announcement_opens (announcement_id, day, n) VALUES (${id}, CURRENT_DATE, 1)
             ON CONFLICT (announcement_id, day) DO UPDATE SET n = tapcard_announcement_opens.n + 1`;
+  // When it happened: within the first hour, the first day, or later; and the hour of day in the UK. Never fails the tap.
+  try {
+    await sql`INSERT INTO tapcard_announcement_open_log (announcement_id, delay, hod, n)
+              SELECT a.id, CASE WHEN now() - a.created_at < interval '1 hour' THEN 'hour' WHEN now() - a.created_at < interval '1 day' THEN 'day' ELSE 'later' END,
+                     EXTRACT(HOUR FROM now() AT TIME ZONE 'Europe/London')::int, 1
+              FROM tapcard_announcements a WHERE a.id = ${id}
+              ON CONFLICT (announcement_id, delay, hod) DO UPDATE SET n = tapcard_announcement_open_log.n + 1`;
+  } catch { /* the headline count above is what matters */ }
+}
+
+/// Remembers how many phones an announcement was pushed to (never throws).
+export async function recordNewsSent(announcementId: number, n: number): Promise<void> {
+  if (!Number.isFinite(announcementId) || n <= 0) return;
+  try {
+    await ensureInsightSchema();
+    await sql`INSERT INTO tapcard_announcement_sent (announcement_id, sent) VALUES (${announcementId}, ${n})
+              ON CONFLICT (announcement_id) DO UPDATE SET sent = tapcard_announcement_sent.sent + ${n}`;
+  } catch { /* a missed count must not fail a push */ }
 }
 
 export interface SlotStat { label: string; startsAt: string; endsAt: string; followers: number; shared: number }
 export interface SourceRow { code: string; label: string; when: string; opens: number; followers: number; shared: number; rate: number | null; slots: SlotStat[] }
-export interface AnnouncementRow { id: number; text: string; postedAt: string; sent: number; opens: number; opened: number | null }
+export interface AnnouncementRow {
+  id: number; text: string; postedAt: string; sent: number; opens: number; opened: number | null;
+  /// Taps within the first hour and the first day after posting (counted from when timing started being recorded).
+  firstHour: number; firstDay: number;
+  /// Who started and stopped following over the posting day and the next (null when that was before leavers were counted).
+  joined48: number | null; left48: number | null;
+}
 export interface EventMark { day: string; label: string }
 export interface Insights {
   totals: { following: number; new7: number; new30: number; shared: number; eventTagged: number };
@@ -60,6 +91,13 @@ export interface Insights {
   series: DayPoint[];
   logStarted: string;
   marks: EventMark[];
+  /// Scan to card open to follow to shared details (opens are not people).
+  funnel: { qrScans: number; opens: number; following: number; shared: number };
+  mix: InvestorMix;
+  /// Followers who can receive an announcement now, and on which phones.
+  reach: { canBeNotified: number; ios: number; android: number };
+  /// Taps through to announcements by hour of the day (UK time), 24 numbers; empty counts until timing has been recorded.
+  tapHours: number[];
 }
 
 export async function getInsights(orgId: string): Promise<Insights> {
@@ -112,17 +150,28 @@ export async function getInsights(orgId: string): Promise<Insights> {
     })),
   }));
 
+  // Keep each announcement's send count past the 14 days the push log is held for: record whatever the log has now.
+  await sql`
+    INSERT INTO tapcard_announcement_sent (announcement_id, sent)
+    SELECT l.ref::bigint, COUNT(*)::int FROM tapcard_push_log l
+    WHERE l.kind = 'news' AND l.ref ~ '^[0-9]+$' AND l.ref::bigint IN (
+      SELECT a.id FROM tapcard_announcements a JOIN tapcard_listed_cards lc ON lc.card_id = a.card_id JOIN tapcard_cards c ON c.id = a.card_id WHERE c.org_id = ${orgId})
+    GROUP BY l.ref
+    ON CONFLICT (announcement_id) DO UPDATE SET sent = GREATEST(tapcard_announcement_sent.sent, EXCLUDED.sent)`.catch(() => []);
   const annRows = (await sql`
     SELECT a.id, a.text, a.created_at,
-      (SELECT COUNT(*)::int FROM tapcard_push_log l WHERE l.card_id = a.card_id AND l.kind = 'news' AND l.ref = a.id::text) AS sent,
-      COALESCE((SELECT SUM(o.n) FROM tapcard_announcement_opens o WHERE o.announcement_id = a.id), 0)::int AS opens
+      COALESCE((SELECT s.sent FROM tapcard_announcement_sent s WHERE s.announcement_id = a.id), 0)::int AS sent,
+      COALESCE((SELECT SUM(o.n) FROM tapcard_announcement_opens o WHERE o.announcement_id = a.id), 0)::int AS opens,
+      COALESCE((SELECT SUM(o.n) FROM tapcard_announcement_open_log o WHERE o.announcement_id = a.id AND o.delay = 'hour'), 0)::int AS first_hour,
+      COALESCE((SELECT SUM(o.n) FROM tapcard_announcement_open_log o WHERE o.announcement_id = a.id AND o.delay IN ('hour', 'day')), 0)::int AS first_day
     FROM tapcard_announcements a
     JOIN tapcard_listed_cards l ON l.card_id = a.card_id JOIN tapcard_cards c ON c.id = a.card_id
-    WHERE c.org_id = ${orgId} AND a.withdrawn = false ORDER BY a.id DESC LIMIT 20`) as { id: number; text: string; created_at: string; sent: number; opens: number }[];
-  const announcements: AnnouncementRow[] = annRows.map((r) => ({
-    id: Number(r.id), text: r.text, postedAt: new Date(r.created_at).toISOString(), sent: Number(r.sent), opens: Number(r.opens),
-    opened: Number(r.sent) > 0 ? Math.round((Number(r.opens) / Number(r.sent)) * 100) : null,
-  }));
+    WHERE c.org_id = ${orgId} AND a.withdrawn = false ORDER BY a.id DESC LIMIT 20`) as { id: number; text: string; created_at: string; sent: number; opens: number; first_hour: number; first_day: number }[];
+  const hourRows = (await sql`
+    SELECT o.hod, SUM(o.n)::int AS n FROM tapcard_announcement_open_log o
+    WHERE o.announcement_id IN (SELECT a.id FROM tapcard_announcements a JOIN tapcard_listed_cards l ON l.card_id = a.card_id JOIN tapcard_cards c ON c.id = a.card_id WHERE c.org_id = ${orgId})
+    GROUP BY o.hod`) as { hod: number; n: number }[];
+  const tapHours = Array.from({ length: 24 }, (_, h) => Number(hourRows.find((r) => Number(r.hod) === h)?.n ?? 0));
 
   // Day by day for the last 90 days: who joined, who left, the total, and how many registered through an event.
   const DAYS = 90;
@@ -149,8 +198,35 @@ export async function getInsights(orgId: string): Promise<Insights> {
   const markRows = (await sql`SELECT label, COALESCE(starts_at, created_at)::date AS d FROM tapcard_listed_events WHERE org_id = ${orgId} AND COALESCE(starts_at, created_at)::date > CURRENT_DATE - (${DAYS}::int) ORDER BY 2`) as { label: string; d: string }[];
   const marks: EventMark[] = markRows.map((r) => ({ day: iso(r.d), label: r.label }));
 
+  const announcements: AnnouncementRow[] = annRows.map((r) => {
+    const posted = new Date(r.created_at).toISOString();
+    const change = followChangeAfter(series, posted.slice(0, 10), logStarted);
+    return {
+      id: Number(r.id), text: r.text, postedAt: posted, sent: Number(r.sent), opens: Number(r.opens),
+      opened: Number(r.sent) > 0 ? Math.round((Number(r.opens) / Number(r.sent)) * 100) : null,
+      firstHour: Number(r.first_hour), firstDay: Number(r.first_day),
+      joined48: change ? change.joined : null, left48: change ? change.left : null,
+    };
+  });
+
+  // Scan to card open to follow to shared details, who is on a company address, and who can be reached and on what phone.
+  const { listedSummary } = await import("@/lib/tapcardListedAdmin");
+  const { listSharedFollowers } = await import("@/lib/tapcardShare");
+  const { emailGroup } = await import("@/lib/tapcardShareRules");
+  const [summary, people] = await Promise.all([listedSummary(orgId).catch(() => null), listSharedFollowers(orgId).catch(() => [])]);
+  const mix = investorMix(people.map((p) => { const g = emailGroup(p.email); return { domain: g.kind === "company" ? g.domain : null, consentedAt: p.consentedAt }; }));
+  const plat = (await sql`
+    SELECT d.platform, COUNT(*)::int AS n FROM tapcard_push_prefs p JOIN tapcard_push_devices d ON d.follower_hash = p.follower_hash
+    WHERE p.news AND p.card_id IN (SELECT l.card_id FROM tapcard_listed_cards l JOIN tapcard_cards c ON c.id = l.card_id WHERE c.org_id = ${orgId})
+    GROUP BY d.platform`.catch(() => [])) as { platform: string; n: number }[];
+  const nOf = (p: string) => Number(plat.find((r) => r.platform === p)?.n ?? 0);
+
   return {
     totals: { following: Number(t?.following ?? 0), new7: Number(t?.new7 ?? 0), new30: Number(t?.new30 ?? 0), shared: Number(sh?.n ?? 0), eventTagged: Number(t?.tagged ?? 0) },
     sources, announcements, series, logStarted, marks,
+    funnel: { qrScans: summary?.qrViews ?? 0, opens: summary?.views ?? 0, following: Number(t?.following ?? 0), shared: Number(sh?.n ?? 0) },
+    mix,
+    reach: { canBeNotified: summary?.canBeNotified ?? 0, ios: nOf("ios"), android: nOf("android") },
+    tapHours,
   };
 }

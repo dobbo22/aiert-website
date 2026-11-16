@@ -360,7 +360,7 @@ test("insights: event opens, followers and shares per event, announcement taps, 
   const { createManagedCompany } = await import("../lib/tapcardBizSupport");
   const { markListedCard } = await import("../lib/tapcardShare");
   const { createEvent } = await import("../lib/tapcardEvents");
-  const { recordEventView, recordAnnouncementOpen, getInsights, isRobotAgent } = await import("../lib/tapcardInsights");
+  const { recordEventView, recordAnnouncementOpen, recordNewsSent, getInsights, isRobotAgent } = await import("../lib/tapcardInsights");
   const { publicAnnouncement } = await import("../lib/tapcardOffers");
   const org = await createManagedCompany({ name: "Insight Co", adminEmail: "ir@insightco.example", locations: 1, listed: true });
   const company = await newCard("i".repeat(45), { company: "Insight Co", name: "Insight Co" });
@@ -387,6 +387,7 @@ test("insights: event opens, followers and shares per event, announcement taps, 
   assert.equal((await publicAnnouncement(plain))?.link, "https://plain.example/news");
   await recordAnnouncementOpen(Number(ins[0].id)); await recordAnnouncementOpen(Number(ins[0].id));
   void plainIns;
+  await recordNewsSent(Number(ins[0].id), 3);
   const data = await getInsights(org.id);
   const sp = data.sources.find((r) => r.code === pc)!, sw = data.sources.find((r) => r.code === wc)!;
   assert.deepEqual([sp.opens, sp.followers, sp.shared, sp.rate], [10, 2, 1, 20]);
@@ -402,6 +403,14 @@ test("insights: event opens, followers and shares per event, announcement taps, 
   const after = (await getInsights(org.id)).series.at(-1)!;
   assert.deepEqual([after.joined, after.left, after.total], [4, 1, 3]);
   assert.equal(data.announcements[0].opens, 2);
+  // New: send count kept, when taps happened, who joined around the post, the funnel, the investor mix and reach.
+  const a0 = data.announcements[0];
+  assert.deepEqual([a0.sent, a0.opens, a0.firstHour, a0.firstDay], [3, 2, 2, 2]);
+  assert.equal(a0.joined48, 4);
+  assert.equal(data.tapHours.reduce((n, x) => n + x, 0), 2);
+  assert.deepEqual([data.funnel.following, data.funnel.shared], [4, 2]);
+  assert.deepEqual([data.mix.people, data.mix.companies, data.mix.private], [2, 2, 0]);
+  assert.deepEqual(data.reach, { canBeNotified: 0, ios: 0, android: 0 });
   assert.ok(isRobotAgent("WhatsApp/2.23") && isRobotAgent("") && !isRobotAgent("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0) Safari/605.1.15"));
   // The redirect: a real link is followed, an unknown id is not.
   const { GET } = await import("../app/tapcard/a/[id]/route");
