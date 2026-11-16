@@ -51,3 +51,14 @@ test("a reported scan time must be real, recent and not in the future", () => {
   assert.equal(cleanScanTime("nonsense", now), null);
   assert.equal(cleanScanTime(undefined, now), null);
 });
+
+import { cleanPrivacyUrl } from "../lib/tapcardShareRules";
+test("a company privacy link must be a plain https address", () => {
+  assert.equal(cleanPrivacyUrl("https://www.kefi.com/privacy"), "https://www.kefi.com/privacy");
+  assert.equal(cleanPrivacyUrl("  https://kefi.com/privacy-policy  "), "https://kefi.com/privacy-policy");
+  assert.equal(cleanPrivacyUrl("http://kefi.com/privacy"), "", "http refused");
+  assert.equal(cleanPrivacyUrl("javascript:alert(1)"), "");
+  assert.equal(cleanPrivacyUrl("https://has space.com/x"), "");
+  assert.equal(cleanPrivacyUrl("https://localhost/x"), "", "needs a real domain");
+  assert.equal(cleanPrivacyUrl(42), "");
+});

@@ -1,6 +1,6 @@
 import sql from "@/lib/db";
 import { hashSecret } from "@/lib/tapcardAuth";
-import { formatEventList, type ShareDetails } from "@/lib/tapcardShareRules";
+import { cleanPrivacyUrl, formatEventList, type ShareDetails } from "@/lib/tapcardShareRules";
 export { validateShare } from "@/lib/tapcardShareRules";
 export type { ShareDetails } from "@/lib/tapcardShareRules";
 
@@ -20,6 +20,8 @@ function ensureShareSchema(): Promise<unknown> {
         ticker TEXT NOT NULL DEFAULT '',
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
       )`
+      // The company's own privacy notice (the company is the controller of what followers share): shown beside the name and email in the app.
+      .then(() => sql`ALTER TABLE tapcard_listed_cards ADD COLUMN IF NOT EXISTS privacy_url TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`CREATE TABLE IF NOT EXISTS tapcard_listed_events (code TEXT PRIMARY KEY, org_id TEXT NOT NULL, label TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now())`)
       .then(
         () => sql`
@@ -64,6 +66,21 @@ export async function followTargetFor(cardId: string): Promise<string> {
     WHERE me.id = ${cardId} AND me.org_id IS NOT NULL
     ORDER BY c.created_at LIMIT 1`) as { card_id: string }[];
   return rows[0]?.card_id ?? cardId;
+}
+
+/// The privacy notice link of a listed company's card ("" if none set).
+export async function getPrivacyUrl(listedCardId: string): Promise<string> {
+  await ensureShareSchema();
+  const r = (await sql`SELECT privacy_url FROM tapcard_listed_cards WHERE card_id = ${listedCardId}`) as { privacy_url: string }[];
+  return r[0]?.privacy_url ?? "";
+}
+
+export async function setPrivacyUrl(orgId: string, url: string): Promise<boolean> {
+  await ensureShareSchema();
+  const clean = url.trim() === "" ? "" : cleanPrivacyUrl(url);
+  if (url.trim() !== "" && !clean) return false;
+  await sql`UPDATE tapcard_listed_cards SET privacy_url = ${clean} WHERE card_id IN (SELECT l.card_id FROM tapcard_listed_cards l JOIN tapcard_cards c ON c.id = l.card_id WHERE c.org_id = ${orgId})`;
+  return true;
 }
 
 /// AIERT marks a card as a listed company's. (Run from the admin side or SQL; the apps cannot do this.)

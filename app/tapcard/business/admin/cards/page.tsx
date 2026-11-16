@@ -3,6 +3,8 @@ import { getOrg } from "@/lib/tapcardBiz";
 import { listedSummary } from "@/lib/tapcardListedAdmin";
 import CardQr from "./CardQr";
 import EventQrs from "./EventQrs";
+import PrivacyLink from "./PrivacyLink";
+import { getPrivacyUrl } from "@/lib/tapcardShare";
 import { listEvents } from "@/lib/tapcardEvents";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +18,7 @@ export default async function BizCardsPage() {
   const s = await listedSummary(org.id);
   const companyName = s.cards.find((c) => c.isCompany)?.company || s.cards.find((c) => c.isCompany)?.name || org.name;
   const events = await listEvents(org.id).catch(() => []);
+  const privacyUrl = s.primaryCardId ? await getPrivacyUrl(s.primaryCardId).catch(() => "") : "";
   return (
     <div className="space-y-6">
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
@@ -28,6 +31,7 @@ export default async function BizCardsPage() {
           <CardQr key={c.id} id={c.id} title={c.isCompany ? (c.company || c.name) : c.name || "Card"} subtitle={c.isCompany ? "Company card" : c.title || "Team card"} />
         ))}
       </div>
+      {s.primaryCardId && <PrivacyLink initial={privacyUrl} />}
       {s.primaryCardId && <EventQrs companyCardId={s.primaryCardId} companyName={companyName} events={events} />}
     </div>
   );

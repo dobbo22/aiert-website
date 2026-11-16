@@ -43,3 +43,11 @@ export function cleanScanTime(v: unknown, now: Date = new Date()): Date | null {
   if (d.getTime() > now.getTime() + 5 * 60_000 || d.getTime() < now.getTime() - 60 * 86_400_000) return null;
   return d;
 }
+
+/// A usable web address for the company's privacy notice: https only, no spaces, short.
+export function cleanPrivacyUrl(v: unknown): string {
+  if (typeof v !== "string") return "";
+  const t = v.trim();
+  if (t.length > 300 || /\s/.test(t)) return "";
+  try { const u = new URL(t); return u.protocol === "https:" && u.hostname.includes(".") ? u.toString() : ""; } catch { return ""; }
+}

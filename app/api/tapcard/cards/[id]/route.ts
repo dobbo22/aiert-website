@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { del, put } from "@vercel/blob";
-import { followTargetFor, isListedCard } from "@/lib/tapcardShare";
+import { followTargetFor, getPrivacyUrl, isListedCard } from "@/lib/tapcardShare";
 
 // A listed company card says listedCompany. A person's card in a listed company says followCardId: where "follow" really goes.
 async function listedFields(id: string): Promise<Record<string, unknown>> {
@@ -17,7 +17,7 @@ const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
 // The same details the public /c/[id] page shows, as JSON — lets the app
 // show a scanned card natively (and save it) when the link opens TapCard.
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const card = await getCard(id);
   if (!card) {
@@ -28,7 +28,22 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   // The special offer (if any) rides along so a saved card's next refresh shows it in the app's updates.
   const offer = await publicOffer(id).catch(() => null);
   const announcement = await publicAnnouncement(id).catch(() => null);
-  return NextResponse.json({ ...publicCardJSON(card), ...(await listedFields(id)), ...(offer ? { offer } : {}), ...(announcement ? { announcement } : {}) });
+  const listed = await listedFields(id);
+  // A listed company's card: its own privacy notice, and (when the app passes ?e=<event code> from a scanned QR) the event's name and slot.
+  const extra: Record<string, unknown> = {};
+  if (listed.listedCompany) {
+    const target = typeof listed.followCardId === "string" ? listed.followCardId : id;
+    const priv = await getPrivacyUrl(target).catch(() => "");
+    if (priv) extra.companyPrivacyURL = priv;
+    const code = new URL(req.url).searchParams.get("e");
+    if (code) {
+      const { cardOrgId } = await import("@/lib/tapcardBiz");
+      const { eventInfoForOrg } = await import("@/lib/tapcardEvents");
+      const ev = await eventInfoForOrg(code, await cardOrgId(target).catch(() => null)).catch(() => null);
+      if (ev) extra.event = { code: ev.code, label: ev.label, slot: ev.slot };
+    }
+  }
+  return NextResponse.json({ ...publicCardJSON(card), ...listed, ...extra, ...(offer ? { offer } : {}), ...(announcement ? { announcement } : {}) });
 }
 
 // "Stop sharing" — the delete/revoke control called for in the plan's

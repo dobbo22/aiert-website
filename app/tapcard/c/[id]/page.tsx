@@ -184,6 +184,10 @@ export default async function CardPage({
     const org = await cardOrgId(id).catch(() => null);
     return org ? await orgIsListed(org) : false;
   })();
+  // An event QR link of a listed company: the page says what registering needs (the app), since nothing is registered in the browser.
+  const eventInfo = listedCard && eventCode && !isRobot
+    ? await (await import("@/lib/tapcardEvents")).eventInfoForOrg(eventCode, await cardOrgId(id).catch(() => null)).catch(() => null)
+    : null;
   const bannerLogo =
     orgLogo ?? (companyDomain ? `https://tapcard.aiert.co.uk/api/logo?domain=${encodeURIComponent(companyDomain)}` : null);
   const palette = paletteFor(card.brand_color);
@@ -247,6 +251,15 @@ export default async function CardPage({
               </p>
             )}
 
+            {eventInfo && (
+              <div className="mt-4 rounded-2xl bg-white/[0.09] px-4 py-3 text-left text-sm text-white">
+                <p className="font-semibold">You are at {eventInfo.label}{eventInfo.slot ? `: ${eventInfo.slot}` : ""}</p>
+                <p className="mt-1">
+                  To register your attendance and follow {card.company || card.name}, you need the TapCard app. Get it, then come back to this page and tap{" "}
+                  <span className="font-semibold">Open in TapCard</span> to finish. Nothing is registered in the browser.
+                </p>
+              </div>
+            )}
             <CarryCardToInstall cardLink={`${TAPCARD_ORIGIN}/c/${id}`} />
             <SaveContactButton
               cardLink={`${TAPCARD_ORIGIN}/c/${id}${eventQuery}`}

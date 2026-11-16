@@ -191,6 +191,16 @@ export async function eventCodeForOrg(code: unknown, orgId: string | null): Prom
   return r.length ? code : "";
 }
 
+/// The names an app or the card page shows for a scanned event code: the event and, for a roadshow, the slot the moment falls in.
+export async function eventInfoForOrg(code: unknown, orgId: string | null, at: Date = new Date()): Promise<{ code: string; label: string; slot: string } | null> {
+  const ok = await eventCodeForOrg(code, orgId).catch(() => "");
+  if (!ok) return null;
+  const r = (await sql`SELECT label FROM tapcard_listed_events WHERE code = ${ok}`) as { label: string }[];
+  if (!r.length) return null;
+  const slot = await slotAt(ok, at).catch(() => null);
+  return { code: ok, label: r[0].label, slot: slot?.label ?? "" };
+}
+
 /// The event running right now for a company (an event window that has started and not ended); the latest start wins. "" if none.
 export async function activeEventForOrg(orgId: string | null, now: Date = new Date()): Promise<string> {
   if (!orgId) return "";
