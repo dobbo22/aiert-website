@@ -36,7 +36,7 @@ export default function AdminNav({ role = "admin", listed = false, current }: { 
   // The Overview tab is only active on its own page; every other tab is active on its page and anything beneath it.
   const isActive = (href: string) => (href === "/business/admin" ? pathname === href : pathname === href || pathname.startsWith(href + "/"));
   return (
-    <nav className="mt-6 flex flex-wrap gap-2" aria-label="Admin sections">
+    <nav className="mt-6 -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0" aria-label="Admin sections">
       {tabs.map((tab) => {
         const active = isActive(tab.href);
         return (

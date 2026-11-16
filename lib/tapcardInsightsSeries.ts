@@ -31,3 +31,15 @@ export function buildSeries(
   }
   return pts;
 }
+
+export type Range = "since" | "30" | "90";
+
+/// The days to chart: the last 30 or 90, or (by default) from the first day anything happened, never fewer than 14 days.
+export function trimSeries<T extends { total: number; joined: number; left: number; viaEvents: number }>(series: T[], range: Range): T[] {
+  const n = series.length;
+  if (range === "30") return series.slice(Math.max(0, n - 30));
+  if (range === "90") return series;
+  const first = series.findIndex((p) => p.total > 0 || p.joined > 0 || p.left > 0 || p.viaEvents > 0);
+  const start = first < 0 ? Math.max(0, n - 14) : Math.max(0, Math.min(first, n - 14));
+  return series.slice(start);
+}

@@ -7,7 +7,7 @@ const W = 720, H = 230, L = 40, R = 12, T = 14, B = 30;
 const fmt = (iso: string) => new Date(iso + "T00:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
 
 /// A plain SVG line chart over days: one line per series, a dashed vertical line and dot for each event, readable axes, and a legend that does not rely on colour alone.
-export default function LineChart({ points, series, marks, title }: { points: DayPoint[]; series: LineSeries[]; marks: EventMark[]; title: string }) {
+export default function LineChart({ points, series, marks, notes = [], title }: { points: DayPoint[]; series: LineSeries[]; marks: EventMark[]; notes?: EventMark[]; title: string }) {
   const n = points.length;
   const max = Math.max(1, ...series.flatMap((s) => points.map(s.pick)));
   const nice = max <= 5 ? max : Math.ceil(max / 5) * 5;
@@ -36,6 +36,17 @@ export default function LineChart({ points, series, marks, title }: { points: Da
             </g>
           );
         })}
+        {notes.map((m) => {
+          const i = idx.get(m.day);
+          if (i === undefined) return null;
+          const cx = x(i), cy = H - B;
+          return (
+            <g key={"n" + m.day + m.label}>
+              <line x1={cx} x2={cx} y1={T} y2={cy} stroke="#4FD1C5" strokeDasharray="1 5" strokeOpacity="0.9" />
+              <path d={`M${cx},${cy - 7} L${cx + 6},${cy} L${cx},${cy + 7} L${cx - 6},${cy} Z`} fill="#4FD1C5"><title>{`Announcement: ${m.label} (${fmt(m.day)})`}</title></path>
+            </g>
+          );
+        })}
         {series.map((s) => (
           <polyline key={s.name} fill="none" stroke={s.color} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" strokeDasharray={s.dash}
             points={points.map((p, i) => `${x(i).toFixed(1)},${y(s.pick(p)).toFixed(1)}`).join(" ")} />
@@ -47,6 +58,7 @@ export default function LineChart({ points, series, marks, title }: { points: Da
             <svg width="26" height="8" aria-hidden="true"><line x1="0" y1="4" x2="26" y2="4" stroke={s.color} strokeWidth="3" strokeDasharray={s.dash} /></svg>{s.name}
           </span>
         ))}
+        {notes.length > 0 && <span className="inline-flex items-center gap-2"><svg width="14" height="14" aria-hidden="true"><path d="M7,1 L13,7 L7,13 L1,7 Z" fill="#4FD1C5" /></svg>An announcement</span>}
         {marks.length > 0 && <span className="inline-flex items-center gap-2"><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4" fill="#F5B63D" /></svg>An event</span>}
       </figcaption>
     </figure>

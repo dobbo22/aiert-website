@@ -33,10 +33,11 @@ function Slots({ ev, post, busy }: { ev: EventRow; post: (b: unknown) => Promise
     <div className="rounded-2xl bg-charcoal p-4 ring-1 ring-white/10">
       <p className="text-sm font-semibold text-cloud">Time slots for this QR code</p>
       {ev.slots.length === 0 ? <p className="mt-1 text-sm text-cloud">None yet. Every scan is recorded against the event as a whole.</p> : (
-        <ul className="mt-2 space-y-1">
+        <ul className="mt-2">
           {ev.slots.map((sl) => (
-            <li key={sl.id} className="flex flex-wrap items-center justify-between gap-2 text-sm text-cloud">
-              <span><strong>{sl.label}</strong> · {dmy(sl.startsAt)} {hm(sl.startsAt)} to {hm(sl.endsAt)} · {sl.followers} {sl.followers === 1 ? "person" : "people"}</span>
+            <li key={sl.id} className="grid grid-cols-[1fr_auto_auto] items-baseline gap-x-4 border-b border-slate/50 py-2 text-sm text-cloud last:border-0">
+              <span><strong>{sl.label}</strong><span className="block">{dmy(sl.startsAt)} · {hm(sl.startsAt)} to {hm(sl.endsAt)}</span></span>
+              <span className="whitespace-nowrap tabular-nums">{sl.followers} {sl.followers === 1 ? "person" : "people"}</span>
               <button type="button" disabled={busy} onClick={() => { if (window.confirm(`Remove the slot "${sl.label}"? Scans already recorded in it stay.`)) void post({ deleteSlot: sl.id }); }} className="underline">Remove</button>
             </li>
           ))}
@@ -45,7 +46,7 @@ function Slots({ ev, post, busy }: { ev: EventRow; post: (b: unknown) => Promise
       <form className="mt-3 flex flex-wrap items-end gap-2" onSubmit={(e) => { e.preventDefault(); if (!ready) return;
         void post({ addSlot: ev.code, label, startsAt: new Date(`${day}T${from}`).toISOString(), endsAt: new Date(`${day}T${to}`).toISOString() }).then(() => { setLabel(""); setFrom(""); setTo(""); }); }}>
         <label className="text-sm font-semibold text-cloud">Who or where
-          <input value={label} onChange={(e) => setLabel(e.target.value)} maxLength={60} placeholder="For example: Smith &amp; Co" className="mt-1 block rounded-xl bg-slate/40 px-3 py-2 text-cloud ring-1 ring-slate" />
+          <input value={label} onChange={(e) => setLabel(e.target.value)} maxLength={60} placeholder="For example: Smith &amp; Co" className="mt-1 block rounded-xl bg-slate/40 px-3 py-2 text-cloud ring-1 ring-slate placeholder:text-cloud/80" />
         </label>
         <label className="text-sm font-semibold text-cloud">Day
           <input type="date" value={day} onChange={(e) => setDay(e.target.value)} className="mt-1 block rounded-xl bg-white px-3 py-2 text-black ring-1 ring-slate" />
@@ -56,7 +57,8 @@ function Slots({ ev, post, busy }: { ev: EventRow; post: (b: unknown) => Promise
         <label className="text-sm font-semibold text-cloud">To
           <input type="time" value={to} onChange={(e) => setTo(e.target.value)} className="mt-1 block rounded-xl bg-white px-3 py-2 text-black ring-1 ring-slate" />
         </label>
-        <button type="submit" disabled={busy || !ready} className="btn-gold rounded-xl px-4 py-2 font-semibold disabled:opacity-50">Add slot</button>
+        <button type="submit" disabled={busy || !ready} className="btn-gold rounded-xl px-4 py-2 font-semibold disabled:cursor-not-allowed disabled:opacity-60">Add slot</button>
+        {!ready && <p className="basis-full text-sm text-cloud">Fill in who or where, the day, and the start and end times to add a slot.</p>}
       </form>
     </div>
   );
@@ -128,16 +130,16 @@ export default function EventQrs({ companyCardId, companyName, events, attendanc
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
-        <h2 className="text-lg font-bold text-cloud">New event</h2>
-        <p className="mt-2 text-cloud">
+      <details className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10" open={events.length === 0}>
+        <summary className="inline-block cursor-pointer rounded-xl btn-gold px-5 py-2 font-semibold">New event</summary>
+        <p className="mt-4 text-cloud">
           One QR code for an AGM, roadshow or meeting. Everyone who registers through it is tagged with the event. For a day of visits, make one event and add a time slot for each firm.
         </p>
         <form className="mt-4 space-y-4" onSubmit={(e) => { e.preventDefault(); if (!label.trim()) return; const w = windowBody(); if ("error" in w) { setError(w.error); return; } void post({ label, ...w }); }}>
           <div className="flex flex-wrap items-end gap-3">
             <label className="sr-only" htmlFor="event-name">Event name</label>
             <input id="event-name" value={label} onChange={(e) => setLabel(e.target.value)} maxLength={60} placeholder="For example: AGM 2026, or Roadshow 20 Nov"
-              className="min-w-[16rem] flex-1 rounded-xl bg-slate/40 px-4 py-2 text-cloud ring-1 ring-slate" />
+              className="min-w-[16rem] flex-1 rounded-xl bg-slate/40 px-4 py-2 text-cloud ring-1 ring-slate placeholder:text-cloud/80" />
           </div>
           <fieldset>
             <legend className="text-sm font-semibold text-cloud">When is it?</legend>
@@ -165,7 +167,8 @@ export default function EventQrs({ companyCardId, companyName, events, attendanc
               )}
             </div>
           )}
-          <button type="submit" disabled={busy || label.trim().length < 2} className="btn-gold rounded-xl px-5 py-2 font-semibold disabled:opacity-50">Create QR code</button>
+          <button type="submit" disabled={busy || label.trim().length < 2} className="btn-gold rounded-xl px-5 py-2 font-semibold disabled:cursor-not-allowed disabled:opacity-60">Create QR code</button>
+          {label.trim().length < 2 && <p className="text-sm text-cloud">Give the event a name (at least two letters) to create its QR code.</p>}
         </form>
         {error && <p role="alert" className="mt-3 rounded-xl bg-white/10 px-4 py-2 text-cloud">{error}</p>}
         <details className="mt-4 text-sm text-cloud">
@@ -176,10 +179,10 @@ export default function EventQrs({ companyCardId, companyName, events, attendanc
             event&apos;s QR code is recorded for them, so one person can have several events. A name appears beside an event only if the person chose to share their details. No location is read.
           </p>
         </details>
-      </div>
+      </details>
 
       {events.length === 0 ? (
-        <p className="rounded-2xl bg-charcoal p-6 text-cloud ring-1 ring-white/10">No events yet. Make one above, then put its QR code on the presentation or notice.</p>
+        <p className="rounded-2xl bg-charcoal p-6 text-cloud ring-1 ring-white/10">No events yet. Make one with the form above, then put its QR code on the presentation or notice.</p>
       ) : (
         events.map((ev) => (
           <section key={ev.code} className="space-y-3 rounded-2xl bg-charcoal/60 p-4 ring-1 ring-white/10">

@@ -15,6 +15,8 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
   const [link, setLink] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const hasFeed = feed.rows.length > 0;
+  const [composerOpen, setComposerOpen] = useState(!hasFeed);
   const [page, setPage] = useState(feed.pageUrl ?? feed.suggested);
   const [editingPage, setEditingPage] = useState(!feed.pageUrl);
   const [feedMsg, setFeedMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -56,7 +58,7 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
     if (res?.ok) { if (done) setFeedMsg({ ok: true, text: done.replace("{n}", String(data.found ?? ""))}); window.location.reload(); return; }
     setFeedMsg({ ok: false, text: data.error ?? "Couldn't do that. Try again." });
   }
-  const fillHeadline = (r: FeedRow) => { setText(headlineOf(r.title)); setLink(r.url); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const fillHeadline = (r: FeedRow) => { setText(headlineOf(r.title)); setLink(r.url); setComposerOpen(true); setTimeout(() => document.getElementById("headline-composer")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); };
 
   async function send(body: Record<string, unknown>, done: string) {
     setBusy(true); setMsg(null);
@@ -67,28 +69,9 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
     setMsg({ ok: false, text: data.error ?? "Couldn't do that. Try again." });
   }
 
-  const field = "mt-1 w-full rounded-lg bg-white px-3 py-2 text-[#111318]";
+  const field = "mt-1 w-full rounded-lg bg-white px-3 py-2 text-[#111318] placeholder:text-[#4b5260]";
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
-        <h2 className="text-lg font-bold text-cloud">Post a headline for {cardName}</h2>
-        <p className="mt-2 text-cloud">Post after the announcement is public, and say nothing that is not in it. A headline and a link to the full RNS is enough.
-          {followers > 0 ? ` ${followers} ${followers === 1 ? "follower" : "followers"} can be notified.` : " Nobody can be notified yet."}</p>
-        <label className="mt-4 block text-cloud">Headline
-          <input className={field} value={text} maxLength={MAX} onChange={(e) => setText(e.target.value)} placeholder="For example: Full year results announced (RNS)" />
-          <span className="mt-1 block text-sm text-cloud">{text.length} of {MAX} characters</span>
-        </label>
-        <label className="mt-3 block text-cloud">Link to the announcement
-          <input className={field} value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://www.yourcompany.com/announcements/results.pdf" inputMode="url" />
-        </label>
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <button type="button" disabled={busy || !active || text.trim().length < 3} onClick={() => send({ action: "news", text: text.trim(), link: link.trim() || undefined }, "Posted. Followers are being notified.")}
-            className="btn-gold rounded-xl px-5 py-3 font-semibold disabled:opacity-50">{busy ? "Working…" : "Post to followers"}</button>
-          {!active && <span className="text-cloud">Billing isn&apos;t active, so posting is paused.</span>}
-        </div>
-        {msg && <p className={`mt-3 rounded-lg px-3 py-2 ${msg.ok ? "bg-teal/20" : "bg-red-500/20"} text-cloud`} role="status">{msg.ok ? "✓ " : "✗ "}{msg.text}</p>}
-      </div>
-
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">On your website</h2>
         <p className="mt-2 text-cloud">All data is taken from your own website only.</p>
@@ -115,6 +98,9 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
         {feedMsg && <p className={`mt-3 rounded-lg px-3 py-2 ${feedMsg.ok ? "bg-teal/20" : "bg-red-500/20"} text-cloud`} role="status">{feedMsg.ok ? "✓ " : "✗ "}{feedMsg.text}</p>}
         {feed.lastError && <p className="mt-3 rounded-lg bg-red-500/20 px-3 py-2 text-cloud">The last check failed: {feed.lastError}</p>}
         {feed.pageUrl && feed.rows.length === 0 && !feed.lastError && <p className="mt-3 text-cloud">Nothing found on that page yet.</p>}
+        {feed.rows.some((r) => r.status === "new" && !r.posted) && (
+          <p className="mt-4 rounded-xl bg-gold/15 px-4 py-2 font-semibold text-cloud ring-1 ring-gold/40">{feed.rows.filter((r) => r.status === "new" && !r.posted).length} new {feed.rows.filter((r) => r.status === "new" && !r.posted).length === 1 ? "announcement" : "announcements"} since you started watching. Tap Use as headline once it is public.</p>
+        )}
         {feed.rows.length > 0 && (
           <ul className="mt-4 divide-y divide-white/10">
             {feed.rows.map((r) => (
@@ -130,17 +116,37 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
                   {r.posted ? <span className="rounded-full bg-teal px-3 py-1 text-sm font-bold text-black">✓ Posted</span>
                     : r.status === "new" ? <span className="rounded-full bg-gold px-3 py-1 text-sm font-bold text-black">New</span>
                     : r.status === "ignored" ? <span className="rounded-full bg-white/15 px-3 py-1 text-sm font-semibold text-cloud">Ignored</span>
-                    : <span className="rounded-full bg-white/15 px-3 py-1 text-sm font-semibold text-cloud">Earlier</span>}
-                  {!r.posted && r.status !== "ignored" && <button type="button" onClick={() => fillHeadline(r)} className="rounded-xl px-3 py-1.5 text-sm font-semibold text-cloud ring-1 ring-slate hover:text-gold">Use as headline</button>}
+                    : <span title="Already on your page when we started watching it" className="rounded-full bg-white/15 px-3 py-1 text-sm font-semibold text-cloud">Earlier</span>}
+                  {!r.posted && r.status !== "ignored" && <button type="button" onClick={() => fillHeadline(r)} className={`rounded-xl px-3 py-1.5 text-sm font-semibold ${r.status === "new" ? "btn-gold" : "text-cloud ring-1 ring-slate hover:text-gold"}`}>Use as headline</button>}
                   {!r.posted && (r.status === "ignored"
-                    ? <button type="button" disabled={busy} onClick={() => feedCall({ action: "restore", url: r.url })} className="rounded-xl px-3 py-1.5 text-sm font-semibold text-cloud ring-1 ring-slate">Restore</button>
-                    : <button type="button" disabled={busy} onClick={() => feedCall({ action: "ignore", url: r.url })} className="rounded-xl px-3 py-1.5 text-sm font-semibold text-cloud ring-1 ring-slate">Ignore</button>)}
+                    ? <button type="button" disabled={busy} onClick={() => feedCall({ action: "restore", url: r.url })} className="px-1 py-1.5 text-sm text-cloud underline">Restore</button>
+                    : <button type="button" disabled={busy} onClick={() => feedCall({ action: "ignore", url: r.url })} className="px-1 py-1.5 text-sm text-cloud underline">Ignore</button>)}
                 </div>
               </li>
             ))}
           </ul>
         )}
       </div>
+
+      <details id="headline-composer" open={composerOpen} onToggle={(e) => setComposerOpen((e.currentTarget as HTMLDetailsElement).open)} className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
+        <summary className="cursor-pointer text-lg font-bold text-cloud">{hasFeed ? `Write your own headline for ${cardName}` : `Post a headline for ${cardName}`}</summary>
+        <p className="mt-3 text-cloud">Post after the announcement is public, and say nothing that is not in it. A headline and a link to the full RNS is enough.
+          {followers > 0 ? ` ${followers} ${followers === 1 ? "follower" : "followers"} can be notified.` : " Nobody can be notified yet."}</p>
+        <label className="mt-4 block text-cloud">Headline
+          <input className={field} value={text} maxLength={MAX} onChange={(e) => setText(e.target.value)} placeholder="For example: Full year results announced (RNS)" />
+          <span className="mt-1 block text-sm text-cloud">{text.length} of {MAX} characters</span>
+        </label>
+        <label className="mt-3 block text-cloud">Link to the announcement
+          <input className={field} value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://www.yourcompany.com/announcements/results.pdf" inputMode="url" />
+        </label>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <button type="button" disabled={busy || !active || text.trim().length < 3} onClick={() => send({ action: "news", text: text.trim(), link: link.trim() || undefined }, "Posted. Followers are being notified.")}
+            className="btn-gold rounded-xl px-5 py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-60">{busy ? "Working…" : "Post to followers"}</button>
+          {active && text.trim().length < 3 && <span className="text-sm text-cloud">Write a headline to post it.</span>}
+          {!active && <span className="text-cloud">Billing isn&apos;t active, so posting is paused.</span>}
+        </div>
+        {msg && <p className={`mt-3 rounded-lg px-3 py-2 ${msg.ok ? "bg-teal/20" : "bg-red-500/20"} text-cloud`} role="status">{msg.ok ? "✓ " : "✗ "}{msg.text}</p>}
+      </details>
 
       {latest && (
         <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
