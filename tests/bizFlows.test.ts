@@ -394,6 +394,13 @@ test("insights: event opens, followers and shares per event, announcement taps, 
   assert.equal(data.totals.following, 4);
   assert.equal(data.totals.eventTagged, 3);
   assert.equal(data.totals.shared, 2);
+  // The day-by-day chart: all four joined today (the log starts today), three came through an event, and an unfollow shows as a departure and a lower total.
+  const today = data.series[data.series.length - 1];
+  assert.deepEqual([today.joined, today.left, today.total, today.viaEvents], [4, 0, 4, 3]);
+  assert.equal(data.marks.length, 2);
+  await call("n", { follow: false });
+  const after = (await getInsights(org.id)).series.at(-1)!;
+  assert.deepEqual([after.joined, after.left, after.total], [4, 1, 3]);
   assert.equal(data.announcements[0].opens, 2);
   assert.ok(isRobotAgent("WhatsApp/2.23") && isRobotAgent("") && !isRobotAgent("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0) Safari/605.1.15"));
   // The redirect: a real link is followed, an unknown id is not.

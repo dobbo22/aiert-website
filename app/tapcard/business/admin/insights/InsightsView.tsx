@@ -1,11 +1,12 @@
 import { Fragment } from "react";
 import type { Insights } from "@/lib/tapcardInsights";
+import LineChart from "./LineChart";
 
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London" });
 
 export default function InsightsView({ data }: { data: Insights }) {
-  const { totals, sources, announcements, weeks } = data;
-  const max = Math.max(1, ...weeks.map((w) => w.followers));
+  const { totals, sources, announcements, series, marks, logStarted } = data;
+  const anyData = series.some((p) => p.joined || p.left || p.viaEvents) || totals.following > 0;
   const stat = (n: number, label: string) => (
     <div className="rounded-2xl bg-charcoal px-4 py-4 ring-1 ring-white/10">
       <div className="text-3xl font-black text-gold">{n}</div>
@@ -100,19 +101,28 @@ export default function InsightsView({ data }: { data: Insights }) {
       </div>
 
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
-        <h2 className="text-lg font-bold text-cloud">New followers each week</h2>
-        {weeks.length === 0 ? (
-          <p className="mt-4 rounded-xl bg-white/10 px-4 py-3 text-cloud">No followers in the last 12 weeks.</p>
+        <h2 className="text-lg font-bold text-cloud">Following over time</h2>
+        <p className="mt-1 text-sm text-cloud">Everyone following you, day by day over the last 90 days. A dip means people stopped following; each dot is an event.</p>
+        {!anyData ? (
+          <p className="mt-4 rounded-xl bg-white/10 px-4 py-3 text-cloud">No followers yet.</p>
         ) : (
-          <ul className="mt-4 space-y-2">
-            {weeks.map((w) => (
-              <li key={w.weekStart} className="flex items-center gap-3 text-cloud">
-                <span className="w-28 shrink-0 text-sm">Week of {day(w.weekStart)}</span>
-                <span className="h-4 rounded bg-gold" style={{ width: `${Math.max(2, Math.round((w.followers / max) * 100))}%` }} aria-hidden="true" />
-                <span className="font-semibold">{w.followers}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-4"><LineChart title="People following, per day" points={series} marks={marks}
+            series={[{ name: "Following", color: "#FFFFFF", pick: (p) => p.total }]} /></div>
+        )}
+      </div>
+
+      <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
+        <h2 className="text-lg font-bold text-cloud">Joined and left each day</h2>
+        <p className="mt-1 text-sm text-cloud">Spikes in <em>Through an event</em> show what an AGM or roadshow brought in. Stopping following is counted from {new Date(logStarted + "T00:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}; before that we only know who is still following.</p>
+        {!anyData ? (
+          <p className="mt-4 rounded-xl bg-white/10 px-4 py-3 text-cloud">Nothing to show yet.</p>
+        ) : (
+          <div className="mt-4"><LineChart title="People who joined, left and registered through an event, per day" points={series} marks={marks}
+            series={[
+              { name: "Joined", color: "#F5B63D", pick: (p) => p.joined },
+              { name: "Left", color: "#FF8A80", dash: "6 4", pick: (p) => p.left },
+              { name: "Through an event", color: "#4FD1C5", dash: "2 4", pick: (p) => p.viaEvents },
+            ]} /></div>
         )}
       </div>
     </div>

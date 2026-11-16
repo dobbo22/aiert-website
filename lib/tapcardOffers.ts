@@ -279,13 +279,18 @@ export async function setFollower(cardId: string, follower: string, follow: bool
     // The event a follow came through (an event QR of a listed company): kept from the first follow that carried one.
     const { ensureFollowerEventColumn } = await import("@/lib/tapcardEvents");
     await ensureFollowerEventColumn();
-    await sql`INSERT INTO tapcard_followers (card_id, follower_hash, event_code, event_via) VALUES (${cardId}, ${who}, ${eventCode}, ${eventVia})
+    const rows = (await sql`INSERT INTO tapcard_followers (card_id, follower_hash, event_code, event_via) VALUES (${cardId}, ${who}, ${eventCode}, ${eventVia})
               ON CONFLICT (card_id, follower_hash) DO UPDATE SET
                 event_via = CASE WHEN tapcard_followers.event_code = '' THEN EXCLUDED.event_via ELSE tapcard_followers.event_via END,
-                event_code = CASE WHEN tapcard_followers.event_code = '' THEN EXCLUDED.event_code ELSE tapcard_followers.event_code END`;
-  } else if (follow) await sql`INSERT INTO tapcard_followers (card_id, follower_hash) VALUES (${cardId}, ${who}) ON CONFLICT DO NOTHING`;
-  else {
-    await sql`DELETE FROM tapcard_followers WHERE card_id = ${cardId} AND follower_hash = ${who}`;
+                event_code = CASE WHEN tapcard_followers.event_code = '' THEN EXCLUDED.event_code ELSE tapcard_followers.event_code END
+              RETURNING (xmax = 0) AS inserted`) as { inserted: boolean }[];
+    if (rows[0]?.inserted) await (await import("@/lib/tapcardInsights")).logFollowChange(cardId, "joined");
+  } else if (follow) {
+    const added = (await sql`INSERT INTO tapcard_followers (card_id, follower_hash) VALUES (${cardId}, ${who}) ON CONFLICT DO NOTHING RETURNING card_id`) as unknown[];
+    if (added.length) await (await import("@/lib/tapcardInsights")).logFollowChange(cardId, "joined");
+  } else {
+    const removed = (await sql`DELETE FROM tapcard_followers WHERE card_id = ${cardId} AND follower_hash = ${who} RETURNING card_id`) as unknown[];
+    if (removed.length) await (await import("@/lib/tapcardInsights")).logFollowChange(cardId, "left");
     const { removeAttendance } = await import("@/lib/tapcardEvents");
     await removeAttendance(cardId, who).catch(() => {});
   }

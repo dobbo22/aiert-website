@@ -1,4 +1,5 @@
 import sql from "@/lib/db";
+import { buildSeries, lastDays, type DayPoint } from "@/lib/tapcardInsightsSeries";
 
 // Insights for a LISTED company: counts only, never a named person. Scans of each event QR code, taps through to each announcement,
 // followers over time. Nothing here links a shareholder who shared their details to what they opened.
@@ -13,9 +14,22 @@ function ensureInsightSchema(): Promise<unknown> {
       .then(() => sql`CREATE TABLE IF NOT EXISTS tapcard_announcement_opens (
         announcement_id BIGINT NOT NULL, day DATE NOT NULL, n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (announcement_id, day)
       )`)
+      // A daily count of people who started and stopped following, so Insights can show drop-off. It starts counting the day this is first created.
+      .then(() => sql`CREATE TABLE IF NOT EXISTS tapcard_follow_log (card_id TEXT NOT NULL, day DATE NOT NULL, joined INTEGER NOT NULL DEFAULT 0, "left" INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (card_id, day))`)
+      .then(() => sql`CREATE TABLE IF NOT EXISTS tapcard_follow_log_meta (id BOOLEAN PRIMARY KEY DEFAULT true, started DATE NOT NULL DEFAULT CURRENT_DATE)`)
+      .then(() => sql`INSERT INTO tapcard_follow_log_meta (id) VALUES (true) ON CONFLICT DO NOTHING`)
       .catch((e) => { ready = null; throw e; });
   }
   return ready;
+}
+
+/// Counts one follow or one unfollow for the day (never throws: a follow must not fail because of a chart).
+export async function logFollowChange(cardId: string, kind: "joined" | "left"): Promise<void> {
+  try {
+    await ensureInsightSchema();
+    if (kind === "joined") await sql`INSERT INTO tapcard_follow_log (card_id, day, joined) VALUES (${cardId}, CURRENT_DATE, 1) ON CONFLICT (card_id, day) DO UPDATE SET joined = tapcard_follow_log.joined + 1`;
+    else await sql`INSERT INTO tapcard_follow_log (card_id, day, "left") VALUES (${cardId}, CURRENT_DATE, 1) ON CONFLICT (card_id, day) DO UPDATE SET "left" = tapcard_follow_log."left" + 1`;
+  } catch { /* the chart can miss one count; the follow matters more */ }
 }
 
 export const ROBOT_UA = /bot|crawl|spider|preview|whatsapp|facebookexternalhit|slurp|headless|lighthouse|googleimageproxy|linkpresentation|python|curl|wget|slack|teams|skype|outlook|safelinks|proofpoint|mimecast/i;
@@ -38,12 +52,14 @@ export async function recordAnnouncementOpen(id: number): Promise<void> {
 export interface SlotStat { label: string; startsAt: string; endsAt: string; followers: number; shared: number }
 export interface SourceRow { code: string; label: string; when: string; opens: number; followers: number; shared: number; rate: number | null; slots: SlotStat[] }
 export interface AnnouncementRow { id: number; text: string; postedAt: string; sent: number; opens: number; opened: number | null }
-export interface WeekRow { weekStart: string; followers: number }
+export interface EventMark { day: string; label: string }
 export interface Insights {
   totals: { following: number; new7: number; new30: number; shared: number; eventTagged: number };
   sources: SourceRow[];
   announcements: AnnouncementRow[];
-  weeks: WeekRow[];
+  series: DayPoint[];
+  logStarted: string;
+  marks: EventMark[];
 }
 
 export async function getInsights(orgId: string): Promise<Insights> {
@@ -108,14 +124,33 @@ export async function getInsights(orgId: string): Promise<Insights> {
     opened: Number(r.sent) > 0 ? Math.round((Number(r.opens) / Number(r.sent)) * 100) : null,
   }));
 
-  const wk = (await sql`
-    SELECT date_trunc('week', f.created_at)::date AS wk, COUNT(*)::int AS n
+  // Day by day for the last 90 days: who joined, who left, the total, and how many registered through an event.
+  const DAYS = 90;
+  const surv = (await sql`
+    SELECT f.created_at::date AS d, COUNT(*)::int AS n
     FROM tapcard_followers f JOIN tapcard_listed_cards l ON l.card_id = f.card_id JOIN tapcard_cards c ON c.id = f.card_id
-    WHERE c.org_id = ${orgId} AND f.created_at > now() - interval '84 days' GROUP BY 1 ORDER BY 1`) as { wk: string; n: number }[];
-  const weeks: WeekRow[] = wk.map((r) => ({ weekStart: new Date(r.wk).toISOString().slice(0, 10), followers: Number(r.n) }));
+    WHERE c.org_id = ${orgId} AND f.created_at::date > CURRENT_DATE - (${DAYS}::int) GROUP BY 1`) as { d: string; n: number }[];
+  const logRows = (await sql`
+    SELECT l.day AS d, SUM(l.joined)::int AS j, SUM(l."left")::int AS x
+    FROM tapcard_follow_log l JOIN tapcard_cards c ON c.id = l.card_id
+    WHERE c.org_id = ${orgId} AND l.day > CURRENT_DATE - (${DAYS}::int) GROUP BY 1`) as { d: string; j: number; x: number }[];
+  const viaRows = (await sql`
+    SELECT a.first_at::date AS d, COUNT(*)::int AS n
+    FROM tapcard_event_attendance a JOIN tapcard_listed_events e ON e.code = a.event_code
+    WHERE e.org_id = ${orgId} AND a.first_at::date > CURRENT_DATE - (${DAYS}::int) GROUP BY 1`) as { d: string; n: number }[];
+  const [meta] = (await sql`SELECT started FROM tapcard_follow_log_meta`) as { started: string }[];
+  const iso = (v: string | Date) => new Date(v).toISOString().slice(0, 10);
+  const rec = (rows: { d: string; n: number }[]) => Object.fromEntries(rows.map((r) => [iso(r.d), Number(r.n)]));
+  const logStarted = meta ? iso(meta.started) : iso(new Date());
+  const series = buildSeries(lastDays(DAYS), {
+    survivors: rec(surv), logJoined: Object.fromEntries(logRows.map((r) => [iso(r.d), Number(r.j)])), logLeft: Object.fromEntries(logRows.map((r) => [iso(r.d), Number(r.x)])),
+    viaEvents: rec(viaRows), started: logStarted, totalNow: Number(t?.following ?? 0),
+  });
+  const markRows = (await sql`SELECT label, COALESCE(starts_at, created_at)::date AS d FROM tapcard_listed_events WHERE org_id = ${orgId} AND COALESCE(starts_at, created_at)::date > CURRENT_DATE - (${DAYS}::int) ORDER BY 2`) as { label: string; d: string }[];
+  const marks: EventMark[] = markRows.map((r) => ({ day: iso(r.d), label: r.label }));
 
   return {
     totals: { following: Number(t?.following ?? 0), new7: Number(t?.new7 ?? 0), new30: Number(t?.new30 ?? 0), shared: Number(sh?.n ?? 0), eventTagged: Number(t?.tagged ?? 0) },
-    sources, announcements, weeks,
+    sources, announcements, series, logStarted, marks,
   };
 }

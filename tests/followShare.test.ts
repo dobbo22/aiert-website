@@ -84,3 +84,18 @@ test("a readable company name is worked out from the email domain", () => {
   assert.equal(companyNameFromDomain("brighton.ac.uk"), "Brighton");
   assert.equal(companyNameFromDomain("x.org"), "X");
 });
+
+import { buildSeries, lastDays } from "../lib/tapcardInsightsSeries";
+test("the follower series is worked back from today and counts departures only once the log has started", () => {
+  const days = ["2026-11-10", "2026-11-11", "2026-11-12", "2026-11-13"];
+  const pts = buildSeries(days, {
+    survivors: { "2026-11-10": 4, "2026-11-11": 2 },
+    logJoined: { "2026-11-12": 5, "2026-11-13": 1 }, logLeft: { "2026-11-12": 1, "2026-11-13": 2 },
+    viaEvents: { "2026-11-12": 3 }, started: "2026-11-12", totalNow: 9,
+  });
+  assert.deepEqual(pts.map((p) => p.joined), [4, 2, 5, 1]);
+  assert.deepEqual(pts.map((p) => p.left), [0, 0, 1, 2]);
+  assert.deepEqual(pts.map((p) => p.total), [4, 6, 10, 9]);
+  assert.deepEqual(pts.map((p) => p.viaEvents), [0, 0, 3, 0]);
+  assert.equal(lastDays(3, new Date("2026-11-16T10:00:00Z")).join(), "2026-11-14,2026-11-15,2026-11-16");
+});
