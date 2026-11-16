@@ -14,6 +14,7 @@ export default async function BizCardsPage() {
   const org = await getOrg(session.orgId);
   if (!org) return null;
   const s = await listedSummary(org.id);
+  const companyName = s.cards.find((c) => c.isCompany)?.company || s.cards.find((c) => c.isCompany)?.name || org.name;
   const events = await listEvents(org.id).catch(() => []);
   return (
     <div className="space-y-6">
@@ -27,7 +28,7 @@ export default async function BizCardsPage() {
           <CardQr key={c.id} id={c.id} title={c.isCompany ? (c.company || c.name) : c.name || "Card"} subtitle={c.isCompany ? "Company card" : c.title || "Team card"} />
         ))}
       </div>
-      {s.primaryCardId && <EventQrs companyCardId={s.primaryCardId} events={events} />}
+      {s.primaryCardId && <EventQrs companyCardId={s.primaryCardId} companyName={companyName} events={events} />}
     </div>
   );
 }

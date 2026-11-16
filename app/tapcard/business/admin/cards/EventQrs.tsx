@@ -17,7 +17,7 @@ function windowText(ev: EventRow, now: number): string {
 }
 
 /// Event QR codes: name a meeting or event, get its own QR code, see how many followers came through each.
-export default function EventQrs({ companyCardId, events }: { companyCardId: string; events: EventRow[] }) {
+export default function EventQrs({ companyCardId, companyName, events }: { companyCardId: string; companyName: string; events: EventRow[] }) {
   const router = useRouter();
   const [label, setLabel] = useState("");
   const [busy, setBusy] = useState(false);
@@ -48,7 +48,7 @@ export default function EventQrs({ companyCardId, events }: { companyCardId: str
         <p className="mt-2 text-cloud">
           Optionally give the event a start and end time. Anyone who <strong>newly</strong> follows during that time, through any of your cards (for example the
           chief executive&apos;s phone at the event), is tagged with the event even without scanning its code, and the list says &ldquo;event window&rdquo;. It is time-based,
-          so it can include people who followed from elsewhere in that window. People who already followed are never retagged.
+          so it can include people who followed from elsewhere in that window. People who already follow are not tagged by the time window alone, but every time someone scans an event&apos;s QR code that event is recorded for them, so a person can have several events (the AGM and then a roadshow). Their name appears beside each event only if they chose to share their details.
         </p>
         <form className="mt-4 flex flex-wrap items-end gap-3" onSubmit={(e) => { e.preventDefault(); if (label.trim()) void post({ label, startsAt: starts ? new Date(starts).toISOString() : "", endsAt: ends ? new Date(ends).toISOString() : "" }); }}>
           <label className="sr-only" htmlFor="event-name">Event name</label>
@@ -70,7 +70,7 @@ export default function EventQrs({ companyCardId, events }: { companyCardId: str
         <div className="grid gap-4 md:grid-cols-2">
           {events.map((ev) => (
             <div key={ev.code} className="space-y-2">
-              <CardQr id={companyCardId} eventCode={ev.code} title={ev.label} subtitle={`${ev.followers} ${ev.followers === 1 ? "follower" : "followers"} so far`} />
+              <CardQr id={companyCardId} eventCode={ev.code} title={ev.label} subtitle={`${ev.followers} ${ev.followers === 1 ? "follower" : "followers"} so far`} caption={`Please scan to register your attendance and follow ${companyName}`} />
               {windowText(ev, now) && <p className="px-1 text-sm text-cloud">{windowText(ev, now)}</p>}
               <button type="button" disabled={busy} onClick={() => { if (window.confirm(`Delete the event "${ev.label}"? Its QR code will still open the card, but follows stop being tagged.`)) void post({ delete: ev.code }); }}
                 className="rounded-xl px-4 py-2 text-cloud underline">Delete this event</button>
