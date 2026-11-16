@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import CardQr from "./CardQr";
 
-export interface EventRow { code: string; label: string; createdAt: string; followers: number; startsAt: string | null; endsAt: string | null }
+export interface SlotRow { id: number; label: string; startsAt: string; endsAt: string; followers: number }
+export interface EventRow { code: string; label: string; createdAt: string; followers: number; startsAt: string | null; endsAt: string | null; slots: SlotRow[] }
 
 const when = (iso: string) => new Date(iso).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
 
@@ -14,6 +15,49 @@ function windowText(ev: EventRow, now: number): string {
   const s = new Date(ev.startsAt).getTime(), e = new Date(ev.endsAt).getTime();
   const state = now < s ? "Not started" : now < e ? "Running now" : "Ended";
   return `${state}: ${when(ev.startsAt)} to ${when(ev.endsAt)}`;
+}
+
+const hm = (iso: string) => new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
+const dmy = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Europe/London" });
+
+/// The timed slots of one event (a roadshow: one firm per slot, one printed QR code). Each scan is recorded against the slot it falls in.
+function Slots({ ev, post, busy }: { ev: EventRow; post: (b: unknown) => Promise<void>; busy: boolean }) {
+  const [label, setLabel] = useState("");
+  const [day, setDay] = useState(ev.startsAt ? new Date(ev.startsAt).toLocaleDateString("en-CA", { timeZone: "Europe/London" }) : "");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const ready = label.trim().length >= 2 && day && from && to;
+  return (
+    <div className="rounded-2xl bg-charcoal p-4 ring-1 ring-white/10">
+      <p className="text-sm font-semibold text-cloud">Time slots for this QR code</p>
+      {ev.slots.length === 0 ? <p className="mt-1 text-sm text-cloud">None yet. Every scan is recorded against the event as a whole.</p> : (
+        <ul className="mt-2 space-y-1">
+          {ev.slots.map((sl) => (
+            <li key={sl.id} className="flex flex-wrap items-center justify-between gap-2 text-sm text-cloud">
+              <span><strong>{sl.label}</strong> · {dmy(sl.startsAt)} {hm(sl.startsAt)} to {hm(sl.endsAt)} · {sl.followers} {sl.followers === 1 ? "person" : "people"}</span>
+              <button type="button" disabled={busy} onClick={() => { if (window.confirm(`Remove the slot "${sl.label}"? Scans already recorded in it stay.`)) void post({ deleteSlot: sl.id }); }} className="underline">Remove</button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <form className="mt-3 flex flex-wrap items-end gap-2" onSubmit={(e) => { e.preventDefault(); if (!ready) return;
+        void post({ addSlot: ev.code, label, startsAt: new Date(`${day}T${from}`).toISOString(), endsAt: new Date(`${day}T${to}`).toISOString() }).then(() => { setLabel(""); setFrom(""); setTo(""); }); }}>
+        <label className="text-sm font-semibold text-cloud">Who or where
+          <input value={label} onChange={(e) => setLabel(e.target.value)} maxLength={60} placeholder="For example: Smith &amp; Co" className="mt-1 block rounded-xl bg-slate/40 px-3 py-2 text-cloud ring-1 ring-slate" />
+        </label>
+        <label className="text-sm font-semibold text-cloud">Day
+          <input type="date" value={day} onChange={(e) => setDay(e.target.value)} className="mt-1 block rounded-xl bg-white px-3 py-2 text-black ring-1 ring-slate" />
+        </label>
+        <label className="text-sm font-semibold text-cloud">From
+          <input type="time" value={from} onChange={(e) => setFrom(e.target.value)} className="mt-1 block rounded-xl bg-white px-3 py-2 text-black ring-1 ring-slate" />
+        </label>
+        <label className="text-sm font-semibold text-cloud">To
+          <input type="time" value={to} onChange={(e) => setTo(e.target.value)} className="mt-1 block rounded-xl bg-white px-3 py-2 text-black ring-1 ring-slate" />
+        </label>
+        <button type="submit" disabled={busy || !ready} className="btn-gold rounded-xl px-4 py-2 font-semibold disabled:opacity-50">Add slot</button>
+      </form>
+    </div>
+  );
 }
 
 /// Event QR codes: name a meeting or event, get its own QR code, see how many followers came through each.
@@ -44,7 +88,7 @@ export default function EventQrs({ companyCardId, companyName, events }: { compa
       const r = await fetch("/api/tapcard/biz/events", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
       const j = (await r.json().catch(() => ({}))) as { error?: string };
       if (!r.ok) setError(j.error ?? "That did not work. Please try again.");
-      else { setLabel(""); if (mode === "slot") { setFrom(""); setTo(""); } else setDay(""); router.refresh(); } // a timed slot keeps the day, ready for the next firm
+      else { setLabel(""); setDay(""); setFrom(""); setTo(""); router.refresh(); }
     } finally { setBusy(false); }
   }
 
@@ -93,7 +137,7 @@ export default function EventQrs({ companyCardId, companyName, events }: { compa
               )}
             </div>
           )}
-          {mode === "slot" && <p className="text-sm text-cloud">Visiting several firms in one day? Make one timed slot for each, with its own name and QR code. After you create one, the day stays filled in for the next.</p>}
+          <p className="text-sm text-cloud">Visiting several firms in one day? Make one event for the roadshow with one QR code to print, then add a timed slot for each firm under it. A scan is recorded against the slot it was made in, and you can change the slots later without reprinting.</p>
           <button type="submit" disabled={busy || label.trim().length < 2} className="btn-gold rounded-xl px-5 py-2 font-semibold disabled:opacity-50">Create QR code</button>
         </form>
         {error && <p role="alert" className="mt-3 rounded-xl bg-white/10 px-4 py-2 text-cloud">{error}</p>}
@@ -106,6 +150,7 @@ export default function EventQrs({ companyCardId, companyName, events }: { compa
             <div key={ev.code} className="space-y-2">
               <CardQr id={companyCardId} eventCode={ev.code} title={ev.label} subtitle={`${ev.followers} ${ev.followers === 1 ? "follower" : "followers"} so far`} caption={`Please scan to register your attendance and follow ${companyName}`} />
               {windowText(ev, now) && <p className="px-1 text-sm text-cloud">{windowText(ev, now)}</p>}
+              <Slots ev={ev} post={post} busy={busy} />
               <button type="button" disabled={busy} onClick={() => { if (window.confirm(`Delete the event "${ev.label}"? Its QR code will still open the card, but follows stop being tagged.`)) void post({ delete: ev.code }); }}
                 className="rounded-xl px-4 py-2 text-cloud underline">Delete this event</button>
             </div>

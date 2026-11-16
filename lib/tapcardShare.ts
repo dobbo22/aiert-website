@@ -108,7 +108,7 @@ export async function listSharedFollowers(orgId: string): Promise<SharedFollower
   await (await import("@/lib/tapcardEvents")).ensureAttendanceTable();
   const rows = (await sql`
     SELECT d.card_id, c.company, c.name AS card_name, d.name, d.email, d.phone, d.consented_at, v.name AS via_name, v.title AS via_title,
-      COALESCE((SELECT json_agg(json_build_object('label', e.label, 'via', a.via) ORDER BY a.first_at) FROM tapcard_event_attendance a JOIN tapcard_listed_events e ON e.code = a.event_code AND e.org_id = c.org_id WHERE a.card_id = d.card_id AND a.follower_hash = d.follower_hash), '[]'::json) AS events
+      COALESCE((SELECT json_agg(json_build_object('label', e.label || COALESCE(': ' || sl.label, ''), 'via', a.via) ORDER BY a.first_at) FROM tapcard_event_attendance a JOIN tapcard_listed_events e ON e.code = a.event_code AND e.org_id = c.org_id LEFT JOIN tapcard_listed_event_slots sl ON sl.id = NULLIF(a.slot_id, 0) WHERE a.card_id = d.card_id AND a.follower_hash = d.follower_hash), '[]'::json) AS events
     FROM tapcard_follower_details d
     JOIN tapcard_listed_cards l ON l.card_id = d.card_id
     JOIN tapcard_cards c ON c.id = d.card_id

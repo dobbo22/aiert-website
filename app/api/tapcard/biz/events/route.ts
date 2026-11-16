@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireBizSession } from "@/lib/tapcardBizSession";
 import { orgIsListed } from "@/lib/tapcardListedAdmin";
-import { createEvent, deleteEvent, listEvents } from "@/lib/tapcardEvents";
+import { addSlot, createEvent, deleteEvent, deleteSlot, listEvents } from "@/lib/tapcardEvents";
 
 // Event QR codes for a listed company (admins only): list, create, delete. See lib/tapcardEvents.ts.
 async function gate() {
@@ -20,9 +20,17 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const g = await gate();
   if (g.error) return g.error;
-  const body = (await req.json().catch(() => null)) as { label?: unknown; delete?: unknown; startsAt?: unknown; endsAt?: unknown } | null;
+  const body = (await req.json().catch(() => null)) as { label?: unknown; delete?: unknown; startsAt?: unknown; endsAt?: unknown; addSlot?: unknown; deleteSlot?: unknown } | null;
   if (typeof body?.delete === "string") {
     await deleteEvent(g.session!.orgId, body.delete);
+    return NextResponse.json({ ok: true });
+  }
+  if (typeof body?.addSlot === "string") {
+    const sr = await addSlot(g.session!.orgId, body.addSlot, String(body?.label ?? ""), body?.startsAt, body?.endsAt);
+    return sr.ok ? NextResponse.json({ ok: true }) : NextResponse.json({ error: sr.error }, { status: 400 });
+  }
+  if (typeof body?.deleteSlot === "number") {
+    await deleteSlot(g.session!.orgId, body.deleteSlot);
     return NextResponse.json({ ok: true });
   }
   const r = await createEvent(g.session!.orgId, String(body?.label ?? ""), body?.startsAt, body?.endsAt);

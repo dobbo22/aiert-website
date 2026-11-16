@@ -24,3 +24,22 @@ export function validateShare(input: unknown): { ok: true; details: ShareDetails
 export function formatEventList(rows: { label: string; via: string }[]): string {
   return rows.map((r) => (r.via === "window" ? `${r.label} (event window)` : r.label)).join(", ");
 }
+
+/// Which slot of an event a moment falls in: starts inclusive, ends exclusive; if slots overlap, the one that started last. null if none.
+export function pickSlot<T extends { startsAt: string; endsAt: string }>(slots: T[], at: Date): T | null {
+  const t = at.getTime();
+  let best: T | null = null;
+  for (const s of slots) {
+    const a = new Date(s.startsAt).getTime(), b = new Date(s.endsAt).getTime();
+    if (t >= a && t < b && (!best || a > new Date(best.startsAt).getTime())) best = s;
+  }
+  return best;
+}
+
+/// The moment a scan happened, as the app reports it: only a real time in the last 60 days and not in the future (5 minutes of slack).
+export function cleanScanTime(v: unknown, now: Date = new Date()): Date | null {
+  const d = typeof v === "number" ? new Date(v) : typeof v === "string" && v ? new Date(v) : null;
+  if (!d || Number.isNaN(d.getTime())) return null;
+  if (d.getTime() > now.getTime() + 5 * 60_000 || d.getTime() < now.getTime() - 60 * 86_400_000) return null;
+  return d;
+}

@@ -68,8 +68,8 @@ export async function getInsights(orgId: string): Promise<Insights> {
   const srcRows = (await sql`
     SELECT e.code, e.label, e.starts_at, e.ends_at,
       COALESCE((SELECT SUM(v.n) FROM tapcard_listed_event_views v WHERE v.code = e.code), 0)::int AS opens,
-      (SELECT COUNT(*)::int FROM tapcard_event_attendance a WHERE a.event_code = e.code) AS followers,
-      (SELECT COUNT(*)::int FROM tapcard_event_attendance a JOIN tapcard_follower_details d ON d.card_id = a.card_id AND d.follower_hash = a.follower_hash WHERE a.event_code = e.code) AS shared
+      (SELECT COUNT(DISTINCT a.follower_hash)::int FROM tapcard_event_attendance a WHERE a.event_code = e.code) AS followers,
+      (SELECT COUNT(DISTINCT a.follower_hash)::int FROM tapcard_event_attendance a JOIN tapcard_follower_details d ON d.card_id = a.card_id AND d.follower_hash = a.follower_hash WHERE a.event_code = e.code) AS shared
     FROM tapcard_listed_events e WHERE e.org_id = ${orgId} ORDER BY COALESCE(e.starts_at, e.created_at) DESC`) as
     { code: string; label: string; starts_at: string | null; ends_at: string | null; opens: number; followers: number; shared: number }[];
   const sources: SourceRow[] = srcRows.map((r) => ({

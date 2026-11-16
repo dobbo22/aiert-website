@@ -27,3 +27,27 @@ test("every event a follower came through is listed, oldest first, windows marke
   assert.equal(formatEventList([{ label: "AGM 2026", via: "code" }]), "AGM 2026");
   assert.equal(formatEventList([{ label: "AGM 2026", via: "code" }, { label: "Roadshow", via: "window" }]), "AGM 2026, Roadshow (event window)");
 });
+
+import { pickSlot, cleanScanTime } from "../lib/tapcardShareRules";
+const slots = [
+  { id: 1, startsAt: "2026-11-20T09:30:00Z", endsAt: "2026-11-20T10:30:00Z" },
+  { id: 2, startsAt: "2026-11-20T11:00:00Z", endsAt: "2026-11-20T12:00:00Z" },
+  { id: 3, startsAt: "2026-11-20T11:30:00Z", endsAt: "2026-11-20T11:45:00Z" },
+];
+test("a scan lands in the slot its time falls in; between slots is none", () => {
+  assert.equal(pickSlot(slots, new Date("2026-11-20T09:30:00Z"))?.id, 1, "start is inclusive");
+  assert.equal(pickSlot(slots, new Date("2026-11-20T10:30:00Z")), null, "end is exclusive");
+  assert.equal(pickSlot(slots, new Date("2026-11-20T10:45:00Z")), null);
+  assert.equal(pickSlot(slots, new Date("2026-11-20T11:10:00Z"))?.id, 2);
+  assert.equal(pickSlot(slots, new Date("2026-11-20T11:35:00Z"))?.id, 3, "overlap: the latest start wins");
+  assert.equal(pickSlot([], new Date()), null);
+});
+test("a reported scan time must be real, recent and not in the future", () => {
+  const now = new Date("2026-11-20T12:00:00Z");
+  assert.equal(cleanScanTime("2026-11-20T09:31:00Z", now)?.toISOString(), "2026-11-20T09:31:00.000Z");
+  assert.equal(cleanScanTime(now.getTime() - 3600_000, now)?.getTime(), now.getTime() - 3600_000);
+  assert.equal(cleanScanTime("2026-11-21T12:00:00Z", now), null, "future");
+  assert.equal(cleanScanTime("2026-08-01T12:00:00Z", now), null, "over 60 days old");
+  assert.equal(cleanScanTime("nonsense", now), null);
+  assert.equal(cleanScanTime(undefined, now), null);
+});

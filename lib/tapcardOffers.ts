@@ -270,7 +270,7 @@ export async function claimOffer(cardId: string, claimant: string, viaRaw: unkno
 }
 
 /// Followers are only ever a count: a one-way hash of a random per-install id, never shown or listed.
-export async function setFollower(cardId: string, follower: string, follow: boolean, eventCode = "", eventVia: "code" | "window" = "code"): Promise<void> {
+export async function setFollower(cardId: string, follower: string, follow: boolean, eventCode = "", eventVia: "code" | "window" = "code", eventAt: Date | null = null): Promise<void> {
   await ensureOfferSchema();
   const who = hashSecret(`tapcard-follower:${follower}`);
   if (follow && eventCode) {
@@ -290,7 +290,7 @@ export async function setFollower(cardId: string, follower: string, follow: bool
   // Every event they came through is kept, not only the first (a person can attend the AGM and then a roadshow).
   if (follow && eventCode) {
     const { recordAttendance } = await import("@/lib/tapcardEvents");
-    await recordAttendance(cardId, who, eventCode, eventVia);
+    await recordAttendance(cardId, who, eventCode, eventVia, eventAt);
   }
 }
 

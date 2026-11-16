@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import sql from "@/lib/db";
+import { pickSlot } from "@/lib/tapcardShareRules";
 
 // Event QR codes for a LISTED company: the company names a meeting or event ("AGM 2026", "London roadshow"), gets its own QR code, and
 // each follow that came through it is tagged with that event. No location is read or stored: the tag is only which code was scanned.
@@ -17,6 +18,15 @@ function ensureEventSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_listed_events ADD COLUMN IF NOT EXISTS starts_at TIMESTAMPTZ`)
       .then(() => sql`ALTER TABLE tapcard_listed_events ADD COLUMN IF NOT EXISTS ends_at TIMESTAMPTZ`)
       .then(() => sql`CREATE INDEX IF NOT EXISTS tapcard_listed_events_org ON tapcard_listed_events (org_id)`)
+      // Slots: one printed QR code for an event (a roadshow), the day split into timed slots (one per firm). A scan is recorded against the slot it falls in.
+      .then(() => sql`CREATE TABLE IF NOT EXISTS tapcard_listed_event_slots (
+        id SERIAL PRIMARY KEY,
+        event_code TEXT NOT NULL,
+        label TEXT NOT NULL,
+        starts_at TIMESTAMPTZ NOT NULL,
+        ends_at TIMESTAMPTZ NOT NULL
+      )`)
+      .then(() => sql`CREATE INDEX IF NOT EXISTS tapcard_listed_event_slots_code ON tapcard_listed_event_slots (event_code)`)
       .catch((e) => { ready = null; throw e; });
   }
   return ready;
@@ -29,7 +39,7 @@ export function cleanEventLabel(v: unknown): string {
   return typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, 60) : "";
 }
 
-export interface ListedEvent { code: string; label: string; createdAt: string; followers: number; startsAt: string | null; endsAt: string | null }
+export interface ListedEvent { code: string; label: string; createdAt: string; followers: number; startsAt: string | null; endsAt: string | null; slots: EventSlot[] }
 
 export const MAX_WINDOW_DAYS = 14;
 
@@ -60,6 +70,7 @@ export async function createEvent(orgId: string, label: string, startsAt?: unkno
 
 export async function deleteEvent(orgId: string, code: string): Promise<void> {
   await ensureEventSchema();
+  await sql`DELETE FROM tapcard_listed_event_slots WHERE event_code IN (SELECT code FROM tapcard_listed_events WHERE code = ${code} AND org_id = ${orgId})`;
   await sql`DELETE FROM tapcard_listed_events WHERE code = ${code} AND org_id = ${orgId}`;
 }
 
@@ -78,21 +89,33 @@ export function ensureAttendanceTable(): Promise<unknown> {
           first_at TIMESTAMPTZ NOT NULL DEFAULT now(),
           PRIMARY KEY (card_id, follower_hash, event_code)
         )`)
+      .then(() => sql`ALTER TABLE tapcard_event_attendance ADD COLUMN IF NOT EXISTS slot_id INT NOT NULL DEFAULT 0`)
+      // One row per follower, event AND slot (a person can scan at two firms in one roadshow day).
+      .then(() => sql`ALTER TABLE tapcard_event_attendance DROP CONSTRAINT IF EXISTS tapcard_event_attendance_pkey`)
+      .then(() => sql`CREATE UNIQUE INDEX IF NOT EXISTS tapcard_event_attendance_uniq ON tapcard_event_attendance (card_id, follower_hash, event_code, slot_id)`)
       .then(() => sql`CREATE INDEX IF NOT EXISTS tapcard_event_attendance_code ON tapcard_event_attendance (event_code)`)
       // Earlier single tags become the first row (safe to repeat).
       .then(() => sql`INSERT INTO tapcard_event_attendance (card_id, follower_hash, event_code, via, first_at)
                       SELECT card_id, follower_hash, event_code, CASE WHEN event_via = 'window' THEN 'window' ELSE 'code' END, created_at
-                      FROM tapcard_followers WHERE event_code <> '' ON CONFLICT DO NOTHING`)
+                      FROM tapcard_followers f WHERE f.event_code <> '' AND NOT EXISTS (SELECT 1 FROM tapcard_event_attendance a WHERE a.card_id = f.card_id AND a.follower_hash = f.follower_hash AND a.event_code = f.event_code) ON CONFLICT DO NOTHING`)
       .catch((e) => { attReady = null; throw e; });
   }
   return attReady;
 }
 
-/// A follower came through an event (a scanned code, or a running event window). Repeats (the apps re-send at launch) change nothing.
-export async function recordAttendance(cardId: string, followerHash: string, eventCode: string, via: "code" | "window"): Promise<void> {
+/// A follower came through an event (a scanned code, or a running event window). If the event has timed slots, the scan is recorded against
+/// the slot its time falls in (`at` is when the app says the scan happened; without it, now). Repeats change nothing: an app that does not send
+/// the scan time re-sends the follow at every launch, so it records only the first time for that event.
+export async function recordAttendance(cardId: string, followerHash: string, eventCode: string, via: "code" | "window", at?: Date | null): Promise<void> {
   if (!eventCode) return;
   await ensureAttendanceTable();
-  await sql`INSERT INTO tapcard_event_attendance (card_id, follower_hash, event_code, via) VALUES (${cardId}, ${followerHash}, ${eventCode}, ${via}) ON CONFLICT DO NOTHING`;
+  if (!at) {
+    const have = (await sql`SELECT 1 FROM tapcard_event_attendance WHERE card_id = ${cardId} AND follower_hash = ${followerHash} AND event_code = ${eventCode} LIMIT 1`) as unknown[];
+    if (have.length) return;
+  }
+  const when = at ?? new Date();
+  const slot = await slotAt(eventCode, when);
+  await sql`INSERT INTO tapcard_event_attendance (card_id, follower_hash, event_code, via, slot_id, first_at) VALUES (${cardId}, ${followerHash}, ${eventCode}, ${via}, ${slot?.id ?? 0}, ${when.toISOString()}) ON CONFLICT DO NOTHING`;
 }
 
 export async function removeAttendance(cardId: string, followerHash?: string): Promise<void> {
@@ -101,18 +124,56 @@ export async function removeAttendance(cardId: string, followerHash?: string): P
   else await sql`DELETE FROM tapcard_event_attendance WHERE card_id = ${cardId}`;
 }
 
+export interface EventSlot { id: number; label: string; startsAt: string; endsAt: string; followers: number }
+
+async function slotsOf(code: string): Promise<{ id: number; label: string; startsAt: string; endsAt: string }[]> {
+  const rows = (await sql`SELECT id, label, starts_at, ends_at FROM tapcard_listed_event_slots WHERE event_code = ${code} ORDER BY starts_at`) as { id: number; label: string; starts_at: string; ends_at: string }[];
+  return rows.map((r) => ({ id: Number(r.id), label: r.label, startsAt: new Date(r.starts_at).toISOString(), endsAt: new Date(r.ends_at).toISOString() }));
+}
+
+export async function slotAt(code: string, at: Date): Promise<{ id: number; label: string } | null> {
+  await ensureEventSchema();
+  return pickSlot(await slotsOf(code), at);
+}
+
+export async function addSlot(orgId: string, code: string, label: string, startsAt: unknown, endsAt: unknown): Promise<{ ok: true } | { ok: false; error: string }> {
+  await ensureEventSchema();
+  const own = (await sql`SELECT 1 FROM tapcard_listed_events WHERE code = ${code} AND org_id = ${orgId}`) as unknown[];
+  if (!own.length) return { ok: false, error: "That event was not found." };
+  const win = parseWindow(startsAt, endsAt);
+  if (!win || "error" in win) return { ok: false, error: win && "error" in win ? win.error : "Give the slot a start and an end time." };
+  const clean = cleanEventLabel(label);
+  if (clean.length < 2) return { ok: false, error: "Give the slot a name, for example the firm you are visiting." };
+  const n = (await sql`SELECT COUNT(*)::int AS n FROM tapcard_listed_event_slots WHERE event_code = ${code}`) as { n: number }[];
+  if ((n[0]?.n ?? 0) >= 40) return { ok: false, error: "That is the most slots one event can have." };
+  await sql`INSERT INTO tapcard_listed_event_slots (event_code, label, starts_at, ends_at) VALUES (${code}, ${clean}, ${win.start.toISOString()}, ${win.end.toISOString()})`;
+  return { ok: true };
+}
+
+export async function deleteSlot(orgId: string, id: number): Promise<void> {
+  await ensureEventSchema();
+  await sql`DELETE FROM tapcard_listed_event_slots WHERE id = ${id} AND event_code IN (SELECT code FROM tapcard_listed_events WHERE org_id = ${orgId})`;
+}
+
 /// The company's events, newest first, with how many current followers came through each.
 export async function listEvents(orgId: string): Promise<ListedEvent[]> {
   await ensureEventSchema();
   await ensureAttendanceTable();
   const rows = (await sql`
     SELECT e.code, e.label, e.created_at, e.starts_at, e.ends_at,
-      (SELECT COUNT(*)::int FROM tapcard_event_attendance a WHERE a.event_code = e.code) AS followers
+      (SELECT COUNT(DISTINCT a.follower_hash)::int FROM tapcard_event_attendance a WHERE a.event_code = e.code) AS followers
     FROM tapcard_listed_events e WHERE e.org_id = ${orgId} ORDER BY COALESCE(e.starts_at, e.created_at) DESC`) as { code: string; label: string; created_at: string; starts_at: string | null; ends_at: string | null; followers: number }[];
-  return rows.map((r) => ({
-    code: r.code, label: r.label, createdAt: new Date(r.created_at).toISOString(), followers: Number(r.followers),
-    startsAt: r.starts_at ? new Date(r.starts_at).toISOString() : null, endsAt: r.ends_at ? new Date(r.ends_at).toISOString() : null,
-  }));
+  const counts = (await sql`SELECT a.slot_id, COUNT(DISTINCT a.follower_hash)::int AS n FROM tapcard_event_attendance a JOIN tapcard_listed_events e ON e.code = a.event_code WHERE e.org_id = ${orgId} AND a.slot_id <> 0 GROUP BY a.slot_id`) as { slot_id: number; n: number }[];
+  const byId = new Map(counts.map((c) => [Number(c.slot_id), Number(c.n)]));
+  const out: ListedEvent[] = [];
+  for (const r of rows) {
+    const slots = (await slotsOf(r.code)).map((x) => ({ ...x, followers: byId.get(x.id) ?? 0 }));
+    out.push({
+      code: r.code, label: r.label, createdAt: new Date(r.created_at).toISOString(), followers: Number(r.followers),
+      startsAt: r.starts_at ? new Date(r.starts_at).toISOString() : null, endsAt: r.ends_at ? new Date(r.ends_at).toISOString() : null, slots,
+    });
+  }
+  return out;
 }
 
 /// A code the app sent is only kept if it is a real event of the company that owns the card being followed.
