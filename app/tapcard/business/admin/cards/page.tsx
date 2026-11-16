@@ -2,19 +2,22 @@ import Link from "next/link";
 import { requireBizSession } from "@/lib/tapcardBizSession";
 import { getOrg } from "@/lib/tapcardBiz";
 import { listedSummary } from "@/lib/tapcardListedAdmin";
+import { listEventAttendees, listEvents } from "@/lib/tapcardEvents";
 import { getPrivacyUrl } from "@/lib/tapcardShare";
 import CardQr from "./CardQr";
 import PrivacyLink from "./PrivacyLink";
+import EventQrs from "./EventQrs";
 
 export const dynamic = "force-dynamic";
 
 const TABS = [
   { key: "company", label: "Company card" },
   { key: "team", label: "Team cards" },
+  { key: "events", label: "Events" },
   { key: "privacy", label: "Privacy notice" },
 ] as const;
 
-// The company's cards, each with a QR code to download for slides, the annual report and the AGM notice, split into tabs. Events have their own page. Admins only.
+// The company's cards, each with a QR code to download for slides, the annual report and the AGM notice, split into tabs: company, team, events and the privacy notice. Admins only.
 export default async function BizCardsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const session = await requireBizSession();
   if (!session) return null;
@@ -25,6 +28,9 @@ export default async function BizCardsPage({ searchParams }: { searchParams: Pro
   const s = await listedSummary(org.id);
   const company = s.cards.filter((c) => c.isCompany);
   const team = s.cards.filter((c) => !c.isCompany);
+  const companyCard = company[0];
+  const companyName = companyCard?.company || companyCard?.name || org.name;
+  const [events, attendance] = tab === "events" && s.primaryCardId ? await Promise.all([listEvents(org.id).catch(() => []), listEventAttendees(org.id).catch(() => ({}))]) : [[], {}];
   const privacyUrl = s.primaryCardId ? await getPrivacyUrl(s.primaryCardId).catch(() => "") : "";
   return (
     <div className="space-y-6">
@@ -35,7 +41,6 @@ export default async function BizCardsPage({ searchParams }: { searchParams: Pro
             {t.label}
           </Link>
         ))}
-        <Link href="/business/admin/events" className="ml-auto rounded-lg px-4 py-2 text-sm font-semibold text-gold underline">Events and roadshow QR codes</Link>
       </nav>
 
       {tab === "company" && (
@@ -57,6 +62,10 @@ export default async function BizCardsPage({ searchParams }: { searchParams: Pro
           </div>
         </>
       )}
+
+      {tab === "events" && (s.primaryCardId
+        ? <EventQrs companyCardId={s.primaryCardId} companyName={companyName} events={events} attendance={attendance} />
+        : <p className="rounded-2xl bg-charcoal p-6 text-cloud ring-1 ring-white/10">There is no company card yet. Ask AIERT to set it up.</p>)}
 
       {tab === "privacy" && (s.primaryCardId ? <PrivacyLink initial={privacyUrl} /> : <p className="rounded-2xl bg-charcoal p-6 text-cloud ring-1 ring-white/10">No company card yet.</p>)}
     </div>

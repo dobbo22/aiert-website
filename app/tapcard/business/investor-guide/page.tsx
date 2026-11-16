@@ -18,7 +18,7 @@ const FAQS: [string, React.ReactNode][] = [
   ["What happens if someone scans an event code twice, or two events?", "Each event is recorded once for that person. A person can have several events, such as the AGM and then a roadshow. Their name appears beside each event only if they chose to share their details."],
   ["What is an event window?", "If an event has a day or a time, anyone who newly follows during that time through any of your cards is tagged with it, even without scanning the code. The list says event window. People who already followed are not tagged by time alone."],
   ["A scan fell outside my time slots. Where does it go?", "It is recorded against the event as a whole, with no slot. If slots overlap, the one that started last wins."],
-  ["Can I change a slot or its time after printing the QR code?", "Yes. The code belongs to the event, not the slot. Add, change or remove slots on the Events tab and the printed code keeps working."],
+  ["Can I change a slot or its time after printing the QR code?", "Yes. The code belongs to the event, not the slot. Add, change or remove slots under Cards & QR, Events, and the printed code keeps working."],
   ["How often does News & RNS check my announcements page?", "When you open the page, when you press Refresh now, and every three minutes while the page stays open. Opening the page checks at most once a minute, and Refresh now at most once every 10 seconds. If your page changes layout and many items look new at once, they are treated as earlier items so they do not flood the list."],
   ["Someone asks to be removed. What do I do?", "They can stop following, or switch to Follow only, in the app, which removes their details from your list. If they email you instead, ask them to do that, or email enquiries@aiert.co.uk and we will remove them."],
   ["What happens to the details when someone stops following?", "Their name, email and event records are removed when they stop following, withdraw their sharing, or when the card is deleted."],
@@ -44,7 +44,7 @@ export default function InvestorGuidePage() {
           <li><strong>Check your company card</strong> (Overview, then Open the card). This is what a shareholder sees after scanning: your logo, investor pages and the follow button.</li>
           <li><strong>Put the QR code where shareholders already look</strong>: results slides, the annual report, the AGM notice and your website. Download it on Cards &amp; QR, then Company card.</li>
           <li><strong>Add your people</strong> on the People tab: chair, CEO, CFO and IR contact each get a card and QR code. A shareholder who follows through a person follows the company.</li>
-          <li><strong>Make an event code</strong> for your AGM or a roadshow on the Events tab (see below).</li>
+          <li><strong>Make an event code</strong> for your AGM or a roadshow under Cards &amp; QR, Events (see below).</li>
           <li><strong>Post a headline after your next RNS</strong> on News &amp; RNS.</li>
         </ol>
       </section>
@@ -54,10 +54,9 @@ export default function InvestorGuidePage() {
         <ul>
           <li><strong>Overview</strong>: following, how many can be notified, how many shared their details, card views and QR scans, your latest headline and a getting-started checklist.</li>
           <li><strong>Followers</strong>: people who shared their name and email. <em>By company</em> groups them by email domain with a logo and a count; click a company for its names and emails. <em>Everyone</em> is a table you can filter by company, by private investors, by event, or search. Download CSV exports the whole list.</li>
-          <li><strong>Events</strong>: one QR code per AGM, roadshow or meeting, with time slots and a list of who registered.</li>
           <li><strong>Insights</strong>: counts only, never a named person: followers over time, opens and registrations for each event and slot, and how many tapped through each headline.</li>
           <li><strong>News &amp; RNS</strong>: your announcements page is watched for new items, and each is one tap to post as a headline. You can also write your own.</li>
-          <li><strong>Cards &amp; QR</strong>: Company card, Team cards and your Privacy notice link.</li>
+          <li><strong>Cards &amp; QR</strong>: Company card, Team cards, Events (one QR code per AGM, roadshow or meeting, with time slots and a list of who registered) and your Privacy notice link.</li>
           <li><strong>People</strong>, <strong>Admins</strong> and <strong>Billing</strong>: who has a card, who can sign in, and your plan.</li>
         </ul>
       </section>
@@ -65,7 +64,7 @@ export default function InvestorGuidePage() {
       <section>
         <h2>Running an AGM or a roadshow</h2>
         <ol className="ml-5 mt-2 space-y-1.5 [&>li]:list-decimal!">
-          <li>On <strong>Events</strong>, name the event (for example AGM 2026 or Roadshow 20 Nov) and choose <em>No set time</em>, <em>All day</em> or <em>Timed slot</em>. Press Create QR code.</li>
+          <li>Under <strong>Cards &amp; QR</strong>, choose <strong>Events</strong>, name the event (for example AGM 2026 or Roadshow 20 Nov) and choose <em>No set time</em>, <em>All day</em> or <em>Timed slot</em>. Press Create QR code.</li>
           <li>Press <strong>Download QR code with wording</strong>. The picture has &ldquo;Please scan to register your attendance and follow your company&rdquo; printed under the code, ready for a slide or a printed sign.</li>
           <li>For a day of visits, keep <strong>one</strong> event and add a <strong>time slot</strong> for each firm (name, day, from, to). Print one code. A scan is recorded against the slot it was made in, and you can edit slots later without reprinting.</li>
           <li>Open <strong>Registered</strong> under the event to see who registered. People who shared their details appear by name with their slot; the rest are counted. Download list gives a CSV for that event.</li>

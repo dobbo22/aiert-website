@@ -20,7 +20,6 @@ const TABS = [
 const LISTED_TABS = [
   { href: "/business/admin", label: "Overview" },
   { href: "/business/admin/followers", label: "Followers" },
-  { href: "/business/admin/events", label: "Events" },
   { href: "/business/admin/insights", label: "Insights" },
   { href: "/business/admin/news", label: "News & RNS" },
   { href: "/business/admin/cards", label: "Cards & QR" },

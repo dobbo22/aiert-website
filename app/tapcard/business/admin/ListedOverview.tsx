@@ -22,7 +22,7 @@ export function ListedOverviewView({ s, orgName, events = [], people = [], now }
       text: "This is what a shareholder sees when they scan your QR code: your logo, investor pages and the follow button." },
     { done: false, href: "/business/admin/cards", title: "Put your QR code where shareholders already look",
       text: "Results slides, the annual report, the AGM notice, your website and roadshow decks. Download it from Cards & QR." },
-    { done: events.length > 0, href: "/business/admin/events", title: "Make a QR code for your AGM or a roadshow",
+    { done: events.length > 0, href: "/business/admin/cards?tab=events", title: "Make a QR code for your AGM or a roadshow",
       text: "Each event gets its own code, with optional time slots for a day of visits. You see who registered, and the people who shared their details by name." },
     { done: s.cards.length > 1, href: "/business/admin/employees", title: "Add the people who speak for the company",
       text: "The chair, CEO, CFO and IR contact each get their own card and QR code, so a meeting ends with a follow and a direct contact." },
@@ -91,7 +91,7 @@ export function ListedOverviewView({ s, orgName, events = [], people = [], now }
         <div className={card}>
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-lg font-bold text-cloud">Events</h2>
-            <a href="/business/admin/events" className="text-gold underline">All events</a>
+            <a href="/business/admin/cards?tab=events" className="text-gold underline">All events</a>
           </div>
           {events.length === 0 ? (
             <p className="mt-3 text-cloud">No events yet. Make a QR code for your next AGM or roadshow.</p>

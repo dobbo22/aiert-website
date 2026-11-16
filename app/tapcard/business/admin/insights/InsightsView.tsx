@@ -89,9 +89,9 @@ export default function InsightsView({ data, range = "since" }: { data: Insights
 
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">Where followers came from</h2>
-        <p className="mt-2 text-cloud">Opens and followers for each event QR code. Make codes on the <a className="text-gold underline" href="/business/admin/events">Events</a> tab.</p>
+        <p className="mt-2 text-cloud">Opens and followers for each event QR code. Make codes under <a className="text-gold underline" href="/business/admin/cards?tab=events">Cards &amp; QR, Events</a>.</p>
         {sources.length === 0 ? (
-          <p className="mt-4 rounded-xl bg-white/10 px-4 py-3 text-cloud">No events yet. Make one on the Events tab.</p>
+          <p className="mt-4 rounded-xl bg-white/10 px-4 py-3 text-cloud">No events yet. Make one under Cards &amp; QR, Events.</p>
         ) : (
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-left text-cloud">
@@ -102,7 +102,7 @@ export default function InsightsView({ data, range = "since" }: { data: Insights
                 {sources.map((r) => (
                   <Fragment key={r.code}>
                     <tr className="border-b border-slate/50">
-                      <td className="py-2 pr-4 font-semibold"><a className="text-gold underline" href="/business/admin/events">{r.label}</a></td>
+                      <td className="py-2 pr-4 font-semibold"><a className="text-gold underline" href="/business/admin/cards?tab=events">{r.label}</a></td>
                       <td className="py-2 pr-4">{r.when}</td>
                       <td className={tdn}>{r.opens}</td>
                       <td className={tdn}>{r.followers}</td>
