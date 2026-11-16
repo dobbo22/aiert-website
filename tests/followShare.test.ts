@@ -73,3 +73,14 @@ test("personal mail addresses are private investors, company addresses group by 
   assert.deepEqual(emailGroup("Jo@Hobart-Capital.com"), { kind: "company", domain: "hobart-capital.com" });
   assert.deepEqual(emailGroup("jo@mailchimp.com"), { kind: "company", domain: "mailchimp.com" });
 });
+
+import { companyNameFromDomain } from "../lib/tapcardShareRules";
+test("a readable company name is worked out from the email domain", () => {
+  assert.equal(companyNameFromDomain("hobart-capital.com"), "Hobart Capital");
+  assert.equal(companyNameFromDomain("acme.co.uk"), "Acme");
+  assert.equal(companyNameFromDomain("mail.acme.co.uk"), "Acme");
+  assert.equal(companyNameFromDomain("kefi-goldandcopper.com"), "Kefi Goldandcopper");
+  assert.equal(companyNameFromDomain("barclays.com"), "Barclays");
+  assert.equal(companyNameFromDomain("brighton.ac.uk"), "Brighton");
+  assert.equal(companyNameFromDomain("x.org"), "X");
+});

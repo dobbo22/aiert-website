@@ -72,3 +72,16 @@ export function emailGroup(email: string): EmailGroup {
   return { kind: "company", domain };
 }
 
+const SECOND_LEVEL = new Set(["co", "com", "org", "net", "ac", "gov", "ltd", "plc", "me", "nhs"]);
+
+/// A readable company name worked out from its email domain: hobart-capital.com becomes "Hobart Capital", mail.acme.co.uk becomes "Acme".
+/// It is a guess from the web address (shown as such), not a lookup.
+export function companyNameFromDomain(domain: string): string {
+  const labels = domain.toLowerCase().replace(/^(www|mail)\./, "").split(".").filter(Boolean);
+  if (labels.length === 0) return domain;
+  let i = labels.length - 2;
+  if (labels.length >= 3 && SECOND_LEVEL.has(labels[labels.length - 2]) && labels[labels.length - 1].length === 2) i = labels.length - 3;
+  const base = labels[Math.max(0, i)];
+  return base.split(/[-_]+/).filter(Boolean).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ") || domain;
+}
+

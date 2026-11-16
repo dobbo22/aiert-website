@@ -112,6 +112,7 @@ export interface SharedFollower {
   company: string;
   name: string;
   email: string;
+  /// A phone number, only for a person who also shared their own TapCard with the company (it arrives with that card); empty otherwise.
   phone: string;
   consentedAt: string;
   /// Where the contact was made: the person's card they followed through ("Jane Smith, Chief Executive"), or "Company card" (QR code or link).
@@ -124,7 +125,14 @@ export async function listSharedFollowers(orgId: string): Promise<SharedFollower
   await ensureShareSchema();
   await (await import("@/lib/tapcardEvents")).ensureAttendanceTable();
   const rows = (await sql`
-    SELECT d.card_id, c.company, c.name AS card_name, d.name, d.email, d.phone, d.consented_at, v.name AS via_name, v.title AS via_title,
+    SELECT d.card_id, c.company, c.name AS card_name, d.name, d.email,
+      COALESCE(NULLIF(d.phone, ''), (
+        SELECT COALESCE(NULLIF(r.accepted_phone, ''), NULLIF(r.phone, '')) FROM tapcard_card_recipients r JOIN tapcard_cards rc ON rc.id = r.card_id
+        WHERE rc.org_id = c.org_id AND r.do_not_contact = false
+          AND (lower(r.email) = lower(d.email) OR lower(r.accepted_email) = lower(d.email))
+          AND COALESCE(NULLIF(r.accepted_phone, ''), NULLIF(r.phone, '')) IS NOT NULL
+        ORDER BY r.created_at DESC LIMIT 1), '') AS phone,
+      d.consented_at, v.name AS via_name, v.title AS via_title,
       COALESCE((SELECT json_agg(json_build_object('label', e.label || COALESCE(': ' || sl.label, ''), 'via', a.via) ORDER BY a.first_at) FROM tapcard_event_attendance a JOIN tapcard_listed_events e ON e.code = a.event_code AND e.org_id = c.org_id LEFT JOIN tapcard_listed_event_slots sl ON sl.id = NULLIF(a.slot_id, 0) WHERE a.card_id = d.card_id AND a.follower_hash = d.follower_hash), '[]'::json) AS events
     FROM tapcard_follower_details d
     JOIN tapcard_listed_cards l ON l.card_id = d.card_id
