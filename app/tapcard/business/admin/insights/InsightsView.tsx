@@ -16,7 +16,7 @@ export default function InsightsView({ data, range = "since" }: { data: Insights
   const first = points[0]?.day ?? "";
   const shownMarks = marks.filter((m) => m.day >= first);
   const notes: EventMark[] = announcements.map((a) => ({ day: ymd(a.postedAt), label: a.text.length > 60 ? a.text.slice(0, 57) + "..." : a.text })).filter((m) => m.day >= first);
-  const pct = (n: number, of: number) => (of > 0 ? `${Math.round((n / of) * 100)}% of followers` : "of followers");
+  const left30 = series.slice(-30).reduce((n, p) => n + p.left, 0);
   const th = "py-2 pr-4 font-semibold";
   const thn = "py-2 pl-4 text-right font-semibold";
   const tdn = "py-2 pl-4 text-right tabular-nums";
@@ -26,22 +26,20 @@ export default function InsightsView({ data, range = "since" }: { data: Insights
   );
   return (
     <div className="space-y-6">
-      <div className="grid gap-3 sm:grid-cols-4">
-        <div className="rounded-2xl bg-charcoal px-5 py-5 ring-1 ring-white/10 sm:col-span-2">
-          <div className="text-5xl font-black text-gold">{totals.following}</div>
-          <div className="mt-1 text-cloud">Following now</div>
-          <div className="mt-2 text-sm text-cloud"><strong className="text-teal">+{totals.new7}</strong> in the last 7 days · <strong className="text-teal">+{totals.new30}</strong> in the last 30 days</div>
-        </div>
-        <div className="rounded-2xl bg-charcoal px-5 py-5 ring-1 ring-white/10">
-          <div className="text-3xl font-black text-gold">{totals.shared}</div>
-          <div className="mt-1 text-cloud">Chose to share their details</div>
-          <div className="mt-2 text-sm text-cloud">{pct(totals.shared, totals.following)}</div>
-        </div>
-        <div className="rounded-2xl bg-charcoal px-5 py-5 ring-1 ring-white/10">
-          <div className="text-3xl font-black text-gold">{totals.eventTagged}</div>
-          <div className="mt-1 text-cloud">Came through an event</div>
-          <div className="mt-2 text-sm text-cloud">{pct(totals.eventTagged, totals.following)}</div>
-        </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        {([
+          [`+${totals.new7}`, "New in 7 days", ""],
+          [`+${totals.new30}`, "New in 30 days", ""],
+          [String(left30), "Stopped following in 30 days", ""],
+          [totals.following > 0 ? `${Math.round((totals.shared / totals.following) * 100)}%` : "–", "Chose to share their details", `${totals.shared} of ${totals.following}`],
+          [totals.following > 0 ? `${Math.round((totals.eventTagged / totals.following) * 100)}%` : "–", "Came through an event", `${totals.eventTagged} of ${totals.following}`],
+        ] as const).map(([n, l, sub]) => (
+          <div key={l} className="rounded-2xl bg-charcoal px-4 py-4 ring-1 ring-white/10">
+            <div className="text-3xl font-black text-gold tabular-nums">{n}</div>
+            <div className="mt-1 text-sm text-cloud">{l}</div>
+            {sub && <div className="text-sm text-cloud">{sub}</div>}
+          </div>
+        ))}
       </div>
 
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
@@ -49,7 +47,7 @@ export default function InsightsView({ data, range = "since" }: { data: Insights
           <h2 className="text-lg font-bold text-cloud">Following over time</h2>
           <div className="flex gap-2" aria-label="Time range">{rangeLink("since", "Since the first follower")}{rangeLink("30", "30 days")}{rangeLink("90", "90 days")}</div>
         </div>
-        <p className="mt-1 text-sm text-cloud">Everyone following you, day by day. A dip means people stopped following. Yellow dots are events and teal diamonds are announcements you sent.</p>
+        <p className="mt-1 text-sm text-cloud">{totals.following} following now. A dip means people stopped following. Yellow dots are events and teal diamonds are announcements you sent.</p>
         {!anyData ? (
           <p className="mt-4 rounded-xl bg-white/10 px-4 py-3 text-cloud">No followers yet.</p>
         ) : (

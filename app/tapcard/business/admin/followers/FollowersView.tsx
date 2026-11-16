@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import type { SharedFollower } from "@/lib/tapcardShare";
 import { companyNameFromDomain, emailGroup } from "@/lib/tapcardShareRules";
 
@@ -8,15 +8,14 @@ const PRIVATE = "__private";
 
 /// A company's logo from its website, or its first letter when there is none (the picture can fail before this page is interactive, so it is checked once it is).
 function LogoTile({ domain, name }: { domain: string; name: string }) {
-  const ref = useRef<HTMLImageElement>(null);
   const [ok, setOk] = useState(true);
-  useEffect(() => { const i = ref.current; if (i && i.complete && i.naturalWidth === 0) setOk(false); }, []);
+  const check = (i: HTMLImageElement | null) => { if (i && i.complete && i.naturalWidth === 0) setOk(false); };
   return (
     <span className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/15 text-xl font-black text-cloud" aria-hidden="true">
       {name.charAt(0).toUpperCase()}
       {ok && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img ref={ref} src={`/api/logo?domain=${encodeURIComponent(domain)}`} alt="" className="absolute inset-0 h-12 w-12 rounded-xl bg-white object-contain p-1" onError={() => setOk(false)} />
+        <img ref={check} src={`/api/logo?domain=${encodeURIComponent(domain)}`} alt="" className="absolute inset-0 h-12 w-12 rounded-xl bg-white object-contain p-1" onError={() => setOk(false)} />
       )}
     </span>
   );
