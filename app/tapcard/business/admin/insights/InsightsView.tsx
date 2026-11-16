@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import type { Insights } from "@/lib/tapcardInsights";
 
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London" });
@@ -35,23 +36,35 @@ export default function InsightsView({ data }: { data: Insights }) {
         <h2 className="text-lg font-bold text-cloud">Where followers came from</h2>
         <p className="mt-2 text-cloud">Opens and followers for each event QR code. Make codes on the <a className="text-gold underline" href="/business/admin/events">Events</a> tab.</p>
         {sources.length === 0 ? (
-          <p className="mt-4 rounded-xl bg-white/10 px-4 py-3 text-cloud">No event codes yet.</p>
+          <p className="mt-4 rounded-xl bg-white/10 px-4 py-3 text-cloud">No events yet. Make one on the Events tab.</p>
         ) : (
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-left text-cloud">
               <thead><tr className="border-b border-slate">
-                <th className={th}>Event or code</th><th className={th}>Kind</th><th className={th}>Opens</th><th className={th}>Followers</th><th className={th}>Shared details</th><th className={th}>Followed per 100 opens</th>
+                <th className={th}>Event</th><th className={th}>When</th><th className={th}>Opens</th><th className={th}>Registered</th><th className={th}>Shared details</th><th className={th}>Registered per 100 opens</th>
               </tr></thead>
               <tbody>
                 {sources.map((r) => (
-                  <tr key={r.code} className="border-b border-slate/50">
-                    <td className="py-2 pr-4 font-semibold">{r.label}</td>
-                    <td className="py-2 pr-4">{r.window}</td>
-                    <td className="py-2 pr-4">{r.window === "time window" ? "–" : r.opens}</td>
-                    <td className="py-2 pr-4">{r.followers}</td>
-                    <td className="py-2 pr-4">{r.shared}</td>
-                    <td className="py-2 pr-4">{r.window === "time window" || r.rate === null ? "–" : r.rate}</td>
-                  </tr>
+                  <Fragment key={r.code}>
+                    <tr className="border-b border-slate/50">
+                      <td className="py-2 pr-4 font-semibold"><a className="text-gold underline" href="/business/admin/events">{r.label}</a></td>
+                      <td className="py-2 pr-4">{r.when}</td>
+                      <td className="py-2 pr-4">{r.opens}</td>
+                      <td className="py-2 pr-4">{r.followers}</td>
+                      <td className="py-2 pr-4">{r.shared}</td>
+                      <td className="py-2 pr-4">{r.rate === null ? "–" : r.rate}</td>
+                    </tr>
+                    {r.slots.map((sl) => (
+                      <tr key={r.code + sl.label + sl.startsAt} className="border-b border-slate/30 text-sm">
+                        <td className="py-1 pr-4 pl-6">{sl.label}</td>
+                        <td className="py-1 pr-4">{new Date(sl.startsAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" })} to {new Date(sl.endsAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" })}</td>
+                        <td className="py-1 pr-4">–</td>
+                        <td className="py-1 pr-4">{sl.followers}</td>
+                        <td className="py-1 pr-4">{sl.shared}</td>
+                        <td className="py-1 pr-4">–</td>
+                      </tr>
+                    ))}
+                  </Fragment>
                 ))}
               </tbody>
             </table>

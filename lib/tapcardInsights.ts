@@ -35,7 +35,8 @@ export async function recordAnnouncementOpen(id: number): Promise<void> {
             ON CONFLICT (announcement_id, day) DO UPDATE SET n = tapcard_announcement_opens.n + 1`;
 }
 
-export interface SourceRow { code: string; label: string; window: string; opens: number; followers: number; shared: number; rate: number | null }
+export interface SlotStat { label: string; startsAt: string; endsAt: string; followers: number; shared: number }
+export interface SourceRow { code: string; label: string; when: string; opens: number; followers: number; shared: number; rate: number | null; slots: SlotStat[] }
 export interface AnnouncementRow { id: number; text: string; postedAt: string; sent: number; opens: number; opened: number | null }
 export interface WeekRow { weekStart: string; followers: number }
 export interface Insights {
@@ -72,10 +73,27 @@ export async function getInsights(orgId: string): Promise<Insights> {
       (SELECT COUNT(DISTINCT a.follower_hash)::int FROM tapcard_event_attendance a JOIN tapcard_follower_details d ON d.card_id = a.card_id AND d.follower_hash = a.follower_hash WHERE a.event_code = e.code) AS shared
     FROM tapcard_listed_events e WHERE e.org_id = ${orgId} ORDER BY COALESCE(e.starts_at, e.created_at) DESC`) as
     { code: string; label: string; starts_at: string | null; ends_at: string | null; opens: number; followers: number; shared: number }[];
+  // Each event's time slots (a roadshow's visits) with how many registered in each and how many of those shared their details.
+  const slotRows = (await sql`
+    SELECT s.event_code, s.label, s.starts_at, s.ends_at,
+      (SELECT COUNT(DISTINCT a.follower_hash)::int FROM tapcard_event_attendance a WHERE a.slot_id = s.id) AS followers,
+      (SELECT COUNT(DISTINCT a.follower_hash)::int FROM tapcard_event_attendance a JOIN tapcard_follower_details d ON d.card_id = a.card_id AND d.follower_hash = a.follower_hash WHERE a.slot_id = s.id) AS shared
+    FROM tapcard_listed_event_slots s JOIN tapcard_listed_events e ON e.code = s.event_code WHERE e.org_id = ${orgId} ORDER BY s.starts_at`) as
+    { event_code: string; label: string; starts_at: string; ends_at: string; followers: number; shared: number }[];
+  const when = (a: string | null, b: string | null) => {
+    if (!a || !b) return "No set time";
+    const d = (x: string) => new Date(x).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London" });
+    const t = (x: string) => new Date(x).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
+    const allDay = t(a) === "00:00" && t(b) === "23:59";
+    return allDay ? d(a) : `${d(a)}, ${t(a)} to ${t(b)}`;
+  };
   const sources: SourceRow[] = srcRows.map((r) => ({
-    code: r.code, label: r.label, window: r.starts_at && r.ends_at ? "time window" : "QR code",
+    code: r.code, label: r.label, when: when(r.starts_at, r.ends_at),
     opens: Number(r.opens), followers: Number(r.followers), shared: Number(r.shared),
     rate: Number(r.opens) > 0 ? Math.round((Number(r.followers) / Number(r.opens)) * 100) : null,
+    slots: slotRows.filter((x) => x.event_code === r.code).map((x) => ({
+      label: x.label, startsAt: new Date(x.starts_at).toISOString(), endsAt: new Date(x.ends_at).toISOString(), followers: Number(x.followers), shared: Number(x.shared),
+    })),
   }));
 
   const annRows = (await sql`
