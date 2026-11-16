@@ -13,6 +13,12 @@ export default function TapCardBusinessGuidePage() {
   return (
     <DocPage title="TapCard for Business: Admin Guide" updated="12 November 2026">
       <section>
+        <p className="rounded-xl bg-white/[0.08] px-4 py-3">
+          A listed company using TapCard for investor relations? See the <a href="/business/investor-guide">investor relations guide and FAQs</a>.
+        </p>
+      </section>
+
+      <section>
         <h2>Overview</h2>
         <p>Setting up your team takes three steps:</p>
         <ol className="ml-5 mt-2 space-y-1.5 [&>li]:list-decimal!">
