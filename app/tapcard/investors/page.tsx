@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import JsonLd from "../JsonLd";
+import InvestorTabs from "./InvestorTabs";
 
 const DESCRIPTION =
   "TapCard for investor relations: a QR code on your results slides, annual report or AGM notice lets shareholders follow your company and get a headline on their phone, with a link to the announcement on your own website. TapCard does not provide RNS. Following is free for shareholders, and you see only the details people choose to share. Set up by us.";
@@ -17,7 +18,66 @@ export const metadata: Metadata = {
   },
 };
 
-const PRICING_MAILTO = "mailto:enquiries@aiert.co.uk?subject=" + encodeURIComponent("TapCard for investor relations: pricing") + "&body=" + encodeURIComponent("Company:\nWebsite:\nYour role:\n\nPlease send pricing for TapCard for investor relations.");
+// Each email button opens a message already set up with what we need to reply, so nobody starts from a blank page.
+const mailto = (subject: string, lines: string[]) =>
+  "mailto:enquiries@aiert.co.uk?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(lines.join("\n"));
+
+const CARD_MAILTO = mailto("TapCard for investor relations: build our card", [
+  "Hello,",
+  "",
+  "Please build a TapCard for investor relations from our website, and send us a link to see it before anything goes live.",
+  "",
+  "Company name:",
+  "Website:",
+  "Stock exchange and ticker (for example AIM: ABC):",
+  "Your name and role:",
+  "Who else should have a card (chair, CEO, CFO, investor relations contact)?",
+  "Any events coming up (AGM, roadshow) and their dates:",
+  "",
+  "Thank you",
+]);
+
+const PRICING_MAILTO = mailto("TapCard for investor relations: pricing", [
+  "Hello,",
+  "",
+  "Please send pricing for TapCard for investor relations.",
+  "",
+  "Company name:",
+  "Website:",
+  "Stock exchange and ticker (for example AIM: ABC):",
+  "Your name and role (company, or adviser to the company):",
+  "Roughly how many events a year (AGM, roadshows, results presentations):",
+  "Anything you would want in a report (for the board, broker or adviser):",
+  "",
+  "Thank you",
+]);
+
+const REPORTS_MAILTO = mailto("TapCard for investor relations: reports", [
+  "Hello,",
+  "",
+  "We would like to talk about reports built around our company.",
+  "",
+  "Company name:",
+  "Website:",
+  "Your name and role:",
+  "Who would read the report (board, broker, adviser) and how often:",
+  "What you want to see in it:",
+  "",
+  "Thank you",
+]);
+
+const PARTNER_MAILTO = mailto("TapCard partner for investor relations", [
+  "Hello,",
+  "",
+  "We are an investor relations adviser and would like the partner terms.",
+  "",
+  "Firm name:",
+  "Website:",
+  "Your name and role:",
+  "Roughly how many listed clients you look after:",
+  "",
+  "Thank you",
+]);
 
 const STEPS = [
   ["Put a QR code on what shareholders already read", "Your investor presentation, results slides, annual report, AGM notice or website. One code for the company, one for each event, and one for each person who speaks for it."],
@@ -36,8 +96,16 @@ const POINTS = [
 const FEATURES = [
   { title: "A QR code for every event", body: "Make one for the AGM, a roadshow or a results presentation. For a day of visits, add a time slot for each firm. You see how many scanned it (counted even without the app, anonymously) and how many registered, and who they are if they chose to share their details." },
   { title: "Insights for your IR team", body: "Followers over time, how many each headline was sent to and how many tapped through, when people read, how many go from scan to follow to sharing their details, and what kind of investor is following (organisations or private)." },
-  { title: "A monthly report", body: "A one-page summary of the last 30 days to print or save as a PDF, for your board or your adviser." },
+  { title: "Reports built for you", body: "A one-page summary of the last 30 days to print or save as a PDF, for your board or your adviser. We can adapt reports to suit your company and build them with you: tell us what you want to see." },
   { title: "The details people share", body: "Download the followers who chose to share their name and email as a spreadsheet, with how they followed and the event they came through." },
+];
+
+const ADMIN_SHOTS = [
+  { file: "overview", title: "Overview", body: "Who follows you, your latest headline, who shared their details and your events, at a glance." },
+  { file: "insights", title: "Insights", body: "Followers over time with your events and announcements marked, how each headline performed, and what kind of investors follow." },
+  { file: "followers", title: "Followers", body: "The people who chose to share their name and email, how they followed and the event they came through, ready to download." },
+  { file: "events", title: "Events", body: "A QR code for each AGM or roadshow, with a time slot for each firm on a day of visits, and who registered." },
+  { file: "report", title: "Monthly report", body: "A one-page summary to print or save as a PDF. We can adapt reports to suit your company, your board and your adviser." },
 ];
 
 const FAQ: [string, string][] = [
@@ -58,6 +126,145 @@ const FAQ_JSON_LD = {
 };
 
 export default function InvestorsPage() {
+  const seeIt = (
+    <>
+      <h2 className="text-2xl font-black text-cloud">See it on a phone</h2>
+      <p className="mt-2 max-w-3xl leading-relaxed text-cloud">
+        Two things an investor relations team does most: meeting investors at an AGM or roadshow, and telling shareholders when you announce. An example company, recorded in the TapCard app.
+      </p>
+      <video
+        className="mt-5 w-full max-w-4xl rounded-2xl ring-1 ring-white/10"
+        src="https://www.aiert.co.uk/tapcard-ir-demo-v3.mp4"
+        poster="https://www.aiert.co.uk/tapcard-ir-demo-poster-v3.jpg"
+        width={1280}
+        height={720}
+        controls
+        playsInline
+        preload="metadata"
+        aria-label="Demo of TapCard for investor relations: an investor scans an event QR code and registers, then a results announcement arrives as a notification"
+      />
+      <details className="mt-3 max-w-4xl text-cloud">
+        <summary className="cursor-pointer font-semibold">What the video shows</summary>
+        <ol className="mt-2 list-decimal space-y-1 pl-5 leading-relaxed">
+          <li>At an AGM or roadshow, an investor scans the QR code on a slide, notice or website with their camera.</li>
+          <li>In the TapCard app they choose to follow, and whether to share their name and email.</li>
+          <li>Their attendance is registered against the event and its time slot, and the app names the company.</li>
+          <li>When the company announces, a one-line headline arrives as a notification.</li>
+          <li>Tapping it opens the headline, with a link to the full announcement on the company&apos;s own website. TapCard does not provide RNS: the announcement stays on the company&apos;s website.</li>
+        </ol>
+      </details>
+      <h2 className="mt-12 text-2xl font-black text-cloud">How it works</h2>
+      <ol className="mt-5 grid gap-4 sm:grid-cols-2">
+        {STEPS.map(([title, body], i) => (
+          <li key={title} className="card rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
+            <p className="text-sm font-semibold text-gold">Step {i + 1}</p>
+            <h3 className="mt-1 text-lg font-bold text-cloud">{title}</h3>
+            <p className="mt-2 leading-relaxed text-cloud">{body}</p>
+          </li>
+        ))}
+      </ol>
+    </>
+  );
+
+  const whatYouGet = (
+    <>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {POINTS.map((p) => (
+          <div key={p.title} className="card rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
+            <h2 className="text-lg font-bold text-cloud">{p.title}</h2>
+            <p className="mt-2 leading-relaxed text-cloud">{p.body}</p>
+          </div>
+        ))}
+      </div>
+      <h2 className="mt-12 text-2xl font-black text-cloud">What your team gets</h2>
+      <div className="mt-5 grid gap-4 sm:grid-cols-2">
+        {FEATURES.map((f) => (
+          <div key={f.title} className="card rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
+            <h3 className="text-lg font-bold text-cloud">{f.title}</h3>
+            <p className="mt-2 leading-relaxed text-cloud">{f.body}</p>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+
+  const admin = (
+    <>
+      <h2 className="text-2xl font-black text-cloud">The admin your team uses</h2>
+      <p className="mt-2 max-w-3xl leading-relaxed text-cloud">
+        A simple website for your investor relations team, with a tab for each job: Overview, Followers, Insights, News, Cards &amp; QR and Settings. These screens show an example company with made-up
+        figures. You choose who the administrators are, and they sign in by an emailed link, with no passwords.
+      </p>
+      <div className="mt-6 grid gap-6 md:grid-cols-2">
+        {ADMIN_SHOTS.map((a) => (
+          <figure key={a.file} className="card rounded-2xl bg-charcoal p-4 ring-1 ring-white/10">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`https://www.aiert.co.uk/tapcard-ir-admin-${a.file}.jpg`}
+              alt={`${a.title} screen of the TapCard investor relations admin, showing an example company`}
+              width={1000}
+              height={900}
+              loading="lazy"
+              className="w-full rounded-xl ring-1 ring-white/10"
+            />
+            <figcaption className="mt-3">
+              <h3 className="text-lg font-bold text-cloud">{a.title}</h3>
+              <p className="mt-1 leading-relaxed text-cloud">{a.body}</p>
+            </figcaption>
+          </figure>
+        ))}
+      </div>
+      <div className="card mt-8 rounded-2xl bg-charcoal p-6 ring-1 ring-gold/40">
+        <h3 className="text-lg font-bold text-cloud">Reports built around your team</h3>
+        <p className="mt-2 leading-relaxed text-cloud">
+          The monthly report is a starting point. We can adapt reports to suit your company, your board and your adviser, and build them with you: tell us what you want to see.
+        </p>
+        <div className="mt-4">
+          <a href={REPORTS_MAILTO} className="btn-gold rounded-xl px-5 py-3 font-semibold">Tell us what you need in a report</a>
+        </div>
+      </div>
+    </>
+  );
+
+  const pricing = (
+    <>
+      <section className="card rounded-2xl bg-charcoal p-8 ring-1 ring-gold/40">
+        <h2 className="text-2xl font-black text-cloud">Pricing</h2>
+        <p className="mt-3 text-lg leading-relaxed text-cloud">
+          <strong>Following is free for shareholders.</strong> For the company, we agree a yearly plan with you when we set things up, based on the size of
+          the company and how you use it. There is no self-service sign-up for investor relations yet: ask us for pricing and we will come back to you.
+        </p>
+        <div className="mt-5">
+          <a href={PRICING_MAILTO} className="btn-gold rounded-xl px-5 py-3 font-semibold">Ask for pricing</a>
+        </div>
+      </section>
+      <section className="card mt-8 rounded-2xl bg-charcoal p-8 ring-1 ring-white/10">
+        <h2 className="text-2xl font-black text-cloud">For investor relations advisers</h2>
+        <p className="mt-3 leading-relaxed text-cloud">
+          If you look after the investor relations of listed companies, you can offer TapCard to your clients. We have a partner arrangement for advisers and will send you the terms. We set the card up for the client; you keep the relationship. Depending on your regulatory
+          position you may need to tell your client about a referral fee, so please take your own advice on that.
+        </p>
+        <div className="mt-5">
+          <a href={PARTNER_MAILTO} className="btn-gold rounded-xl px-5 py-3 font-semibold">Talk to us about partnering</a>
+        </div>
+      </section>
+    </>
+  );
+
+  const questions = (
+    <>
+      <h2 className="text-2xl font-black text-cloud">Questions about TapCard for investor relations</h2>
+      <div className="mt-4 space-y-4">
+        {FAQ.map(([q, a]) => (
+          <div key={q} className="card rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
+            <h3 className="text-lg font-bold text-cloud">{q}</h3>
+            <p className="mt-2 leading-relaxed text-cloud">{a}</p>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+
   return (
     <main className="pitch min-h-screen px-4 py-12">
       <JsonLd data={FAQ_JSON_LD} />
@@ -76,7 +283,7 @@ export default function InvestorsPage() {
             phone when you announce, with a link to the full announcement on your own website. No mailing list to build, and you see only the details a shareholder chooses to share.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <a href="mailto:enquiries@aiert.co.uk?subject=TapCard%20for%20investor%20relations" className="btn-gold rounded-xl px-5 py-3 font-semibold">Ask for a card built from your website</a>
+            <a href={CARD_MAILTO} className="btn-gold rounded-xl px-5 py-3 font-semibold">Ask for a card built from your website</a>
             <a href={PRICING_MAILTO} className="rounded-xl px-5 py-3 font-semibold text-cloud ring-1 ring-white/30">Ask for pricing</a>
             <span className="text-cloud">We make it from your site and show you before anything goes live.</span>
           </div>
@@ -86,101 +293,15 @@ export default function InvestorsPage() {
           </p>
         </section>
 
-        <section className="mt-12">
-          <h2 className="text-2xl font-black text-cloud">See it on a phone</h2>
-          <p className="mt-2 max-w-3xl leading-relaxed text-cloud">
-            Two things an investor relations team does most: meeting investors at an AGM or roadshow, and telling shareholders when you announce. An example company, recorded in the TapCard app.
-          </p>
-          <video
-            className="mt-5 w-full max-w-4xl rounded-2xl ring-1 ring-white/10"
-            src="https://www.aiert.co.uk/tapcard-ir-demo-v3.mp4"
-            poster="https://www.aiert.co.uk/tapcard-ir-demo-poster-v3.jpg"
-            width={1280}
-            height={720}
-            controls
-            playsInline
-            preload="metadata"
-            aria-label="Demo of TapCard for investor relations: an investor scans an event QR code and registers, then a results announcement arrives as a notification"
-          />
-          <details className="mt-3 max-w-4xl text-cloud">
-            <summary className="cursor-pointer font-semibold">What the video shows</summary>
-            <ol className="mt-2 list-decimal space-y-1 pl-5 leading-relaxed">
-              <li>At an AGM or roadshow, an investor scans the QR code on a slide, notice or website with their camera.</li>
-              <li>In the TapCard app they choose to follow, and whether to share their name and email.</li>
-              <li>Their attendance is registered against the event and its time slot, and the app names the company.</li>
-              <li>When the company announces, a one-line headline arrives as a notification.</li>
-              <li>Tapping it opens the headline, with a link to the full announcement on the company's own website. TapCard does not provide RNS: the announcement stays on the company's website.</li>
-            </ol>
-          </details>
-        </section>
-
-        <section className="mt-14">
-          <h2 className="text-2xl font-black text-cloud">How it works</h2>
-          <ol className="mt-5 grid gap-4 sm:grid-cols-2">
-            {STEPS.map(([title, body], i) => (
-              <li key={title} className="card rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
-                <p className="text-sm font-semibold text-gold">Step {i + 1}</p>
-                <h3 className="mt-1 text-lg font-bold text-cloud">{title}</h3>
-                <p className="mt-2 leading-relaxed text-cloud">{body}</p>
-              </li>
-            ))}
-          </ol>
-        </section>
-
-        <section className="mt-14 grid gap-4 sm:grid-cols-2">
-          {POINTS.map((p) => (
-            <div key={p.title} className="card rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
-              <h2 className="text-lg font-bold text-cloud">{p.title}</h2>
-              <p className="mt-2 leading-relaxed text-cloud">{p.body}</p>
-            </div>
-          ))}
-        </section>
-
-        <section className="mt-14">
-          <h2 className="text-2xl font-black text-cloud">What your team gets</h2>
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            {FEATURES.map((f) => (
-              <div key={f.title} className="card rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
-                <h3 className="text-lg font-bold text-cloud">{f.title}</h3>
-                <p className="mt-2 leading-relaxed text-cloud">{f.body}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="card mt-14 rounded-2xl bg-charcoal p-8 ring-1 ring-gold/40">
-          <h2 className="text-2xl font-black text-cloud">Pricing</h2>
-          <p className="mt-3 text-lg leading-relaxed text-cloud">
-            <strong>Following is free for shareholders.</strong> For the company, we agree a yearly plan with you when we set things up, based on the size of
-            the company and how you use it. There is no self-service sign-up for investor relations yet: ask us for pricing and we will come back to you.
-          </p>
-          <div className="mt-5">
-            <a href={PRICING_MAILTO} className="btn-gold rounded-xl px-5 py-3 font-semibold">Ask for pricing</a>
-          </div>
-        </section>
-
-        <section className="card mt-14 rounded-2xl bg-charcoal p-8 ring-1 ring-white/10">
-          <h2 className="text-2xl font-black text-cloud">For investor relations advisers</h2>
-          <p className="mt-3 leading-relaxed text-cloud">
-            If you look after the investor relations of listed companies, you can offer TapCard to your clients. We have a partner arrangement for advisers and will send you the terms. We set the card up for the client; you keep the relationship. Depending on your regulatory
-            position you may need to tell your client about a referral fee, so please take your own advice on that.
-          </p>
-          <div className="mt-5">
-            <a href="mailto:enquiries@aiert.co.uk?subject=TapCard%20partner%20for%20investor%20relations" className="btn-gold rounded-xl px-5 py-3 font-semibold">Talk to us about partnering</a>
-          </div>
-        </section>
-
-        <section className="mt-14">
-          <h2 className="text-2xl font-black text-cloud">Questions about TapCard for investor relations</h2>
-          <div className="mt-4 space-y-4">
-            {FAQ.map(([q, a]) => (
-              <div key={q} className="card rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
-                <h3 className="text-lg font-bold text-cloud">{q}</h3>
-                <p className="mt-2 leading-relaxed text-cloud">{a}</p>
-              </div>
-            ))}
-          </div>
-        </section>
+        <InvestorTabs
+          tabs={[
+            { id: "see", label: "See it", node: seeIt },
+            { id: "features", label: "What you get", node: whatYouGet },
+            { id: "admin", label: "Your admin", node: admin },
+            { id: "pricing", label: "Pricing and advisers", node: pricing },
+            { id: "questions", label: "Questions", node: questions },
+          ]}
+        />
 
         <footer className="mt-14 border-t border-slate pt-6 text-sm text-cloud">
           <p>
