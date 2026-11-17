@@ -3,6 +3,7 @@ import { getOrg } from "@/lib/tapcardBiz";
 import LoginForm from "./LoginForm";
 import AdminNav from "./AdminNav";
 import LogoutButton from "./LogoutButton";
+import LiveRefresh from "./LiveRefresh";
 import { orgIsListed } from "@/lib/tapcardListedAdmin";
 
 export const metadata = {
@@ -36,6 +37,7 @@ export default async function BizAdminLayout({ children }: { children: React.Rea
           <div className="flex shrink-0 items-center gap-2">
             <a href={listed ? "/business/investor-guide" : "/business/guide"} target="_blank" rel="noopener noreferrer"
               className="whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold text-cloud ring-1 ring-slate hover:ring-mist">Help</a>
+            <LiveRefresh />
             <LogoutButton />
           </div>
         </header>
