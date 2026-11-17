@@ -1,0 +1,119 @@
+import { randomBytes } from "node:crypto";
+import sql from "@/lib/db";
+
+// A simulated AGM for a DEMO company only (a company on the tapcard_demo_orgs list, which AIERT adds by hand). It adds made-up people
+// ("Demo Investor n", example.org addresses) as followers of the company's listed card, with event attendance, headline taps and later
+// followers, so a live demo can show the admin moving. Everything it adds is remembered so Clear removes it, counters included.
+// Nothing here can run for a real company: every entry point checks the demo list first.
+
+let ready: Promise<unknown> | null = null;
+function ensureSchema(): Promise<unknown> {
+  if (!ready) {
+    ready = sql`CREATE TABLE IF NOT EXISTS tapcard_demo_orgs (org_id TEXT PRIMARY KEY, created_at TIMESTAMPTZ NOT NULL DEFAULT now())`
+      .then(() => sql`CREATE TABLE IF NOT EXISTS tapcard_demo_sim_followers (card_id TEXT NOT NULL, follower TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), PRIMARY KEY (card_id, follower))`)
+      .catch((e) => { ready = null; throw e; });
+  }
+  return ready;
+}
+
+/// The simulation exists for demo companies only: "Example Resources plc", or a copy made for a showing and named "... (demo)".
+/// Even on the demo list, a company with any other name is refused, so a real client's card can never be touched.
+export const DEMO_ORG_NAME = "Example Resources plc";
+export const isDemoName = (name: string) => name === DEMO_ORG_NAME || /\(demo\)\s*$/i.test(name);
+
+export async function isDemoOrg(orgId: string): Promise<boolean> {
+  try {
+    await ensureSchema();
+    const rows = (await sql`
+      SELECT o.name FROM tapcard_demo_orgs d JOIN tapcard_biz_orgs o ON o.id = d.org_id WHERE d.org_id = ${orgId}`) as { name: string }[];
+    return rows.length > 0 && isDemoName(rows[0].name);
+  } catch {
+    return false;
+  }
+}
+
+const FIRST = ["Alex", "Sam", "Priya", "Tom", "Hannah", "Ravi", "Emma", "Chris", "Fatima", "Liam", "Zoe", "Omar", "Grace", "Ben", "Aisha", "Jack", "Mei", "Leo", "Nina", "Paul"];
+const LAST = ["Shah", "Brown", "Patel", "Evans", "Khan", "Taylor", "Wright", "Singh", "Walker", "Green", "Hall", "Lewis", "Young", "King", "Scott", "Reid", "Ford", "Kerr", "Bell", "Cole"];
+export function demoPerson(n: number): { name: string; email: string; phone: string } {
+  return { phone: "", name: `${FIRST[n % 20]} ${LAST[(Math.floor(n / 3) + n) % 20]} (demo ${n})`, email: `demo.investor.${n}@example.org` };
+}
+
+async function listedCardOf(orgId: string): Promise<string | null> {
+  const rows = (await sql`SELECT l.card_id FROM tapcard_listed_cards l JOIN tapcard_cards c ON c.id = l.card_id WHERE c.org_id = ${orgId} ORDER BY c.created_at LIMIT 1`) as { card_id: string }[];
+  return rows[0]?.card_id ?? null;
+}
+
+async function gate(orgId: string): Promise<{ ok: true; cardId: string } | { ok: false; error: string }> {
+  if (!(await isDemoOrg(orgId))) return { ok: false, error: "This is not a demo company." };
+  const cardId = await listedCardOf(orgId);
+  if (!cardId) return { ok: false, error: "This company has no listed card." };
+  return { ok: true, cardId };
+}
+
+const clampN = (n: unknown, max: number, dflt: number) => (typeof n === "number" && Number.isFinite(n) ? Math.max(0, Math.min(max, Math.floor(n))) : dflt);
+
+/// People arriving at an event: each follows the company's card through the event, about 60% sharing their name and email.
+/// `start` numbers the people so a second batch continues the names. Called in small batches by the page so the admin moves.
+export async function simArrive(orgId: string, eventCode: string, count: unknown, start: unknown): Promise<{ ok: true; added: number } | { ok: false; error: string }> {
+  const g = await gate(orgId);
+  if (!g.ok) return g;
+  const events = (await sql`SELECT code FROM tapcard_listed_events WHERE code = ${eventCode} AND org_id = ${orgId}`) as unknown[];
+  if (!events.length) return { ok: false, error: "Choose one of this company's events." };
+  const { setFollower } = await import("@/lib/tapcardOffers");
+  const { saveFollowerDetails } = await import("@/lib/tapcardShare");
+  const n = clampN(count, 25, 5), first = clampN(start, 10000, 1);
+  for (let i = 0; i < n; i++) {
+    const num = first + i;
+    const follower = `sim-${Date.now()}-${num}-${randomBytes(5).toString("hex")}`;
+    await setFollower(g.cardId, follower, true, eventCode, "code", new Date());
+    if (num % 5 !== 0 && num % 5 !== 3) await saveFollowerDetails(g.cardId, follower, demoPerson(num), g.cardId, eventCode, "code");
+    await sql`INSERT INTO tapcard_demo_sim_followers (card_id, follower) VALUES (${g.cardId}, ${follower}) ON CONFLICT DO NOTHING`;
+  }
+  return { ok: true, added: n };
+}
+
+/// The results are read: taps on the latest headline, and some new followers who came from reading it (no event).
+export async function simResults(orgId: string, taps: unknown, late: unknown, start: unknown): Promise<{ ok: true; taps: number; followers: number } | { ok: false; error: string }> {
+  const g = await gate(orgId);
+  if (!g.ok) return g;
+  const t = clampN(taps, 40, 0), l = clampN(late, 25, 0), first = clampN(start, 10000, 101);
+  let tapped = 0;
+  if (t > 0) {
+    const a = (await sql`SELECT id FROM tapcard_announcements WHERE card_id = ${g.cardId} AND withdrawn = false ORDER BY id DESC LIMIT 1`) as { id: number }[];
+    if (!a[0]) return { ok: false, error: "Post a headline first, with a story link, so there is something to tap." };
+    const { recordAnnouncementOpen } = await import("@/lib/tapcardInsights");
+    for (let i = 0; i < t; i++) { await recordAnnouncementOpen(Number(a[0].id)); tapped++; }
+  }
+  const { setFollower } = await import("@/lib/tapcardOffers");
+  const { saveFollowerDetails } = await import("@/lib/tapcardShare");
+  for (let i = 0; i < l; i++) {
+    const num = first + i;
+    const follower = `sim-${Date.now()}-${num}-${randomBytes(5).toString("hex")}`;
+    await setFollower(g.cardId, follower, true);
+    if (i % 2 === 0) await saveFollowerDetails(g.cardId, follower, demoPerson(num), g.cardId);
+    await sql`INSERT INTO tapcard_demo_sim_followers (card_id, follower) VALUES (${g.cardId}, ${follower}) ON CONFLICT DO NOTHING`;
+  }
+  return { ok: true, taps: tapped, followers: l };
+}
+
+/// Removes everyone the simulation added (and their shared details and attendance), then resets the demo company's counters so the
+/// graphs start flat again: join/leave log, headline taps, event-link opens.
+export async function simClear(orgId: string): Promise<{ ok: true; removed: number } | { ok: false; error: string }> {
+  const g = await gate(orgId);
+  if (!g.ok) return g;
+  const { setFollower } = await import("@/lib/tapcardOffers");
+  const { withdrawFollowerDetails } = await import("@/lib/tapcardShare");
+  const rows = (await sql`SELECT follower FROM tapcard_demo_sim_followers WHERE card_id = ${g.cardId}`) as { follower: string }[];
+  for (const r of rows) {
+    await setFollower(g.cardId, r.follower, false);
+    await withdrawFollowerDetails(g.cardId, r.follower);
+  }
+  await sql`DELETE FROM tapcard_demo_sim_followers WHERE card_id = ${g.cardId}`;
+  const { ensureInsightSchema } = await import("@/lib/tapcardInsights");
+  await ensureInsightSchema();
+  await sql`DELETE FROM tapcard_follow_log WHERE card_id = ${g.cardId}`;
+  await sql`DELETE FROM tapcard_announcement_opens WHERE announcement_id IN (SELECT id FROM tapcard_announcements WHERE card_id = ${g.cardId})`;
+  await sql`DELETE FROM tapcard_announcement_open_log WHERE announcement_id IN (SELECT id FROM tapcard_announcements WHERE card_id = ${g.cardId})`;
+  await sql`DELETE FROM tapcard_listed_event_views WHERE code IN (SELECT code FROM tapcard_listed_events WHERE org_id = ${orgId})`;
+  return { ok: true, removed: rows.length };
+}

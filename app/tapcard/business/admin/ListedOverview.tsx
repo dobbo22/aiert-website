@@ -1,6 +1,9 @@
 import { listedSummary, type ListedSummary } from "@/lib/tapcardListedAdmin";
 import { listEvents } from "@/lib/tapcardEvents";
 import { listSharedFollowers, type SharedFollower } from "@/lib/tapcardShare";
+import { isDemoOrg } from "@/lib/tapcardDemoSim";
+import DemoPanel from "./DemoPanel";
+import { nowMs } from "@/lib/clock";
 
 type EventItem = Awaited<ReturnType<typeof listEvents>>[number];
 
@@ -10,7 +13,13 @@ export default async function ListedOverview({ orgId, orgName }: { orgId: string
     listEvents(orgId).catch(() => [] as EventItem[]),
     listSharedFollowers(orgId).catch(() => [] as SharedFollower[]),
   ]);
-  return <ListedOverviewView s={s} orgName={orgName} events={events} people={people} now={Date.now()} />;
+  const demo = await isDemoOrg(orgId);
+  return (
+    <>
+      {demo && <DemoPanel events={events.map((e) => ({ code: e.code, label: e.label }))} />}
+      <ListedOverviewView s={s} orgName={orgName} events={events} people={people} now={nowMs()} />
+    </>
+  );
 }
 
 const when = (iso: string) => new Date(iso).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });

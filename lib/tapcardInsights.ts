@@ -6,7 +6,7 @@ import { followChangeAfter, investorMix, type InvestorMix } from "@/lib/tapcardI
 // followers over time. Nothing here links a shareholder who shared their details to what they opened.
 
 let ready: Promise<unknown> | null = null;
-function ensureInsightSchema(): Promise<unknown> {
+export function ensureInsightSchema(): Promise<unknown> {
   if (!ready) {
     ready = sql`
       CREATE TABLE IF NOT EXISTS tapcard_listed_event_views (
