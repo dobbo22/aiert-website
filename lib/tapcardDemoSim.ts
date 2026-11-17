@@ -35,8 +35,10 @@ export async function isDemoOrg(orgId: string): Promise<boolean> {
 
 const FIRST = ["Alex", "Sam", "Priya", "Tom", "Hannah", "Ravi", "Emma", "Chris", "Fatima", "Liam", "Zoe", "Omar", "Grace", "Ben", "Aisha", "Jack", "Mei", "Leo", "Nina", "Paul"];
 const LAST = ["Shah", "Brown", "Patel", "Evans", "Khan", "Taylor", "Wright", "Singh", "Walker", "Green", "Hall", "Lewis", "Young", "King", "Scott", "Reid", "Ford", "Kerr", "Bell", "Cole"];
+// Made-up retail investors: private mail providers on the reserved .example name, so the Followers tab files them under private investors.
+const RETAIL = ["hotmail.example", "yahoo.example", "outlook.example", "icloud.example"];
 export function demoPerson(n: number): { name: string; email: string; phone: string } {
-  return { phone: "", name: `${FIRST[n % 20]} ${LAST[(Math.floor(n / 3) + n) % 20]} (demo ${n})`, email: `demo.investor.${n}@example.org` };
+  return { phone: "", name: `${FIRST[n % 20]} ${LAST[(Math.floor(n / 3) + n) % 20]} (demo ${n})`, email: `demo.investor.${n}@${RETAIL[n % RETAIL.length]}` };
 }
 
 async function listedCardOf(orgId: string): Promise<string | null> {

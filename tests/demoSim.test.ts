@@ -143,7 +143,7 @@ test("the roadshow has one slot per meeting (made once), and each meeting record
     assert.equal(inSlot, m.attendees, "everyone is recorded against that firm's slot");
     const mails = (await sql`SELECT email FROM tapcard_follower_details WHERE card_id = ${demo.cardId}`) as { email: string }[];
     assert.equal(mails.length, m.shared);
-    assert.ok(mails.every((r) => r.email.endsWith("@pembertonhale.example.org")), "fund managers use their firm's made-up address");
+    assert.ok(mails.every((r) => r.email.endsWith("@pemberton-hale.example")), "fund managers use their firm's made-up address");
   }
   assert.equal((await simMeeting(demo.orgId, code, 99, "2026-11-18T12:30:00.000Z")).ok, false, "unknown firm");
   assert.equal((await simMeeting(demo.orgId, "nope", 1, "2026-11-18T12:30:00.000Z")).ok, false, "unknown event");
@@ -177,4 +177,18 @@ test("Clear removes the made-up people, the demo's headlines and the roadshow, a
   assert.equal(log.length, 1);
   assert.equal(Number(log[0].joined), 2, "the history starts again with the two real followers");
   assert.equal(Number(log[0].left), 0);
+});
+
+test("the Followers tab names each demo firm properly, and files made-up retail investors as private", async () => {
+  const { FIRMS } = await import("../lib/demoScenario");
+  const { companyNameFromDomain, emailGroup } = await import("../lib/tapcardShareRules");
+  const { demoPerson } = await import("../lib/tapcardDemoSim");
+  const letters = (x: string) => x.toLowerCase().replace(/[^a-z]/g, "");
+  for (const f of FIRMS) {
+    const g = emailGroup(`someone@${f.domain}`);
+    assert.equal(g.kind, "company");
+    assert.equal(letters(companyNameFromDomain(f.domain)), letters(f.name), `${f.domain} reads as ${f.name}`);
+  }
+  assert.equal(new Set(FIRMS.map((f) => f.domain)).size, FIRMS.length, "each firm has its own domain");
+  for (let n = 1; n <= 8; n++) assert.equal(emailGroup(demoPerson(n).email).kind, "private", "retail demo people are private investors");
 });
