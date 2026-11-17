@@ -138,6 +138,7 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
         </label>
         <label className="mt-3 block text-cloud">Link to the announcement, or to a webcast or event page
           <input className={field} value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://www.yourcompany.com/announcements/results.pdf" inputMode="url" />
+          <span className="mt-1 block text-sm text-cloud">If the page asks people to register, as many webcast platforms do, they register there. TapCard only passes on the link.</span>
         </label>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <button type="button" disabled={busy || !active || text.trim().length < 3} onClick={() => send({ action: "news", text: text.trim(), link: link.trim() || undefined }, "Posted. Followers are being notified.")}
