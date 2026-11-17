@@ -89,8 +89,8 @@ export default function InvestorsPage() {
           </p>
           <video
             className="mt-5 w-full max-w-4xl rounded-2xl ring-1 ring-white/10"
-            src="https://www.aiert.co.uk/tapcard-ir-demo.mp4"
-            poster="https://www.aiert.co.uk/tapcard-ir-demo-poster.jpg"
+            src="https://www.aiert.co.uk/tapcard-ir-demo-v2.mp4"
+            poster="https://www.aiert.co.uk/tapcard-ir-demo-poster-v2.jpg"
             width={1280}
             height={720}
             controls
