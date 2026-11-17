@@ -138,3 +138,49 @@ export async function simHeadline(orgId: string, text: unknown, link: unknown): 
   const r = await setAnnouncement(g.cardId, text, link);
   return r.ok ? { ok: true, cardId: g.cardId } : { ok: false, error: r.error };
 }
+
+/// The roadshow: one event over the window, with a slot for each meeting. Made once; a second press adds only slots that are missing.
+export async function simRoadshow(orgId: string, label: string, startsAt: unknown, endsAt: unknown, slots: unknown): Promise<{ ok: true; code: string; slots: number } | { ok: false; error: string }> {
+  const e = await simEvent(orgId, label, startsAt, endsAt);
+  if (!e.ok) return e;
+  const { addSlot } = await import("@/lib/tapcardEvents");
+  const have = new Set(((await sql`SELECT label FROM tapcard_listed_event_slots WHERE event_code = ${e.code}`) as { label: string }[]).map((r) => r.label.toLowerCase()));
+  const list = Array.isArray(slots) ? (slots as { label?: unknown; startsAt?: unknown; endsAt?: unknown }[]).slice(0, 40) : [];
+  for (const sl of list) {
+    const lbl = String(sl.label ?? "");
+    if (have.has(lbl.toLowerCase())) continue;
+    const r = await addSlot(orgId, e.code, lbl, sl.startsAt, sl.endsAt);
+    if (!r.ok) return { ok: false, error: r.error };
+  }
+  return { ok: true, code: e.code, slots: list.length };
+}
+
+/// One roadshow meeting: a random number of people (some of them fund managers from the firm who share their name and email)
+/// scan the event QR at the time of the slot. `firm` is an index into the made-up firms in lib/demoScenario.ts.
+export async function simMeeting(orgId: string, eventCode: string, firm: unknown, at: unknown): Promise<{ ok: true; attendees: number; shared: number; firm: string } | { ok: false; error: string }> {
+  const g = await gate(orgId);
+  if (!g.ok) return g;
+  const sc = await import("@/lib/demoScenario");
+  const f = typeof firm === "number" ? sc.FIRMS[Math.floor(firm)] : undefined;
+  if (!f) return { ok: false, error: "Unknown meeting." };
+  const when = new Date(String(at));
+  if (Number.isNaN(when.getTime())) return { ok: false, error: "That time does not look right." };
+  const events = (await sql`SELECT 1 FROM tapcard_listed_events WHERE code = ${eventCode} AND org_id = ${orgId}`) as unknown[];
+  if (!events.length) return { ok: false, error: "Choose one of this company's events." };
+  const { setFollower } = await import("@/lib/tapcardOffers");
+  const { saveFollowerDetails } = await import("@/lib/tapcardShare");
+  const [lo, hi] = sc.ATTENDEES;
+  const n = lo + Math.floor(Math.random() * (hi - lo + 1));
+  const sharers = Math.min(n, f.managers.length, 1 + Math.floor(Math.random() * sc.MAX_SHARERS));
+  for (let i = 0; i < n; i++) {
+    const follower = `sim-${Date.now()}-m${i}-${randomBytes(5).toString("hex")}`;
+    await setFollower(g.cardId, follower, true, eventCode, "code", new Date(when.getTime() + i * 20_000));
+    if (i < sharers) {
+      const m = f.managers[i];
+      const email = `${m.name.toLowerCase().replace(/[^a-z]+/g, ".")}@${f.domain}`;
+      await saveFollowerDetails(g.cardId, follower, { name: `${m.name}, ${m.title}, ${f.name} (demo)`, email, phone: "" }, g.cardId, eventCode, "code");
+    }
+    await sql`INSERT INTO tapcard_demo_sim_followers (card_id, follower) VALUES (${g.cardId}, ${follower}) ON CONFLICT DO NOTHING`;
+  }
+  return { ok: true, attendees: n, shared: sharers, firm: f.name };
+}

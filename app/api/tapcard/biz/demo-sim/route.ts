@@ -1,19 +1,21 @@
 import { after, NextRequest, NextResponse } from "next/server";
 import { requireBizSession } from "@/lib/tapcardBizSession";
 import sql from "@/lib/db";
-import { simArrive, simClear, simEvent, simHeadline, simResults } from "@/lib/tapcardDemoSim";
+import { simArrive, simClear, simEvent, simHeadline, simMeeting, simResults, simRoadshow } from "@/lib/tapcardDemoSim";
 
 // The simulated AGM for the demo company only (Example Resources plc, on the demo list). Admins of that company; refused for anyone else.
 // The page calls it in small batches so the admin moves while it runs. See lib/tapcardDemoSim.ts.
 export async function POST(req: NextRequest) {
   const session = await requireBizSession();
   if (!session) return NextResponse.json({ error: "Please sign in again." }, { status: 401 });
-  const body = (await req.json().catch(() => null)) as { action?: unknown; event?: unknown; count?: unknown; start?: unknown; taps?: unknown; late?: unknown; label?: unknown; startsAt?: unknown; endsAt?: unknown; text?: unknown; link?: unknown } | null;
+  const body = (await req.json().catch(() => null)) as { action?: unknown; event?: unknown; count?: unknown; start?: unknown; taps?: unknown; late?: unknown; label?: unknown; startsAt?: unknown; endsAt?: unknown; text?: unknown; link?: unknown; slots?: unknown; firm?: unknown; at?: unknown } | null;
   let r;
   if (body?.action === "arrive") r = await simArrive(session.orgId, String(body.event ?? ""), body.count, body.start);
   else if (body?.action === "results") r = await simResults(session.orgId, body.taps, body.late, body.start);
   else if (body?.action === "clear") r = await simClear(session.orgId);
   else if (body?.action === "event") r = await simEvent(session.orgId, String(body.label ?? ""), body.startsAt, body.endsAt);
+  else if (body?.action === "roadshow") r = await simRoadshow(session.orgId, String(body.label ?? ""), body.startsAt, body.endsAt, body.slots);
+  else if (body?.action === "meeting") r = await simMeeting(session.orgId, String(body.event ?? ""), body.firm, body.at);
   else if (body?.action === "headline") {
     const h = await simHeadline(session.orgId, body.text, body.link);
     if (!h.ok) return NextResponse.json({ error: h.error }, { status: 403 });

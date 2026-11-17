@@ -114,3 +114,37 @@ test("the demo event is made once, and the demo headline is saved as the latest 
   const latest = await publicAnnouncement(demo.cardId);
   assert.equal(latest?.text, "Acme (demo): Fundraise announced.");
 });
+
+test("the roadshow has one slot per meeting (made once), and each meeting records a random crowd in its own slot with fund managers sharing", async () => {
+  const { simRoadshow, simMeeting } = await import("../lib/tapcardDemoSim");
+  const { FIRMS, MEETING_TIMES, ATTENDEES } = await import("../lib/demoScenario");
+  const demo = await newListedCompany("Roadshow Co (demo)", "demotok-eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee");
+  await sql`INSERT INTO tapcard_demo_orgs (org_id) VALUES (${demo.orgId})`;
+  const days = ["2026-11-18", "2026-11-19"];
+  const slots = Array.from({ length: 10 }, (_, k) => {
+    const [from, to] = MEETING_TIMES[k % 5], d = days[k < 5 ? 0 : 1];
+    return { label: `Meeting ${k + 1}: ${FIRMS[k].name}`, startsAt: `${d}T${from}:00.000Z`, endsAt: `${d}T${to}:00.000Z` };
+  });
+  const a = await simRoadshow(demo.orgId, "IPO roadshow", "2026-11-18T00:00:00.000Z", "2026-11-19T23:59:00.000Z", slots);
+  assert.ok(a.ok && a.slots === 10);
+  const b = await simRoadshow(demo.orgId, "IPO roadshow", "2026-11-18T00:00:00.000Z", "2026-11-19T23:59:00.000Z", slots);
+  assert.ok(b.ok && a.ok && b.code === a.code);
+  const n = Number(((await sql`SELECT COUNT(*)::int AS n FROM tapcard_listed_event_slots WHERE event_code = ${a.ok ? a.code : ""}`) as { n: number }[])[0].n);
+  assert.equal(n, 10, "a second press adds no duplicate slots");
+
+  const code = a.ok ? a.code : "";
+  const m = await simMeeting(demo.orgId, code, 2, "2026-11-18T12:30:00.000Z"); // the third meeting of day 1
+  assert.ok(m.ok);
+  if (m.ok) {
+    assert.equal(m.firm, FIRMS[2].name);
+    assert.ok(m.attendees >= ATTENDEES[0] && m.attendees <= ATTENDEES[1]);
+    assert.ok(m.shared >= 1 && m.shared <= 3);
+    const inSlot = Number(((await sql`SELECT COUNT(*)::int AS n FROM tapcard_event_attendance a JOIN tapcard_listed_event_slots s ON s.id = a.slot_id WHERE a.card_id = ${demo.cardId} AND s.label LIKE '%Pemberton%'`) as { n: number }[])[0].n);
+    assert.equal(inSlot, m.attendees, "everyone is recorded against that firm's slot");
+    const mails = (await sql`SELECT email FROM tapcard_follower_details WHERE card_id = ${demo.cardId}`) as { email: string }[];
+    assert.equal(mails.length, m.shared);
+    assert.ok(mails.every((r) => r.email.endsWith("@pembertonhale.example.org")), "fund managers use their firm's made-up address");
+  }
+  assert.equal((await simMeeting(demo.orgId, code, 99, "2026-11-18T12:30:00.000Z")).ok, false, "unknown firm");
+  assert.equal((await simMeeting(demo.orgId, "nope", 1, "2026-11-18T12:30:00.000Z")).ok, false, "unknown event");
+});
