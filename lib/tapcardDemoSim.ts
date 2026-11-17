@@ -117,3 +117,24 @@ export async function simClear(orgId: string): Promise<{ ok: true; removed: numb
   await sql`DELETE FROM tapcard_listed_event_views WHERE code IN (SELECT code FROM tapcard_listed_events WHERE org_id = ${orgId})`;
   return { ok: true, removed: rows.length };
 }
+
+/// The demo's event: made once (a second press finds the one already there by name), optionally for a whole day.
+export async function simEvent(orgId: string, label: string, startsAt: unknown, endsAt: unknown): Promise<{ ok: true; code: string; created: boolean } | { ok: false; error: string }> {
+  const g = await gate(orgId);
+  if (!g.ok) return g;
+  const { createEvent } = await import("@/lib/tapcardEvents");
+  const clean = label.replace(/\s+/g, " ").trim();
+  const existing = (await sql`SELECT code FROM tapcard_listed_events WHERE org_id = ${orgId} AND lower(label) = lower(${clean}) LIMIT 1`) as { code: string }[];
+  if (existing[0]) return { ok: true, code: existing[0].code, created: false };
+  const r = await createEvent(orgId, clean, startsAt, endsAt);
+  return r.ok ? { ok: true, code: r.code, created: true } : r;
+}
+
+/// The demo headline: saved as the company's latest announcement. The route sends the push to followers, exactly as the News page does.
+export async function simHeadline(orgId: string, text: unknown, link: unknown): Promise<{ ok: true; cardId: string } | { ok: false; error: string }> {
+  const g = await gate(orgId);
+  if (!g.ok) return g;
+  const { setAnnouncement } = await import("@/lib/tapcardOffers");
+  const r = await setAnnouncement(g.cardId, text, link);
+  return r.ok ? { ok: true, cardId: g.cardId } : { ok: false, error: r.error };
+}

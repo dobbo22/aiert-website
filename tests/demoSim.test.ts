@@ -94,3 +94,23 @@ test("arrive adds followers with attendance, results adds taps and followers, cl
   const opens2 = Number(((await sql`SELECT COALESCE(SUM(n),0)::int AS n FROM tapcard_announcement_opens o JOIN tapcard_announcements a ON a.id = o.announcement_id WHERE a.card_id = ${demo.cardId}`) as { n: number }[])[0].n);
   assert.equal(opens2, 0);
 });
+
+test("the demo event is made once, and the demo headline is saved as the latest announcement; real companies are refused", async () => {
+  const { simEvent, simHeadline } = await import("../lib/tapcardDemoSim");
+  const { publicAnnouncement } = await import("../lib/tapcardOffers");
+  const real = await newListedCompany("Another Client plc", "realtok-cccccccccccccccccccccccccccccccccccccccc");
+  assert.equal((await simEvent(real.orgId, "Roadshow", undefined, undefined)).ok, false);
+  assert.equal((await simHeadline(real.orgId, "Hello", "https://tapcard.aiert.co.uk/investors")).ok, false);
+
+  const demo = await newListedCompany("Acme Mining plc (demo)", "demotok-dddddddddddddddddddddddddddddddddddddddd");
+  await sql`INSERT INTO tapcard_demo_orgs (org_id) VALUES (${demo.orgId})`;
+  const a = await simEvent(demo.orgId, "Roadshow", "2026-11-18T00:00:00.000Z", "2026-11-18T23:59:00.000Z");
+  assert.ok(a.ok && a.created);
+  const b = await simEvent(demo.orgId, " roadshow ", "2026-11-18T00:00:00.000Z", "2026-11-18T23:59:00.000Z");
+  assert.ok(b.ok && !b.created && a.ok && b.code === a.code, "a second press finds the same event");
+
+  const h = await simHeadline(demo.orgId, "Acme (demo): Fundraise announced.", "https://tapcard.aiert.co.uk/investors");
+  assert.ok(h.ok);
+  const latest = await publicAnnouncement(demo.cardId);
+  assert.equal(latest?.text, "Acme (demo): Fundraise announced.");
+});
