@@ -86,7 +86,7 @@ export default function SaveContactButton({
         {icon}
         Get TapCard
       </a>
-      <p className="mt-2 text-center text-xs text-white">Free. Opens on {firstName}&apos;s card so you can save it and send yours back.</p>
+      <p className="mt-2 text-center text-xs text-white">Opens on {firstName}&apos;s card so you can save it and send yours back.</p>
       <p className="mt-3 text-center text-sm text-white">
         <a href={vcardHref} className="font-semibold underline">Just save {firstName} to contacts</a>
       </p>
