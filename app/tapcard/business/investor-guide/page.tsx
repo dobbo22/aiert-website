@@ -84,7 +84,8 @@ export default function InvestorGuidePage() {
       <section>
         <h2>Posting a headline</h2>
         <ul>
-          <li>Post only after the RNS is public. Keep it to the headline and a link to the announcement.</li>
+          <li>Never post an RNS, or anything that is inside information, before it is public: wait until it has been released through your regulatory news service and is on your website. Keep it to the headline and a link to the announcement.</li>
+          <li>A meeting invitation or an event that does not need disclosure is a different case: check with your adviser before you post it.</li>
           <li>On <strong>News &amp; RNS</strong>, new items from your announcements page appear with a Post button. The page shows when it was last checked, and Refresh now reads it again.</li>
           <li>Followers get the headline as a notification and can open the link.</li>
         </ul>

@@ -130,7 +130,7 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
 
       <details id="headline-composer" open={composerOpen} onToggle={(e) => setComposerOpen((e.currentTarget as HTMLDetailsElement).open)} className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <summary className="cursor-pointer text-lg font-bold text-cloud">{hasFeed ? `Write your own headline for ${cardName}` : `Post a headline for ${cardName}`}</summary>
-        <p className="mt-3 text-cloud">Post after the announcement is public, and say nothing that is not in it. A headline and a link to the full RNS is enough.
+        <p className="mt-3 text-cloud">Never post an RNS before it is public, and say nothing that is not in it. A headline and a link to the full RNS is enough. For a meeting invitation or an event that needs no disclosure, check with your adviser first.
           {followers > 0 ? ` ${followers} ${followers === 1 ? "follower" : "followers"} can be notified.` : " Nobody can be notified yet."}</p>
         <label className="mt-4 block text-cloud">Headline
           <input className={field} value={text} maxLength={MAX} onChange={(e) => setText(e.target.value)} placeholder="For example: Full year results announced (RNS)" />

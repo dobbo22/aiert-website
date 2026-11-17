@@ -27,7 +27,7 @@ export function ListedOverviewView({ s, orgName, events = [], people = [], now }
     { done: s.cards.length > 1, href: "/business/admin/cards?tab=team", title: "Add the people who speak for the company",
       text: "The chair, CEO, CFO and IR contact each get their own card and QR code, so a meeting ends with a follow and a direct contact." },
     { done: !!s.latestNews, href: "/business/admin/news", title: "Post a headline after your next RNS",
-      text: "A one-line headline and a link to the announcement. Followers are notified. Post only after the RNS is public." },
+      text: "A one-line headline and a link to the announcement. Followers are notified. Never post an RNS before it is public." },
     { done: s.shared > 0, href: "/business/admin/followers", title: "See who chose to share their details",
       text: "Followers can choose to share their name and email. They appear on the Followers tab, with a CSV download." },
   ];
