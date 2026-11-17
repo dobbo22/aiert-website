@@ -11,7 +11,7 @@ And you can see how well it worked:
 • what time of day they read it
 • how many started following around the time you posted
 
-People join by scanning a QR code on your results slide, annual report or AGM notice, or one for each event or roadshow slot. They follow, and choose whether to share their name and email. You see only the people who choose to.
+People join by scanning a QR code on your results slide, annual report, AGM notice or website, or one for each event or roadshow slot. Or they take the TapCard e-business card on your CEO's or IR contact's phone: following any of your team's cards follows the company. They follow, and choose whether to share their name and email. You see only the people who choose to.
 
 TapCard does not provide RNS: the announcement and the data stay on your own website, and you post only once it is public.
 
