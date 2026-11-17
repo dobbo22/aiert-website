@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { irTrack } from "./irTrack";
 
 // The investors page is long, so its sections sit in tabs. Every panel is still in the page's HTML (inactive ones are only hidden), so search
 // engines and the FAQ structured data see all of it. The address can carry the tab (/investors#questions) and keeps in step as you switch.
@@ -24,7 +25,15 @@ export default function InvestorTabs({ tabs }: { tabs: InvestorTab[] }) {
     return () => window.removeEventListener("hashchange", fromHash);
   }, [tabs]);
 
+  // A personal link (?v=code): note that the page was opened, and that the reader stayed (a link-checking scanner does not).
+  useEffect(() => {
+    irTrack("visit");
+    const t = window.setTimeout(() => { if (document.visibilityState === "visible") irTrack("engaged"); }, 8000);
+    return () => window.clearTimeout(t);
+  }, []);
+
   function choose(id: string) {
+    irTrack("tab", id);
     setActive(id);
     try { window.history.replaceState(null, "", `#${id}`); } catch { /* the tab still switches */ }
   }

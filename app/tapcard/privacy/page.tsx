@@ -15,8 +15,8 @@ export default function TapCardPrivacyPage() {
       <section>
         <h2>Summary</h2>
         <p>
-          TapCard has no accounts, no advertising and no tracking, and its only analytics is anonymous counts of
-          taps on our own app promotions and of how far people get through setting up their card (see below). Your card stays on your iPhone
+          TapCard has no accounts, no advertising and no tracking of what you do in the app, and its only analytics is anonymous counts of
+          taps on our own app promotions and of how far people get through setting up their card (see below). One exception: a personal link in an email we write to you can show us whether our page was opened (see &ldquo;Personal links in our emails&rdquo;). Your card stays on your iPhone
           until you tap <strong>Share my card</strong>. Sharing publishes a copy at a private link so other people can
           view and save it, and <strong>Stop sharing</strong> deletes that copy from our servers.
         </p>
@@ -193,6 +193,15 @@ export default function TapCardPrivacyPage() {
         <p className="mt-3">
           The card page counts how many times it has been opened and saved, and those two numbers are shown to you
           in the app. We do not record who viewed or saved it.
+        </p>
+      </section>
+
+      <section>
+        <h2>Personal links in our emails</h2>
+        <p>
+          When we write to you personally about TapCard (for example about TapCard for investor relations), the link to our page in the email may carry a code
+          that is just for you. If the page is opened, we record that it was opened, how long it stayed open, which tabs were clicked, whether the video was played, and the time.
+          We do not store your IP address, set cookies or use tracking images in the email, and we do not share this. We use it only to decide whether to follow up. If you would rather we did not, say so and we will send you a plain link and remove what we hold.
         </p>
       </section>
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import JsonLd from "../JsonLd";
 import InvestorTabs from "./InvestorTabs";
+import TrackedVideo from "./TrackedVideo";
 
 const DESCRIPTION =
   "TapCard for investor relations: a QR code on your results slides, annual report or AGM notice lets shareholders follow your company and get a headline on their phone, with a link to the announcement on your own website. TapCard does not provide RNS. Following is free for shareholders, and you see only the details people choose to share. Set up by us.";
@@ -132,16 +133,10 @@ export default function InvestorsPage() {
       <p className="mt-2 max-w-3xl leading-relaxed text-cloud">
         Two things an investor relations team does most: meeting investors at an AGM or roadshow, and telling shareholders when you announce. An example company, recorded in the TapCard app.
       </p>
-      <video
-        className="mt-5 w-full max-w-4xl rounded-2xl ring-1 ring-white/10"
+      <TrackedVideo
         src="https://www.aiert.co.uk/tapcard-ir-demo-v3.mp4"
         poster="https://www.aiert.co.uk/tapcard-ir-demo-poster-v3.jpg"
-        width={1280}
-        height={720}
-        controls
-        playsInline
-        preload="metadata"
-        aria-label="Demo of TapCard for investor relations: an investor scans an event QR code and registers, then a results announcement arrives as a notification"
+        label="Demo of TapCard for investor relations: an investor scans an event QR code and registers, then a results announcement arrives as a notification"
       />
       <details className="mt-3 max-w-4xl text-cloud">
         <summary className="cursor-pointer font-semibold">What the video shows</summary>
