@@ -1,0 +1,24 @@
+When you announce, how do your shareholders find out?
+
+For most listed companies, the honest answer is: when they next check a news site, or if they are on a mailing list that someone has to build and look after.
+
+We have built TapCard for investor relations to give IR teams a direct line, and made a 30-second video of it (the company in the video is an example).
+
+What it does:
+
+• A QR code on your results slide, annual report or AGM notice. An investor scans it, follows your company, and chooses whether to share their name and email. You see only the people who choose to.
+
+• A QR code for each event, with a time slot for each firm on a roadshow, so you can see who registered and when.
+
+• When you announce, a one-line headline with a link to the announcement goes to your followers' phones. TapCard does not provide RNS: the announcement and the data stay on your own website, and you post only once it is public.
+
+• An admin for the IR team with followers, insights and a monthly report, which we can adapt to what your board, broker or adviser want to see.
+
+For IR and PR teams, and the agencies behind them: a direct channel to the people who asked to hear from the company, with no list to build and no algorithm in between.
+
+It is early days and some parts are still being built. I would value your view, especially on what you would want to see in a report.
+
+Video and detail:
+https://tapcard.aiert.co.uk/go/tapcard-web-ir-linkedin?src=page
+
+#InvestorRelations #FinancialPR #CorporateCommunications #PublicRelations #ListedCompanies #AIM
