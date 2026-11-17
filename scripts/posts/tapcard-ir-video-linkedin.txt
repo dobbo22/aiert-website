@@ -1,22 +1,23 @@
-When you announce, how do your shareholders find out?
+Your announcement is out. Did your shareholders see it?
 
-For most listed companies, the honest answer is: when they next check a news site, or if they are on a mailing list that someone has to build and look after.
+An email can sit unread in a promotions tab, be caught by a spam filter, or never reach someone who is not on your list.
 
-We have built TapCard for investor relations to give IR teams a direct line, and made a 30-second video of it (the company in the video is an example).
+With TapCard for investor relations, the people who follow your company get a notification on their phone when you announce: a one-line headline with a link to the announcement on your own website. It is a message they asked for, and it goes straight to their phone, not their inbox.
 
-What it does:
+And you can see how well it worked:
 
-• A QR code on your results slide, annual report or AGM notice. An investor scans it, follows your company, and chooses whether to share their name and email. You see only the people who choose to.
+• how many followers each headline was sent to
+• how many tapped through to the announcement
+• what time of day they read it
+• how many started following around the time you posted
 
-• A QR code for each event, with a time slot for each firm on a roadshow, so you can see who registered and when.
+People join by scanning a QR code on your results slide, annual report or AGM notice, or one for each event or roadshow slot. They follow, and choose whether to share their name and email. You see only the people who choose to.
 
-• When you announce, a one-line headline with a link to the announcement goes to your followers' phones. TapCard does not provide RNS: the announcement and the data stay on your own website, and you post only once it is public.
+TapCard does not provide RNS: the announcement and the data stay on your own website, and you post only once it is public.
 
-• An admin for the IR team with followers, insights and a monthly report, which we can adapt to what your board, broker or adviser want to see.
+The 30-second video shows it with an example company. It is early days and some parts are still being built.
 
-For IR and PR teams, and the agencies behind them: a direct channel to the people who asked to hear from the company, with no list to build and no algorithm in between.
-
-It is early days and some parts are still being built. I would value your view, especially on what you would want to see in a report.
+For IR and PR teams, and the agencies behind them: how do you measure whether your announcements are actually read?
 
 Video and detail:
 https://tapcard.aiert.co.uk/go/tapcard-web-ir-linkedin?src=page
