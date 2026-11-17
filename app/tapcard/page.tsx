@@ -158,6 +158,16 @@ export default function TapCardHomePage() {
           </dl>
         </section>
 
+        <section className="mt-16 rounded-2xl bg-charcoal p-8 ring-1 ring-gold/40">
+          <p className="text-sm font-semibold uppercase tracking-wider text-teal">For listed companies</p>
+          <h2 className="mt-2 text-2xl font-black text-cloud">Reach your shareholders on their phone</h2>
+          <p className="mt-3 max-w-3xl text-lg leading-relaxed text-cloud">
+            Put a QR code on your results slides, annual report or AGM notice. Shareholders scan it and follow your company, and get your RNS headline on their phone when you
+            announce, with a link to the full announcement. See who came to each event, and what they read.
+          </p>
+          <a href="/investors" className="btn-gold mt-5 inline-block rounded-xl px-6 py-3 font-semibold">TapCard for investor relations</a>
+        </section>
+
         <section className="mt-12 flex flex-wrap gap-4">
           <a href="/how-it-works" className="btn-gold rounded-xl px-6 py-3 font-semibold">
             See how it works
@@ -184,6 +194,7 @@ export default function TapCardHomePage() {
             <a href="/blog" className="text-gold underline">Blog</a> ·{" "}
             <a href="/business" className="text-gold underline">For businesses</a> ·{" "}
             <a href="/promote" className="text-gold underline">Promote</a> ·{" "}
+            <a href="/investors" className="text-gold underline">Investor relations</a> ·{" "}
             <a href="/support" className="text-gold underline">Support</a> ·{" "}
             <a href="/privacy" className="text-gold underline">Privacy</a> ·{" "}
             <a href="mailto:enquiries@aiert.co.uk" className="text-gold underline">enquiries@aiert.co.uk</a>
