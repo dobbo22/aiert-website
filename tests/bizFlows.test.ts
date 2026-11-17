@@ -436,6 +436,7 @@ test("QR sign: wording is saved per shop, cleaned, and only by that company", as
   assert.equal(saved.headline, "Follow us!");
   assert.equal(saved.footer.length, 120, "long text is cut");
   assert.equal(saved.showLogo, false);
+  assert.equal(parseSign(JSON.stringify({ footer: "Free TapCard app for iPhone and Android" })).footer, DEFAULT_SIGN.footer, "an older saved sign shows the current footer wording");
   assert.equal(saved.showSocials, true);
   // a blank headline falls back to the standard one; junk is ignored
   assert.equal(parseSign('{"headline":"  "}').headline, DEFAULT_SIGN.headline);

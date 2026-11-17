@@ -67,7 +67,7 @@ Here's what your TapCard could look like:
 What makes it even better:
 - **Tap to call** — once someone has your TapCard, they can tap your number to call you direct.
 - **All your links in one place** — your website and social media profiles are right there on the card, so people can tap straight through to your site, LinkedIn, X, Instagram, or wherever you want them to find you.
-- **No app needed for them** — they just tap your link or scan your QR code, and your details save to their phone.
+- **Nothing to install for them to save you** — they just tap your link or scan your QR code, and your details save to their phone. They use the TapCard app to follow your news.
 
 See exactly how it works: [How TapCard works]({howItWorksLink})
 
@@ -92,7 +92,7 @@ Android: {androidLink}
 
 • Tap to call — once someone has your TapCard, they can tap your number to call you direct
 • All your links in one place — your website, LinkedIn, X, Instagram, right there on the card
-• No app needed for them — they just tap your link or scan your QR code
+• Nothing for them to install to save you — they just tap your link or scan your QR code
 
 How it works: {howItWorksLink}
 

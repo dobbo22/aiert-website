@@ -19,7 +19,7 @@ export default function QrSignEditor({ shops, selected, company }: { shops: Shop
   const [saving, setSaving] = useState(false);
 
   const shop = shops.find((s) => s.id === id) ?? null;
-  const sign = (id && signs[id]) || shops[0]?.sign || { headline: "Scan to follow and receive news and offers", line: "", footer: "Free TapCard app for iPhone and Android", showLogo: true, showSocials: false, showApp: true };
+  const sign = (id && signs[id]) || shops[0]?.sign || { headline: "Scan to follow and receive news and offers", line: "", footer: "TapCard app for iPhone and Android", showLogo: true, showSocials: false, showApp: true };
   // A shop with no card yet: the QR leads to a page saying this is a sample (never to the website, which the TapCard app cannot read as a contact).
   const target = shop?.cardUrl ?? "https://tapcard.aiert.co.uk/business/qr-sample";
   const sample = !shop?.cardUrl;

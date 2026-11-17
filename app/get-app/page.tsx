@@ -7,7 +7,7 @@ const APPS: Record<string, { name: string; title: string; text: string; image: s
   tapcard: {
     name: "TapCard",
     title: "TapCard: digital business card (free for the first 1,000 users)",
-    text: "Share your card with a QR code or a link, and save people into your contacts in one tap. They don't need the app.",
+    text: "Share your card with a QR code or a link, and save people into your contacts in one tap. They can open and save your card without the app; they use it to follow your news and offers.",
     image: "https://www.aiert.co.uk/tapcard-wallet-hero.png",
   },
   powersearch: {

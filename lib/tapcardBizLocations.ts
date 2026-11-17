@@ -65,7 +65,7 @@ export async function updateLocation(orgId: string, id: string, d: { name: strin
 
 /// The QR sign's wording and options for one shop (what the admin set on the QR sign page).
 export interface SignSettings { headline: string; line: string; footer: string; showLogo: boolean; showSocials: boolean; showApp: boolean }
-export const DEFAULT_SIGN: SignSettings = { headline: "Scan to follow and receive news and offers", line: "", footer: "Free TapCard app for iPhone and Android", showLogo: true, showSocials: false, showApp: true };
+export const DEFAULT_SIGN: SignSettings = { headline: "Scan to follow and receive news and offers", line: "", footer: "TapCard app for iPhone and Android", showLogo: true, showSocials: false, showApp: true };
 
 export function parseSign(raw: string | null | undefined): SignSettings {
   try {
@@ -73,7 +73,8 @@ export function parseSign(raw: string | null | undefined): SignSettings {
     return {
       headline: typeof j.headline === "string" && j.headline.trim() ? j.headline.slice(0, 120) : DEFAULT_SIGN.headline,
       line: typeof j.line === "string" ? j.line.slice(0, 120) : "",
-      footer: typeof j.footer === "string" ? j.footer.slice(0, 120) : DEFAULT_SIGN.footer,
+      // Signs saved before the wording changed still say "Free TapCard app ...": show the current default instead.
+      footer: typeof j.footer === "string" ? (/^free tapcard app\b/i.test(j.footer.trim()) ? DEFAULT_SIGN.footer : j.footer.slice(0, 120)) : DEFAULT_SIGN.footer,
       showLogo: j.showLogo !== false, showSocials: j.showSocials === true, showApp: j.showApp !== false,
     };
   } catch { return { ...DEFAULT_SIGN }; }

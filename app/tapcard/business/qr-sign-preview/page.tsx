@@ -4,7 +4,7 @@ export const metadata = { title: "QR sign preview — TapCard for Business", rob
 
 // A sample of the QR sign with made-up shops, so the layout can be seen and tested without signing in. Nothing is saved from here.
 export default function QrSignPreviewPage() {
-  const sign = { headline: "Scan to follow and receive news and offers", line: "", footer: "Free TapCard app for iPhone and Android", showLogo: true, showSocials: false, showApp: true };
+  const sign = { headline: "Scan to follow and receive news and offers", line: "", footer: "TapCard app for iPhone and Android", showLogo: true, showSocials: false, showApp: true };
   return (
     <main className="min-h-screen px-4 py-10">
       <div className="mx-auto max-w-4xl">

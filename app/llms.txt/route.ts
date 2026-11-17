@@ -116,11 +116,11 @@ Contact: admin@aiert.co.uk
 
 const TAPCARD_TXT = `# TapCard
 
-> TapCard is a digital business card app for iPhone and Android. Share your card with a QR code or a link, add it to Apple Wallet or Google Wallet, and it stays in sync with everyone you have shared it with. The person receiving your card does not need the app. Free to download.
+> TapCard is a digital business card app for iPhone and Android. Share your card with a QR code or a link, add it to Apple Wallet or Google Wallet, and it stays in sync with everyone you have shared it with. The person receiving your card can open and save it without the app; they use the app to follow news and offers. Free to download.
 
 ## At a glance
 
-- Price: free for life for the first 1,000 people on iPhone and the first 1,000 on Android. After that, sharing your own card needs a one-off unlock from £0.99, which rises in steps as more people join. Receiving a card is always free and the person receiving it does not need the app. No account or sign-up is needed.
+- Price: free for life for the first 1,000 people on iPhone and the first 1,000 on Android. After that, sharing your own card needs a one-off unlock from £0.99, which rises in steps as more people join. Receiving a card is always free, and anyone can open and save it without the app; they use the app to follow news and offers. No account or sign-up is needed.
 - Sharing: QR code, link, Apple Wallet, Google Wallet, or an offline QR code that works with no signal. A person who receives a card can send theirs back with one tap, and without the app they can leave their details on the card page.
 - App Clip (iPhone): scanning a business's QR code with the Camera can open a small TapCard App Clip, so a customer can see the card, save it and add it to Wallet without installing the full app.
 - Cards: up to 3 shared cards per phone (for example personal, work and a side business). Company cards from TapCard for Business do not count.
@@ -164,7 +164,7 @@ const AIERT_TXT = `# AIERT Ltd
 
 ## TapCard — digital business card
 
-TapCard lets a person or business share their details with a tap, a QR code or a link, and get the other person's details back. It is free for life for the first 1,000 people on each platform, then a one-off unlock that starts at £0.99; up to 3 shared cards per phone; businesses can send offers, stamp cards and news with TapCard Promote (3 months free, then £49.99 a year or £9.99 a month). Cards can be added to Apple Wallet or Google Wallet and stay in sync. Businesses can post offers, stamp cards and news to people who follow them. The person receiving a card does not need the app.
+TapCard lets a person or business share their details with a tap, a QR code or a link, and get the other person's details back. It is free for life for the first 1,000 people on each platform, then a one-off unlock that starts at £0.99; up to 3 shared cards per phone; businesses can send offers, stamp cards and news with TapCard Promote (3 months free, then £49.99 a year or £9.99 a month). Cards can be added to Apple Wallet or Google Wallet and stay in sync. Businesses can post offers, stamp cards and news to people who follow them. A person receiving a card can open and save it without the app; they use the app to follow news and offers.
 
 - [TapCard website](https://tapcard.aiert.co.uk): what it is and how it works.
 - [How TapCard works](https://tapcard.aiert.co.uk/how-it-works)

@@ -402,7 +402,7 @@ That's PowerSearch. It works with TapCard, a digital business card app, so every
 
 ${MAILSHOT_M365_NOTE}
 
-TapCard is also your digital business card. Share it with a QR code or a link and people save you in one tap, with no app needed on their side. Every card is one tap to call, message on WhatsApp, email, open their socials or get directions, and much more. It is free for life for the first 1,000 users on each phone, and PowerSearch has a free 7-day trial.
+TapCard is also your digital business card. Share it with a QR code or a link and people save you in one tap, without installing anything on their side. Every card is one tap to call, message on WhatsApp, email, open their socials or get directions, and much more. It is free for life for the first 1,000 users on each phone, and PowerSearch has a free 7-day trial.
 
 Get the app: ${links.app}
 See how it works: ${links.how}
@@ -438,7 +438,7 @@ export function mailshotHtml(firstName: string, links: MailshotLinks, relationsh
 <td width="50%" valign="top" style="padding:0 6px 0 0;text-align:center;"><a href="${esc(links.video)}"><img src="${MAILSHOT_IMAGE_TAPCARD}" alt="A contact in TapCard with a Find emails in PowerSearch button" width="250" style="width:100%;max-width:250px;border-radius:14px;border:1px solid #e5e7eb;"></a><div style="font-size:12px;line-height:1.4;color:#6b7280;margin-top:6px;"><strong>1.</strong> Tap a contact in TapCard</div></td>
 <td width="50%" valign="top" style="padding:0 0 0 6px;text-align:center;"><a href="${esc(links.video)}"><img src="${MAILSHOT_IMAGE_POWERSEARCH}" alt="PowerSearch showing that contact's emails, searched for invoice" width="250" style="width:100%;max-width:250px;border-radius:14px;border:1px solid #e5e7eb;"></a><div style="font-size:12px;line-height:1.4;color:#6b7280;margin-top:6px;"><strong>2.</strong> See their emails, and search inside them</div></td>
 </tr></table>
-<p style="margin:0 0 20px;">TapCard is also your digital business card. Share it with a QR code or a link and people save you in one tap, with no app needed on their side. Every card is <strong>one tap to call, message on WhatsApp, email, open their socials or get directions</strong>, and much more. It is <strong>free for life for the first 1,000 users</strong> on each phone, and PowerSearch has a free 7-day trial.</p>
+<p style="margin:0 0 20px;">TapCard is also your digital business card. Share it with a QR code or a link and people save you in one tap, without installing anything on their side. Every card is <strong>one tap to call, message on WhatsApp, email, open their socials or get directions</strong>, and much more. It is <strong>free for life for the first 1,000 users</strong> on each phone, and PowerSearch has a free 7-day trial.</p>
 <p style="margin:0 0 20px;"><a href="${esc(links.app)}" style="${btn}">Get the app</a></p>
 <p style="margin:0 0 24px;"><a href="${esc(links.how)}" style="${link}">See how it works</a> &nbsp;·&nbsp; <a href="${esc(links.video)}" style="${link}">See everything it can do</a></p>
 <p style="margin:0 0 4px;">Martin Dobson</p>
@@ -492,7 +492,7 @@ ${links.preview}
 
 Why owners like it
 - INSTANT: post an offer in about 30 seconds. Everyone who follows you is notified (up to two a week, so you never become annoying).
-- SIMPLE FOR CUSTOMERS: scan your QR code, save your phone, menu, booking link and directions. No app needed.
+- SIMPLE FOR CUSTOMERS: scan your QR code, save your phone, menu, booking link and directions, with nothing to install. They use the TapCard app to follow your news and offers.
 - ONE USE ONLY: each customer gets a one-off QR code. Your staff scan it, type a PIN, and it can never be used twice.
 - KEEPS THEM COMING BACK: offers sit in your customers' Apple or Google Wallet and in the app's Offers tab.
 - REVIEWS: if you're on Google, your rating shows on your card, with a one-tap button to leave a review.
@@ -542,7 +542,7 @@ export function restaurantHtml(name: string, links: MailshotLinks, cardImageUrl:
 <p style="margin:0 0 8px;font-size:18px;font-weight:800;color:#111318;">Why owners like it</p>
 <ul style="margin:0 0 20px;padding-left:20px;">
 <li style="${li}"><span style="${tag}">INSTANT:</span> post an offer in about 30 seconds. Everyone who follows you is notified (up to two a week, so you never become annoying).</li>
-<li style="${li}"><span style="${tag}">SIMPLE FOR CUSTOMERS:</span> scan your QR code, save your phone, menu, booking link and directions. No app needed.</li>
+<li style="${li}"><span style="${tag}">SIMPLE FOR CUSTOMERS:</span> scan your QR code, save your phone, menu, booking link and directions, with nothing to install. They use the TapCard app to follow your news and offers.</li>
 <li style="${li}"><span style="${tag}">ONE USE ONLY:</span> each customer gets a one-off QR code. Your staff scan it, type a PIN, and it can never be used twice.</li>
 <li style="${li}"><span style="${tag}">KEEPS THEM COMING BACK:</span> offers sit in your customers&rsquo; Apple or Google Wallet and in the app&rsquo;s Offers tab.</li>
 <li style="${li}"><span style="${tag}">REVIEWS:</span> if you&rsquo;re on Google, your rating shows on your card, with a one-tap button to leave a review.</li>

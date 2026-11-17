@@ -31,7 +31,7 @@ const APP_STORE_URL = "https://apps.apple.com/app/id6816003159";
 const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.mailbroom.tapcard";
 
 const GLANCE = [
-  ["Is TapCard free?", "Free for life for the first 1,000 people on iPhone and the first 1,000 on Android. After that, sharing your own card needs a one-off unlock from \u00a30.99, which rises in steps as more people join. Receiving a card is always free, and the person receiving it does not need the app."],
+  ["Is TapCard free?", "Free for life for the first 1,000 people on iPhone and the first 1,000 on Android. After that, sharing your own card needs a one-off unlock from \u00a30.99, which rises in steps as more people join. Receiving a card is always free. Anyone can open and save a card in their browser; to get a business's news and offers they use the TapCard app."],
   ["Do I need an account?", "No. You make a card in two screens, with no account or sign-up."],
   ["How do people get my card?", "By QR code, by link, through Apple Wallet or Google Wallet, or with an offline QR code that works with no signal. If they have a card of their own they can send it back with one tap, and even without the app they can leave their details on your card page, so you get their details too."],
   ["Is there an App Clip?", "On iPhone, scanning a business's QR code with the Camera can open a small TapCard App Clip, so a customer can see the card, save it and add it to Wallet without installing the full app."],
@@ -85,7 +85,7 @@ const FEATURES = [
   },
   {
     title: "They can share back, too",
-    body: "Whoever you send your card to can share their own details back in one tap, with a live preview of their card as they type — no account or app needed on their end.",
+    body: "Whoever you send your card to can share their own details back in one tap, with a live preview of their card as they type — no account needed and nothing to install on their end.",
   },
   {
     title: "Nothing to install to receive",
