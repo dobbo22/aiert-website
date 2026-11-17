@@ -122,7 +122,7 @@ const ShopPhones = forwardRef<ShopHandle, { initial: Shop[]; allowed: number; we
     return (
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">Your shops</h2>
-        <p className="mt-1 text-sm text-mist">Find your business above and its card appears here as a phone screen, with your other shops in tabs.</p>
+        <p className="mt-1 text-sm text-cloud">Find your business above and its card appears here as a phone screen, with your other shops in tabs.</p>
         {busy && <p className="mt-3 text-sm text-gold">{note}</p>}
         <button type="button" onClick={addManually} className="mt-4 rounded-xl px-3 py-2 text-sm font-semibold text-gold ring-1 ring-gold">+ Add a shop manually</button>
       </div>
@@ -167,7 +167,7 @@ const ShopPhones = forwardRef<ShopHandle, { initial: Shop[]; allowed: number; we
         <div className="min-w-[16rem] flex-1 space-y-3">
           {([["name", "Shop name"], ["address", "Address"], ["phone", "Phone"], ["email", "Email"]] as const).map(([k, label]) => (
             <label key={k} className="block">
-              <span className="text-sm text-mist">{label}</span>
+              <span className="text-sm text-cloud">{label}</span>
               <input value={shop[k]} onChange={(e) => patch({ [k]: e.target.value })} 
                 className="mt-1 w-full rounded-xl bg-slate/40 px-3 py-2 text-cloud ring-1 ring-slate" />
             </label>
@@ -175,8 +175,8 @@ const ShopPhones = forwardRef<ShopHandle, { initial: Shop[]; allowed: number; we
           <div className="flex flex-wrap items-center gap-3 pt-1">
             {!shop.id && <button type="button" onClick={() => void addThis()} disabled={busy || savedCount(shops) >= allowed} className="btn-gold rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-60">Add this shop</button>}
             {shop.id && <button type="button" onClick={() => void saveEdits()} disabled={busy} className="btn-gold rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-60">Save changes</button>}
-            {shop.id && !shop.claimed && <button type="button" onClick={() => void removeThis()} className="text-sm text-mist underline">Remove</button>}
-            {shop.claimed && shop.cardId && <button type="button" onClick={() => void removeCard()} className="text-sm text-mist underline">Remove this card</button>}
+            {shop.id && !shop.claimed && <button type="button" onClick={() => void removeThis()} className="text-sm text-cloud underline">Remove</button>}
+            {shop.claimed && shop.cardId && <button type="button" onClick={() => void removeCard()} className="text-sm text-cloud underline">Remove this card</button>}
             {shop.id && <a href={`/business/admin/qr-sign?shop=${shop.id}`} className="text-sm font-semibold text-gold underline">QR sign</a>}
             {shop.id && !shop.claimed && <a href="/business/admin/locations" className="text-sm font-semibold text-gold underline">Invite its manager</a>}
           </div>

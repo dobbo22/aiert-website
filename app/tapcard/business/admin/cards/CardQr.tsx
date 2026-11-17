@@ -50,7 +50,7 @@ export default function CardQr({ id, title, subtitle, eventCode, caption }: { id
   return (
     <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
       <p className="text-sm font-semibold uppercase tracking-wider text-teal">{subtitle}</p>
-      <h3 className="mt-1 text-lg font-bold text-cloud">{title}</h3>
+      <h2 className="mt-1 text-lg font-bold text-cloud">{title}</h2>
       <div className="mt-4 flex items-start gap-4">
         {src ? (
           // eslint-disable-next-line @next/next/no-img-element

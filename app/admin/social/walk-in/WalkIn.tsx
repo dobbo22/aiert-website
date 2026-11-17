@@ -196,7 +196,7 @@ export default function WalkIn() {
           <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
             <div className="rounded-2xl bg-charcoal p-5 ring-1 ring-gold/40">
               <h2 className="text-xl font-black text-cloud">{built.card.name}</h2>
-              <p className="mt-1 text-cloud">Ask the owner to scan this with their phone camera. They install the free app and their card is already built.</p>
+              <p className="mt-1 text-cloud">Ask the owner to scan this with their phone camera. They install the TapCard app and their card is already built.</p>
               {qr ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={qr} alt="QR code that starts this business's TapCard" className="mt-4 aspect-square w-full max-w-[30rem] rounded-xl bg-white" />

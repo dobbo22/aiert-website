@@ -205,3 +205,6 @@ body {
 .footer-divider {
   border-top: 1px solid rgba(45, 55, 72, 0.3);
 }
+
+/* Business admin: a clear keyboard focus ring on the dark background (the browser default is dark blue and hard to see). */
+.biz-admin :focus-visible { outline: 2px solid var(--color-gold); outline-offset: 2px; }

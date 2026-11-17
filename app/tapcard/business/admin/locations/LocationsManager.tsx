@@ -97,7 +97,7 @@ export default function LocationsManager({ initial, allowed, orgName }: { initia
     <div className="space-y-8">
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">Add a location</h2>
-        <p className="mt-1 text-sm text-mist">
+        <p className="mt-1 text-sm text-cloud">
           Find the shop the way the TapCard app does: type its name and town, tap it, and its address, phone number, opening hours and
           booking, menu and review links are filled in from Google and its website. Your plan has {allowed} location{allowed === 1 ? "" : "s"}
           ({locations.length} added).
@@ -116,7 +116,7 @@ export default function LocationsManager({ initial, allowed, orgName }: { initia
               <li key={h.id}>
                 <button type="button" onClick={() => void add(h)} className="w-full rounded-xl bg-slate/40 px-4 py-3 text-left text-cloud ring-1 ring-slate hover:ring-gold">
                   <span className="font-semibold">{h.name}</span>
-                  <span className="block text-sm text-mist">{[h.type, h.address].filter(Boolean).join(" · ")}</span>
+                  <span className="block text-sm text-cloud">{[h.type, h.address].filter(Boolean).join(" · ")}</span>
                 </button>
               </li>
             ))}
@@ -129,14 +129,14 @@ export default function LocationsManager({ initial, allowed, orgName }: { initia
         )}
         {candidates && candidates.length > 0 && (
           <div className="mt-3">
-            <p className="text-sm text-mist">Found for {orgName}. Tap one to add it:</p>
+            <p className="text-sm text-cloud">Found for {orgName}. Tap one to add it:</p>
             <ul className="mt-2 space-y-2">
               {candidates.map((c) => (
                 <li key={c.id}>
                   <button type="button" onClick={() => void addCandidate(c)} disabled={busy || locations.length >= allowed}
                     className="w-full rounded-xl bg-slate/40 px-4 py-3 text-left text-cloud ring-1 ring-slate hover:ring-gold disabled:opacity-60">
                     <span className="font-semibold">{c.name}</span>
-                    <span className="block text-sm text-mist">{[c.address, c.phone, `from ${c.source}`].filter(Boolean).join(" · ")}</span>
+                    <span className="block text-sm text-cloud">{[c.address, c.phone, `from ${c.source}`].filter(Boolean).join(" · ")}</span>
                   </button>
                 </li>
               ))}
@@ -149,7 +149,7 @@ export default function LocationsManager({ initial, allowed, orgName }: { initia
 
       {locations.some((l) => !l.claimed) && (
         <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
-          <p className="text-sm text-mist">Want every waiting shop&apos;s card link in one email to yourself? Open them on a phone, or forward each to its manager.</p>
+          <p className="text-sm text-cloud">Want every waiting shop&apos;s card link in one email to yourself? Open them on a phone, or forward each to its manager.</p>
           <button type="button" onClick={() => void emailAll()} disabled={busy} className="btn-gold mt-3 rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-60">Email me the shop card links</button>
         </div>
       )}
@@ -159,7 +159,7 @@ export default function LocationsManager({ initial, allowed, orgName }: { initia
           <div className="flex items-start justify-between gap-4">
             <div>
               <h3 className="font-bold text-cloud">{l.name}</h3>
-              <p className="text-sm text-mist">{[l.address, l.phone].filter(Boolean).join(" · ")}</p>
+              <p className="text-sm text-cloud">{[l.address, l.phone].filter(Boolean).join(" · ")}</p>
             </div>
             <span className={`rounded-full px-3 py-1 text-xs font-semibold ${l.claimed ? "bg-teal/20 text-teal" : "bg-gold/20 text-gold"}`}>{l.claimed ? "Card made" : "Waiting for its manager"}</span>
           </div>
@@ -183,7 +183,7 @@ export default function LocationsManager({ initial, allowed, orgName }: { initia
                   <LinkQr link={links[l.id]} />
                 </div>
               )}
-              {!l.claimed && <button type="button" onClick={() => void remove(l)} className="mt-3 text-sm text-mist underline">Remove this location</button>}
+              {!l.claimed && <button type="button" onClick={() => void remove(l)} className="mt-3 text-sm text-cloud underline">Remove this location</button>}
             </div>
           )}
         </div>

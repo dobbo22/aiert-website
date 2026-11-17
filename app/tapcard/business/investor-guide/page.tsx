@@ -64,7 +64,7 @@ export default function InvestorGuidePage() {
       <section>
         <h2>Running an AGM or a roadshow</h2>
         <ol className="ml-5 mt-2 space-y-1.5 [&>li]:list-decimal!">
-          <li>Under <strong>Cards &amp; QR</strong>, choose <strong>Events</strong>, name the event (for example AGM 2026 or Roadshow 20 Nov) and choose <em>No set time</em>, <em>All day</em> or <em>Timed slot</em>. Press Create QR code.</li>
+          <li>Under <strong>Cards &amp; QR</strong>, choose <strong>Events</strong>, name the event (for example AGM 2026 or Roadshow 20 Nov) and choose <em>Any time</em>, <em>All day</em> or <em>Timed slot</em>. Press Create QR code.</li>
           <li>Press <strong>Download QR code with wording</strong>. The picture has &ldquo;Please scan to register your attendance and follow your company&rdquo; printed under the code, ready for a slide or a printed sign.</li>
           <li>For a day of visits, keep <strong>one</strong> event and add a <strong>time slot</strong> for each firm (name, day, from, to). Print one code. A scan is recorded against the slot it was made in, and you can edit slots later without reprinting.</li>
           <li>Open <strong>Registered</strong> under the event to see who registered. People who shared their details appear by name with their slot; the rest are counted. Download list gives a CSV for that event.</li>

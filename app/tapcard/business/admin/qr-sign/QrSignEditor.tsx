@@ -45,7 +45,7 @@ export default function QrSignEditor({ shops, selected, company }: { shops: Shop
     return (
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">QR sign</h2>
-        <p className="mt-1 text-sm text-mist">Add your shops first (Card template or Locations tab). Each shop gets its own sign with its own QR code.</p>
+        <p className="mt-1 text-sm text-cloud">Add your shops first (Card template or Locations tab). Each shop gets its own sign with its own QR code.</p>
       </div>
     );
   }
@@ -62,7 +62,7 @@ export default function QrSignEditor({ shops, selected, company }: { shops: Shop
       `}</style>
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10 print:hidden">
         <h2 className="text-lg font-bold text-cloud">QR sign</h2>
-        <p className="mt-1 text-sm text-mist">A sign for your window or till. Customers scan the QR code to save your card and follow your shop for news and offers.</p>
+        <p className="mt-1 text-sm text-cloud">A sign for your window or till. Customers scan the QR code to save your card and follow your shop for news and offers.</p>
         <div className="mt-4 flex flex-wrap gap-2">
           {shops.map((s) => (
             <button key={s.id} type="button" onClick={() => { setId(s.id); setNote(null); }}
@@ -74,15 +74,15 @@ export default function QrSignEditor({ shops, selected, company }: { shops: Shop
       <div className="flex flex-wrap items-start gap-8">
         <div className="min-w-[18rem] flex-1 space-y-4 rounded-2xl bg-charcoal p-6 ring-1 ring-white/10 print:hidden">
           <label className="block">
-            <span className="text-sm text-mist">Headline</span>
+            <span className="text-sm text-cloud">Headline</span>
             <input value={sign.headline} maxLength={120} onChange={(e) => set({ headline: e.target.value })} className="mt-1 w-full rounded-xl bg-slate/40 px-3 py-2 text-cloud ring-1 ring-slate" />
           </label>
           <label className="block">
-            <span className="text-sm text-mist">Name on the sign</span>
+            <span className="text-sm text-cloud">Name on the sign</span>
             <input value={sign.line} maxLength={120} placeholder={shop?.name || company.name} onChange={(e) => set({ line: e.target.value })} className="mt-1 w-full rounded-xl bg-slate/40 px-3 py-2 text-cloud ring-1 ring-slate" />
           </label>
           <label className="block">
-            <span className="text-sm text-mist">Small print at the bottom</span>
+            <span className="text-sm text-cloud">Small print at the bottom</span>
             <input value={sign.footer} maxLength={120} onChange={(e) => set({ footer: e.target.value })} className="mt-1 w-full rounded-xl bg-slate/40 px-3 py-2 text-cloud ring-1 ring-slate" />
           </label>
           {([["showLogo", "Show the company logo", !!company.logoUrl], ["showSocials", "Show our social profiles", company.socials.length > 0], ["showApp", "Show the small print and TapCard line", true]] as const).map(([k, label, available]) => (
@@ -96,7 +96,7 @@ export default function QrSignEditor({ shops, selected, company }: { shops: Shop
           </div>
           {note && <p className="text-sm text-gold">{note}</p>}
           {sample && <p className="text-sm text-gold">This is a sample: the shop&apos;s card doesn&apos;t exist yet, so the QR code is not its real one (scanning it shows a &quot;sample&quot; page) and printing is switched off. The real QR code appears here once its manager has made the card.</p>}
-          <p className="text-xs text-mist">In the print window choose A4, and turn off &quot;Headers and footers&quot; for the cleanest result.</p>
+          <p className="text-xs text-cloud">In the print window choose A4, and turn off &quot;Headers and footers&quot; for the cleanest result.</p>
         </div>
 
         <div className="w-full max-w-[26rem] flex-1">

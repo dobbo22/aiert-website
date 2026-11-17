@@ -22,10 +22,10 @@ export default async function BizAdminOverview() {
             {shops.map((s) => {
               const parts = s.address.split(",").map((p) => p.replace(/[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}/i, "").trim()).filter(Boolean);
               const town = (parts.length >= 2 ? parts[1] : parts[0]) || s.name;
-              return <li key={s.id}><strong>{town}</strong><span className="text-mist"> · {s.address}</span></li>;
+              return <li key={s.id}><strong>{town}</strong><span className="text-cloud"> · {s.address}</span></li>;
             })}
           </ul>
-          <p className="mt-4 text-sm text-mist">
+          <p className="mt-4 text-sm text-cloud">
             Use <a href="/business/admin/qr-sign" className="text-gold underline">QR sign</a> to print your shop&apos;s sign, and{" "}
             <a href="/business/admin/employees" className="text-gold underline">Employees</a> to invite your staff and remove a card when someone leaves.
             Post your shop&apos;s offers and news from <a href="/business/admin/promote" className="text-gold underline">Offers &amp; numbers</a>, or from the TapCard app; your company&apos;s admins can post for it too.
@@ -62,11 +62,11 @@ export default async function BizAdminOverview() {
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
-          <p className="text-sm text-mist">Billing</p>
-          <p className="mt-1 text-xl font-bold text-cloud capitalize">{org.free_for_life ? "Free for life" : isComplimentary(org) ? "Free access" : orgStatusLabel(org)}</p>
+          <p className="text-sm text-cloud">Billing</p>
+          <p className="mt-1 text-xl font-bold text-cloud first-letter:uppercase">{org.free_for_life ? "Free for life" : isComplimentary(org) ? "Free access" : orgStatusLabel(org)}</p>
         </div>
         <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
-          <p className="text-sm text-mist">Active cards</p>
+          <p className="text-sm text-cloud">Active cards</p>
           <p className="mt-1 text-xl font-bold text-cloud">
             {activeCards} / {org.seat_limit || "–"} cards
           </p>
@@ -91,7 +91,7 @@ export default async function BizAdminOverview() {
               <span className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-sm font-bold ${st.done ? "bg-teal text-black" : "bg-slate text-cloud"}`}>{st.done ? "✓" : i + 1}</span>
               <span>
                 <a href={st.href} className="font-semibold text-gold underline">{st.title}</a>
-                <span className="block text-sm text-mist">{st.text}</span>
+                <span className="block text-sm text-cloud">{st.text}</span>
               </span>
             </li>
           ))}

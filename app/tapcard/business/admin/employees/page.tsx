@@ -32,10 +32,10 @@ export default async function BizEmployeesPage() {
         <InvitePeople billingActive={isOrgActive(org)} orgName={org.name} domain={org.domain} shops={mine.map((l) => ({ id: l.id, label: shopLabel(l.address, l.name) }))} shopRequired />
         <div className="rounded-2xl bg-charcoal ring-1 ring-white/10">
           <div className="px-4 pt-4"><h2 className="text-lg font-bold text-cloud">Your staff</h2></div>
-          <table className="mt-2 w-full text-left text-cloud">
-            <thead><tr className="border-b border-slate text-sm text-mist"><th className="px-4 py-3">Name</th><th className="px-4 py-3">Email</th><th className="px-4 py-3">Shop</th><th className="px-4 py-3" /></tr></thead>
+          <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Table, scrolls sideways on a small screen"><table className="mt-2 w-full text-left text-cloud">
+            <thead><tr className="border-b border-slate text-sm text-cloud"><th className="px-4 py-3">Name</th><th className="px-4 py-3">Email</th><th className="px-4 py-3">Shop</th><th className="px-4 py-3"><span className="sr-only">Actions</span></th></tr></thead>
             <tbody>
-              {staff.length === 0 && <tr><td colSpan={4} className="px-4 py-6 text-mist">No one has made their card yet. Create links above and send each person theirs.</td></tr>}
+              {staff.length === 0 && <tr><td colSpan={4} className="px-4 py-6 text-cloud">No one has made their card yet. Create links above and send each person theirs.</td></tr>}
               {staff.map((c) => (
                 <tr key={c.id} className="border-b border-slate/50">
                   <td className="px-4 py-3">{c.name}</td>
@@ -45,7 +45,7 @@ export default async function BizEmployeesPage() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         </div>
       </div>
     );
@@ -67,13 +67,13 @@ export default async function BizEmployeesPage() {
       <div className="rounded-2xl bg-charcoal ring-1 ring-white/10">
         <div className="flex items-baseline justify-between px-4 pt-4">
           <h2 className="text-lg font-bold text-cloud">Active cards</h2>
-          <span className="text-sm text-mist">
+          <span className="text-sm text-cloud">
             {cards.length} of {org.seat_limit || "–"} cards used
           </span>
         </div>
-        <table className="mt-2 w-full text-left text-cloud">
+        <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Table, scrolls sideways on a small screen"><table className="mt-2 w-full text-left text-cloud">
           <thead>
-            <tr className="border-b border-slate text-sm text-mist">
+            <tr className="border-b border-slate text-sm text-cloud">
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Title</th>
@@ -81,13 +81,13 @@ export default async function BizEmployeesPage() {
                 <th className="px-4 py-3">Shop</th>
                 <th className="px-4 py-3">Offers and news</th>
               </>)}
-              <th className="px-4 py-3" />
+              <th className="px-4 py-3"><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody>
             {cards.length === 0 && (
               <tr>
-                <td colSpan={listed ? 5 : 6} className="px-4 py-6 text-mist">
+                <td colSpan={listed ? 5 : 6} className="px-4 py-6 text-cloud">
                   No one has activated their card yet.
                 </td>
               </tr>
@@ -109,7 +109,7 @@ export default async function BizEmployeesPage() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
     </div>
   );

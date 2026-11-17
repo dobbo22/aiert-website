@@ -100,7 +100,7 @@ export function ListedOverviewView({ s, orgName, events = [], people = [], now }
               {events.slice(0, 4).map((e) => (
                 <li key={e.code} className="flex items-baseline justify-between gap-3 border-b border-slate/50 py-2 text-cloud last:border-0">
                   <span className="font-semibold">{e.label}</span>
-                  <span className="whitespace-nowrap text-sm">{state(e) || (e.startsAt ? "" : "No set time")}{e.startsAt ? ` · ${short(e.startsAt)}` : ""}</span>
+                  <span className="whitespace-nowrap text-sm">{state(e) || (e.startsAt ? "" : "Any time")}{e.startsAt ? ` · ${short(e.startsAt)}` : ""}</span>
                 </li>
               ))}
             </ul>

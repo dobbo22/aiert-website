@@ -51,7 +51,7 @@ export default function LocationPromote({ cardId, hasOffer, hasNews }: Props) {
           </div>
           {kind === "stamps" && (
             <div className="mt-3 rounded-lg bg-white/5 p-3">
-              <p className="text-xs text-white/80">Customers get a card on their phone. Staff scan it and enter your PIN to add a stamp. When it is full they get the reward and the card starts again.</p>
+              <p className="text-xs text-cloud">Customers get a card on their phone. Staff scan it and enter your PIN to add a stamp. When it is full they get the reward and the card starts again.</p>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <label>Stamps needed (1 to 20)<input className={field} value={stamps} onChange={(e) => setStamps(e.target.value.replace(/\D/g, "").slice(0, 2))} /></label>
                 <label>Time between stamps
@@ -64,7 +64,7 @@ export default function LocationPromote({ cardId, hasOffer, hasNews }: Props) {
               {APP_GATE_READY && (
                 <label className="mt-3 flex items-start gap-2">
                   <input type="checkbox" className="mt-1" checked={needApp} onChange={(e) => setNeedApp(e.target.checked)} />
-                  <span>Customers need the TapCard app after their first stamp. <span className="text-white/70">The first stamp needs nothing to install. From the second, they get the free app, and their stamps come with them.</span></span>
+                  <span>Customers need the TapCard app after their first stamp. <span className="text-cloud">The first stamp needs nothing to install. From the second, they need the TapCard app, and their stamps come with them.</span></span>
                 </label>
               )}
             </div>
@@ -77,7 +77,7 @@ export default function LocationPromote({ cardId, hasOffer, hasNews }: Props) {
             <label>{kind === "stamps" ? "Max cards (optional)" : "Limit (optional)"}<input className={field} value={limit} onChange={(e) => setLimit(e.target.value.replace(/\D/g, ""))} /></label>
             <label>Staff PIN<input className={field} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="4 to 6 digits" /></label>
           </div>
-          {kind === "stamps" && <p className="mt-2 text-xs text-white/80">Posting a new offer later replaces this card, and customers&apos; stamps start again.</p>}
+          {kind === "stamps" && <p className="mt-2 text-xs text-cloud">Posting a new offer later replaces this card, and customers&apos; stamps start again.</p>}
           <button type="button" disabled={busy || pin.length < 4 || (kind === "stamps" ? !reward.trim() || !Number(stamps) : !text.trim())} className="mt-3 rounded-lg bg-white px-4 py-2 font-semibold text-[#111318] disabled:opacity-50"
             onClick={() => send({
               action: "offer", kind,

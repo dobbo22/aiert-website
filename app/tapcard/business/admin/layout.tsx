@@ -21,7 +21,7 @@ export default async function BizAdminLayout({ children }: { children: React.Rea
 
   const listed = await orgIsListed(org.id);
   return (
-    <main className="min-h-screen px-4 py-10">
+    <main className="biz-admin min-h-screen px-4 py-10">
       <div className="mx-auto max-w-4xl">
         {session.support && (
           <p className="mb-4 rounded-xl bg-gold px-4 py-2 text-sm font-semibold text-black print:hidden">
@@ -29,19 +29,19 @@ export default async function BizAdminLayout({ children }: { children: React.Rea
           </p>
         )}
         <header className="flex items-center justify-between print:hidden">
-          <div>
+          <div className="min-w-0">
             <p className="text-sm font-semibold uppercase tracking-wider text-teal">{listed ? "TapCard for investor relations" : "TapCard for Business"}</p>
             <h1 className="mt-1 text-2xl font-black text-cloud">{org.name}</h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <a href={listed ? "/business/investor-guide" : "/business/guide"} target="_blank" rel="noopener noreferrer"
-              className="rounded-xl px-4 py-2 text-sm font-semibold text-cloud ring-1 ring-slate hover:ring-mist">Help</a>
+              className="whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold text-cloud ring-1 ring-slate hover:ring-mist">Help</a>
             <LogoutButton />
           </div>
         </header>
         <AdminNav role={session.role} listed={listed} />
         <div className="mt-8">{children}</div>
-        <footer className="mt-12 border-t border-slate pt-6 text-sm text-mist print:hidden">
+        <footer className="mt-12 border-t border-slate pt-6 text-sm text-cloud print:hidden">
           {listed && <><a href="/business/investor-guide" className="text-gold underline">Investor relations guide &amp; FAQs</a> ·{" "}</>}
           <a href="/business/guide" className="text-gold underline">Admin guide</a> ·{" "}
           <a href="/business/security" className="text-gold underline">Security &amp; privacy</a>

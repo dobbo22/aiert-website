@@ -135,7 +135,7 @@ export async function getInsights(orgId: string): Promise<Insights> {
     FROM tapcard_listed_event_slots s JOIN tapcard_listed_events e ON e.code = s.event_code WHERE e.org_id = ${orgId} ORDER BY s.starts_at`) as
     { event_code: string; label: string; starts_at: string; ends_at: string; followers: number; shared: number }[];
   const when = (a: string | null, b: string | null) => {
-    if (!a || !b) return "No set time";
+    if (!a || !b) return "Any time";
     const d = (x: string) => new Date(x).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London" });
     const t = (x: string) => new Date(x).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
     const allDay = t(a) === "00:00" && t(b) === "23:59";

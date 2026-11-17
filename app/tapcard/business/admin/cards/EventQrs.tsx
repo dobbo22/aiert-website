@@ -46,7 +46,7 @@ function Slots({ ev, post, busy }: { ev: EventRow; post: (b: unknown) => Promise
       <form className="mt-3 flex flex-wrap items-end gap-2" onSubmit={(e) => { e.preventDefault(); if (!ready) return;
         void post({ addSlot: ev.code, label, startsAt: new Date(`${day}T${from}`).toISOString(), endsAt: new Date(`${day}T${to}`).toISOString() }).then(() => { setLabel(""); setFrom(""); setTo(""); }); }}>
         <label className="text-sm font-semibold text-cloud">Who or where
-          <input value={label} onChange={(e) => setLabel(e.target.value)} maxLength={60} placeholder="For example: Smith &amp; Co" className="mt-1 block rounded-xl bg-slate/40 px-3 py-2 text-cloud ring-1 ring-slate placeholder:text-cloud/80" />
+          <input value={label} onChange={(e) => setLabel(e.target.value)} maxLength={60} placeholder="For example: Smith &amp; Co" className="mt-1 block rounded-xl bg-slate/40 px-3 py-2 text-cloud ring-1 ring-slate placeholder:text-cloud" />
         </label>
         <label className="text-sm font-semibold text-cloud">Day
           <input type="date" value={day} onChange={(e) => setDay(e.target.value)} className="mt-1 block rounded-xl bg-white px-3 py-2 text-black ring-1 ring-slate" />
@@ -139,12 +139,12 @@ export default function EventQrs({ companyCardId, companyName, events, attendanc
           <div className="flex flex-wrap items-end gap-3">
             <label className="sr-only" htmlFor="event-name">Event name</label>
             <input id="event-name" value={label} onChange={(e) => setLabel(e.target.value)} maxLength={60} placeholder="For example: AGM 2026, or Roadshow 20 Nov"
-              className="min-w-[16rem] flex-1 rounded-xl bg-slate/40 px-4 py-2 text-cloud ring-1 ring-slate placeholder:text-cloud/80" />
+              className="min-w-[16rem] flex-1 rounded-xl bg-slate/40 px-4 py-2 text-cloud ring-1 ring-slate placeholder:text-cloud" />
           </div>
           <fieldset>
             <legend className="text-sm font-semibold text-cloud">When is it?</legend>
             <div className="mt-2 flex flex-wrap gap-2">
-              {([["none", "No set time"], ["day", "All day"], ["slot", "Timed slot"]] as const).map(([m, t]) => (
+              {([["none", "Any time"], ["day", "All day"], ["slot", "Timed slot"]] as const).map(([m, t]) => (
                 <button key={m} type="button" onClick={() => setMode(m)} aria-pressed={mode === m}
                   className={`rounded-xl px-4 py-2 font-semibold ring-1 ${mode === m ? "btn-gold ring-transparent" : "text-cloud ring-slate"}`}>{t}</button>
               ))}
@@ -188,7 +188,7 @@ export default function EventQrs({ companyCardId, companyName, events, attendanc
           <section key={ev.code} className="space-y-3 rounded-2xl bg-charcoal/60 p-4 ring-1 ring-white/10">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h3 className="text-xl font-bold text-cloud">{ev.label}</h3>
+                <h2 className="text-xl font-bold text-cloud">{ev.label}</h2>
                 {windowText(ev, now) && <p className="text-sm text-cloud">{windowText(ev, now)}</p>}
               </div>
               <button type="button" disabled={busy} onClick={() => { if (window.confirm(`Delete the event "${ev.label}"? Its QR code will still open the card, but follows stop being tagged.`)) void post({ delete: ev.code }); }}

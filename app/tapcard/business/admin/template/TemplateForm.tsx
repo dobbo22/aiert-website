@@ -172,7 +172,7 @@ export default function TemplateForm({ org, shops, allowed }: { org: BizOrg; sho
     <form onSubmit={handleSave} className="space-y-8">
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">Find your business</h2>
-        <p className="mt-1 text-sm text-mist">
+        <p className="mt-1 text-sm text-cloud">
           Type your business name and town and tap it in the list. Its card appears below as a phone screen, with your other shops in tabs.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
@@ -195,7 +195,7 @@ export default function TemplateForm({ org, shops, allowed }: { org: BizOrg; sho
                 <button type="button" onClick={() => void pick(h)}
                   className="w-full rounded-xl bg-slate/40 px-4 py-3 text-left text-cloud ring-1 ring-slate hover:ring-gold">
                   <span className="font-semibold">{h.name}</span>
-                  <span className="block text-sm text-mist">{[h.type, h.address].filter(Boolean).join(" · ")}</span>
+                  <span className="block text-sm text-cloud">{[h.type, h.address].filter(Boolean).join(" · ")}</span>
                 </button>
               </li>
             ))}
@@ -217,11 +217,11 @@ export default function TemplateForm({ org, shops, allowed }: { org: BizOrg; sho
             // eslint-disable-next-line @next/next/no-img-element
             <img src={logoURL} alt="" className="h-10 w-16 rounded-lg bg-white object-contain p-1" />
           ) : (
-            <span className="flex h-10 w-16 items-center justify-center rounded-lg bg-slate/40 text-xs text-mist">No logo</span>
+            <span className="flex h-10 w-16 items-center justify-center rounded-lg bg-slate/40 text-xs text-cloud">No logo</span>
           )}
           <span className="min-w-0 flex-1">
             <span className="block truncate font-bold text-cloud">{name || "Company details"}</span>
-            <span className="block truncate text-sm text-mist">{[website.replace(/^https?:\/\//, ""), brandColor].filter(Boolean).join(" · ") || "Website, colour, logo and social links"}</span>
+            <span className="block truncate text-sm text-cloud">{[website.replace(/^https?:\/\//, ""), brandColor].filter(Boolean).join(" · ") || "Website, colour, logo and social links"}</span>
           </span>
           {brandColor && /^#[0-9a-f]{6}$/i.test(brandColor) && <span className="h-6 w-6 rounded-full ring-1 ring-white/30" style={{ background: brandColor }} />}
           <span className="text-sm font-semibold text-gold group-open:hidden">Edit</span>
@@ -230,7 +230,7 @@ export default function TemplateForm({ org, shops, allowed }: { org: BizOrg; sho
         <div className="space-y-6 px-5 pb-6">
       <div>
         <h2 className="text-lg font-bold text-cloud">Company details</h2>
-        <p className="mt-1 text-sm text-mist">
+        <p className="mt-1 text-sm text-cloud">
           These fill in every employee&apos;s card automatically, and are locked by default below.
         </p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -242,7 +242,7 @@ export default function TemplateForm({ org, shops, allowed }: { org: BizOrg; sho
 
       <div className="border-t border-slate/50 pt-6">
         <h2 className="text-lg font-bold text-cloud">Company logo</h2>
-        <p className="mt-1 text-sm text-mist">
+        <p className="mt-1 text-sm text-cloud">
           Shown on every employee&apos;s card and Wallet pass. The logo from your website&apos;s header usually works
           best — a PNG with a transparent background.
         </p>
@@ -252,7 +252,7 @@ export default function TemplateForm({ org, shops, allowed }: { org: BizOrg; sho
               // eslint-disable-next-line @next/next/no-img-element
               <img src={logoURL} alt="Company logo" className="max-h-full max-w-full object-contain" />
             ) : (
-              <span className="text-sm text-slate">No logo yet</span>
+              <span className="text-sm text-cloud">No logo yet</span>
             )}
           </div>
           <div className="flex flex-wrap gap-2">
@@ -283,20 +283,20 @@ export default function TemplateForm({ org, shops, allowed }: { org: BizOrg; sho
                 type="button"
                 disabled={logoBusy}
                 onClick={() => changeLogo(fetch("/api/tapcard/biz/logo", { method: "DELETE" }))}
-                className="rounded-xl px-4 py-2 text-sm text-mist underline"
+                className="rounded-xl px-4 py-2 text-sm text-cloud underline"
               >
                 Remove
               </button>
             )}
           </div>
         </div>
-        {logoBusy && <p className="mt-3 text-sm text-mist">Working…</p>}
+        {logoBusy && <p className="mt-3 text-sm text-cloud">Working…</p>}
         {logoError && <p className="mt-3 text-sm text-gold">{logoError}</p>}
       </div>
 
       <div className="border-t border-slate/50 pt-6">
         <h2 className="text-lg font-bold text-cloud">Company social links</h2>
-        <p className="mt-1 text-sm text-mist">Shown on every employee&apos;s card instead of a personal profile.</p>
+        <p className="mt-1 text-sm text-cloud">Shown on every employee&apos;s card instead of a personal profile.</p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <Field label="LinkedIn" value={linkedInURL} onChange={setLinkedInURL} />
           <Field label="X (Twitter)" value={twitterURL} onChange={setTwitterURL} />
@@ -309,7 +309,7 @@ export default function TemplateForm({ org, shops, allowed }: { org: BizOrg; sho
 
       <div className="border-t border-slate/50 pt-6">
         <h2 className="text-lg font-bold text-cloud">What employees can edit</h2>
-        <p className="mt-1 text-sm text-mist">
+        <p className="mt-1 text-sm text-cloud">
           Ticked fields are locked to the company&apos;s value above — employees can&apos;t change them. Name is always
           editable.
         </p>
@@ -361,7 +361,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="text-sm text-mist">{label}</span>
+      <span className="text-sm text-cloud">{label}</span>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}

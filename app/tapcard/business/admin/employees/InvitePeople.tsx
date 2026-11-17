@@ -187,7 +187,7 @@ export default function InvitePeople({ billingActive, orgName, domain, shops = [
       <h2 className="text-lg font-bold text-cloud">Invite people</h2>
       {shops.length > 0 && (
         <label className="mb-4 flex flex-wrap items-center gap-3 text-cloud">
-          <span className="text-sm text-mist">These staff work at</span>
+          <span className="text-sm text-cloud">These staff work at</span>
           <select value={shopId} onChange={(e) => setShopId(e.target.value)} className="rounded-xl bg-slate/40 px-3 py-2 text-cloud ring-1 ring-slate">
             {!shopRequired && <option value="">No particular shop</option>}
             {shops.map((sh) => <option key={sh.id} value={sh.id}>{sh.label}</option>)}
@@ -195,12 +195,12 @@ export default function InvitePeople({ billingActive, orgName, domain, shops = [
         </label>
       )}
       {listed && (
-        <p className="mt-1 text-sm text-mist">
+        <p className="mt-1 text-sm text-cloud">
           For directors and others who speak for the company, such as the CEO or investor relations contact. Their cards share contact details and keep them up to date.
           Anyone who follows one of these cards follows the company&apos;s announcements, with the choice to share their own details. Other news goes to people directly, by email or message.
         </p>
       )}
-      <p className="mt-1 text-sm text-mist">
+      <p className="mt-1 text-sm text-cloud">
         Type each person&apos;s name and we fill in the email{domain ? ` (@${domain})` : ""}. Change the first one if your company
         uses a different format, for example j.smith, and the rest follow it. You get one invite link per person to send from
         your own email. Nothing you type here is stored by TapCard.
@@ -213,7 +213,7 @@ export default function InvitePeople({ billingActive, orgName, domain, shops = [
       )}
 
       <div className="mt-4 space-y-2">
-        <div className="hidden grid-cols-[1.2fr_1.5fr_1fr] gap-2 text-xs text-mist sm:grid">
+        <div className="hidden grid-cols-[1.2fr_1.5fr_1fr] gap-2 text-xs text-cloud sm:grid">
           <span>Name</span><span>Email</span><span>Job title (optional)</span>
         </div>
         {rows.map((r, idx) => (
@@ -238,19 +238,19 @@ export default function InvitePeople({ billingActive, orgName, domain, shops = [
         ))}
         <div className="flex flex-wrap items-center gap-4 pt-1">
           <button type="button" onClick={addRow} disabled={!billingActive} className="text-gold underline">+ Add another person</button>
-          {learned && <span className="text-sm text-mist">Using your format: {localPart("Jane Smith", pattern)}@{domain}</span>}
+          {learned && <span className="text-sm text-cloud">Using your format: {localPart("Jane Smith", pattern)}@{domain}</span>}
         </div>
       </div>
 
       <div className="mt-4">
-        <button type="button" onClick={() => setShowImport(!showImport)} className="text-sm text-mist underline">
+        <button type="button" onClick={() => setShowImport(!showImport)} className="text-sm text-cloud underline">
           {showImport ? "Hide list import" : (listed ? "Have a list instead? Import a .vcf or CSV" : "Have a staff list instead? Import a .vcf or CSV")}
         </button>
         {showImport && (
           <div className="mt-2 flex flex-wrap items-center gap-4">
             <input type="file" accept=".csv,.vcf,text/csv,text/vcard" onChange={handleFile} disabled={!billingActive} className="text-cloud" />
-            {fileName && <span className="text-sm text-mist">{fileName}: {imported.length} {imported.length === 1 ? "person" : "people"} added</span>}
-            <span className="text-sm text-mist">CSV columns: name, email, title. Read on this computer only.</span>
+            {fileName && <span className="text-sm text-cloud">{fileName}: {imported.length} {imported.length === 1 ? "person" : "people"} added</span>}
+            <span className="text-sm text-cloud">CSV columns: name, email, title. Read on this computer only.</span>
           </div>
         )}
       </div>
@@ -268,11 +268,11 @@ export default function InvitePeople({ billingActive, orgName, domain, shops = [
             <button type="button" onClick={downloadMailMerge} className="btn-gold rounded-xl px-4 py-2 text-sm font-semibold">
               Download for mail merge (CSV)
             </button>
-            <span className="text-sm text-mist">Each link works once and expires in 30 days. Not saved — download or send them now.</span>
+            <span className="text-sm text-cloud">Each link works once and expires in 30 days. Not saved — download or send them now.</span>
           </div>
           <table className="mt-4 w-full text-left text-sm text-cloud">
             <thead>
-              <tr className="border-b border-slate text-mist">
+              <tr className="border-b border-slate text-cloud">
                 <th className="py-2 pr-4">Name</th>
                 <th className="py-2 pr-4">Email</th>
                 <th className="py-2" />

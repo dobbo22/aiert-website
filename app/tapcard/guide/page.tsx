@@ -26,7 +26,7 @@ const steps: { title: string; img?: string; alt?: string; text: string }[] = [
     title: "Share your card",
     img: "share.png",
     alt: "TapCard share screen with a QR code and Share, Send and QR sign buttons",
-    text: "Your QR code is the quickest way. Anyone scans it with their camera and saves you, with no app needed (on an iPhone without TapCard it opens a quick preview, an App Clip, where they can save you, add you to Apple Wallet or share their details back). Under it, Share sends your link, Send picks people from your contacts, and QR sign (on business cards) makes a poster for your window or till, headed with your business name and \"Scan to follow and receive news and offers\". Choose Email me the sign and print it from a computer. Add your card to Apple Wallet or Google Wallet and choose a design: Brand (a business's own logo and colours, the first choice for businesses), Artwork or Photo.",
+    text: "Your QR code is the quickest way. Anyone scans it with their camera and can save you without installing anything first (on an iPhone without TapCard it opens a quick preview, an App Clip, where they can save you, add you to Apple Wallet or share their details back). To follow you and get your news and offers, they need the TapCard app. Under it, Share sends your link, Send picks people from your contacts, and QR sign (on business cards) makes a poster for your window or till, headed with your business name and \"Scan to follow and receive news and offers\". Choose Email me the sign and print it from a computer. Add your card to Apple Wallet or Google Wallet and choose a design: Brand (a business's own logo and colours, the first choice for businesses), Artwork or Photo.",
   },
   {
     title: "Send them their own card",
@@ -38,7 +38,7 @@ const steps: { title: string; img?: string; alt?: string; text: string }[] = [
   },
   {
     title: "Emailing someone their card",
-    text: "For a contact with an email address but no phone number, Send card writes an email in your own mail app instead of a text. On iPhone it has a picture of their ready-made card and one button, Keep my TapCard; on Android it has one link to the same card. If they do not have TapCard, the link takes them to get the free app and their card is ready when they open it. If they already have TapCard, opening it shows a preview of the card and asks Keep this card? with Keep this card and No thanks, so nothing is added unless they choose to. The email goes from your own address, so TapCard sends nothing on your behalf, and the page behind the link offers your own card too.",
+    text: "For a contact with an email address but no phone number, Send card writes an email in your own mail app instead of a text. On iPhone it has a picture of their ready-made card and one button, Keep my TapCard; on Android it has one link to the same card. If they do not have TapCard, the link takes them to get the TapCard app and their card is ready when they open it. If they already have TapCard, opening it shows a preview of the card and asks Keep this card? with Keep this card and No thanks, so nothing is added unless they choose to. The email goes from your own address, so TapCard sends nothing on your behalf, and the page behind the link offers your own card too.",
   },
   {
     title: "Get their details back",

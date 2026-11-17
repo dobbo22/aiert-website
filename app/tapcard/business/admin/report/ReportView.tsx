@@ -41,7 +41,7 @@ export default function ReportView({ orgName, data, today }: { orgName: string; 
 
         <h3 className="mt-6 text-lg font-bold">Announcements in the period</h3>
         {anns.length === 0 ? <p className="mt-2">None posted.</p> : (
-          <table className="mt-2 w-full text-sm">
+          <div className="overflow-x-auto print:overflow-visible" tabIndex={0} role="region" aria-label="Announcements table, scrolls sideways on a small screen"><table className="mt-2 w-full text-sm">
             <thead><tr><th className={th}>Headline</th><th className={th}>Posted</th><th className={`${th} text-right`}>Sent to</th><th className={`${th} text-right`}>Tapped</th><th className={`${th} text-right`}>Per 100 sent</th></tr></thead>
             <tbody>
               {anns.map((a) => {
@@ -49,17 +49,17 @@ export default function ReportView({ orgName, data, today }: { orgName: string; 
                 return (<tr key={a.id}><td className={td}>{a.text}</td><td className={`${td} whitespace-nowrap`}>{d(a.postedAt)}</td><td className={num}>{unknown ? "–" : a.sent}</td><td className={num}>{a.opens}</td><td className={num}>{unknown ? "–" : (a.opened ?? "–")}</td></tr>);
               })}
             </tbody>
-          </table>
+          </table></div>
         )}
 
         <h3 className="mt-6 text-lg font-bold">Events</h3>
         {data.sources.length === 0 ? <p className="mt-2">No events yet.</p> : (
-          <table className="mt-2 w-full text-sm">
+          <div className="overflow-x-auto print:overflow-visible" tabIndex={0} role="region" aria-label="Events table, scrolls sideways on a small screen"><table className="mt-2 w-full text-sm">
             <thead><tr><th className={th}>Event</th><th className={th}>When</th><th className={`${th} text-right`}>Opens</th><th className={`${th} text-right`}>Registered</th><th className={`${th} text-right`}>Shared details</th></tr></thead>
             <tbody>
               {data.sources.slice(0, 8).map((e) => (<tr key={e.code}><td className={td}>{e.label}</td><td className={td}>{e.when}</td><td className={num}>{e.opens}</td><td className={num}>{e.followers}</td><td className={num}>{e.shared}</td></tr>))}
             </tbody>
-          </table>
+          </table></div>
         )}
 
         <h3 className="mt-6 text-lg font-bold">Who is following</h3>

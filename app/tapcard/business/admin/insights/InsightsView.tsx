@@ -65,7 +65,7 @@ export default function InsightsView({ data, range = "since" }: { data: Insights
         {announcements.length === 0 ? (
           <p className="mt-4 rounded-xl bg-white/10 px-4 py-3 text-cloud">Nothing posted yet.</p>
         ) : (
-          <div className="mt-4 overflow-x-auto">
+          <div className="mt-4 overflow-x-auto" tabIndex={0} role="region" aria-label="Announcements table, scrolls sideways on a small screen">
             <table className="w-full text-left text-cloud">
               <thead><tr className="border-b border-slate">
                 <th className={th}>Headline</th><th className={th}>Posted</th><th className={thn}>Sent to</th><th className={thn}>Tapped through</th><th className={thn}>Per 100 sent</th><th className={thn}>Tapped in first day</th><th className={thn}>Joined / left in 48 hours</th>
@@ -153,7 +153,7 @@ export default function InsightsView({ data, range = "since" }: { data: Insights
         {sources.length === 0 ? (
           <p className="mt-4 rounded-xl bg-white/10 px-4 py-3 text-cloud">No events yet. Make one under Cards &amp; QR, Events.</p>
         ) : (
-          <div className="mt-4 overflow-x-auto">
+          <div className="mt-4 overflow-x-auto" tabIndex={0} role="region" aria-label="Events table, scrolls sideways on a small screen">
             <table className="w-full text-left text-cloud">
               <thead><tr className="border-b border-slate">
                 <th className={th}>Event</th><th className={th}>When</th><th className={thn}>Opens</th><th className={thn}>Registered</th><th className={thn}>Shared details</th><th className={thn}>Registered per 100 opens</th>

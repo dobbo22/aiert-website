@@ -47,10 +47,10 @@ export default function PostControls({
         This card is a shop / location
       </label>
       {locations.length === 0 ? (
-        <p className="text-mist">Mark a shop card first to choose who posts for it.</p>
+        <p className="text-cloud">Mark a shop card first to choose who posts for it.</p>
       ) : (
         <div>
-          <p className="text-mist">Can post offers and news for:</p>
+          <p className="text-cloud">Can post offers and news for:</p>
           {locations.map((l) => (
             <label key={l.id} className="flex items-center gap-2">
               <input

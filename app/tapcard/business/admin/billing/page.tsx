@@ -19,7 +19,7 @@ export default async function BizBillingPage() {
       <dl className="mt-4 space-y-2 text-cloud">
         <Row label="Status" value={orgStatusLabel(org)} />
         <Row label="Plan" value={free ? `Free, ${org.locations} location${org.locations === 1 ? "" : "s"}` : org.seat_band === "trial" ? "Free trial" : org.seat_band === "locations" ? `${org.locations} locations` : band?.label ?? (org.seat_band || "–")} />
-        <Row label="Cards allowed" value={String(org.seat_limit || "–")} />
+        <Row label="Cards included" value={String(org.seat_limit || "–")} />
         <Row
           label={org.seat_band === "trial" ? "Trial ends" : free ? "Cost" : "Renews"}
           value={free ? (org.free_for_life ? "Free for life" : "Nothing to pay") : (org.seat_band === "trial" ? trialEndsAt(org) : org.current_period_end ? new Date(org.current_period_end) : null)?.toLocaleDateString("en-GB") ?? "–"}
@@ -50,8 +50,8 @@ export default async function BizBillingPage() {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between border-b border-slate/50 py-2">
-      <dt className="text-mist">{label}</dt>
-      <dd className="capitalize">{value}</dd>
+      <dt className="text-cloud">{label}</dt>
+      <dd className="first-letter:uppercase">{value}</dd>
     </div>
   );
 }

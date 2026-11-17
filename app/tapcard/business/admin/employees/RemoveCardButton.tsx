@@ -19,7 +19,7 @@ export default function RemoveCardButton({ cardId, name }: { cardId: string; nam
   }
 
   return (
-    <button type="button" onClick={remove} disabled={busy} className="text-sm text-mist underline">
+    <button type="button" onClick={remove} disabled={busy} className="text-sm text-cloud underline">
       {busy ? "Removing…" : "Remove"}
     </button>
   );

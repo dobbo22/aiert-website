@@ -83,20 +83,20 @@ export default function AdminsManager({ admins, max, managers, maxManagers, shop
       <div className="rounded-2xl bg-charcoal ring-1 ring-white/10">
         <div className="flex items-baseline justify-between px-4 pt-4">
           <h2 className="text-lg font-bold text-cloud">Admins</h2>
-          <span className="text-sm text-mist">{admins.length} of {max}</span>
+          <span className="text-sm text-cloud">{admins.length} of {max}</span>
         </div>
         <ul className="mt-2 divide-y divide-slate/50">
           {admins.map((a) => (
             <li key={a.id} className="flex items-center justify-between gap-3 px-4 py-3 text-cloud">
               <div>
                 <div>{a.email}{a.you ? " (you)" : ""}</div>
-                <div className="text-sm text-mist">
+                <div className="text-sm text-cloud">
                   {a.owner ? "Owner" : "Admin"}
                   {a.confirmed ? "" : " · hasn't signed in yet"}
                 </div>
               </div>
               {!a.you && !a.owner && (
-                <button type="button" onClick={() => remove(a)} disabled={busy} className="text-sm text-mist underline">Remove</button>
+                <button type="button" onClick={() => remove(a)} disabled={busy} className="text-sm text-cloud underline">Remove</button>
               )}
             </li>
           ))}
@@ -105,7 +105,7 @@ export default function AdminsManager({ admins, max, managers, maxManagers, shop
 
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">Managers</h2>
-        <p className="mt-1 text-sm text-mist">
+        <p className="mt-1 text-sm text-cloud">
           A manager looks after one or more shops. They sign in with an emailed link and can print their shop&apos;s QR sign and create or remove
           their shop&apos;s staff cards. They can post their shop&apos;s offers and news unless you switch that off for them below. They never see billing, the template, locations or other admins.
         </p>
@@ -116,9 +116,9 @@ export default function AdminsManager({ admins, max, managers, maxManagers, shop
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div>{m.email}</div>
-                    <div className="text-sm text-mist">Manager{m.confirmed ? "" : " · hasn't signed in yet"}</div>
+                    <div className="text-sm text-cloud">Manager{m.confirmed ? "" : " · hasn't signed in yet"}</div>
                   </div>
-                  <button type="button" onClick={() => removeManager(m)} disabled={busy} className="text-sm text-mist underline">Remove</button>
+                  <button type="button" onClick={() => removeManager(m)} disabled={busy} className="text-sm text-cloud underline">Remove</button>
                 </div>
                 <label className="mt-2 flex items-center gap-1.5 text-sm">
                   <input type="checkbox" checked={m.canPost} disabled={busy} onChange={(e) => void togglePost(m, e.target.checked)} />
@@ -147,7 +147,7 @@ export default function AdminsManager({ admins, max, managers, maxManagers, shop
             <p className="mt-3 text-sm text-gold">Add your shops first (Card template or Locations tab), then choose which ones this manager looks after.</p>
           ) : (
             <div className="mt-3 flex flex-wrap gap-3 text-sm text-cloud">
-              <span className="text-mist">Looks after:</span>
+              <span className="text-cloud">Looks after:</span>
               {shops.map((sh) => (
                 <label key={sh.id} className="flex items-center gap-1.5">
                   <input type="checkbox" checked={mShops.includes(sh.id)} onChange={(e) => setMShops((l) => (e.target.checked ? [...l, sh.id] : l.filter((x) => x !== sh.id)))} />
@@ -162,7 +162,7 @@ export default function AdminsManager({ admins, max, managers, maxManagers, shop
 
       <form onSubmit={add} className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">Add an admin</h2>
-        <p className="mt-1 text-sm text-mist">
+        <p className="mt-1 text-sm text-cloud">
           An admin can design the card template, invite and remove cards, choose who posts for which shop, see the numbers and manage billing.
           We email them a sign-in link. Use their work email: a card counts as verified when an admin has signed in with an email on the card&apos;s own website domain.
         </p>
@@ -181,7 +181,7 @@ export default function AdminsManager({ admins, max, managers, maxManagers, shop
           </button>
         </div>
         {message && <p className={`mt-3 text-sm ${message.ok ? "text-cloud" : "text-gold"}`} role="status">{message.text}</p>}
-        <p className="mt-3 text-sm text-mist">
+        <p className="mt-3 text-sm text-cloud">
           The owner is the person who signed up and can&apos;t be removed here. To hand the company to someone else, email{" "}
           <a href="mailto:enquiries@aiert.co.uk">enquiries@aiert.co.uk</a>.
         </p>

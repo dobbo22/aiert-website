@@ -17,7 +17,7 @@ export default function SupportAccess({ until }: { until: string | null }) {
   return (
     <div className="mt-8 rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
       <h2 className="text-lg font-bold text-cloud">AIERT support access</h2>
-      <p className="mt-1 text-sm text-mist">
+      <p className="mt-1 text-sm text-cloud">
         If you want help, you can let AIERT support open this admin area for a limited time. It is off unless you turn it on. Support
         sessions last two hours, cannot change billing or admins, and every visit is logged. Turn it off at any time.
       </p>
