@@ -4,6 +4,8 @@ import LoginForm from "./LoginForm";
 import AdminNav from "./AdminNav";
 import LogoutButton from "./LogoutButton";
 import LiveRefresh from "./LiveRefresh";
+import DemoPresenter from "./DemoPresenter";
+import { isDemoOrg } from "@/lib/tapcardDemoSim";
 import { orgIsListed } from "@/lib/tapcardListedAdmin";
 
 export const metadata = {
@@ -21,8 +23,10 @@ export default async function BizAdminLayout({ children }: { children: React.Rea
   if (!org) return <LoginForm />;
 
   const listed = await orgIsListed(org.id);
+  const demo = listed && (await isDemoOrg(org.id));
   return (
     <main className="biz-admin min-h-screen px-4 py-10">
+      {demo && <DemoPresenter />}
       <div className="mx-auto max-w-4xl">
         {session.support && (
           <p className="mb-4 rounded-xl bg-gold px-4 py-2 text-sm font-semibold text-black print:hidden">

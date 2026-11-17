@@ -16,7 +16,7 @@ export default async function ListedOverview({ orgId, orgName }: { orgId: string
   const demo = await isDemoOrg(orgId);
   return (
     <>
-      {demo && <DemoPanel events={events.map((e) => ({ code: e.code, label: e.label }))} />}
+      {demo && <DemoPanel />}
       <ListedOverviewView s={s} orgName={orgName} events={events} people={people} now={nowMs()} />
     </>
   );
