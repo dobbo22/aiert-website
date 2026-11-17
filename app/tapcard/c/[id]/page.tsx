@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { after } from "next/server";
 import { getCard, incrementViewCount, markRecipientOpened } from "@/lib/tapcardDb";
+import { firstNameOf, initialsOf } from "@/lib/tapcardName";
 import { paletteFor } from "@/lib/brandPalette";
 import { cardOrgId, orgLogoUrlForCard } from "@/lib/tapcardBiz";
 import { orgIsListed } from "@/lib/tapcardListedAdmin";
@@ -96,7 +97,7 @@ export default async function CardPage({
     : `${TAPCARD_ORIGIN}/c/${id}?send=1`;
   // A business-name-only card (restaurant, shop) has no personal first name: use the whole name.
   const isBusinessName = card.company.trim() !== "" && card.name.trim().toLowerCase() === card.company.trim().toLowerCase();
-  const firstName = isBusinessName ? card.name : card.name.split(/\s+/)[0] || card.name;
+  const firstName = isBusinessName ? card.name : firstNameOf(card.name) || card.name;
   const isMobile = /android|iphone|ipad|ipod/i.test(requestHeaders.get("user-agent") ?? "");
 
   // QR codes point at /s/[id] (see ../../s/[id]/page.tsx), which renders
@@ -231,8 +232,8 @@ export default async function CardPage({
                   className="h-28 w-28 rounded-full object-cover ring-4 ring-[#111318]"
                 />
               ) : (
-                <div className="flex h-28 w-28 items-center justify-center rounded-full bg-white/15 text-5xl text-white ring-4 ring-[#111318]">
-                  🙂
+                <div className="flex h-28 w-28 items-center justify-center rounded-full bg-white/15 text-4xl font-bold text-white ring-4 ring-[#111318]" aria-hidden="true">
+                  {initialsOf(card.company || card.name)}
                 </div>
               )}
               {companyDomain && !orgLogo && <FaviconBadge domain={companyDomain} />}
@@ -255,8 +256,8 @@ export default async function CardPage({
               <div className="mt-4 rounded-2xl bg-white/[0.09] px-4 py-3 text-left text-sm text-white">
                 <p className="font-semibold">You are at {eventInfo.label}{eventInfo.slot ? `: ${eventInfo.slot}` : ""}</p>
                 <p className="mt-1">
-                  To register your attendance and follow {card.company || card.name}, you need the TapCard app. Get it, then come back to this page and tap{" "}
-                  <span className="font-semibold">Open in TapCard</span> to finish. Nothing is registered in the browser.
+                  To register your attendance and follow {card.company || card.name}, use the TapCard app. Get it, then come back to this page and tap{" "}
+                  <span className="font-semibold">Open in TapCard</span> to finish. Or share your details below to register your attendance without the app.
                 </p>
               </div>
             )}
@@ -281,7 +282,7 @@ export default async function CardPage({
               </a>
             )}
 
-            {!acceptToken && send !== "1" && card.accept_share_back !== false && <ShareBackForm cardId={id} ownerFirstName={firstName} />}
+            {!acceptToken && send !== "1" && card.accept_share_back !== false && <ShareBackForm cardId={id} ownerFirstName={firstName} eventCode={eventInfo?.code} />}
 
             {acceptToken && (
               <AcceptRecipientForm cardId={id} token={acceptToken} ownerFirstName={firstName} appStoreUrl={TAPCARD_APP_STORE_URL} />

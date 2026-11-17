@@ -44,7 +44,7 @@ const WHAT_YOU_CAN_DO = [
 ];
 
 const STEPS = [
-  ["Make your card", "Try the demo on this website: type your business name and TapCard builds your card from your website, then emails you a link that opens it ready-made in the app. Or start in the free app: choose A business and it builds the card from your name and website."],
+  ["Make your card", "Try the demo on this website: type your business name and TapCard builds your card from your website, then emails you a link that opens it ready-made in the app. Or start in the app: choose A business and it builds the card from your name and website."],
   ["Put the QR code where people look", "On the door, the till or a table. Customers scan it and save you, and with the TapCard app they can follow you for offers and news."],
   ["Post an offer or news", "Open TapCard, tap Promote, write a line and set a staff PIN. That is the whole job."],
   ["They claim it, you scan it", "Each person claims their own one-off QR code. Your staff scan it with a phone camera (or type the code on any till), enter the PIN, and it is marked as used. It can never be used twice."],

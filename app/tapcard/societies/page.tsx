@@ -49,7 +49,7 @@ const WHAT_YOU_CAN_DO = [
 ];
 
 const STEPS = [
-  ["Make your card", "Type your group's name on the demo and watch TapCard build a card from your website, then get a link that opens it ready-made in the free app."],
+  ["Make your card", "Type your group's name on the demo and watch TapCard build a card from your website, then get a link that opens it ready-made in the app."],
   ["Put the QR code where people look", "On posters, the noticeboard, your newsletter and the sign-in sheet. People scan, save you and follow."],
   ["Post when there is something to say", "Open TapCard, tap Promote, write a line. That is the whole job."],
 ];
@@ -120,7 +120,7 @@ export default function SocietiesPage() {
             never pay. 
           </p>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-cloud">
-            Followers must have the free TapCard app to receive news and offers. People without it can still see your card and its latest news on its page.
+            Followers must have the TapCard app to receive news and offers. People without it can still see your card and its latest news on its page.
           </p>
         </section>
 

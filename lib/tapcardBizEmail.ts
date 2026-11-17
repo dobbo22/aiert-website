@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { firstNameOf } from "@/lib/tapcardName";
 import { inviteEmailRoute } from "@/lib/inviteEmailRoute";
 import { isFreeMailDomain } from "@/lib/tapcardDomain";
 
@@ -107,7 +108,7 @@ export type BizWelcomeOpts = ({ kind: "trial"; endsOn: string } | { kind: "paid"
 export function buildBizWelcomeEmail(email: string, company: string, opts: BizWelcomeOpts): { subject: string; html: string; text: string } {
   if (opts.listed) return buildListedWelcomeEmail(email, company, opts.name);
   // Addressed by the first name they gave (never guessed from the email address).
-  const first = (opts.name ?? "").trim().split(/\s+/)[0]?.slice(0, 40) ?? "";
+  const first = firstNameOf(opts.name).slice(0, 40);
   const hello = first ? `Hi ${esc(first)},` : "Hello,";
   const helloText = first ? `Hi ${first},` : "Hello,";
   const mailDomain = email.split("@")[1]?.toLowerCase() ?? "";
@@ -245,7 +246,7 @@ export async function sendBizShopLinksEmail(email: string, company: string, link
 /// Welcome for the admin of a LISTED company (investor relations): followers and RNS headlines, not shops, staff offers or locations.
 /// No prices (those are agreed separately). Keep in step with the listed admin tabs (AdminNav LISTED_TABS).
 export function buildListedWelcomeEmail(email: string, company: string, personName?: string): { subject: string; html: string; text: string } {
-  const first = (personName ?? "").trim().split(/\s+/)[0]?.slice(0, 40) ?? "";
+  const first = firstNameOf(personName).slice(0, 40);
   const hello = first ? `Hi ${esc(first)},` : "Hello,";
   const helloText = first ? `Hi ${first},` : "Hello,";
   const name = esc(company || "your company");

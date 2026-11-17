@@ -116,7 +116,7 @@ const steps: { title: string; img?: string; alt?: string; text: string }[] = [
   },
   {
     title: "Claiming without the app",
-    text: "Anyone who scans a business's QR code sees its card, latest news and current offer on a web page. They can claim a one-off offer or start a stamp card there, with nothing to install. To follow the business and be told about new offers and news they need the free TapCard app, and the page invites them to get it.",
+    text: "Anyone who scans a business's QR code sees its card, latest news and current offer on a web page. They can claim a one-off offer or start a stamp card there, with nothing to install. To follow the business and be told about new offers and news they need the TapCard app, and the page invites them to get it.",
   },
   {
     title: "News with a Read more link",

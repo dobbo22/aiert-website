@@ -476,7 +476,7 @@ export default function Phones({ name, website, kind, built, stage, typed, rows,
 
   const share = () => runScenes([
     { run: () => { setBView("idle"); setAView("hook"); }, step: 1, settle: 2200, text: "The problem|Customers walk in, buy, and leave. You never get their name, their number or a way to bring them back." },
-    { run: () => { setBView("idle"); setAView("qr"); }, step: 1, text: "Turn every visitor into a customer you keep|Customers scan your card's QR code from your phone, or from a printed TapCard sign in your window or at reception. They need the free TapCard app." },
+    { run: () => { setBView("idle"); setAView("qr"); }, step: 1, text: "Turn every visitor into a customer you keep|Customers scan your card's QR code from your phone, or from a printed TapCard sign in your window or at reception. They need the TapCard app." },
     { run: () => setBView("scanning"), settle: 2300, step: 1, text: `Two seconds. No typing.|Alex Morgan, a ${kind ? kind.toLowerCase() : "business"} customer with TapCard installed, scans your QR code…` },
     { run: () => setBView("received"), step: 1, text: "Your whole business, in their pocket|Alex sees your card at once, with your links ready to tap: call, directions, menu, booking, reviews. Alex chooses Save & send my card." },
     { run: () => setBView("saved"), step: 1, text: "A handshake, not a handout|Alex's own card is sent back to you, so you each have the other's details." },

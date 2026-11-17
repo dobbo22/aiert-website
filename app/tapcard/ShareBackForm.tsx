@@ -1,10 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // "Share your details" for someone who opened a card with no app and no personal link: a short form that leaves
 // their name plus phone or email as a pending card in the owner's app (POST /api/tapcard/cards/[id]/share-back).
-export default function ShareBackForm({ cardId, ownerFirstName }: { cardId: string; ownerFirstName: string }) {
+// A random number kept in this browser only when the card was opened from a company event QR code, so the visit is counted once for that event.
+// It is not linked to the name typed into the form; the server keeps only a one-way scrambled form of it.
+function visitorId(): string {
+  try {
+    let v = localStorage.getItem("tapcard.visitor");
+    if (!v) {
+      v = (crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`).replace(/-/g, "") + Math.random().toString(36).slice(2, 10);
+      localStorage.setItem("tapcard.visitor", v);
+    }
+    return v;
+  } catch {
+    return "";
+  }
+}
+
+export default function ShareBackForm({ cardId, ownerFirstName, eventCode }: { cardId: string; ownerFirstName: string; eventCode?: string }) {
+  const openedAt = useRef<number>(0);
+  useEffect(() => { openedAt.current = Date.now(); }, []);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -23,7 +40,11 @@ export default function ShareBackForm({ cardId, ownerFirstName }: { cardId: stri
       const res = await fetch(`/api/tapcard/cards/${cardId}/share-back`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone, email, company, hp }),
+        body: JSON.stringify({
+          name, phone, email, company, hp,
+          // Opened from an event QR code of a listed company: the server counts the visit as attendance (only if it is a real event of that company).
+          ...(eventCode ? { event: eventCode, eventAt: new Date(openedAt.current || Date.now()).toISOString(), follower: visitorId() } : {}),
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {

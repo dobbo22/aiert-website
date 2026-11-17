@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { firstNameOf } from "@/lib/tapcardName";
 import LinkQr from "../LinkQr";
 import { parseVcards } from "@/lib/vcardImport";
 
@@ -95,7 +96,7 @@ export default function InvitePeople({ billingActive, orgName, domain, shops = [
 
   const subject = `Your ${orgName} TapCard`;
   const message = (i: Invite) =>
-    `Hi ${i.name.split(" ")[0] || "there"},\n\nYour ${orgName} business card is ready on TapCard.\n\n` +
+    `Hi ${firstNameOf(i.name) || "there"},\n\nYour ${orgName} business card is ready on TapCard.\n\n` +
     `1. Install TapCard from the App Store or Google Play.\n2. Tap this link on your phone to set up your card:\n${i.link}\n\n` +
     `The link works once and expires in 30 days.`;
 

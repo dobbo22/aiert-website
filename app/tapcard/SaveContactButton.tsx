@@ -57,8 +57,8 @@ export default function SaveContactButton({
     <p className="mt-2 rounded-xl bg-white/[0.07] px-3 py-2 text-center text-xs text-white">
       <strong>Saving to contacts is a one-off copy.</strong>{" "}
       {listed
-        ? "You will not receive the company's announcements, or any updates to these details, unless you download the free TapCard app and follow."
-        : "You will not get notifications or updates when these details change unless you download the free TapCard app."}
+        ? "You will not receive the company's announcements, or any updates to these details, unless you download the TapCard app and follow."
+        : "You will not get notifications or updates when these details change unless you download the TapCard app."}
     </p>
   );
 

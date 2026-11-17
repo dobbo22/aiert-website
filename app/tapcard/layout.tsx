@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     siteName: "TapCard",
     type: "website",
     title: "TapCard – your business card on your phone",
-    description: "Share your details with a tap or a QR code. Free to try, no app needed to receive a card.",
+    description: "Share your details with a tap or a QR code. Free to try. Anyone can open and save a card without installing anything.",
     images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: "TapCard: your business card on your phone" }],
   },
   twitter: { card: "summary_large_image", images: [OG_IMAGE] },

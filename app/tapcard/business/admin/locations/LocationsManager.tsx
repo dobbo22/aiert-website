@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { firstNameOf } from "@/lib/tapcardName";
 import LinkQr from "../LinkQr";
 import { enrichPlace, searchPlaces } from "../placeClient";
 
@@ -64,9 +65,9 @@ export default function LocationsManager({ initial, allowed, orgName }: { initia
 
   function mailto(l: Loc, link: string) {
     const to = people[l.id]?.email ?? "";
-    const first = (people[l.id]?.name ?? "").trim().split(/\s+/)[0];
+    const first = firstNameOf(people[l.id]?.name);
     const subject = `Your TapCard for ${l.name}`;
-    const body = `${first ? `Hi ${first},` : "Hello,"}\n\nWe use TapCard for ${orgName}. Your card for ${l.name} is ready, with the address, phone number, opening hours and links already filled in.\n\n1. Install the free TapCard app (search "TapCard" in the App Store or Google Play).\n2. Open this link on your phone: ${link}\n\nYour card appears in the app and you can share it straight away. The link works once and lasts 30 days.\n\nThanks`;
+    const body = `${first ? `Hi ${first},` : "Hello,"}\n\nWe use TapCard for ${orgName}. Your card for ${l.name} is ready, with the address, phone number, opening hours and links already filled in.\n\n1. Install the TapCard app (search "TapCard" in the App Store or Google Play).\n2. Open this link on your phone: ${link}\n\nYour card appears in the app and you can share it straight away. The link works once and lasts 30 days.\n\nThanks`;
     return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }
 

@@ -49,7 +49,7 @@ export default async function BizAdminOverview() {
     { done: locations.length >= allowed, href: "/business/admin/locations", title: `Add your shops (${locations.length} of ${allowed})`,
       text: "Find each shop the way the app does, or let us find your other shops automatically. Address, phone, hours and links are filled in." },
     { done: locations.length > 0 && claimed >= locations.length, href: "/business/admin/locations", title: `Invite each manager (${claimed} of ${locations.length} cards made)`,
-      text: "Create a link for each shop's manager. They open it in the free TapCard app and their shop's card is ready to share." },
+      text: "Create a link for each shop's manager. They open it in the TapCard app and their shop's card is ready to share." },
     { done: locations.length > 0 && locations.every((l) => l.sign && l.sign !== "{}"), href: "/business/admin/qr-sign", title: "Make your QR sign",
       text: "Available as soon as your own card is made. Print a counter or window sign that saves the card when customers scan it; each shop's own card is used once its manager has made it." },
     { done: activeCards > claimed, href: "/business/admin/employees", title: "Invite staff cards (optional)",

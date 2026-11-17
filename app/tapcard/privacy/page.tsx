@@ -175,7 +175,7 @@ export default function TapCardPrivacyPage() {
           page (or the iPhone App Clip) can type a <strong>name, a phone number or email and optionally a company</strong> and send
           it. We keep that with the card so it appears in the card owner&apos;s Contacts. We do not email these people, we do not
           use their details for anything else, and the card owner can remove them. It is deleted with the card. To limit abuse,
-          each card accepts a limited number an hour. When you share details this way, nothing else is collected about you.
+          each card accepts a limited number an hour. If you do this from an event QR code of a listed company, your browser keeps a random number (not linked to the name you type) so your visit is counted once for that event, and we store only a one-way scrambled form of it. Nothing else is collected about you.
         </p>
         <p className="mt-3">
           The iPhone App Clip and the full app share a small private storage area on your phone (an Apple app group). It holds only

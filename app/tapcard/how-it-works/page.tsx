@@ -212,7 +212,7 @@ export default function HowItWorksPage() {
           <strong>Offers and news only reach people who have TapCard.</strong> Someone who scans your QR code without the app can look at your
           card in their browser and save your contact, but they can&apos;t receive your offers, your news or any notifications. To get them,
           they need TapCard (it&apos;s free) on their phone and they choose to follow you. So on a printed sign in your window or on your
-          desk, say <em>&ldquo;Get the free TapCard app to receive our offers.&rdquo;</em>
+          desk, say <em>&ldquo;Get the TapCard app to receive our offers.&rdquo;</em>
         </p>
         <p>
           <strong>Stamp cards:</strong> instead of a one-off offer, choose <strong>Stamp card</strong> when you post. You choose how
@@ -225,7 +225,7 @@ export default function HowItWorksPage() {
         <p>
           <strong>Customers do not need the app to claim.</strong> Anyone who scans your QR code sees your card, news and current offer
           on the web page and can claim a one-off offer or start a stamp card there, with nothing to install. To follow you and be told
-          about new offers and news they need the free TapCard app, and the page invites them to get it.
+          about new offers and news they need the TapCard app, and the page invites them to get it.
         </p>
         <p>
           <strong>News</strong> is a short line (up to 140 characters) with an optional <strong>Read more</strong> link to the full story

@@ -24,7 +24,7 @@ export default async function QrSignPage({ searchParams }: { searchParams: Promi
     return (
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-gold/40">
         <h2 className="text-lg font-bold text-cloud">Make your card before making a QR sign</h2>
-        <p className="mt-2 text-cloud">The QR code on the sign is a TapCard, so one card has to exist first. Open your sign-in email on your phone, install the free TapCard app and make your card. Then come back here.</p>
+        <p className="mt-2 text-cloud">The QR code on the sign is a TapCard, so one card has to exist first. Open your sign-in email on your phone, install the TapCard app and make your card. Then come back here.</p>
         <p className="mt-3"><a href="/business/admin" className="text-gold underline">Back to the overview</a></p>
       </div>
     );

@@ -103,7 +103,7 @@ export default function ClaimOfferWeb({ cardId, business, offerText, expiresAt, 
       <p className="text-xs font-extrabold uppercase tracking-wider">{isStamps ? "Stamp card" : "Special offer"}</p>
       <p className="mt-1 text-xl font-extrabold leading-snug">{offerText}</p>
       {isStamps && !claim && <p className="mt-1 text-sm font-semibold">Collect {required} stamps, then {reward}</p>}
-      {isStamps && !claim && appAfterFirst && <p className="mt-1 text-xs font-semibold">Your first stamp needs nothing. After that you will need the free TapCard app.</p>}
+      {isStamps && !claim && appAfterFirst && <p className="mt-1 text-xs font-semibold">Your first stamp needs nothing. After that you will need the TapCard app.</p>}
       {expiresAt && <p className="mt-1 text-sm font-semibold">Ends {new Date(expiresAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</p>}
       {claim && finished ? (
         <p className="mt-3 rounded-xl bg-[#111318] px-3 py-3 text-sm font-semibold text-white">
@@ -123,7 +123,7 @@ export default function ClaimOfferWeb({ cardId, business, offerText, expiresAt, 
               </p>
               {status?.needsApp && (
                 <p className="mt-2 rounded-xl bg-[#111318] px-3 py-2 text-sm font-bold text-white">
-                  Stamp collected! To collect your next stamp you need the free TapCard app. Your stamps come with you.
+                  Stamp collected! To collect your next stamp you need the TapCard app. Your stamps come with you.
                 </p>
               )}
               {(status?.rewardsGiven ?? 0) > 0 && <p className="text-xs font-semibold">Rewards earned so far: {status?.rewardsGiven}</p>}

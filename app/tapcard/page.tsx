@@ -88,8 +88,8 @@ const FEATURES = [
     body: "Whoever you send your card to can share their own details back in one tap, with a live preview of their card as they type — no account or app needed on their end.",
   },
   {
-    title: "No app needed to receive",
-    body: "Your card opens in their browser. One tap on Save Contact and you're in their phone. No typing, no mistakes.",
+    title: "Nothing to install to receive",
+    body: "Your card opens in their browser. One tap on Save Contact and you're in their phone. No typing, no mistakes. To follow you and get your news and offers, they use the TapCard app.",
   },
   {
     title: "Organise your contacts",

@@ -77,7 +77,7 @@ export default function InvestorGuidePage() {
           <li>With the camera they scan your code. If they have TapCard, it opens the app on your card.</li>
           <li>A new follower sees <strong>Register and follow</strong> (shares name and email) and, underneath, <strong>Follow only</strong> (shares nothing). Both record the event; only the first shares details.</li>
           <li>Someone who already follows is registered straight away and sees a thank-you.</li>
-          <li>Without the app, the page says registering needs the app. On Android the event carries through the install. On iPhone they come back to the page after installing and tap <strong>Open in TapCard</strong>.</li>
+          <li>Without the app, the page says to use the app to register and follow. On Android the event carries through the install. On iPhone they come back to the page after installing and tap <strong>Open in TapCard</strong>. Someone who shares their details on the page instead is counted as attending that event (and appears to the card owner as a new contact), but is not a follower.</li>
         </ul>
       </section>
 
