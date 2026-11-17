@@ -2,6 +2,7 @@ import { after, NextRequest, NextResponse } from "next/server";
 import { addWebShareBack, getCard } from "@/lib/tapcardDb";
 import { pushToOwner } from "@/lib/tapcardPush";
 import { recordFunnel } from "@/lib/tapcardFunnel";
+import { recordShareBackAttendance } from "@/lib/tapcardEvents";
 
 interface Body {
   name?: string;
@@ -11,6 +12,10 @@ interface Body {
   company?: string;
   website?: string;
   hp?: string; // honeypot: real people leave it empty
+  // From the App Clip, after an event QR code of a listed company: an anonymous per-install id, the event code and when it was scanned.
+  follower?: string;
+  event?: string;
+  eventAt?: string | number;
 }
 
 // "Share your details" on the public card page, for someone who scanned or opened the card with no app and no
@@ -42,6 +47,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     website: clip(body.website, 300),
   });
   if (!ok) return NextResponse.json({ error: "Too many people sharing right now, try again later" }, { status: 429 });
+  await recordShareBackAttendance(id, body.follower, body.event, body.eventAt);
   after(async () => {
     await recordFunnel("web_shareback", "other", "").catch(() => {});
     await pushToOwner(id, card.grouping_id, { title: "New contact", body: `${name} shared their details with you` });

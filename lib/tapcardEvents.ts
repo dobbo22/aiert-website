@@ -244,3 +244,24 @@ export function ensureFollowerEventColumn(): Promise<unknown> {
   }
   return colReady;
 }
+
+/// Someone left their details through the App Clip or the card page after scanning an event QR code of a listed company: the scan counts as
+/// attendance (hashed anonymous id only, the same id the follow route uses), so the event's numbers include people who never followed.
+/// Only a real event of the company that owns the card is kept; anything else is ignored. Never throws: it must not fail the share.
+export async function recordShareBackAttendance(cardId: string, visitor: unknown, event: unknown, eventAt: unknown): Promise<boolean> {
+  try {
+    if (typeof visitor !== "string" || visitor.length < 16 || visitor.length > 200) return false;
+    const { followTargetFor, isListedCard } = await import("@/lib/tapcardShare");
+    const target = await followTargetFor(cardId);
+    if (!(await isListedCard(target))) return false;
+    const { cardOrgId } = await import("@/lib/tapcardBiz");
+    const code = await eventCodeForOrg(event, await cardOrgId(target));
+    if (!code) return false;
+    const { cleanScanTime } = await import("@/lib/tapcardShareRules");
+    const { hashSecret } = await import("@/lib/tapcardAuth");
+    await recordAttendance(target, hashSecret(`tapcard-follower:${visitor}`), code, "code", cleanScanTime(eventAt));
+    return true;
+  } catch {
+    return false;
+  }
+}

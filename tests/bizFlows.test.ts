@@ -621,3 +621,31 @@ test("free for life: set by AIERT, never switched off or charged by any billing 
   assert.equal((await POST(req("/x", { body: { action: "freeForLife", orgId: org.id, on: false } }))).status, 200);
   assert.equal((await getOrg(org.id))!.free_for_life, false);
 });
+
+test("share-back from the App Clip: an event code of the company counts as attendance in the right slot, a foreign or unlisted one does not", async () => {
+  const { createManagedCompany } = await import("../lib/tapcardBizSupport");
+  const { markListedCard } = await import("../lib/tapcardShare");
+  const { createEvent, addSlot, listEventAttendees } = await import("../lib/tapcardEvents");
+  const org = await createManagedCompany({ name: "Clip Events Co", adminEmail: "ir@clipevents.example", locations: 1, listed: true });
+  const other = await createManagedCompany({ name: "Clip Other Co", adminEmail: "ir@clipother.example", locations: 1, listed: true });
+  const company = await newCard("q".repeat(45), { company: "Clip Events Co", name: "Clip Events Co" });
+  await sql`UPDATE tapcard_cards SET org_id = ${org.id} WHERE id = ${company}`;
+  await markListedCard(company, "GB00CLIP", "CLP");
+  const ev = await createEvent(org.id, "Clip roadshow");
+  const foreign = await createEvent(other.id, "Not ours");
+  assert.ok(ev.ok && foreign.ok);
+  const code = (ev as { code: string }).code;
+  const t0 = Date.now() - 3 * 3600_000;
+  const slot = await addSlot(org.id, code, "Morning", new Date(t0 - 1800_000).toISOString(), new Date(t0 + 1800_000).toISOString());
+  assert.ok(slot.ok);
+  const { POST } = await import("../app/api/tapcard/cards/[id]/share-back/route");
+  const call = (body: Record<string, unknown>) => POST(req(`/api/tapcard/cards/${company}/share-back`, { body: { name: "Clip Visitor", email: "v@x.com", ...body } }), { params: Promise.resolve({ id: company }) });
+  assert.equal((await call({ follower: "a".repeat(40), event: code, eventAt: new Date(t0).toISOString() })).status, 200);
+  assert.equal((await call({ follower: "b".repeat(40), event: (foreign as { code: string }).code })).status, 200, "a foreign code never fails the share");
+  assert.equal((await call({ event: code })).status, 200, "no visitor id: still shared, not counted");
+  const att = (await listEventAttendees(org.id))[code];
+  assert.equal(att?.anonymous, 1, "only the real event code with a visitor id counts");
+  const rows = (await sql`SELECT slot_id FROM tapcard_event_attendance WHERE card_id = ${company}`) as { slot_id: number }[];
+  assert.equal(rows.length, 1);
+  assert.ok(rows[0].slot_id > 0, "the scan time puts the visit in the Morning slot");
+});
