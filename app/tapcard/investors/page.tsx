@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import JsonLd from "../JsonLd";
 
 const DESCRIPTION =
-  "TapCard for investor relations: a QR code on your results slides, annual report or AGM notice lets shareholders follow your company and get your RNS headlines on their phone. Following is free for shareholders, and you see only the details people choose to share. Set up by us.";
+  "TapCard for investor relations: a QR code on your results slides, annual report or AGM notice lets shareholders follow your company and get a headline on their phone, with a link to the announcement on your own website. TapCard does not provide RNS. Following is free for shareholders, and you see only the details people choose to share. Set up by us.";
 
 export const metadata: Metadata = {
   title: "TapCard for investor relations: reach shareholders on their phone – AIERT Ltd",
@@ -23,11 +23,11 @@ const STEPS = [
   ["Put a QR code on what shareholders already read", "Your investor presentation, results slides, annual report, AGM notice or website. One code for the company, one for each event, and one for each person who speaks for it."],
   ["A shareholder scans it", "They land on your company's card: your latest headline, your contacts, and one-tap links to your investor pages (RNS, reports, shareholder information, share price) where your website has them. They can read it in their browser, with nothing to install."],
   ["They follow you in the TapCard app", "Following is their choice, it is free for them, and they can stop at any time. They need the app to receive notifications; without it they can still read the card."],
-  ["You post a headline when you announce", "A one-line headline with a link to the full RNS, posted from the web by your administrators. Followers with notifications on are told. You decide what goes out and when."],
+  ["You post a headline when you announce", "A one-line headline with a link to the full announcement on your own website, posted from the web by your administrators. Followers with notifications on are told. You decide what goes out and when."],
 ];
 
 const POINTS = [
-  { title: "It doesn't replace the RNS", body: "The announcement still goes out through your normal channels. TapCard is for telling people it has happened and pointing them to it. We suggest a post goes out only after an announcement is public and says nothing that is not in it. What you may and may not say, and when, is for you and your advisers." },
+  { title: "TapCard does not provide RNS", body: "TapCard is not a regulatory news service. Your announcements and your data stay yours: they are published and distributed only from your own website and your normal channels. TapCard never hosts, copies or sends the announcement itself. It tells followers that an announcement has happened and links them to it on your website. We suggest a post goes out only after an announcement is public and says nothing that is not in it. What you may and may not say, and when, is for you and your advisers." },
   { title: "Followers who choose to share", body: "You see how many people follow and how many can receive a notification. A shareholder can also choose to share their name and email with you when they follow; you see only those who do, and they can withdraw at any time. Followers who don't share stay anonymous." },
   { title: "Your investor pages, in one tap", body: "RNS announcements, reports and results, shareholder information, investor presentations and share price all sit on the card as one-tap links to your own website, found automatically where your site has them. Nothing is copied; change your website and the links still work." },
   { title: "Several voices", body: "Cards for the chair, CEO, CFO and IR contact, all in the company's branding, on one account. Anyone who follows one of them follows the company. Only your administrators can post, and you choose who they are." },
@@ -43,7 +43,7 @@ const FEATURES = [
 const FAQ: [string, string][] = [
   ["What does a shareholder need?", "To scan the QR code they need only their phone's camera, and the card opens in the browser. To follow the company and receive its headlines as notifications they install the TapCard app (iPhone and Android) and choose to follow."],
   ["Do we see who follows us?", "By default, no: you see a count of followers and of how many can receive a notification. A shareholder who follows your investor relations card can choose Follow and share my details, which gives you their name and email. You see only the people who chose to, and they can withdraw at any time. What you do with those details is your responsibility."],
-  ["Does this replace RNS or our investor relations website?", "No. It sits beside them. The card links to your own investor pages and to the RNS list, and a post is a short headline with a link."],
+  ["Does this replace RNS or our investor relations website?", "No, and TapCard does not provide RNS. Your announcements and your data are yours: they are published and distributed only from your own website and your regulatory news service, and TapCard never hosts, copies or sends the announcement itself. It sits beside them. A post is a short headline with a link back to the announcement on your website, and the card links to your own investor pages and RNS list."],
   ["Can we post before the announcement is public?", "We recommend not, and the service is built around posting after the announcement. Whatever you post is your decision and your responsibility; please take your own advice on market abuse and disclosure rules."],
   ["How is it priced?", "We agree a yearly plan with you, plus VAT for UK companies, based on the size of the company and how you use it. Email us and we will send pricing."],
   ["Can we see who came to an event?", "Each event has its own QR code and optional time slots. Everyone who scans it is counted, even without the app, as an anonymous number, and the page they land on encourages them to download TapCard so they can follow you. People who register in the app, or share their details on the card page, are counted as attending against the event and time slot, and you see names and emails only for those who chose to share them."],
@@ -72,14 +72,18 @@ export default function InvestorsPage() {
           <p className="text-sm font-semibold uppercase tracking-wider text-teal">TapCard for investor relations · for listed companies and their advisers</p>
           <h1 className="mt-3 text-4xl font-black tracking-tight text-cloud sm:text-5xl">Reach your shareholders on their phone.</h1>
           <p className="mt-5 max-w-3xl text-lg leading-relaxed text-cloud">
-            Put a QR code on your results slides, annual report or AGM notice. Shareholders scan it, follow your company, and get your RNS headline on their
-            phone when you announce, with a link to the full announcement. No mailing list to build, and you see only the details a shareholder chooses to share.
+            Put a QR code on your results slides, annual report or AGM notice. Shareholders scan it, follow your company, and get a headline on their
+            phone when you announce, with a link to the full announcement on your own website. No mailing list to build, and you see only the details a shareholder chooses to share.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <a href="mailto:enquiries@aiert.co.uk?subject=TapCard%20for%20investor%20relations" className="btn-gold rounded-xl px-5 py-3 font-semibold">Ask for a card built from your website</a>
             <a href={PRICING_MAILTO} className="rounded-xl px-5 py-3 font-semibold text-cloud ring-1 ring-white/30">Ask for pricing</a>
             <span className="text-cloud">We make it from your site and show you before anything goes live.</span>
           </div>
+          <p className="mt-6 max-w-3xl rounded-xl bg-charcoal px-5 py-4 leading-relaxed text-cloud ring-1 ring-gold/40">
+            <strong>TapCard does not provide RNS.</strong> Your announcements and your data stay yours, published and distributed only from your own website.
+            TapCard passes on a short headline and a link back to the announcement on your site.
+          </p>
         </section>
 
         <section className="mt-12">
@@ -89,8 +93,8 @@ export default function InvestorsPage() {
           </p>
           <video
             className="mt-5 w-full max-w-4xl rounded-2xl ring-1 ring-white/10"
-            src="https://www.aiert.co.uk/tapcard-ir-demo-v2.mp4"
-            poster="https://www.aiert.co.uk/tapcard-ir-demo-poster-v2.jpg"
+            src="https://www.aiert.co.uk/tapcard-ir-demo-v3.mp4"
+            poster="https://www.aiert.co.uk/tapcard-ir-demo-poster-v3.jpg"
             width={1280}
             height={720}
             controls
@@ -105,7 +109,7 @@ export default function InvestorsPage() {
               <li>In the TapCard app they choose to follow, and whether to share their name and email.</li>
               <li>Their attendance is registered against the event and its time slot, and the app names the company.</li>
               <li>When the company announces, a one-line headline arrives as a notification.</li>
-              <li>Tapping it opens the headline, with a link to the full announcement.</li>
+              <li>Tapping it opens the headline, with a link to the full announcement on the company's own website. TapCard does not provide RNS: the announcement stays on the company's website.</li>
             </ol>
           </details>
         </section>

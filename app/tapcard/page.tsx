@@ -162,8 +162,8 @@ export default function TapCardHomePage() {
           <p className="text-sm font-semibold uppercase tracking-wider text-teal">For listed companies</p>
           <h2 className="mt-2 text-2xl font-black text-cloud">Reach your shareholders on their phone</h2>
           <p className="mt-3 max-w-3xl text-lg leading-relaxed text-cloud">
-            Put a QR code on your results slides, annual report or AGM notice. Shareholders scan it and follow your company, and get your RNS headline on their phone when you
-            announce, with a link to the full announcement. See who came to each event, and what they read.
+            Put a QR code on your results slides, annual report or AGM notice. Shareholders scan it and follow your company, and get a headline on their phone when you
+            announce, with a link to the full announcement on your own website. TapCard does not provide RNS: your announcements stay yours, on your own site. See who came to each event, and what they read.
           </p>
           <a href="/investors" className="btn-gold mt-5 inline-block rounded-xl px-6 py-3 font-semibold">TapCard for investor relations</a>
         </section>

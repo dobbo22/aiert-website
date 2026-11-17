@@ -23,7 +23,7 @@ const FAQS: [string, React.ReactNode][] = [
   ["Someone asks to be removed. What do I do?", "They can stop following, or switch to Follow only, in the app, which removes their details from your list. If they email you instead, ask them to do that, or email enquiries@aiert.co.uk and we will remove them."],
   ["What happens to the details when someone stops following?", "Their name, email and event records are removed when they stop following, withdraw their sharing, or when the card is deleted."],
   ["Who can sign in to the admin?", "The admins you add under Settings, Admins, up to five. Each gets a sign-in link by email. There are no passwords."],
-  ["Is TapCard a substitute for the RNS?", "No. Post a headline only after the announcement is public on the market, and say nothing that is not in it. TapCard sends the headline and a link to your own announcements page. Check the rules that apply to you with your adviser."],
+  ["Is TapCard a substitute for the RNS?", "No, and TapCard does not provide RNS. Your announcements and your data are yours, published and distributed only from your own website and your regulatory news service. TapCard never hosts or copies them: it sends a headline and a link to the announcement on your own website. Post a headline only after the announcement is public on the market, and say nothing that is not in it. Check the rules that apply to you with your adviser."],
 ];
 
 export default function InvestorGuidePage() {
@@ -32,7 +32,7 @@ export default function InvestorGuidePage() {
       <section>
         <h2>What it does</h2>
         <p>
-          A shareholder scans your QR code from a slide, the annual report or an AGM notice, follows you in the TapCard app, and from then on gets your RNS headlines on their phone with a link to
+          A shareholder scans your QR code from a slide, the annual report or an AGM notice, follows you in the TapCard app, and from then on gets your headlines on their phone with a link to
           the announcement on your own website. They can choose to share their name and email with you, and nothing is shared unless they tap the button that says so.
         </p>
         <p className="mt-2">Your admin area is at <a href="/business/admin">tapcard.aiert.co.uk/business/admin</a>. Sign in with your email: we send a link, there are no passwords.</p>
