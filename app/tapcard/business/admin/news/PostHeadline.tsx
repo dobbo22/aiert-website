@@ -136,7 +136,7 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
           <input className={field} value={text} maxLength={MAX} onChange={(e) => setText(e.target.value)} placeholder="For example: Full year results announced (RNS)" />
           <span className="mt-1 block text-sm text-cloud">{text.length} of {MAX} characters</span>
         </label>
-        <label className="mt-3 block text-cloud">Link to the announcement
+        <label className="mt-3 block text-cloud">Link to the announcement, or to a webcast or event page
           <input className={field} value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://www.yourcompany.com/announcements/results.pdf" inputMode="url" />
         </label>
         <div className="mt-4 flex flex-wrap items-center gap-3">
