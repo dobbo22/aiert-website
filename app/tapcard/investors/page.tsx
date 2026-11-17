@@ -285,8 +285,8 @@ export default function InvestorsPage() {
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <a href={CARD_MAILTO} className="btn-gold rounded-xl px-5 py-3 font-semibold">Ask for a card built from your website</a>
             <a href={PRICING_MAILTO} className="rounded-xl px-5 py-3 font-semibold text-cloud ring-1 ring-white/30">Ask for pricing</a>
-            <span className="text-cloud">We make it from your site and show you before anything goes live.</span>
           </div>
+          <p className="mt-3 text-cloud">We make it from your site and show you before anything goes live.</p>
           <p className="mt-6 max-w-3xl rounded-xl bg-charcoal px-5 py-4 leading-relaxed text-cloud ring-1 ring-gold/40">
             <strong>TapCard does not provide RNS.</strong> Your announcements and your data stay yours, published and distributed only from your own website.
             TapCard passes on a short headline and a link back to the announcement on your site.
