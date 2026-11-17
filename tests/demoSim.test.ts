@@ -148,3 +148,33 @@ test("the roadshow has one slot per meeting (made once), and each meeting record
   assert.equal((await simMeeting(demo.orgId, code, 99, "2026-11-18T12:30:00.000Z")).ok, false, "unknown firm");
   assert.equal((await simMeeting(demo.orgId, "nope", 1, "2026-11-18T12:30:00.000Z")).ok, false, "unknown event");
 });
+
+test("Clear removes the made-up people, the demo's headlines and the roadshow, and keeps the people who really follow", async () => {
+  const { simRoadshow, simMeeting, simHeadline, simResults, simClear } = await import("../lib/tapcardDemoSim");
+  const { setFollower, publicAnnouncement } = await import("../lib/tapcardOffers");
+  const { ROADSHOW_LABEL } = await import("../lib/demoScenario");
+  const demo = await newListedCompany("Keep Real (demo)", "demotok-ffffffffffffffffffffffffffffffffffffffff");
+  await sql`INSERT INTO tapcard_demo_orgs (org_id) VALUES (${demo.orgId})`;
+
+  // Two people who really scanned the follow QR on their phones (not made by the simulation).
+  await setFollower(demo.cardId, "real-phone-martin-0000000000", true);
+  await setFollower(demo.cardId, "real-phone-jasper-0000000000", true);
+
+  const rs = await simRoadshow(demo.orgId, ROADSHOW_LABEL, "2026-11-18T00:00:00.000Z", "2026-11-19T23:59:00.000Z", [{ label: "Day 1 09:00: Northgate", startsAt: "2026-11-18T09:00:00.000Z", endsAt: "2026-11-18T10:00:00.000Z" }]);
+  assert.ok(rs.ok);
+  assert.ok((await simMeeting(demo.orgId, rs.ok ? rs.code : "", 0, "2026-11-18T09:30:00.000Z")).ok);
+  assert.ok((await simHeadline(demo.orgId, "Keep Real (demo): Fundraise announced.", "https://tapcard.aiert.co.uk/investors")).ok);
+  assert.ok((await simResults(demo.orgId, 5, 3, 101)).ok);
+  assert.ok((await count("tapcard_followers", demo.cardId)) > 2, "the simulation added people");
+
+  const c = await simClear(demo.orgId);
+  assert.ok(c.ok);
+  assert.equal(await count("tapcard_followers", demo.cardId), 2, "only the two real followers remain");
+  assert.equal(await publicAnnouncement(demo.cardId), null, "the demo's headline is gone");
+  const ev = Number(((await sql`SELECT COUNT(*)::int AS n FROM tapcard_listed_events WHERE org_id = ${demo.orgId}`) as { n: number }[])[0].n);
+  assert.equal(ev, 0, "the roadshow is removed so the next run builds it again");
+  const log = (await sql`SELECT joined, "left" FROM tapcard_follow_log WHERE card_id = ${demo.cardId}`) as { joined: number; left: number }[];
+  assert.equal(log.length, 1);
+  assert.equal(Number(log[0].joined), 2, "the history starts again with the two real followers");
+  assert.equal(Number(log[0].left), 0);
+});

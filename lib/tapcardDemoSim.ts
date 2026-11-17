@@ -11,6 +11,7 @@ function ensureSchema(): Promise<unknown> {
   if (!ready) {
     ready = sql`CREATE TABLE IF NOT EXISTS tapcard_demo_orgs (org_id TEXT PRIMARY KEY, created_at TIMESTAMPTZ NOT NULL DEFAULT now())`
       .then(() => sql`CREATE TABLE IF NOT EXISTS tapcard_demo_sim_followers (card_id TEXT NOT NULL, follower TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), PRIMARY KEY (card_id, follower))`)
+      .then(() => sql`CREATE TABLE IF NOT EXISTS tapcard_demo_sim_announcements (card_id TEXT NOT NULL, announcement_id BIGINT NOT NULL, PRIMARY KEY (card_id, announcement_id))`)
       .catch((e) => { ready = null; throw e; });
   }
   return ready;
@@ -96,8 +97,9 @@ export async function simResults(orgId: string, taps: unknown, late: unknown, st
   return { ok: true, taps: tapped, followers: l };
 }
 
-/// Removes everyone the simulation added (and their shared details and attendance), then resets the demo company's counters so the
-/// graphs start flat again: join/leave log, headline taps, event-link opens.
+/// Clears the demo: everyone the simulation added (with their shared details and attendance), the demo's own headlines, the roadshow
+/// and the demo company's counters. Real followers (people who scanned the follow QR on a real phone) are left alone and still count:
+/// the join/leave history is started again with them in it.
 export async function simClear(orgId: string): Promise<{ ok: true; removed: number } | { ok: false; error: string }> {
   const g = await gate(orgId);
   if (!g.ok) return g;
@@ -111,10 +113,31 @@ export async function simClear(orgId: string): Promise<{ ok: true; removed: numb
   await sql`DELETE FROM tapcard_demo_sim_followers WHERE card_id = ${g.cardId}`;
   const { ensureInsightSchema } = await import("@/lib/tapcardInsights");
   await ensureInsightSchema();
-  await sql`DELETE FROM tapcard_follow_log WHERE card_id = ${g.cardId}`;
+  // The demo's headlines, with their taps.
+  const ann = (await sql`SELECT announcement_id AS id FROM tapcard_demo_sim_announcements WHERE card_id = ${g.cardId}`) as { id: number }[];
+  for (const a of ann) {
+    await sql`DELETE FROM tapcard_announcement_opens WHERE announcement_id = ${a.id}`;
+    await sql`DELETE FROM tapcard_announcement_open_log WHERE announcement_id = ${a.id}`;
+    await sql`DELETE FROM tapcard_announcement_sent WHERE announcement_id = ${a.id}`;
+    await sql`DELETE FROM tapcard_announcements WHERE id = ${a.id} AND card_id = ${g.cardId}`;
+  }
+  await sql`DELETE FROM tapcard_demo_sim_announcements WHERE card_id = ${g.cardId}`;
+  // Taps that came from the "results" step on whatever headline is left, and the event-link opens.
   await sql`DELETE FROM tapcard_announcement_opens WHERE announcement_id IN (SELECT id FROM tapcard_announcements WHERE card_id = ${g.cardId})`;
   await sql`DELETE FROM tapcard_announcement_open_log WHERE announcement_id IN (SELECT id FROM tapcard_announcements WHERE card_id = ${g.cardId})`;
+  // The roadshow, so the next run builds it again.
+  const { ROADSHOW_LABEL } = await import("@/lib/demoScenario");
+  const { deleteEvent } = await import("@/lib/tapcardEvents");
+  const evs = (await sql`SELECT code FROM tapcard_listed_events WHERE org_id = ${orgId} AND lower(label) = lower(${ROADSHOW_LABEL})`) as { code: string }[];
+  for (const e of evs) {
+    await sql`DELETE FROM tapcard_event_attendance WHERE event_code = ${e.code}`;
+    await deleteEvent(orgId, e.code);
+  }
   await sql`DELETE FROM tapcard_listed_event_views WHERE code IN (SELECT code FROM tapcard_listed_events WHERE org_id = ${orgId})`;
+  // The history starts again with the people who really follow.
+  await sql`DELETE FROM tapcard_follow_log WHERE card_id = ${g.cardId}`;
+  const real = Number(((await sql`SELECT COUNT(*)::int AS n FROM tapcard_followers WHERE card_id = ${g.cardId}`) as { n: number }[])[0]?.n ?? 0);
+  if (real > 0) await sql`INSERT INTO tapcard_follow_log (card_id, day, joined) VALUES (${g.cardId}, CURRENT_DATE, ${real}) ON CONFLICT (card_id, day) DO UPDATE SET joined = ${real}`;
   return { ok: true, removed: rows.length };
 }
 
@@ -136,7 +159,11 @@ export async function simHeadline(orgId: string, text: unknown, link: unknown): 
   if (!g.ok) return g;
   const { setAnnouncement } = await import("@/lib/tapcardOffers");
   const r = await setAnnouncement(g.cardId, text, link);
-  return r.ok ? { ok: true, cardId: g.cardId } : { ok: false, error: r.error };
+  if (!r.ok) return { ok: false, error: r.error };
+  // Remember it, so Clear removes the demo's headlines and nothing else.
+  const latest = (await sql`SELECT id FROM tapcard_announcements WHERE card_id = ${g.cardId} ORDER BY id DESC LIMIT 1`) as { id: number }[];
+  if (latest[0]) await sql`INSERT INTO tapcard_demo_sim_announcements (card_id, announcement_id) VALUES (${g.cardId}, ${latest[0].id}) ON CONFLICT DO NOTHING`;
+  return { ok: true, cardId: g.cardId };
 }
 
 /// The roadshow: one event over the window, with a slot for each meeting. Made once; a second press adds only slots that are missing.

@@ -10,7 +10,7 @@ import { AFTER_LISTING, FIRMS, HEADLINES, MEETING_DELAY_SECONDS, MEETING_TIMES, 
 
 export type DemoSettings = { day: string; broker: string; ipo: string; raise: string; link: string; taps: string; late: string };
 export const SETTINGS_KEY = "tapcard.demo.settings";
-const STATE_KEY = "tapcard.demo.presenter";
+export const STATE_KEY = "tapcard.demo.presenter";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 export const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
@@ -29,7 +29,8 @@ const BEATS: Beat[] = [
   { id: "who", caption: "5 · Who came: fund managers by name, firm and title", page: "/business/admin/followers" },
   { id: "raise", caption: "6 · Listing complete and £100m raised", page: "/business/admin/news" },
   { id: "effect", caption: "7 · The effect: shareholders read it and follow", page: "/business/admin/insights" },
-  { id: "clear", caption: "8 · Cleared: ready to run again", page: "/business/admin" },
+  { id: "overview", caption: "8 · Back to the Overview: the whole story in numbers", page: "/business/admin" },
+  { id: "clear", caption: "9 · Demo data cleared: only the people who really follow remain", page: "/business/admin" },
 ];
 
 type St = { pos: number; ran: number; event: string };
@@ -132,7 +133,7 @@ export default function DemoPresenter() {
     if (id === "clear") {
       const r = await call({ action: "clear" });
       if (!r.ok) { setStatus(r.error ?? "That did not work."); return { ok: false }; }
-      setStatus("Everything is back to zero.");
+      setStatus("The made-up people, headlines and roadshow are gone. Real followers stay.");
       return { ok: true };
     }
     return { ok: true };
