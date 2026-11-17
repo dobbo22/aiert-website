@@ -25,12 +25,13 @@ const BEATS: Beat[] = [
   { id: "broker", caption: "1 · Cavendish is appointed as broker", page: "/business/admin/news" },
   { id: "ipo", caption: "2 · The £100m IPO is announced: followers get a notification", page: "/business/admin/news" },
   { id: "roadshow", caption: "3 · Cavendish arranges a two-day roadshow: 10 meetings, one QR code", page: "/business/admin/cards?tab=events" },
-  { id: "meetings", caption: "4 · The roadshow runs: watch each firm's attendance rise", page: "/business/admin/cards?tab=events" },
-  { id: "who", caption: "5 · Who came: fund managers by name, firm and title", page: "/business/admin/followers" },
-  { id: "raise", caption: "6 · Listing complete and £100m raised", page: "/business/admin/news" },
-  { id: "effect", caption: "7 · The effect: shareholders read it and follow", page: "/business/admin/insights" },
-  { id: "overview", caption: "8 · Back to the Overview: the whole story in numbers", page: "/business/admin" },
-  { id: "clear", caption: "9 · Demo data cleared: only the people who really follow remain", page: "/business/admin" },
+  { id: "day1", caption: "4 · Roadshow day 1: five meetings", page: "/business/admin/cards?tab=events" },
+  { id: "day2", caption: "5 · Roadshow day 2: five more meetings", page: "/business/admin/cards?tab=events" },
+  { id: "who", caption: "6 · Who came: fund managers by name, firm and title", page: "/business/admin/followers" },
+  { id: "raise", caption: "7 · Listing complete and £100m raised", page: "/business/admin/news" },
+  { id: "effect", caption: "8 · The effect: shareholders read it and follow", page: "/business/admin/insights" },
+  { id: "overview", caption: "9 · Back to the Overview: the whole story in numbers", page: "/business/admin" },
+  { id: "clear", caption: "10 · Demo data cleared: only the people who really follow remain", page: "/business/admin" },
 ];
 
 type St = { pos: number; ran: number; event: string };
@@ -98,17 +99,23 @@ export default function DemoPresenter() {
       setStatus("2 days, 10 meetings, one QR code.");
       return { ok: true, event: r.code };
     }
-    if (id === "meetings") {
+    if (id === "day1" || id === "day2") {
       const ev = await eventCode();
       if (!ev) { setStatus("Set up the roadshow first (step 3)."); return { ok: false }; }
-      for (let k = 0; k < 10; k++) {
-        const start = new Date(`${dayN(s, k < 5 ? 0 : 1)}T${MEETING_TIMES[k % 5][0]}`);
+      const d = id === "day1" ? 0 : 1;
+      let people = 0, managers = 0;
+      for (let j = 0; j < 5; j++) {
+        const k = d * 5 + j;
+        const start = new Date(`${dayN(s, d)}T${MEETING_TIMES[j][0]}`);
         const r = await call({ action: "meeting", event: ev, firm: k, at: new Date(start.getTime() + 30 * 60000).toISOString() });
         if (!r.ok) { setStatus(r.error ?? "That did not work."); return { ok: false }; }
-        setStatus(`Day ${k < 5 ? 1 : 2}, ${MEETING_TIMES[k % 5][0]}: ${r.firm}: ${r.attendees} attended, ${r.shared} fund manager${r.shared === 1 ? "" : "s"} shared details (${k + 1} of 10)`);
+        people += r.attendees ?? 0; managers += r.shared ?? 0;
+        setStatus(`${MEETING_TIMES[j][0]} ${r.firm}: ${r.attendees} attended, ${r.shared} fund manager${r.shared === 1 ? "" : "s"} shared details`);
         router.refresh();
-        if (k < 9) await wait(MEETING_DELAY_SECONDS * 1000);
+        if (j < 4) await wait(MEETING_DELAY_SECONDS * 1000);
       }
+      setStatus(`Day ${d + 1} done: 5 meetings, ${people} attended, ${managers} fund managers shared their details.`);
+      router.refresh();
       return { ok: true, event: ev };
     }
     if (id === "effect") {

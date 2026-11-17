@@ -40,5 +40,5 @@ export const MAX_SHARERS = 3;
 /** The extra people who follow after reading the listing and raise announcement, and the taps on it. */
 export const AFTER_LISTING = { taps: 20, followers: 30 };
 
-/** Seconds between meetings when the demo runs (short enough to keep a room's attention). */
-export const MEETING_DELAY_SECONDS = 4;
+/** Seconds between the meetings of one day when it runs (each firm's count jumps in turn; a whole day takes about three seconds). */
+export const MEETING_DELAY_SECONDS = 0.6;
