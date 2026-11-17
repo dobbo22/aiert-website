@@ -83,3 +83,28 @@ test("IR outreach: the admin list shows who looked, who only opened, and who has
   assert.match(row("Otis Opened"), /Opened the link/);
   assert.match(row("Quinn Quiet"), /Not opened yet/);
 });
+
+test("IR outreach: who they are and their address are kept, and the page offers the right email for them", async () => {
+  const { addIrRecipient, irSummary } = await import("../lib/tapcardIrOutreach");
+  const { renderToStaticMarkup } = await import("react-dom/server");
+  const Page = (await import("../app/admin/social/ir-outreach/page")).default;
+  const b = await addIrRecipient("Bea Broker", "Brokerage Ltd", "met at a roadshow", "bea@brokerage.example", "broker");
+  const bad = await addIrRecipient("Odd Entry", "Odd Ltd", "", "not an email", "not-a-kind");
+  const rows = await irSummary();
+  const rb = rows.find((r) => r.token === b.token)!;
+  assert.equal(rb.email, "bea@brokerage.example");
+  assert.equal(rb.kind, "broker");
+  assert.equal(rb.note, "met at a roadshow");
+  const rbad = rows.find((r) => r.token === bad.token)!;
+  assert.equal(rbad.email, "", "a bad address is dropped");
+  assert.equal(rbad.kind, "contact", "an unknown type becomes 'someone I know'");
+  const html = renderToStaticMarkup(await Page());
+  // Each person has two rows: their details, then the email panel under them.
+  const start = html.indexOf("Bea Broker");
+  const row = html.slice(start, html.indexOf("</tr>", html.indexOf("</tr>", start) + 5));
+  assert.match(row, /Broker \/ corporate finance/);
+  assert.match(row, /bea@brokerage\.example/);
+  assert.match(row, /Write email/);
+  assert.match(row, /roadshows, events and notifications/, "the broker subject is used");
+  assert.ok(row.includes(b.token), "the email carries this person's own link");
+});

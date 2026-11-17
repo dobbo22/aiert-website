@@ -32,6 +32,9 @@ export function ensureIrSchema(): Promise<unknown> {
         agent TEXT NOT NULL DEFAULT 'person'
       )`)
       .then(() => sql`CREATE INDEX IF NOT EXISTS tapcard_ir_visits_token ON tapcard_ir_visits (token, at)`)
+      // Who they are, to choose the right email: company (a listed company's IR, finance or chair), agency (IR or PR adviser), broker (broker, NOMAD, corporate finance), contact (someone we know).
+      .then(() => sql`ALTER TABLE tapcard_ir_recipients ADD COLUMN IF NOT EXISTS email TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_ir_recipients ADD COLUMN IF NOT EXISTS kind TEXT NOT NULL DEFAULT 'contact'`)
       .catch((e) => { ready = null; throw e; });
   }
   return ready;
@@ -39,10 +42,15 @@ export function ensureIrSchema(): Promise<unknown> {
 
 export const irLink = (token: string) => `https://tapcard.aiert.co.uk/investors?v=${token}`;
 
-export async function addIrRecipient(name: string, org: string, note = ""): Promise<{ token: string; link: string }> {
+export const IR_KINDS_OF_PERSON = ["company", "agency", "broker", "contact"] as const;
+export type IrPersonKind = (typeof IR_KINDS_OF_PERSON)[number];
+const cleanKind = (k: unknown): IrPersonKind => ((IR_KINDS_OF_PERSON as readonly string[]).includes(String(k)) ? (k as IrPersonKind) : "contact");
+const cleanEmail = (e: unknown) => (typeof e === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim()) ? e.trim().slice(0, 200) : "");
+
+export async function addIrRecipient(name: string, org: string, note = "", email = "", kind: string = "contact"): Promise<{ token: string; link: string }> {
   await ensureIrSchema();
   const token = crypto.randomBytes(8).toString("hex").slice(0, 10);
-  await sql`INSERT INTO tapcard_ir_recipients (token, name, org, note) VALUES (${token}, ${name.trim().slice(0, 120)}, ${org.trim().slice(0, 120)}, ${note.trim().slice(0, 300)})`;
+  await sql`INSERT INTO tapcard_ir_recipients (token, name, org, note, email, kind) VALUES (${token}, ${name.trim().slice(0, 120)}, ${org.trim().slice(0, 120)}, ${note.trim().slice(0, 300)}, ${cleanEmail(email)}, ${cleanKind(kind)})`;
   return { token, link: irLink(token) };
 }
 
@@ -74,6 +82,8 @@ export interface IrRow {
   name: string;
   org: string;
   note: string;
+  email: string;
+  kind: IrPersonKind;
   createdAt: string;
   sentAt: string | null;
   /// First and last time a person (not a robot) had the page open.
@@ -89,7 +99,7 @@ export interface IrRow {
 
 export async function irSummary(): Promise<IrRow[]> {
   await ensureIrSchema();
-  const people = (await sql`SELECT token, name, org, note, created_at, sent_at FROM tapcard_ir_recipients ORDER BY created_at DESC`) as { token: string; name: string; org: string; note: string; created_at: string; sent_at: string | null }[];
+  const people = (await sql`SELECT token, name, org, note, email, kind, created_at, sent_at FROM tapcard_ir_recipients ORDER BY created_at DESC`) as { token: string; name: string; org: string; note: string; email: string; kind: string; created_at: string; sent_at: string | null }[];
   const visits = (await sql`SELECT token, at, kind, detail, agent FROM tapcard_ir_visits ORDER BY at`) as { token: string; at: string; kind: string; detail: string; agent: string }[];
   return people.map((p) => {
     const mine = visits.filter((v) => v.token === p.token);
@@ -99,7 +109,7 @@ export async function irSummary(): Promise<IrRow[]> {
     const ended = human.some((v) => v.kind === "video-end");
     const played = human.some((v) => v.kind === "video");
     return {
-      token: p.token, name: p.name, org: p.org, note: p.note, createdAt: iso(p.created_at)!, sentAt: iso(p.sent_at),
+      token: p.token, name: p.name, org: p.org, note: p.note, email: p.email ?? "", kind: cleanKind(p.kind), createdAt: iso(p.created_at)!, sentAt: iso(p.sent_at),
       firstAt: iso(human[0]?.at ?? null), lastAt: iso(human[human.length - 1]?.at ?? null),
       opens: human.filter((v) => v.kind === "visit").length,
       engaged: human.some((v) => v.kind === "engaged" || v.kind === "tab" || v.kind === "video"),
