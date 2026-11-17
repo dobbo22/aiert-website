@@ -35,7 +35,9 @@ export async function GET(req: NextRequest) {
       }
     }
   }
-  const logo = await findSiteLogo(domain, { iconFallback: false }).catch(() => null);
+  // Some sites only answer on www (the apps ask for the bare domain), so try that when the bare one gives nothing.
+  let logo = await findSiteLogo(domain, { iconFallback: false }).catch(() => null);
+  if (!logo && !domain.startsWith("www.")) logo = await findSiteLogo(`www.${domain}`, { iconFallback: false }).catch(() => null);
   if (!logo) {
     return new NextResponse(null, { status: 404, headers: { "cache-control": "public, s-maxage=86400" } });
   }
