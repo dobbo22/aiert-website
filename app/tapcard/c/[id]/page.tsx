@@ -256,8 +256,8 @@ export default async function CardPage({
               <div className="mt-4 rounded-2xl bg-white/[0.09] px-4 py-3 text-left text-sm text-white">
                 <p className="font-semibold">You are at {eventInfo.label}{eventInfo.slot ? `: ${eventInfo.slot}` : ""}</p>
                 <p className="mt-1">
-                  To register your attendance and follow {card.company || card.name}, use the TapCard app. Get it, then come back to this page and tap{" "}
-                  <span className="font-semibold">Open in TapCard</span> to finish. Or share your details below to register your attendance without the app.
+                  Your visit has been counted. To follow {card.company || card.name} and get its announcements on your phone, get the TapCard app, then come back to this page and tap{" "}
+                  <span className="font-semibold">Open in TapCard</span>. You can also share your details below to register your attendance.
                 </p>
               </div>
             )}

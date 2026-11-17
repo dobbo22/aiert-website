@@ -34,7 +34,7 @@ const POINTS = [
 ];
 
 const FEATURES = [
-  { title: "A QR code for every event", body: "Make one for the AGM, a roadshow or a results presentation. For a day of visits, add a time slot for each firm. You see how many opened the link and how many registered, and who they are if they chose to share their details." },
+  { title: "A QR code for every event", body: "Make one for the AGM, a roadshow or a results presentation. For a day of visits, add a time slot for each firm. You see how many scanned it (counted even without the app, anonymously) and how many registered, and who they are if they chose to share their details." },
   { title: "Insights for your IR team", body: "Followers over time, how many each headline was sent to and how many tapped through, when people read, how many go from scan to follow to sharing their details, and what kind of investor is following (organisations or private)." },
   { title: "A monthly report", body: "A one-page summary of the last 30 days to print or save as a PDF, for your board or your adviser." },
   { title: "The details people share", body: "Download the followers who chose to share their name and email as a spreadsheet, with how they followed and the event they came through." },
@@ -46,7 +46,7 @@ const FAQ: [string, string][] = [
   ["Does this replace RNS or our investor relations website?", "No. It sits beside them. The card links to your own investor pages and to the RNS list, and a post is a short headline with a link."],
   ["Can we post before the announcement is public?", "We recommend not, and the service is built around posting after the announcement. Whatever you post is your decision and your responsibility; please take your own advice on market abuse and disclosure rules."],
   ["How is it priced?", "We agree a yearly plan with you, plus VAT for UK companies, based on the size of the company and how you use it. Email us and we will send pricing."],
-  ["Can we see who came to an event?", "Each event has its own QR code and optional time slots. You see how many opened it and how many registered, and the names and emails of the people who chose to share their details. Registering needs the TapCard app, or sharing details on the card page, so people who do neither are not counted as attending."],
+  ["Can we see who came to an event?", "Each event has its own QR code and optional time slots. Everyone who scans it is counted, even without the app, as an anonymous number, and the page they land on encourages them to download TapCard so they can follow you. People who register in the app, or share their details on the card page, are counted as attending against the event and time slot, and you see names and emails only for those who chose to share them."],
   ["How do we start?", "Email us the company name and website. We build the company's card from your website, add your RNS and investor links, and send you a link to see it before anything goes live."],
   ["We are an investor relations adviser. Can we offer this to our clients?", "Yes. We have a partner arrangement for advisers: email us for the terms. Depending on your regulatory position you may need to tell your client about a referral fee; please take your own advice on that."],
 ];
