@@ -192,3 +192,18 @@ test("the Followers tab names each demo firm properly, and files made-up retail 
   assert.equal(new Set(FIRMS.map((f) => f.domain)).size, FIRMS.length, "each firm has its own domain");
   for (let n = 1; n <= 8; n++) assert.equal(emailGroup(demoPerson(n).email).kind, "private", "retail demo people are private investors");
 });
+
+test("one person who shares the same email twice (a second phone, or the app installed again) is listed and counted once", async () => {
+  const { saveFollowerDetails, listSharedFollowers, sharedFollowerCount } = await import("../lib/tapcardShare");
+  const { setFollower } = await import("../lib/tapcardOffers");
+  const co = await newListedCompany("Dedupe Co (demo)", "demotok-gggggggggggggggggggggggggggggggggggggggg");
+  await setFollower(co.cardId, "phone-one-0000000000000000", true);
+  await setFollower(co.cardId, "phone-two-0000000000000000", true);
+  await saveFollowerDetails(co.cardId, "phone-one-0000000000000000", { name: "Jasper Berry", email: "jberry@cavendish.com", phone: "" }, co.cardId);
+  await saveFollowerDetails(co.cardId, "phone-two-0000000000000000", { name: "Jasper Berry", email: "JBerry@Cavendish.com", phone: "" }, co.cardId);
+  await saveFollowerDetails(co.cardId, "phone-three-00000000000000", { name: "Someone Else", email: "else@cavendish.com", phone: "" }, co.cardId);
+  const list = await listSharedFollowers(co.orgId);
+  assert.equal(list.length, 2, "Jasper once, plus the other person");
+  assert.equal(list.filter((p) => p.email.toLowerCase() === "jberry@cavendish.com").length, 1);
+  assert.equal(await sharedFollowerCount(co.cardId), 2);
+});

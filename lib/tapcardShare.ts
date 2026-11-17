@@ -140,13 +140,24 @@ export async function listSharedFollowers(orgId: string): Promise<SharedFollower
     LEFT JOIN tapcard_cards v ON v.id = NULLIF(d.via_card_id, '')
     WHERE c.org_id = ${orgId}
     ORDER BY d.consented_at DESC`) as { card_id: string; company: string; card_name: string; name: string; email: string; phone: string; consented_at: string; via_name: string | null; via_title: string | null; events: { label: string; via: string }[] }[];
-  return rows.map((r) => ({ cardId: r.card_id, company: r.company || r.card_name, name: r.name, email: r.email, phone: r.phone, consentedAt: new Date(r.consented_at).toISOString(), followedThrough: r.via_name ? [r.via_name, r.via_title].filter(Boolean).join(", ") : "Company card", event: formatEventList(r.events ?? []) }));
+  const all = rows.map((r) => ({ cardId: r.card_id, company: r.company || r.card_name, name: r.name, email: r.email, phone: r.phone, consentedAt: new Date(r.consented_at).toISOString(), followedThrough: r.via_name ? [r.via_name, r.via_title].filter(Boolean).join(", ") : "Company card", event: formatEventList(r.events ?? []) }));
+  // One person is one row: the same email shared again (a second phone, or the app installed again) is listed once, with the newest
+  // details and every event either follow came through. Rows are newest first, so the first of an email is the one that stays.
+  const byEmail = new Map<string, SharedFollower>();
+  for (const f of all) {
+    const key = f.email.trim().toLowerCase();
+    const have = byEmail.get(key);
+    if (!have) { byEmail.set(key, f); continue; }
+    const events = [...new Set([...have.event.split(", "), ...f.event.split(", ")].filter(Boolean))];
+    byEmail.set(key, { ...have, event: events.join(", "), phone: have.phone || f.phone });
+  }
+  return [...byEmail.values()];
 }
 
 /// How many of the card's followers have chosen to share (for the admin page and the follower numbers).
 export async function sharedFollowerCount(cardId: string): Promise<number> {
   await ensureShareSchema();
-  const r = (await sql`SELECT COUNT(*)::int AS n FROM tapcard_follower_details WHERE card_id = ${cardId}`) as { n: number }[];
+  const r = (await sql`SELECT COUNT(DISTINCT lower(email))::int AS n FROM tapcard_follower_details WHERE card_id = ${cardId}`) as { n: number }[];
   return Number(r[0]?.n ?? 0);
 }
 
