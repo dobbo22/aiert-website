@@ -108,3 +108,27 @@ test("IR outreach: who they are and their address are kept, and the page offers 
   assert.match(row, /roadshows, events and notifications/, "the broker subject is used");
   assert.ok(row.includes(b.token), "the email carries this person's own link");
 });
+
+test("IR outreach timeline: typed events and page visits read together, oldest first", async () => {
+  const { addIrRecipient, addIrEvent, deleteIrEvent, recordIrVisit, irSummary, deleteIrRecipient } = await import("../lib/tapcardIrOutreach");
+  const PERSON2 = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
+  const p = await addIrRecipient("Kim Example", "Example Broker");
+  assert.equal(await addIrEvent(p.token, "email-sent", "Intro email", "With the investors link", new Date("2026-11-18T09:00:00Z")), true);
+  assert.equal(await addIrEvent(p.token, "email-received", "Reply: happy to talk", "", new Date("2026-11-18T10:00:00Z")), true);
+  assert.equal(await addIrEvent(p.token, "carrier-pigeon", "Nope"), false, "unknown type");
+  assert.equal(await addIrEvent(p.token, "note", "x"), false, "title too short");
+  assert.equal(await addIrEvent("zzzzzzzzzz", "note", "Unknown person"), false, "unknown code");
+  assert.equal(await addIrEvent(p.token, "note", "Bad date", "", new Date("nonsense")), false, "bad date");
+  await recordIrVisit(p.token, "visit", "", PERSON2);
+  await recordIrVisit(p.token, "visit", "", PERSON2); // a repeat within a minute folds into one line
+  await recordIrVisit(p.token, "visit", "", "Mozilla/5.0 (compatible; MimecastLinkChecker/1.0)");
+  const row = (await irSummary()).find((r) => r.token === p.token)!;
+  const kinds = row.timeline.map((t) => t.kind);
+  assert.deepEqual(kinds.filter((k) => k !== "page"), ["email-sent", "email-received"]);
+  assert.equal(kinds.filter((k) => k === "page").length, 1, "one page line, repeats and robots left out");
+  assert.deepEqual(row.timeline.map((t) => t.at), [...row.timeline.map((t) => t.at)].sort());
+  const id = row.timeline.find((t) => t.kind === "email-sent")!.id!;
+  await deleteIrEvent(p.token, id);
+  assert.equal((await irSummary()).find((r) => r.token === p.token)!.timeline.some((t) => t.id === id), false);
+  await deleteIrRecipient(p.token);
+});

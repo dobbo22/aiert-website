@@ -91,3 +91,44 @@ export function WriteEmail({ to, first, followup }: { to: string; first: Mail; f
     </details>
   );
 }
+
+const EVENT_TYPES: [string, string][] = [
+  ["email-sent", "Email I sent"], ["email-received", "Email they sent"], ["message-sent", "Message I sent (WhatsApp, text)"],
+  ["message-received", "Message they sent"], ["meeting", "Meeting or call"], ["note", "Note"],
+];
+
+// Adds one line to a person's timeline: what was said or done, and when (defaults to now).
+export function AddEvent({ token }: { token: string }) {
+  const router = useRouter();
+  const [kind, setKind] = useState("email-sent");
+  const [title, setTitle] = useState("");
+  const [detail, setDetail] = useState("");
+  const [at, setAt] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const field = { padding: "6px 8px", borderRadius: 8, border: "1px solid rgba(255,255,255,.25)", background: "rgba(255,255,255,.08)", color: "inherit" } as const;
+  async function add() {
+    setBusy(true); setError("");
+    const r = await post({ action: "event", token, kind, title, detail, at: at ? new Date(at).toISOString() : undefined });
+    setBusy(false);
+    if (!r.ok) { setError(r.error ?? "Something went wrong."); return; }
+    setTitle(""); setDetail(""); setAt(""); router.refresh();
+  }
+  return (
+    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+      <select style={field} value={kind} onChange={(e) => setKind(e.target.value)} aria-label="What happened">
+        {EVENT_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+      </select>
+      <input style={{ ...field, minWidth: 220 }} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Subject or what happened" maxLength={160} />
+      <input style={{ ...field, minWidth: 220 }} value={detail} onChange={(e) => setDetail(e.target.value)} placeholder="Detail (optional)" maxLength={600} />
+      <input style={field} type="datetime-local" value={at} onChange={(e) => setAt(e.target.value)} aria-label="When (blank is now)" />
+      <button type="button" onClick={add} disabled={busy || title.trim().length < 2} style={{ ...field, background: "#FBBF24", color: "#111", fontWeight: 700, border: "none" }}>Add to timeline</button>
+      {error && <span style={{ color: "#fca5a5" }}>{error}</span>}
+    </div>
+  );
+}
+
+export function RemoveEvent({ token, id }: { token: string; id: number }) {
+  const router = useRouter();
+  return <button type="button" aria-label="Remove this line" onClick={async () => { if (window.confirm("Remove this line from the timeline?")) { await post({ action: "delete-event", token, id }); router.refresh(); } }} style={{ marginLeft: 8, padding: "0 8px", borderRadius: 6, border: "1px solid rgba(255,255,255,.3)", background: "transparent", color: "inherit", fontSize: 12 }}>Remove</button>;
+}

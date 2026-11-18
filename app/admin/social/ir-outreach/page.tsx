@@ -1,7 +1,7 @@
 import { Fragment } from "react";
-import { irLink, irSummary, type IrRow } from "@/lib/tapcardIrOutreach";
+import { irLink, irSummary, type IrRow, type IrTimelineItem } from "@/lib/tapcardIrOutreach";
 import { isAdminRequest } from "@/lib/adminRequest";
-import { AddRecipient, RowActions, WriteEmail } from "./IrOutreachAdmin";
+import { AddEvent, AddRecipient, RemoveEvent, RowActions, WriteEmail } from "./IrOutreachAdmin";
 import { buildIrEmail } from "@/lib/tapcardIrEmail";
 
 export const metadata = { title: "Investor relations outreach — Admin", robots: { index: false, follow: false } };
@@ -9,6 +9,31 @@ export const dynamic = "force-dynamic";
 
 const when = (d: string | null) => (d ? new Date(d).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" }) : "–");
 const KIND_NAMES: Record<string, string> = { company: "Listed company", agency: "IR / PR adviser", broker: "Broker / corporate finance", contact: "Someone I know" };
+const EVENT_LABEL: Record<string, string> = { "email-sent": "Email sent", "email-received": "Email received", "message-sent": "Message sent", "message-received": "Message received", meeting: "Meeting", note: "Note", page: "On the page" };
+const EVENT_COLOUR: Record<string, string> = { "email-sent": "#93c5fd", "email-received": "#4ade80", "message-sent": "#93c5fd", "message-received": "#4ade80", meeting: "#FBBF24", note: "#cbd5e1", page: "#c4b5fd" };
+
+// One person's story, oldest first: what was said and when, with what they did on the investors page in between.
+function Timeline({ token, items }: { token: string; items: IrTimelineItem[] }) {
+  return (
+    <details open style={{ marginTop: 6 }}>
+      <summary style={{ cursor: "pointer", fontWeight: 700 }}>Timeline ({items.length})</summary>
+      {items.length === 0 ? <p style={{ margin: "8px 0", fontSize: 14 }}>Nothing recorded yet.</p> : (
+        <ol style={{ listStyle: "none", margin: "8px 0 0", padding: 0, borderLeft: "2px solid rgba(255,255,255,.2)" }}>
+          {items.map((e, i) => (
+            <li key={`${e.at}-${i}`} style={{ padding: "4px 0 6px 12px", position: "relative" }}>
+              <span style={{ position: "absolute", left: -6, top: 10, width: 10, height: 10, borderRadius: 5, background: EVENT_COLOUR[e.kind] ?? "#cbd5e1" }} />
+              <span style={{ fontSize: 13, opacity: 0.85 }}>{when(e.at)} · <span style={{ color: EVENT_COLOUR[e.kind] ?? "#cbd5e1", fontWeight: 700 }}>{EVENT_LABEL[e.kind] ?? e.kind}</span></span>
+              <div>{e.title}{e.detail && e.kind === "page" ? `: ${TAB_NAMES[e.detail] ?? e.detail}` : ""}{e.id !== undefined && <RemoveEvent token={token} id={e.id} />}</div>
+              {e.detail && e.kind !== "page" && <div style={{ fontSize: 14, opacity: 0.85 }}>{e.detail}</div>}
+            </li>
+          ))}
+        </ol>
+      )}
+      <AddEvent token={token} />
+    </details>
+  );
+}
+
 const TAB_NAMES: Record<string, string> = { see: "See it", features: "What you get", admin: "Your admin", pricing: "Pricing", questions: "Questions" };
 
 function status(r: IrRow): { text: string; colour: string } {
@@ -55,6 +80,7 @@ export default async function IrOutreachPage() {
                     </tr>
                     <tr style={{ borderBottom: "1px solid rgba(255,255,255,.12)" }}>
                       <td colSpan={9} style={{ padding: "0 10px 12px" }}>
+                        <Timeline token={r.token} items={r.timeline} />
                         <WriteEmail to={r.email} first={buildIrEmail({ name: r.name, org: r.org, kind: r.kind, link: irLink(r.token) })} followup={buildIrEmail({ name: r.name, org: r.org, kind: r.kind, link: irLink(r.token), step: "followup" })} />
                       </td>
                     </tr>
