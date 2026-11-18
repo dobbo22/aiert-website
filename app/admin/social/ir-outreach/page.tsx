@@ -48,6 +48,20 @@ function status(r: IrRow): { text: string; colour: string } {
 export default async function IrOutreachPage() {
   if (!(await isAdminRequest())) return null;
   const rows = await irSummary().catch(() => [] as IrRow[]);
+  // One folder per company, most recently active first, so the page stays short; open a company to see its people.
+  const lastActivity = (r: IrRow) => [r.lastAt, r.sentAt, r.createdAt, ...r.timeline.map((t) => t.at)].filter(Boolean).sort().pop() ?? r.createdAt;
+  const byCompany = new Map<string, { key: string; name: string; rows: IrRow[]; looked: number; opened: number; waiting: number; last: string }>();
+  for (const r of rows) {
+    const name = r.org.trim() || "No company";
+    const key = name.toLowerCase();
+    const g = byCompany.get(key) ?? { key, name, rows: [], looked: 0, opened: 0, waiting: 0, last: "" };
+    g.rows.push(r);
+    if (r.engaged) g.looked++; else if (r.opens > 0) g.opened++; else g.waiting++;
+    const la = lastActivity(r);
+    if (la > g.last) g.last = la;
+    byCompany.set(key, g);
+  }
+  const groups = [...byCompany.values()].sort((a, b) => b.last.localeCompare(a.last));
   const cell: React.CSSProperties = { padding: "8px 10px", verticalAlign: "top", textAlign: "left" };
   return (
     <div className="text-cloud">
@@ -57,38 +71,54 @@ export default async function IrOutreachPage() {
       </p>
       <AddRecipient />
       {rows.length === 0 ? <p>No links yet.</p> : (
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead><tr style={{ borderBottom: "1px solid rgba(255,255,255,.25)" }}>
-              {["Who", "Status", "Sent", "First look", "Last look", "Tabs seen", "Video", "Scanner hits", ""].map((h) => <th key={h} style={cell}>{h}</th>)}
-            </tr></thead>
-            <tbody>
-              {rows.map((r) => {
-                const s = status(r);
-                return (
-                  <Fragment key={r.token}>
-                    <tr>
-                      <td style={cell}><strong>{r.name}</strong><br />{r.org}<br /><span style={{ fontSize: 13 }}>{KIND_NAMES[r.kind]}{r.email ? ` · ${r.email}` : ""}</span></td>
-                      <td style={{ ...cell, color: s.colour, fontWeight: 700 }}>{s.text}{r.opens > 1 ? ` (${r.opens} visits)` : ""}</td>
-                      <td style={cell}>{when(r.sentAt)}</td>
-                      <td style={cell}>{when(r.firstAt)}</td>
-                      <td style={cell}>{when(r.lastAt)}</td>
-                      <td style={cell}>{r.tabs.length ? r.tabs.map((t) => TAB_NAMES[t] ?? t).join(", ") : "–"}</td>
-                      <td style={cell}>{r.video === "finished" ? "Watched to the end" : r.video === "played" ? "Played" : "–"}</td>
-                      <td style={cell}>{r.robotHits || "–"}</td>
-                      <td style={cell}><RowActions token={r.token} link={irLink(r.token)} sent={!!r.sentAt} /></td>
-                    </tr>
-                    <tr style={{ borderBottom: "1px solid rgba(255,255,255,.12)" }}>
-                      <td colSpan={9} style={{ padding: "0 10px 12px" }}>
-                        <Timeline token={r.token} items={r.timeline} />
-                        <WriteEmail to={r.email} first={buildIrEmail({ name: r.name, org: r.org, kind: r.kind, link: irLink(r.token) })} followup={buildIrEmail({ name: r.name, org: r.org, kind: r.kind, link: irLink(r.token), step: "followup" })} />
-                      </td>
-                    </tr>
-                  </Fragment>
-                );
-              })}
-            </tbody>
-          </table>
+        <div style={{ display: "grid", gap: 10 }}>
+          {groups.map((g, gi) => (
+            <details key={g.key} open={gi === 0} style={{ border: "1px solid rgba(255,255,255,.2)", borderRadius: 12, padding: "10px 14px" }}>
+              <summary style={{ cursor: "pointer", display: "flex", flexWrap: "wrap", gap: "4px 14px", alignItems: "baseline" }}>
+                <strong style={{ fontSize: 17 }}>{g.name}</strong>
+                <span>{g.rows.length} {g.rows.length === 1 ? "person" : "people"}</span>
+                {g.looked > 0 && <span style={{ color: "#4ade80", fontWeight: 700 }}>{g.looked} looked at it</span>}
+                {g.opened > 0 && <span style={{ color: "#FBBF24", fontWeight: 700 }}>{g.opened} opened the link</span>}
+                {g.waiting > 0 && <span style={{ opacity: 0.8 }}>{g.waiting} waiting</span>}
+                <span style={{ opacity: 0.8, fontSize: 14 }}>Last activity {when(g.last)}</span>
+              </summary>
+              <div style={{ marginTop: 10 }}>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead><tr style={{ borderBottom: "1px solid rgba(255,255,255,.25)" }}>
+                  {["Who", "Status", "Sent", "First look", "Last look", "Tabs seen", "Video", "Scanner hits", ""].map((h) => <th key={h} style={cell}>{h}</th>)}
+                </tr></thead>
+                <tbody>
+                  {g.rows.map((r) => {
+                    const s = status(r);
+                    return (
+                      <Fragment key={r.token}>
+                        <tr>
+                          <td style={cell}><strong>{r.name}</strong><br />{r.org}<br /><span style={{ fontSize: 13 }}>{KIND_NAMES[r.kind]}{r.email ? ` · ${r.email}` : ""}</span></td>
+                          <td style={{ ...cell, color: s.colour, fontWeight: 700 }}>{s.text}{r.opens > 1 ? ` (${r.opens} visits)` : ""}</td>
+                          <td style={cell}>{when(r.sentAt)}</td>
+                          <td style={cell}>{when(r.firstAt)}</td>
+                          <td style={cell}>{when(r.lastAt)}</td>
+                          <td style={cell}>{r.tabs.length ? r.tabs.map((t) => TAB_NAMES[t] ?? t).join(", ") : "–"}</td>
+                          <td style={cell}>{r.video === "finished" ? "Watched to the end" : r.video === "played" ? "Played" : "–"}</td>
+                          <td style={cell}>{r.robotHits || "–"}</td>
+                          <td style={cell}><RowActions token={r.token} link={irLink(r.token)} sent={!!r.sentAt} /></td>
+                        </tr>
+                        <tr style={{ borderBottom: "1px solid rgba(255,255,255,.12)" }}>
+                          <td colSpan={9} style={{ padding: "0 10px 12px" }}>
+                            <Timeline token={r.token} items={r.timeline} />
+                            <WriteEmail to={r.email} first={buildIrEmail({ name: r.name, org: r.org, kind: r.kind, link: irLink(r.token) })} followup={buildIrEmail({ name: r.name, org: r.org, kind: r.kind, link: irLink(r.token), step: "followup" })} />
+                          </td>
+                        </tr>
+                      </Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+              </div>
+            </details>
+          ))}
         </div>
       )}
     </div>
