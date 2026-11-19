@@ -8,6 +8,8 @@ import { listGroupsWithCounts } from "@/lib/tapcardGroups";
 import { approvalRequired, pendingDrafts } from "@/lib/tapcardNewsPolicy";
 import PostHeadline from "../../admin/news/PostHeadline";
 import NewsTabs from "../../admin/news/NewsTabs";
+import ClientSwitcher from "../ClientSwitcher";
+import { adviserPortfolio } from "@/lib/adviserPortfolio";
 import NewsGovernance from "../../admin/news/NewsGovernance";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +32,8 @@ export default async function AdviserClientPage({ params, searchParams }: { para
   const cfg = await getFeedConfig(card.id).catch(() => null);
   const rows = cfg ? await listFeedRows(card.id).catch(() => []) : [];
   const [groups, approval, drafts] = await Promise.all([listGroupsWithCounts(card.id).catch(() => []), approvalRequired(orgId), pendingDrafts(orgId)]);
+  const portfolio = await adviserPortfolio(me.adviserId, me).catch(() => []);
+  const switcherCompanies = [...portfolio].filter((r) => r.status === "approved").sort((a, b) => a.name.localeCompare(b.name)).map((r) => ({ orgId: r.orgId, name: r.name, badge: r.waitingForYou || undefined }));
   const mayRegulatory = me.senior && link.canRegulatory;
   const coveredNow = await adviserCoverActive(orgId);
   const shownDrafts = mayRegulatory ? drafts : drafts.filter((d) => d.createdBy === me.email);
@@ -37,7 +41,7 @@ export default async function AdviserClientPage({ params, searchParams }: { para
 
   return (
     <div className="space-y-6">
-      <p><a className="text-gold underline" href="/business/adviser">← All companies</a></p>
+      <ClientSwitcher current={orgId} companies={switcherCompanies} />
       <h2 className="text-xl font-black text-cloud">{org.name}</h2>
       <p className="rounded-xl bg-white/10 px-4 py-2 text-cloud">
         {link.canRegulatory

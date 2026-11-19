@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 
-export interface ClientRow { orgId: string; name: string; status: string; canRegulatory: boolean; coverStatus: string; tierLabel: string; monthly: string; committedUntil: string | null; coverEndsAt: string | null }
+import PortfolioList from "./PortfolioList";
+import type { PortfolioRow } from "@/lib/adviserPortfolioRules";
+
 export interface BillingInfo { status: string; senior: boolean; trialDaysLeft: number | null; termsAccepted: boolean; termsVersion: string; coveredCount: number; monthly: string; hasCustomer: boolean }
 
 /// The adviser's companies, and a search to ask a new one to approve the adviser.
-export default function AdviserHome({ clients, billing }: { clients: ClientRow[]; billing: BillingInfo }) {
+export default function AdviserHome({ portfolio, billing }: { portfolio: PortfolioRow[]; billing: BillingInfo }) {
   const [capM, setCapM] = useState("");
   const [covers, setCovers] = useState(true);
   const [agree, setAgree] = useState(false);
@@ -47,9 +49,6 @@ export default function AdviserHome({ clients, billing }: { clients: ClientRow[]
     setBusy(false);
     if (res?.ok) window.location.reload(); else setMsg({ ok: false, text: data.error ?? "Couldn't do that." });
   }
-  const date = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "");
-  const status = (c: ClientRow) => c.status === "approved" ? (c.canRegulatory ? "Approved · may post regulatory news" : "Approved · general headlines") : c.status === "pending" ? "Waiting for the company to approve" : "Removed by the company";
-
   return (
     <div className="space-y-6">
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10" id="billing">
@@ -71,22 +70,7 @@ export default function AdviserHome({ clients, billing }: { clients: ClientRow[]
         ) : <p className="mt-2 text-sm text-cloud">Only senior staff can sign up or change payment.</p>}
         {billing.status !== "active" && billing.coveredCount === 0 && <p className="mt-2 text-sm text-cloud">You can add a card once a company has accepted your payment.</p>}
       </div>
-      <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
-        <h2 className="text-lg font-bold text-cloud">Your companies</h2>
-        {clients.length === 0 && <p className="mt-3 text-cloud">None yet. Ask a company below to approve you.</p>}
-        <ul className="mt-3 divide-y divide-white/10">
-          {clients.map((c) => (
-            <li key={c.orgId} className="flex flex-wrap items-center justify-between gap-3 py-3">
-              <div><p className="font-semibold text-cloud">{c.name}</p><p className="text-sm text-cloud">{status(c)}</p>
-                {(c.coverStatus === "active" || c.coverStatus === "ending") && <p className="text-sm text-cloud">You pay for this company: {c.tierLabel}, {c.monthly} a month plus VAT · minimum term to {date(c.committedUntil)}{c.coverStatus === "ending" ? ` · ending ${date(c.coverEndsAt)}` : ""}</p>}</div>
-              <div className="flex flex-wrap gap-2">
-                {c.status === "approved" && <a href={`/business/adviser/${c.orgId}`} className="btn-gold rounded-xl px-4 py-2 font-semibold">Open headlines</a>}
-                {billing.senior && c.coverStatus === "active" && <button type="button" disabled={busy} onClick={() => void endCover(c.orgId, c.name)} className="rounded-xl px-4 py-2 font-semibold text-cloud ring-1 ring-slate disabled:opacity-60">Stop covering</button>}
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
+      <PortfolioList rows={portfolio} senior={billing.senior} busy={busy} onStopCovering={(orgId, name) => void endCover(orgId, name)} />
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">Ask a company to approve you</h2>
         <p className="mt-2 text-cloud">Find the company by name. Its senior admins get an email and decide. Until they approve, you can&apos;t see or do anything for it.</p>
