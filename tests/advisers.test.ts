@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import { installStubs, sql as db } from "./helpers/pgdb";
 installStubs();
 
-let orgId = "", orgNoIr = "", cardId = "cardAdv", adviserId = "";
+const cardId = "cardAdv";
+let orgId = "", orgNoIr = "", adviserId = "";
 const posts: unknown[] = [];
 
 async function setup() {
