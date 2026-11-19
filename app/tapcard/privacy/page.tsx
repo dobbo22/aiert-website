@@ -70,7 +70,9 @@ export default function TapCardPrivacyPage() {
         <h2>Who we are</h2>
         <p>
           TapCard is provided by AIERT Ltd, registered in England &amp; Wales (No. 16587000), which is the data
-          controller for the information described here. Contact:{" "}
+          controller for the information described here. The one exception is the name and email address you choose to share with a
+          listed company: that company is the controller and we store them on its behalf (see{" "}
+          <em>When you share your details with a listed company</em>). Contact:{" "}
           <a href="mailto:enquiries@aiert.co.uk">enquiries@aiert.co.uk</a>.
         </p>
       </section>
@@ -159,13 +161,44 @@ export default function TapCardPrivacyPage() {
             following removes them.</li>
           <li><strong>Why:</strong> so the company can contact you about its announcements and shareholder information. Anything
             promotional needs your separate consent and an unsubscribe.</li>
-          <li><strong>Our basis:</strong> your consent, given by tapping <strong>Follow and share my details</strong>.</li>
+          <li><strong>Our basis for passing them on:</strong> your consent, given by tapping <strong>Follow and share my details</strong>. Sharing your details is not consent to marketing. The company is responsible for its own legal basis for what it then does with them, and for its own privacy notice, which the app links to when the company has provided one.</li>
           <li><strong>Withdrawing:</strong> switch to <strong>Follow only</strong> in the app (the &ldquo;...&rdquo; menu on the company&apos;s card),
             stop following, or email{" "}
             <a href="mailto:enquiries@aiert.co.uk">enquiries@aiert.co.uk</a>. We remove your details from the company&apos;s list within 30 days.
             Details the company has already copied are then the company&apos;s responsibility.</li>
           <li><strong>Deleted:</strong> when you withdraw, when you stop following, or when the company&apos;s card is deleted.</li>
         </ul>
+      </section>
+
+      <section>
+        <h2>Audience groups</h2>
+        <p>
+          A listed company can give you a link or QR code that adds you to an audience group, for example the people at one meeting, so it
+          can send a headline to that group only. The app remembers the group for 60 days, shows its name as a label on that company&apos;s card
+          on your phone, and tells our server which group, which we store next to your random id. The company sees how many followers are
+          in each group, never who. The group is removed when you stop following the company.
+        </p>
+      </section>
+
+      <section>
+        <h2>Company administrators and advisers</h2>
+        <p>
+          This is about the people who run a company&apos;s TapCard, not its followers. A company&apos;s administrators and shop managers sign in with
+          their email address: we keep that address, whether the person is an administrator or a manager, and whether they are senior. Signing in
+          uses a link we email, which works once, expires after 15 minutes and is stored only in scrambled form; a signed-in session lasts up to 30 days.
+        </p>
+        <p className="mt-3">
+          An investor relations adviser or broker (an &ldquo;adviser&rdquo;) is set up by us. For each member of its staff we keep their name, email
+          address and whether they are senior. They sign in separately, and see only the companies that have approved the adviser. An adviser
+          cannot see followers&apos; names or email addresses.
+        </p>
+        <p className="mt-3">
+          Every headline posted, approval, refusal, withdrawal, group change and adviser decision is recorded in an audit trail with the email of
+          the person who did it, when, and the headline text and link. A separate record shows who approved an adviser, who pays and which terms applied. The
+          company can download its audit trail, and entries cannot be edited in the product. We keep these records while the company&apos;s account exists and for a
+          limited time afterwards, to show what was agreed and done. We use this information to run sign-in and security and to keep these
+          records. For this information AIERT Ltd is the controller.
+        </p>
       </section>
 
       <section>
@@ -253,7 +286,7 @@ export default function TapCardPrivacyPage() {
         <p>
           Following a business is private. When you follow a business, your phone tells our server only that one more
           phone follows it, using a random id the app keeps on your phone (not your name, email, phone number or
-          card), which we store in scrambled (hashed) form so it cannot be turned back into anything about you. The
+          card), which we store in scrambled (hashed) form. We still treat it as personal information, because it can be linked to what you follow on that phone. The
           business sees a single number, how many people follow it, and never who.
         </p>
         <p>
@@ -270,7 +303,7 @@ export default function TapCardPrivacyPage() {
           address (a token Apple or Google gives the app), kept with the same random id, together with which
           businesses you follow and which kinds of message you chose (offers, an offer ending soon, menu and detail
           changes, news). The notification contains only what the business posted, which is public. We keep a short
-          record of what we sent, for 14 days, to keep to the limit of two notifications a week from each business.
+          record of what we sent, for 14 days, to keep to the limit of two notifications a week from each business. A listed company&apos;s followers chose to receive its announcements, so the weekly limit does not apply to it; instead we stop at 20 notifications a day from a company, as a safety limit.
           Your notification address is deleted within 30 days of you no longer following any business, when Apple
           or Google tells us the phone is no longer reachable, or after 90 days without use. You can turn notifications off per business, in
           the app (the &ldquo;...&rdquo; menu on a card), with each notification&apos;s Mute button, or in your phone&apos;s
@@ -307,7 +340,10 @@ export default function TapCardPrivacyPage() {
         <h2>Service providers</h2>
         <ul>
           <li>Vercel: hosts the TapCard website and API, and stores card photos.</li>
-          <li>Neon: hosts the database that holds shared cards.</li>
+          <li>Neon: hosts the database that holds shared cards, follower records and company accounts.</li>
+          <li>Amazon Web Services: holds encrypted copies of our database, in London, for 30 days. When something is deleted it leaves these copies when they expire.</li>
+          <li>Resend: sends the emails we send, such as administrators&apos; sign-in links and the demo link.</li>
+          <li>Stripe: takes card payments for TapCard for Business and for advisers. Card details go to Stripe, not to us.</li>
           <li>
             Apple (APNs) and Google (Firebase Cloud Messaging): deliver notifications to your phone. They receive the
             notification and your phone&apos;s notification address, as with any app that sends notifications.
