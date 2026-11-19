@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import JsonLd from "../JsonLd";
 import InvestorTabs from "./InvestorTabs";
 import TrackedVideo from "./TrackedVideo";
+import { ADVISER_TIERS, ADVISER_TRIAL_DAYS, COVER_GRACE_DAYS, MIN_TERM_MONTHS, poundsPerMonth } from "@/lib/tapcardAdviserPricing";
 
 const DESCRIPTION =
   "TapCard for investor relations: a QR code on your results slides, annual report or AGM notice lets shareholders follow your company and get a headline on their phone, with a link to the announcement on your own website. TapCard does not provide RNS. Following is free for shareholders, and you see only the details people choose to share. Set up by us.";
@@ -70,12 +71,13 @@ const REPORTS_MAILTO = mailto("TapCard for investor relations: reports", [
 const PARTNER_MAILTO = mailto("TapCard partner for investor relations", [
   "Hello,",
   "",
-  "We are an investor relations adviser and would like the partner terms.",
+  "We are an investor relations adviser or broker and would like to be set up on TapCard.",
   "",
   "Firm name:",
   "Website:",
   "Your name and role:",
-  "Roughly how many listed clients you look after:",
+  "Staff who need access (name, work email, and who is senior):",
+  "Roughly how many listed clients you look after, and the first company you would like to cover:",
   "",
   "Thank you",
 ]);
@@ -114,11 +116,12 @@ const FAQ: [string, string][] = [
   ["Do we see who follows us?", "By default, no: you see a count of followers and of how many can receive a notification. A shareholder who follows your investor relations card can choose Follow and share my details, which gives you their name and email. You see only the people who chose to, and they can withdraw at any time. What you do with those details is your responsibility."],
   ["Does this replace RNS or our investor relations website?", "No, and TapCard does not provide RNS. Your announcements and your data are yours: they are published and distributed only from your own website and your regulatory news service, and TapCard never hosts, copies or sends the announcement itself. It sits beside them. A post is a short headline with a link back to the announcement on your website, and the card links to your own investor pages and RNS list."],
   ["Can we post before the announcement is public?", "No. Never post an RNS, or anything that is inside information, before it is public: wait until it has been released through your regulatory news service and is on your own website. If the post is a meeting invitation or an event that does not need disclosure, check with your adviser first. Whatever you post is your decision and your responsibility."],
-  ["How is it priced?", "We agree a yearly plan with you, plus VAT for UK companies, based on the size of the company and how you use it. Email us and we will send pricing."],
+  ["How is it priced?", "Following is free for shareholders. For a company we agree a yearly plan with you, plus VAT for UK companies, based on the size of the company and how you use it: email us and we will send pricing. If your adviser or broker covers TapCard for you, you are not billed; advisers pay a published monthly price per company by market capitalisation (see Pricing and advisers)."],
+  ["Who can post regulatory news, and can we see who did?", "Only the senior admins you choose can post or withdraw a regulatory headline, and it must carry a link that TapCard checks against your own announcements page. You can also require a second senior admin to approve each one before it is sent. Everything is recorded in an audit trail you can download, naming who did what and when. Your adviser can post regulatory news only if you allow it for them."],
   ["Does this replace the webcast or events platform we already use?", "No. Keep using it. Your company can post the link to its webcast or event page as a headline, and followers are notified. If that platform asks viewers to register, they do so there: TapCard only passes on the link. TapCard also records who scanned in at the AGMs and roadshows you hold in person. An invitation to an event that does not need disclosure is something to check with your adviser before you post it."],
   ["Can we see who came to an event?", "Each event has its own QR code and optional time slots. Everyone who scans it is counted, even without the app, as an anonymous number, and the page they land on encourages them to download TapCard so they can follow you. People who register in the app, or share their details on the card page, are counted as attending against the event and time slot, and you see names and emails only for those who chose to share them."],
   ["How do we start?", "Email us the company name and website. We build the company's card from your website, add your RNS and investor links, and send you a link to see it before anything goes live."],
-  ["We are an investor relations adviser. Can we offer this to our clients?", "Yes. We have a partner arrangement for advisers: email us for the terms. Depending on your regulatory position you may need to tell your client about a referral fee; please take your own advice on that."],
+  ["We are an investor relations adviser or broker. Can we offer this to our clients?", "Yes. We set your firm up, and each client company approves you from its own admin. You pay a published monthly price per company by market capitalisation, with a free 30-day trial for the first company and a minimum of six months for each company you cover. The data always belongs to the company, which can remove you at any time. See Pricing and advisers, then email us to be set up. Depending on your regulatory position you may need to tell your client how you are paid: please take your own advice on that."],
 ];
 
 const FAQ_JSON_LD = {
@@ -225,23 +228,51 @@ export default function InvestorsPage() {
   const pricing = (
     <>
       <section className="card rounded-2xl bg-charcoal p-8 ring-1 ring-gold/40">
-        <h2 className="text-2xl font-black text-cloud">Pricing</h2>
+        <h2 className="text-2xl font-black text-cloud">Pricing for companies</h2>
         <p className="mt-3 text-lg leading-relaxed text-cloud">
           <strong>Following is free for shareholders.</strong> For the company, we agree a yearly plan with you when we set things up, based on the size of
-          the company and how you use it. There is no self-service sign-up for investor relations yet: ask us for pricing and we will come back to you.
+          the company and how you use it, plus VAT for UK companies. There is no self-service sign-up for investor relations yet: ask us for pricing and we will come back to you.
+        </p>
+        <p className="mt-3 leading-relaxed text-cloud">
+          <strong>Your adviser can pay instead.</strong> If your investor relations adviser or broker covers TapCard for you, you are not billed. You approve the adviser yourself, you can take billing over
+          at any time, and your followers and data stay with you either way.
         </p>
         <div className="mt-5">
           <a href={PRICING_MAILTO} className="btn-gold rounded-xl px-5 py-3 font-semibold">Ask for pricing</a>
         </div>
       </section>
-      <section className="card mt-8 rounded-2xl bg-charcoal p-8 ring-1 ring-white/10">
-        <h2 className="text-2xl font-black text-cloud">For investor relations advisers</h2>
+
+      <section id="advisers" className="card mt-8 rounded-2xl bg-charcoal p-8 ring-1 ring-white/10">
+        <h2 className="text-2xl font-black text-cloud">For investor relations advisers and brokers</h2>
         <p className="mt-3 leading-relaxed text-cloud">
-          If you look after the investor relations of listed companies, you can offer TapCard to your clients. We have a partner arrangement for advisers and will send you the terms. We set the card up for the client; you keep the relationship. Depending on your regulatory
-          position you may need to tell your client about a referral fee, so please take your own advice on that.
+          Look after several listed companies from one login. You pay a monthly price for each company you cover, set by the company&apos;s market capitalisation. You bill your client however you like: the data and the
+          account always belong to the company.
+        </p>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full border-collapse text-left">
+            <thead><tr className="border-b border-white/25"><th className="px-2 py-2">Company market capitalisation</th><th className="px-2 py-2">Per company, per month</th></tr></thead>
+            <tbody>
+              {ADVISER_TIERS.map((t) => (
+                <tr key={t.tier} className="border-b border-white/10"><td className="px-2 py-2 text-cloud">{t.label}</td><td className="px-2 py-2 font-bold text-cloud">{poundsPerMonth(t.monthlyPence)}</td></tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-2 text-sm text-cloud">Prices exclude VAT, which is added for UK firms. AIERT confirms each company&apos;s band, and it is reviewed at the end of each minimum term.</p>
+        <h3 className="mt-6 text-lg font-bold text-cloud">How it works</h3>
+        <ul className="mt-2 list-disc space-y-1.5 pl-5 text-cloud">
+          <li><strong>Free for {ADVISER_TRIAL_DAYS} days.</strong> The first company that accepts your payment is free for {ADVISER_TRIAL_DAYS} days. We email you 14 days before it ends. To keep going, and to cover more companies, a senior member of your team accepts the terms and adds a card. The first charge is on the last day of the trial.</li>
+          <li><strong>Each company approves you.</strong> You ask a company from your portal; its own senior admins decide. Nothing is allowed until they approve, and they can remove you at any time. A company has one adviser at a time.</li>
+          <li><strong>You decide what you cover, and for how long.</strong> Each company is a minimum of {MIN_TERM_MONTHS} months from the day you add it, then monthly. If cover ends, the company keeps working for {COVER_GRACE_DAYS} days so it can take over its own billing. Nothing is deleted.</li>
+          <li><strong>Regulatory news is controlled.</strong> You can write general headlines and manage audiences for an approved company. Regulatory (RNS) headlines can be posted only if the company allows it for your firm and a senior member of your staff posts it. A company can require a second senior admin to approve each one.</li>
+          <li><strong>Everything is recorded.</strong> Every post, approval and refusal is in the company&apos;s audit trail with who did it, and the agreement, who pays and who owns the data are kept on a permanent record.</li>
+          <li><strong>Many companies, one screen.</strong> See every company at a glance, what needs your attention, search and filter, and switch between companies in one click.</li>
+        </ul>
+        <p className="mt-4 leading-relaxed text-cloud">
+          We set your firm up and add your staff: there is no self-service sign-up yet. Depending on your regulatory position you may need to tell your client how you are paid, so please take your own advice on that.
         </p>
         <div className="mt-5">
-          <a href={PARTNER_MAILTO} className="btn-gold rounded-xl px-5 py-3 font-semibold">Talk to us about partnering</a>
+          <a href={PARTNER_MAILTO} className="btn-gold rounded-xl px-5 py-3 font-semibold">Set my firm up</a>
         </div>
       </section>
     </>
