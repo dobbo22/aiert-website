@@ -310,12 +310,24 @@ export async function sendAdviserLoginEmail(email: string, adviser: string, link
 }
 
 /// Tells a company's senior admins that an adviser has asked to post for it. Nothing is allowed until one of them approves.
-export async function sendAdviserRequestEmail(email: string, company: string, adviser: string, requestedBy: string, link: string): Promise<void> {
+export async function sendAdviserRequestEmail(email: string, company: string, adviser: string, requestedBy: string, offersToPay: boolean, link: string): Promise<void> {
   const html = `
     <p><strong>${esc(adviser)}</strong> (${esc(requestedBy)}) has asked to manage headlines for <strong>${esc(company)}</strong> on TapCard.</p>
+    ${offersToPay ? `<p><strong>${esc(adviser)} also offers to pay for TapCard for ${esc(company)}</strong>, so you would not be billed for this. You decide separately whether to accept that.</p>` : ""}
     <p>Nothing is allowed until you approve. If you do, you choose whether they may post regulatory news (they can always write general headlines and manage groups), and you can remove them at any time. Everything they do is recorded in your audit trail.</p>
     <p><a href="${link}">Review the request</a> (sign in as a senior admin, then open the Headlines page).</p>
     <p>If you don't know this adviser, don't approve it. Ignoring this email gives them no access.</p>`;
   await send(email, `${adviser} has asked to post for ${company} on TapCard`, html,
     `${adviser} (${requestedBy}) has asked to manage headlines for ${company} on TapCard.\n\nNothing is allowed until you approve. Review it here (sign in as a senior admin): ${link}\n\nIf you don't know this adviser, don't approve it.`);
+}
+
+/// Sent 14 days before an adviser's free trial ends: what happens next and what the first charge will be.
+export async function sendAdviserTrialReminderEmail(email: string, adviser: string, endsOn: string, monthly: string, link: string): Promise<void> {
+  const amount = monthly ? `The first charge will be <strong>${esc(monthly)} a month plus VAT</strong> for the company you cover, and it changes as you add or remove companies.` : "";
+  const html = `
+    <p>The free trial for <strong>${esc(adviser)}</strong> on TapCard ends on <strong>${esc(endsOn)}</strong>.</p>
+    <p>To keep going, and to cover more companies, a senior member of your team needs to accept the adviser terms and add a card. ${amount} Nothing is charged before ${esc(endsOn)}, and you can add the card now.</p>
+    <p><a href="${link}">Sign and add a card</a></p>
+    <p>If you do nothing, the trial company's headline posting pauses on ${esc(endsOn)}. Its followers and data are not touched.</p>`;
+  await send(email, `Your TapCard adviser trial ends on ${endsOn}`, html, `The free trial for ${adviser} on TapCard ends on ${endsOn}. ${monthly ? `The first charge will be ${monthly} a month plus VAT. ` : ""}Sign and add a card: ${link}\n\nIf you do nothing, the trial company's headline posting pauses on ${endsOn}. Its followers and data are not touched.`);
 }

@@ -41,6 +41,25 @@ export function ensureAdviserSchema(): Promise<unknown> {
           UNIQUE (adviser_id, org_id)
         )
       `)
+      // Billing (lib/tapcardAdviserBilling.ts): the adviser's trial and subscription, and per company the tier, the cover and its minimum term.
+      .then(() => sql`ALTER TABLE tapcard_advisers ADD COLUMN IF NOT EXISTS billing_status TEXT NOT NULL DEFAULT 'trial'`)
+      .then(() => sql`ALTER TABLE tapcard_advisers ADD COLUMN IF NOT EXISTS trial_org_id TEXT`)
+      .then(() => sql`ALTER TABLE tapcard_advisers ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMPTZ`)
+      .then(() => sql`ALTER TABLE tapcard_advisers ADD COLUMN IF NOT EXISTS trial_reminded_at TIMESTAMPTZ`)
+      .then(() => sql`ALTER TABLE tapcard_advisers ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT`)
+      .then(() => sql`ALTER TABLE tapcard_advisers ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT`)
+      .then(() => sql`ALTER TABLE tapcard_advisers ADD COLUMN IF NOT EXISTS paid_through TIMESTAMPTZ`)
+      .then(() => sql`ALTER TABLE tapcard_advisers ADD COLUMN IF NOT EXISTS terms_version TEXT`)
+      .then(() => sql`ALTER TABLE tapcard_advisers ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ`)
+      .then(() => sql`ALTER TABLE tapcard_advisers ADD COLUMN IF NOT EXISTS terms_accepted_by TEXT`)
+      .then(() => sql`ALTER TABLE tapcard_adviser_links ADD COLUMN IF NOT EXISTS tier INT`)
+      .then(() => sql`ALTER TABLE tapcard_adviser_links ADD COLUMN IF NOT EXISTS cap_stated_m NUMERIC`)
+      .then(() => sql`ALTER TABLE tapcard_adviser_links ADD COLUMN IF NOT EXISTS tier_confirmed BOOLEAN NOT NULL DEFAULT false`)
+      .then(() => sql`ALTER TABLE tapcard_adviser_links ADD COLUMN IF NOT EXISTS covers_requested BOOLEAN NOT NULL DEFAULT false`)
+      .then(() => sql`ALTER TABLE tapcard_adviser_links ADD COLUMN IF NOT EXISTS cover_status TEXT NOT NULL DEFAULT 'none'`)
+      .then(() => sql`ALTER TABLE tapcard_adviser_links ADD COLUMN IF NOT EXISTS cover_started_at TIMESTAMPTZ`)
+      .then(() => sql`ALTER TABLE tapcard_adviser_links ADD COLUMN IF NOT EXISTS committed_until TIMESTAMPTZ`)
+      .then(() => sql`ALTER TABLE tapcard_adviser_links ADD COLUMN IF NOT EXISTS cover_ends_at TIMESTAMPTZ`)
       .then(() => sql`
         CREATE TABLE IF NOT EXISTS tapcard_adviser_login_tokens (
           token_hash TEXT PRIMARY KEY,
@@ -121,8 +140,11 @@ export async function requireAdviser(): Promise<AdviserSession | null> {
 
 // ---- companies approve advisers
 
-export interface LinkRow { id: string; adviserId: string; adviserName: string; orgId: string; orgName: string; status: string; canRegulatory: boolean; requestedBy: string; requestedAt: string }
-const toLink = (r: Record<string, unknown>): LinkRow => ({ id: String(r.id), adviserId: String(r.adviser_id), adviserName: String(r.adviser_name ?? ""), orgId: String(r.org_id), orgName: String(r.org_name ?? ""), status: String(r.status), canRegulatory: r.can_regulatory === true, requestedBy: String(r.requested_by), requestedAt: new Date(r.requested_at as string).toISOString() });
+export interface LinkRow { id: string; adviserId: string; adviserName: string; orgId: string; orgName: string; status: string; canRegulatory: boolean; requestedBy: string; requestedAt: string; tier: number | null; capStatedM: number | null; tierConfirmed: boolean; coversRequested: boolean; coverStatus: string; coverStartedAt: string | null; committedUntil: string | null; coverEndsAt: string | null }
+const iso = (v: unknown): string | null => (v ? new Date(v as string).toISOString() : null);
+const toLink = (r: Record<string, unknown>): LinkRow => ({ id: String(r.id), adviserId: String(r.adviser_id), adviserName: String(r.adviser_name ?? ""), orgId: String(r.org_id), orgName: String(r.org_name ?? ""), status: String(r.status), canRegulatory: r.can_regulatory === true, requestedBy: String(r.requested_by), requestedAt: new Date(r.requested_at as string).toISOString(),
+  tier: r.tier == null ? null : Number(r.tier), capStatedM: r.cap_stated_m == null ? null : Number(r.cap_stated_m), tierConfirmed: r.tier_confirmed === true, coversRequested: r.covers_requested === true,
+  coverStatus: String(r.cover_status ?? "none"), coverStartedAt: iso(r.cover_started_at), committedUntil: iso(r.committed_until), coverEndsAt: iso(r.cover_ends_at) });
 
 /// Listed companies an adviser can ask to work with (name search only; nothing else about them is shown).
 export async function findListedOrgs(q: string, limit = 8): Promise<{ orgId: string; name: string }[]> {
@@ -136,7 +158,7 @@ export async function findListedOrgs(q: string, limit = 8): Promise<{ orgId: str
     WHERE o.name ILIKE ${like} ORDER BY o.name LIMIT ${limit}`) as { id: string; name: string }[]).map((r) => ({ orgId: r.id, name: r.name }));
 }
 
-export async function requestLink(adviserId: string, orgId: string, requestedBy: string): Promise<{ ok: true; linkId: string; created: boolean } | { ok: false; error: string }> {
+export async function requestLink(adviserId: string, orgId: string, requestedBy: string, opts: { capM?: number; covers?: boolean } = {}): Promise<{ ok: true; linkId: string; created: boolean } | { ok: false; error: string }> {
   await ensureAdviserSchema();
   const listed = ((await sql`SELECT 1 FROM tapcard_cards c JOIN tapcard_listed_cards l ON l.card_id = c.id WHERE c.org_id = ${orgId} LIMIT 1`) as unknown[]).length > 0;
   if (!listed) return { ok: false, error: "That company isn't set up for investor relations on TapCard." };
@@ -147,7 +169,9 @@ export async function requestLink(adviserId: string, orgId: string, requestedBy:
     return { ok: false, error: "This company has already answered that request. Please speak to the company directly." };
   }
   const id = newId();
-  await sql`INSERT INTO tapcard_adviser_links (id, adviser_id, org_id, requested_by) VALUES (${id}, ${adviserId}, ${orgId}, ${clean(requestedBy)})`;
+  const cap = Number.isFinite(opts.capM) && (opts.capM as number) > 0 ? (opts.capM as number) : null;
+  const tier = cap === null ? null : (await import("@/lib/tapcardAdviserPricing")).tierForMarketCap(cap).tier;
+  await sql`INSERT INTO tapcard_adviser_links (id, adviser_id, org_id, requested_by, cap_stated_m, tier, covers_requested) VALUES (${id}, ${adviserId}, ${orgId}, ${clean(requestedBy)}, ${cap}, ${tier}, ${opts.covers === true})`;
   return { ok: true, linkId: id, created: true };
 }
 

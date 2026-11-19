@@ -2,10 +2,14 @@
 
 import { useState } from "react";
 
-export interface ClientRow { orgId: string; name: string; status: string; canRegulatory: boolean }
+export interface ClientRow { orgId: string; name: string; status: string; canRegulatory: boolean; coverStatus: string; tierLabel: string; monthly: string; committedUntil: string | null; coverEndsAt: string | null }
+export interface BillingInfo { status: string; senior: boolean; trialDaysLeft: number | null; termsAccepted: boolean; termsVersion: string; coveredCount: number; monthly: string; hasCustomer: boolean }
 
 /// The adviser's companies, and a search to ask a new one to approve the adviser.
-export default function AdviserHome({ clients }: { clients: ClientRow[] }) {
+export default function AdviserHome({ clients, billing }: { clients: ClientRow[]; billing: BillingInfo }) {
+  const [capM, setCapM] = useState("");
+  const [covers, setCovers] = useState(true);
+  const [agree, setAgree] = useState(false);
   const [q, setQ] = useState("");
   const [found, setFound] = useState<{ orgId: string; name: string }[] | null>(null);
   const [busy, setBusy] = useState(false);
@@ -20,24 +24,65 @@ export default function AdviserHome({ clients }: { clients: ClientRow[] }) {
   }
   async function ask(orgId: string) {
     setBusy(true); setMsg(null);
-    const res = await fetch("/api/tapcard/adviser/request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orgId }) }).catch(() => null);
+    const res = await fetch("/api/tapcard/adviser/request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orgId, covers, capM: capM ? Number(capM) : undefined }) }).catch(() => null);
     const data = (res ? await res.json().catch(() => ({})) : {}) as { error?: string; created?: boolean };
     setBusy(false);
     if (res?.ok) { setMsg({ ok: true, text: data.created === false ? "That request is already open." : "Asked. The company's senior admins have been emailed. You get access when one approves." }); setTimeout(() => window.location.reload(), 1200); return; }
     setMsg({ ok: false, text: data.error ?? "Couldn't do that. Try again." });
   }
+  async function bill(action: string, extra: Record<string, unknown> = {}) {
+    setBusy(true); setMsg(null);
+    const res = await fetch("/api/tapcard/adviser/billing", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, ...extra }) }).catch(() => null);
+    const data = (res ? await res.json().catch(() => ({})) : {}) as { error?: string; url?: string };
+    setBusy(false);
+    if (data.url) { window.location.href = data.url; return; }
+    if (res?.ok) { window.location.reload(); return; }
+    setMsg({ ok: false, text: data.error ?? "Couldn't do that. Try again." });
+  }
+  async function endCover(orgId: string, name: string) {
+    if (!window.confirm(`Stop covering ${name}? You still pay until its minimum term ends, then it has 30 days to take over its own billing.`)) return;
+    setBusy(true);
+    const res = await fetch("/api/tapcard/adviser/cover", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orgId }) }).catch(() => null);
+    const data = (res ? await res.json().catch(() => ({})) : {}) as { error?: string };
+    setBusy(false);
+    if (res?.ok) window.location.reload(); else setMsg({ ok: false, text: data.error ?? "Couldn't do that." });
+  }
+  const date = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "");
   const status = (c: ClientRow) => c.status === "approved" ? (c.canRegulatory ? "Approved · may post regulatory news" : "Approved · general headlines") : c.status === "pending" ? "Waiting for the company to approve" : "Removed by the company";
 
   return (
     <div className="space-y-6">
+      <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10" id="billing">
+        <h2 className="text-lg font-bold text-cloud">Your plan</h2>
+        {billing.status === "trial" && <p className="mt-2 text-cloud">Free trial: one company for 30 days{billing.trialDaysLeft !== null ? ` (${billing.trialDaysLeft} ${billing.trialDaysLeft === 1 ? "day" : "days"} left)` : " from the day its first company accepts your payment"}. To keep going and cover more companies, accept the terms and add a card. The first charge is on the last day of the trial.</p>}
+        {billing.status === "active" && <p className="mt-2 text-cloud">Active. You are covering {billing.coveredCount} {billing.coveredCount === 1 ? "company" : "companies"}: {billing.monthly} a month plus VAT. Each company is added at a price set by its market cap and runs for a minimum of 6 months.</p>}
+        {(billing.status === "past_due" || billing.status === "canceled") && <p className="mt-2 rounded-lg bg-red-500/20 px-3 py-2 text-cloud">Your payment needs attention. Companies you cover keep working for 30 days after the last paid period so they can take over.</p>}
+        {billing.senior ? (
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            {billing.status !== "active" && (
+              <>
+                <label className="flex items-center gap-2 text-cloud"><input type="checkbox" checked={agree || billing.termsAccepted} disabled={billing.termsAccepted} onChange={(e) => setAgree(e.target.checked)} /> I accept the <a className="text-gold underline" href="/business/adviser/terms" target="_blank" rel="noopener noreferrer">adviser terms</a> for my firm</label>
+                {!billing.termsAccepted && <button type="button" disabled={busy || !agree} onClick={() => void bill("accept", { accept: true, version: billing.termsVersion })} className="rounded-xl px-4 py-2 font-semibold text-cloud ring-1 ring-slate disabled:opacity-60">Record acceptance</button>}
+                <button type="button" disabled={busy || !billing.termsAccepted || billing.coveredCount === 0} onClick={() => void bill("checkout")} className="btn-gold rounded-xl px-5 py-2 font-semibold disabled:opacity-60">Add card and subscribe</button>
+              </>
+            )}
+            {billing.hasCustomer && <button type="button" disabled={busy} onClick={() => void bill("portal")} className="rounded-xl px-4 py-2 font-semibold text-cloud ring-1 ring-slate disabled:opacity-60">Card and invoices</button>}
+          </div>
+        ) : <p className="mt-2 text-sm text-cloud">Only senior staff can sign up or change payment.</p>}
+        {billing.status !== "active" && billing.coveredCount === 0 && <p className="mt-2 text-sm text-cloud">You can add a card once a company has accepted your payment.</p>}
+      </div>
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">Your companies</h2>
         {clients.length === 0 && <p className="mt-3 text-cloud">None yet. Ask a company below to approve you.</p>}
         <ul className="mt-3 divide-y divide-white/10">
           {clients.map((c) => (
             <li key={c.orgId} className="flex flex-wrap items-center justify-between gap-3 py-3">
-              <div><p className="font-semibold text-cloud">{c.name}</p><p className="text-sm text-cloud">{status(c)}</p></div>
-              {c.status === "approved" && <a href={`/business/adviser/${c.orgId}`} className="btn-gold rounded-xl px-4 py-2 font-semibold">Open headlines</a>}
+              <div><p className="font-semibold text-cloud">{c.name}</p><p className="text-sm text-cloud">{status(c)}</p>
+                {(c.coverStatus === "active" || c.coverStatus === "ending") && <p className="text-sm text-cloud">You pay for this company: {c.tierLabel}, {c.monthly} a month plus VAT · minimum term to {date(c.committedUntil)}{c.coverStatus === "ending" ? ` · ending ${date(c.coverEndsAt)}` : ""}</p>}</div>
+              <div className="flex flex-wrap gap-2">
+                {c.status === "approved" && <a href={`/business/adviser/${c.orgId}`} className="btn-gold rounded-xl px-4 py-2 font-semibold">Open headlines</a>}
+                {billing.senior && c.coverStatus === "active" && <button type="button" disabled={busy} onClick={() => void endCover(c.orgId, c.name)} className="rounded-xl px-4 py-2 font-semibold text-cloud ring-1 ring-slate disabled:opacity-60">Stop covering</button>}
+              </div>
             </li>
           ))}
         </ul>
@@ -50,6 +95,13 @@ export default function AdviserHome({ clients }: { clients: ClientRow[] }) {
             <input className="mt-1 block rounded-lg bg-white px-3 py-2 text-[#111318]" value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") void search(); }} placeholder="KEFI" />
           </label>
           <button type="button" disabled={busy || q.trim().length < 2} onClick={() => void search()} className="rounded-xl px-5 py-2 font-semibold text-cloud ring-1 ring-slate disabled:opacity-60">Search</button>
+        </div>
+        <div className="mt-3 space-y-2">
+          <label className="block text-cloud">Company&apos;s market cap, £ millions (sets the monthly price)
+            <input className="mt-1 block w-40 rounded-lg bg-white px-3 py-2 text-[#111318]" inputMode="decimal" value={capM} onChange={(e) => setCapM(e.target.value)} placeholder="e.g. 45" />
+          </label>
+          <label className="flex items-start gap-2 text-cloud"><input type="checkbox" className="mt-1" checked={covers} onChange={(e) => setCovers(e.target.checked)} /> <span>We will pay for this company (the company is not billed, and can take over at any time)</span></label>
+          <p className="text-sm text-cloud">AIERT checks the market cap and may adjust the band. Price per company per month plus VAT: under £10m £25 · £10–25m £30 · £25–50m £40 · £50–100m £50 · £100–250m £60 · £250–500m £70 · £500m–£1bn £85 · over £1bn £100.</p>
         </div>
         {found && found.length === 0 && <p className="mt-3 text-cloud">No investor-relations company found with that name. It may not be set up on TapCard yet.</p>}
         {found && found.length > 0 && (

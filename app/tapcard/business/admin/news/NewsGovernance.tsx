@@ -4,20 +4,20 @@ import { useState } from "react";
 
 export interface DraftRow { id: number; kind: string; text: string; link: string; groups: string[]; createdBy: string; createdAt: string; websiteStatus: string }
 export interface AdminRow { email: string; senior: boolean }
-export interface AdviserLink { id: string; adviserName: string; status: string; canRegulatory: boolean; requestedBy: string; requestedAt: string }
+export interface AdviserLink { id: string; adviserName: string; status: string; canRegulatory: boolean; requestedBy: string; requestedAt: string; coversRequested?: boolean; coverStatus?: string; tier?: number | null; capStatedM?: number | null }
 export interface AuditRow { id: number; at: string; action: string; kind: string; actor: string; text: string; link: string; detail: Record<string, unknown> }
 
 const label: Record<string, string> = {
   posted: "Posted", submitted: "Written, waiting for approval", approved: "Approved", rejected: "Turned down", "draft-withdrawn": "Draft withdrawn",
   withdrawn: "Withdrawn", refused: "Refused", "approval-on": "Second approval switched on", "approval-off": "Second approval switched off",
   "senior-on": "Made senior", "senior-off": "Senior removed", "group-added": "Group added", "group-removed": "Group removed",
-  "adviser-requested": "Adviser asked for access", "adviser-approved": "Adviser approved", "adviser-declined": "Adviser declined", "adviser-revoked": "Adviser removed",
+  "adviser-requested": "Adviser asked for access", "adviser-cover-accepted": "Adviser's payment accepted", "adviser-cover-ended": "Adviser's payment ending", "adviser-approved": "Adviser approved", "adviser-declined": "Adviser declined", "adviser-revoked": "Adviser removed",
   "adviser-regulatory-on": "Adviser allowed regulatory news", "adviser-regulatory-off": "Adviser regulatory news switched off",
 };
 const when = (iso: string) => new Date(iso).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
 
 /// Who may post regulatory news, the optional second approval, headlines waiting for approval, and the audit trail.
-export default function NewsGovernance({ cardId, me, meSenior, approval, admins, drafts, audit, advisers = [], adviserOrgId }: { cardId: string; me: string; meSenior: boolean; approval: boolean; admins: AdminRow[]; drafts: DraftRow[]; audit: AuditRow[]; advisers?: AdviserLink[]; adviserOrgId?: string }) {
+export default function NewsGovernance({ cardId, me, meSenior, approval, admins, drafts, audit, advisers = [], adviserOrgId, cover = [] }: { cardId: string; me: string; meSenior: boolean; approval: boolean; admins: AdminRow[]; drafts: DraftRow[]; audit: AuditRow[]; advisers?: AdviserLink[]; adviserOrgId?: string; cover?: { linkId: string; adviserName: string; until: string | null; ending: boolean }[] }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -87,7 +87,9 @@ export default function NewsGovernance({ cardId, me, meSenior, approval, admins,
               <p className="text-cloud"><strong>{a.adviserName}</strong> <span className="text-sm">· {a.status === "pending" ? `asked by ${a.requestedBy}, ${when(a.requestedAt)}` : a.status === "approved" ? "approved" : "removed"}</span></p>
               {meSenior && a.status === "pending" && (
                 <div className="mt-2 flex flex-wrap gap-2">
-                  <button type="button" disabled={busy} onClick={() => void call({ action: "adviserDecide", linkId: a.id, approve: true })} className="btn-gold rounded-xl px-4 py-2 font-semibold disabled:opacity-60">Approve</button>
+                  {a.coversRequested && <p className="w-full text-sm text-cloud">{a.adviserName} also offers to <strong>pay for TapCard for your company</strong> (you would not be billed for it). You can take over billing yourselves at any time.</p>}
+                  <button type="button" disabled={busy} onClick={() => void call({ action: "adviserDecide", linkId: a.id, approve: true, acceptCover: false })} className="btn-gold rounded-xl px-4 py-2 font-semibold disabled:opacity-60">Approve{a.coversRequested ? ", we pay ourselves" : ""}</button>
+                  {a.coversRequested && <button type="button" disabled={busy} onClick={() => void call({ action: "adviserDecide", linkId: a.id, approve: true, acceptCover: true })} className="btn-gold rounded-xl px-4 py-2 font-semibold disabled:opacity-60">Approve and accept their payment</button>}
                   <button type="button" disabled={busy} onClick={() => void call({ action: "adviserDecide", linkId: a.id, approve: false })} className="rounded-xl px-4 py-2 font-semibold text-cloud ring-1 ring-slate disabled:opacity-60">Decline</button>
                 </div>
               )}
@@ -97,6 +99,10 @@ export default function NewsGovernance({ cardId, me, meSenior, approval, admins,
                     <input type="checkbox" className="mt-1" checked={a.canRegulatory} disabled={busy || !meSenior} onChange={(e) => void call({ action: "adviserSetRegulatory", linkId: a.id, on: e.target.checked })} />
                     <span>May post regulatory news (only its senior staff)</span>
                   </label>
+                  {cover.filter((c) => c.linkId === a.id).map((c) => (
+                    <p key={c.linkId} className="text-sm text-cloud">{c.ending ? `${a.adviserName}'s payment for you is ending` : `${a.adviserName} is paying for your TapCard`}{c.until ? ` (covered until ${when(c.until)})` : ""}.
+                      {meSenior && <> <button type="button" disabled={busy} onClick={() => { if (window.confirm(`Take over billing yourselves? ${a.adviserName}'s cover ends when its minimum term does, then you have 30 days to start your own plan on the Billing page.`)) void call({ action: "adviserEndCover", linkId: a.id }); }} className="ml-1 text-gold underline">Pay ourselves instead</button></>}</p>
+                  ))}
                   {meSenior && <button type="button" disabled={busy} onClick={() => { if (window.confirm(`Remove ${a.adviserName}? It loses all access at once.`)) void call({ action: "adviserRevoke", linkId: a.id }); }} className="rounded-xl px-3 py-1.5 text-sm font-semibold text-cloud ring-1 ring-slate disabled:opacity-60">Remove adviser</button>}
                 </div>
               )}

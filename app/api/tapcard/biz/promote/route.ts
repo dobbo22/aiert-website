@@ -11,8 +11,11 @@ export async function POST(req: Request) {
   const session = await requireBizUser();
   if (!session) return NextResponse.json({ error: "Please sign in again." }, { status: 401 });
   const org = await getOrg(session.orgId);
-  if (!org || !isOrgActive(org)) return NextResponse.json({ error: "Your company's billing isn't active, so offers and news are paused." }, { status: 402 });
   const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
+  // A company an adviser pays for (lib/tapcardAdviserBilling.ts) can post headlines and manage groups without its own billing; offers still follow its own plan.
+  const coveredAction = ["news", "approveNews", "rejectNews", "withdrawNews", "addGroup", "removeGroup"].includes(String(body?.action));
+  const covered = !!org && coveredAction && !isOrgActive(org) && (await (await import("@/lib/tapcardAdviserBilling")).adviserCoverActive(org.id));
+  if (!org || (!isOrgActive(org) && !covered)) return NextResponse.json({ error: "Your company's billing isn't active, so offers and news are paused." }, { status: 402 });
   const cardId = String(body?.cardId ?? "");
   const owns = ((await sql`SELECT 1 FROM tapcard_cards WHERE id = ${cardId} AND org_id = ${org.id}`) as unknown[]).length > 0;
   if (!owns) return NextResponse.json({ error: "That card isn't one of your company's." }, { status: 404 });

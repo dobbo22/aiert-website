@@ -3,6 +3,7 @@ import { approvedLink, requireAdviser } from "@/lib/tapcardAdvisers";
 import { getOrg, isOrgActive } from "@/lib/tapcardBiz";
 import { listedSummary } from "@/lib/tapcardListedAdmin";
 import { listFeedRows, getFeedConfig } from "@/lib/tapcardIrFeed";
+import { adviserCoverActive } from "@/lib/tapcardAdviserBilling";
 import { listGroupsWithCounts } from "@/lib/tapcardGroups";
 import { approvalRequired, pendingDrafts } from "@/lib/tapcardNewsPolicy";
 import PostHeadline from "../../admin/news/PostHeadline";
@@ -38,7 +39,7 @@ export default async function AdviserClientPage({ params }: { params: Promise<{ 
           ? (me.senior ? "You may post and approve regulatory news for this company." : "This company allows regulatory news for your firm, but only senior staff can post it. You can write general headlines.")
           : "This company has approved you for general headlines and groups. Regulatory news is posted by the company."}
       </p>
-      <PostHeadline cardId={card.id} cardName={card.company || card.name} active={isOrgActive(org)} latest={s.latestNews?.text ?? null} followers={s.canBeNotified} groups={groups} meSenior={mayRegulatory} approval={approval} adviserOrgId={orgId}
+      <PostHeadline cardId={card.id} cardName={card.company || card.name} active={isOrgActive(org) || (await adviserCoverActive(orgId))} latest={s.latestNews?.text ?? null} followers={s.canBeNotified} groups={groups} meSenior={mayRegulatory} approval={approval} adviserOrgId={orgId}
         feed={{ pageUrl: cfg?.pageUrl ?? null, lastCheckedAt: cfg?.lastCheckedAt ?? null, suggested: "", lastError: cfg?.lastError ?? "", rows }} />
       <NewsGovernance cardId={card.id} me={me.email} meSenior={mayRegulatory} approval={approval} admins={[]} drafts={(mayRegulatory ? drafts : drafts.filter((d) => d.createdBy === me.email)) as never} audit={[]} adviserOrgId={orgId} />
     </div>

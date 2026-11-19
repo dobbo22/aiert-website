@@ -8,8 +8,9 @@ import { approveDraftNews, isSeniorActor, rejectDraftNews, submitNews, withdrawN
 import * as policy from "@/lib/tapcardNewsPolicy";
 import { addGroup, listGroupsWithCounts, removeGroup, validAudience } from "@/lib/tapcardGroups";
 import { decideLink, getLink, revokeLink, setLinkRegulatory } from "@/lib/tapcardAdvisers";
+import { activateCover, endCover } from "@/lib/tapcardAdviserBilling";
 
-export const NEWS_ACTIONS = ["news", "approveNews", "rejectNews", "withdrawNews", "addGroup", "removeGroup", "setApproval", "setSenior", "adviserDecide", "adviserSetRegulatory", "adviserRevoke"] as const;
+export const NEWS_ACTIONS = ["news", "approveNews", "rejectNews", "withdrawNews", "addGroup", "removeGroup", "setApproval", "setSenior", "adviserDecide", "adviserSetRegulatory", "adviserRevoke", "adviserEndCover"] as const;
 export type Reply = { status: number; json: Record<string, unknown> };
 const fail = (r: { status: number; code: string; error: string; website?: unknown }): Reply => ({ status: r.status, json: { error: r.error, code: r.code, website: r.website } });
 const ok = (extra: Record<string, unknown> = {}): Reply => ({ status: 200, json: { ok: true, ...extra } });
@@ -83,6 +84,12 @@ export async function runNewsAction(actor: Actor, cardId: string, body: Record<s
     const approve = body.approve === true;
     if (!(await decideLink(actor.orgId, link.id, approve, by))) return { status: 409, json: { error: "That request has already been answered." } };
     await policy.audit({ orgId: actor.orgId, cardId, kind: "general", actor: by, action: approve ? "adviser-approved" : "adviser-declined", detail });
+    // The adviser offered to pay for this company: the company's own senior admin accepts that separately and knowingly.
+    if (approve && body.acceptCover === true && link.coversRequested) {
+      const c = await activateCover(link.id);
+      if (!c.ok) return ok({ coverError: c.error });
+      await policy.audit({ orgId: actor.orgId, cardId, kind: "general", actor: by, action: "adviser-cover-accepted", detail });
+    }
     return ok();
   }
   if (body.action === "adviserSetRegulatory") {
@@ -91,8 +98,16 @@ export async function runNewsAction(actor: Actor, cardId: string, body: Record<s
     await policy.audit({ orgId: actor.orgId, cardId, kind: "rns", actor: by, action: on ? "adviser-regulatory-on" : "adviser-regulatory-off", detail });
     return ok();
   }
+  if (body.action === "adviserEndCover") {
+    // The company takes over its own billing: the adviser's cover stops at the end of its committed term, then the 30-day grace begins.
+    const r = await endCover(link.id);
+    if (!r.ok) return { status: 409, json: { error: r.error } };
+    await policy.audit({ orgId: actor.orgId, cardId, kind: "general", actor: by, action: "adviser-cover-ended", detail: { ...detail, endsAt: r.endsAt.toISOString() } });
+    return ok({ endsAt: r.endsAt.toISOString() });
+  }
   if (body.action === "adviserRevoke") {
     if (!(await revokeLink(actor.orgId, link.id, by))) return { status: 409, json: { error: "That adviser has no access to remove." } };
+    await endCover(link.id).catch(() => {}); // removing an adviser also ends its cover (at the end of the committed term)
     await policy.audit({ orgId: actor.orgId, cardId, kind: "general", actor: by, action: "adviser-revoked", detail });
     return ok();
   }

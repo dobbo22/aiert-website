@@ -8,6 +8,7 @@ import { approvalRequired, isSenior, listAudit, pendingDrafts, seniorAdmins } fr
 import PostHeadline from "./PostHeadline";
 import NewsGovernance from "./NewsGovernance";
 import { linksForOrg } from "@/lib/tapcardAdvisers";
+import { adviserCoverActive, coverInfoForOrg } from "@/lib/tapcardAdviserBilling";
 
 export const dynamic = "force-dynamic";
 
@@ -38,9 +39,9 @@ export default async function BizNewsPage() {
 
   return (
     <div className="space-y-6">
-    <PostHeadline cardId={card.id} cardName={card.company || card.name} active={isOrgActive(org)} latest={s.latestNews?.text ?? null} followers={s.canBeNotified} groups={groups} meSenior={meSenior} approval={approval as boolean}
+    <PostHeadline cardId={card.id} cardName={card.company || card.name} active={isOrgActive(org) || (await adviserCoverActive(org.id))} latest={s.latestNews?.text ?? null} followers={s.canBeNotified} groups={groups} meSenior={meSenior} approval={approval as boolean}
       feed={{ pageUrl: cfg?.pageUrl ?? null, lastCheckedAt: cfg?.lastCheckedAt ?? null, suggested, lastError: cfg?.lastError ?? "", rows }} />
-    <NewsGovernance cardId={card.id} me={session.email} meSenior={meSenior} approval={approval as boolean} admins={admins as never} drafts={drafts as never} audit={audit as never} advisers={advisers as never} />
+    <NewsGovernance cardId={card.id} me={session.email} meSenior={meSenior} approval={approval as boolean} admins={admins as never} drafts={drafts as never} audit={audit as never} advisers={advisers as never} cover={await coverInfoForOrg(org.id).catch(() => [])} />
     </div>
   );
 }

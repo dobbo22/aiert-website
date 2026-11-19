@@ -40,6 +40,10 @@
       "schedule": "0 8 * * *"
     },
     {
+      "path": "/api/cron/adviser-billing",
+      "schedule": "15 8 * * *"
+    },
+    {
       "path": "/api/cron/push-daily",
       "schedule": "0 16 * * *"
     },
