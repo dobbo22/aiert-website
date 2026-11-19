@@ -17,7 +17,7 @@ const label: Record<string, string> = {
 const when = (iso: string) => new Date(iso).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
 
 /// Who may post regulatory news, the optional second approval, headlines waiting for approval, and the audit trail.
-export default function NewsGovernance({ cardId, me, meSenior, approval, admins, drafts, audit, advisers = [], adviserOrgId, cover = [] }: { cardId: string; me: string; meSenior: boolean; approval: boolean; admins: AdminRow[]; drafts: DraftRow[]; audit: AuditRow[]; advisers?: AdviserLink[]; adviserOrgId?: string; cover?: { linkId: string; adviserName: string; until: string | null; ending: boolean }[] }) {
+export default function NewsGovernance({ cardId, me, meSenior, approval, admins, drafts, audit, advisers = [], adviserOrgId, cover = [], section = "approvals" }: { cardId: string; me: string; meSenior: boolean; approval: boolean; admins: AdminRow[]; drafts: DraftRow[]; audit: AuditRow[]; advisers?: AdviserLink[]; adviserOrgId?: string; cover?: { linkId: string; adviserName: string; until: string | null; ending: boolean }[]; section?: "approvals" | "people" | "audit" }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -34,7 +34,8 @@ export default function NewsGovernance({ cardId, me, meSenior, approval, admins,
 
   return (
     <div className="space-y-6">
-      {drafts.length > 0 && (
+      {section === "approvals" && drafts.length === 0 && <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10"><h2 className="text-lg font-bold text-cloud">Waiting for approval</h2><p className="mt-2 text-cloud">Nothing is waiting. When second approval is on, regulatory headlines written by one person appear here for a different senior admin to approve.</p></div>}
+      {section === "approvals" && drafts.length > 0 && (
         <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-gold/40">
           <h2 className="text-lg font-bold text-cloud">Waiting for approval</h2>
           <ul className="mt-3 divide-y divide-white/10">
@@ -58,6 +59,7 @@ export default function NewsGovernance({ cardId, me, meSenior, approval, admins,
       )}
 
       {!adviserOrgId && <>
+      {section === "people" && <>
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">Who can post what</h2>
         <p className="mt-2 text-cloud">General headlines (events, webcasts, meeting invitations) can be posted by any admin. <strong>Regulatory</strong> headlines can only be posted by a senior admin, need a link, and are checked against your own announcements page. Withdrawing a regulatory headline is also senior only. <a className="text-gold underline" href="/business/investor-guide/setup#roles" target="_blank" rel="noopener noreferrer">Who should be senior?</a></p>
@@ -110,8 +112,10 @@ export default function NewsGovernance({ cardId, me, meSenior, approval, admins,
           ))}
         </ul>
       </div>
+      </>}
 
-      <details className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
+      {section === "audit" && <>
+      <details open className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <summary className="cursor-pointer text-lg font-bold text-cloud">Audit trail ({audit.length} most recent)</summary>
         <p className="mt-3 text-cloud">Every post, approval, refusal and withdrawal, with who did it. Entries cannot be edited or deleted here. <a className="text-gold underline" href="/api/tapcard/biz/news-audit">Download as CSV</a></p>
         <ul className="mt-3 divide-y divide-white/10">
@@ -127,6 +131,7 @@ export default function NewsGovernance({ cardId, me, meSenior, approval, admins,
           {audit.length === 0 && <li className="py-2 text-sm text-cloud">Nothing yet.</li>}
         </ul>
       </details>
+      </>}
       </>}
     </div>
   );

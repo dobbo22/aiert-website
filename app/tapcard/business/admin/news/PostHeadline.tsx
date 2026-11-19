@@ -11,7 +11,7 @@ export interface FeedProps { pageUrl: string | null; lastCheckedAt: string | nul
 
 const headlineOf = (title: string) => { const x = title.replace(/\s+/g, " ").trim(); return x.length <= MAX ? x : x.slice(0, MAX - 3).trimEnd() + "..."; };
 
-export default function PostHeadline({ cardId, cardName, active, latest, followers, feed, groups, meSenior, approval, adviserOrgId }: { cardId: string; cardName: string; active: boolean; latest: string | null; followers: number; feed: FeedProps; groups: GroupRow[]; meSenior: boolean; approval: boolean; adviserOrgId?: string }) {
+export default function PostHeadline({ cardId, cardName, active, latest, followers, feed, groups, meSenior, approval, adviserOrgId, part = "post" }: { cardId: string; cardName: string; active: boolean; latest: string | null; followers: number; feed: FeedProps; groups: GroupRow[]; meSenior: boolean; approval: boolean; adviserOrgId?: string; part?: "post" | "groups" }) {
   // An adviser works through its own route, and only reads the company's announcements page (the company controls that watch).
   const ro = !!adviserOrgId;
   const endpoint = ro ? "/api/tapcard/adviser/news" : "/api/tapcard/biz/promote";
@@ -86,6 +86,7 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
   const field = "mt-1 w-full rounded-lg bg-white px-3 py-2 text-[#111318] placeholder:text-[#4b5260]";
   return (
     <div className="space-y-6">
+      {part === "post" && <>
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">On your website</h2>
         <p className="mt-2 text-cloud">All data is taken from your own website only.</p>
@@ -144,8 +145,11 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
         )}
       </div>
 
-      <GroupsPanel cardId={cardId} initial={groups} adviserOrgId={adviserOrgId} />
+      </>}
 
+      {part === "groups" && <GroupsPanel cardId={cardId} initial={groups} adviserOrgId={adviserOrgId} />}
+
+      {part === "post" && <>
       <details id="headline-composer" open={composerOpen} onToggle={(e) => setComposerOpen((e.currentTarget as HTMLDetailsElement).open)} className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <summary className="cursor-pointer text-lg font-bold text-cloud">{hasFeed ? `Write your own headline for ${cardName}` : `Post a headline for ${cardName}`}</summary>
         <p className="mt-3 text-cloud">Never post an RNS before it is public, and say nothing that is not in it. A headline and a link to the full RNS is enough. For a meeting invitation or an event that needs no disclosure, check with your adviser first.
@@ -196,6 +200,7 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
           <button type="button" disabled={busy} onClick={() => send({ action: "withdrawNews" }, "Withdrawn.")} className="mt-3 rounded-xl px-4 py-2 font-semibold text-cloud ring-1 ring-slate">Withdraw this headline</button>
         </div>
       )}
+      </>}
     </div>
   );
 }

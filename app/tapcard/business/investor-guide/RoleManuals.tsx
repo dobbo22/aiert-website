@@ -29,7 +29,7 @@ function CompanyCommon({ senior }: { senior: boolean }) {
       <Task id="post-general" title="Post a general headline (an event, webcast or meeting invitation)">
         <Steps>
           <li>Open <strong>News &amp; RNS</strong>.</li>
-          <li>Under <em>Write your own headline</em>, leave <strong>Type</strong> on <em>General</em>.</li>
+          <li>Stay on the <strong>Post</strong> tab. Under <em>Write your own headline</em>, leave <strong>Type</strong> on <em>General</em>.</li>
           <li>Write the headline (up to 140 characters). Add a link if there is one, such as a webcast page.</li>
           <li>Choose <strong>Send to</strong>: everyone who follows, or only chosen groups.</li>
           <li>Press <strong>Post to followers</strong>. The post is recorded in the audit trail.</li>
@@ -38,7 +38,7 @@ function CompanyCommon({ senior }: { senior: boolean }) {
       </Task>
       <Task id="groups" title="Make a group and give out its QR code">
         <Steps>
-          <li>On <strong>News &amp; RNS</strong>, find <strong>Groups</strong> and type a name such as #Retail investors, then <strong>Add group</strong>.</li>
+          <li>Open <strong>News &amp; RNS</strong>, then the <strong>Audiences</strong> tab. Type a name such as #Retail investors, then <strong>Add group</strong>.</li>
           <li>Each group has a link and a <strong>Show QR code</strong> button. Use that code on the slide or page meant for that audience.</li>
           <li>When you post, choose <em>Only these groups</em> to send the notification to them alone.</li>
         </Steps>
@@ -54,7 +54,7 @@ function CompanyCommon({ senior }: { senior: boolean }) {
       {!senior && (
         <>
           <Task id="regulatory-general" title="What happens when I want to post a regulatory headline">
-            <p>Regulatory (RNS) headlines can only be posted by a senior admin. If your company has <strong>second approval</strong> switched on, you can still write one: choose <em>Regulatory</em>, add the link, and press <strong>Submit for approval</strong>. It is not sent. A senior admin approves it from <em>Waiting for approval</em> on the same page. You can withdraw your own draft there before it is approved.</p>
+            <p>Regulatory (RNS) headlines can only be posted by a senior admin. If your company has <strong>second approval</strong> switched on, you can still write one: choose <em>Regulatory</em>, add the link, and press <strong>Submit for approval</strong>. It is not sent. A senior admin approves it on the <strong>Approvals</strong> tab. You can withdraw your own draft there before it is approved.</p>
             <p>If second approval is off, ask a senior admin to post it.</p>
           </Task>
           <Task id="not-allowed" title="Things only a senior admin can do">
@@ -63,7 +63,7 @@ function CompanyCommon({ senior }: { senior: boolean }) {
               <li>Make someone senior, or switch second approval on or off.</li>
               <li>Approve, change or remove an adviser, or accept an adviser paying for the company.</li>
             </ul>
-            <p>If you need one of these, ask a senior admin. You can see who they are under <em>Who can post what</em> on News &amp; RNS.</p>
+            <p>If you need one of these, ask a senior admin. You can see who they are on the <strong>People &amp; advisers</strong> tab of News &amp; RNS.</p>
           </Task>
         </>
       )}
@@ -88,21 +88,21 @@ export function CompanySeniorManual() {
       </Task>
       <Task id="approve" title="Approve or turn down a headline someone else wrote">
         <Steps>
-          <li>Open <strong>News &amp; RNS</strong> and find <strong>Waiting for approval</strong> (a count shows when something is waiting).</li>
+          <li>Open <strong>News &amp; RNS</strong>, then the <strong>Approvals</strong> tab (a number shows when something is waiting).</li>
           <li>Read the headline and the line under it: it says whether the link was found on your announcements page.</li>
           <li>Press <strong>Approve and send</strong>, or <strong>Turn down</strong> with an optional note. If the link was not found you are asked to confirm, and that is recorded.</li>
         </Steps>
       </Task>
       <Task id="withdraw" title="Withdraw a headline">
-        <p>On News &amp; RNS, under <em>Currently showing</em>, press <strong>Withdraw this headline</strong>. Withdrawing a regulatory headline is senior only. It is recorded.</p>
+        <p>On the <strong>Post</strong> tab of News &amp; RNS, under <em>Currently showing</em>, press <strong>Withdraw this headline</strong>. Withdrawing a regulatory headline is senior only. It is recorded.</p>
       </Task>
       <Task id="seniors" title="Choose who is senior, and switch on second approval">
-        <p>Under <strong>Who can post what</strong> on News &amp; RNS, each admin has <em>Make senior</em> or <em>Make general only</em>. New admins start as general. Tick <strong>Second approval for regulatory headlines</strong> to make every regulatory post wait for a different senior admin. It needs at least two senior admins. The setup guide explains who to choose: <a href="/business/investor-guide/setup#roles">Who should be senior</a>.</p>
+        <p>On the <strong>People &amp; advisers</strong> tab of News &amp; RNS, under <em>Who can post what</em>, each admin has <em>Make senior</em> or <em>Make general only</em>. New admins start as general. Tick <strong>Second approval for regulatory headlines</strong> to make every regulatory post wait for a different senior admin. It needs at least two senior admins. The setup guide explains who to choose: <a href="/business/investor-guide/setup#roles">Who should be senior</a>.</p>
       </Task>
       <Task id="advisers" title="Approve an adviser, and decide what it may do">
         <Steps>
           <li>An adviser (an IR firm or broker) asks for access from its own portal. Your senior admins get an email.</li>
-          <li>Open <strong>News &amp; RNS</strong>, then <strong>Advisers</strong>. Nothing is allowed until you approve.</li>
+          <li>Open <strong>News &amp; RNS</strong>, then the <strong>People &amp; advisers</strong> tab. Nothing is allowed until you approve.</li>
           <li>If the adviser offers to pay for your TapCard, choose <strong>Approve and accept their payment</strong> (you are not billed), or <strong>Approve, we pay ourselves</strong>.</li>
           <li>Tick <strong>May post regulatory news</strong> only if you want that. It applies only to the adviser&apos;s own senior staff.</li>
           <li>Press <strong>Remove adviser</strong> any time: access ends at once.</li>
@@ -110,10 +110,10 @@ export function CompanySeniorManual() {
         <p>An approved adviser can write general headlines and manage groups. It can never change your settings, admins or billing.</p>
       </Task>
       <Task id="take-over-billing" title="Take over billing from an adviser">
-        <p>Under <strong>Advisers</strong>, press <strong>Pay ourselves instead</strong>. The adviser&apos;s payment ends when its minimum term ends, and you then have 30 days to start your own plan on <strong>Settings, Billing</strong>. Nothing is lost: followers, groups and history stay with you.</p>
+        <p>On the <strong>People &amp; advisers</strong> tab, press <strong>Pay ourselves instead</strong>. The adviser&apos;s payment ends when its minimum term ends, and you then have 30 days to start your own plan on <strong>Settings, Billing</strong>. Nothing is lost: followers, groups and history stay with you.</p>
       </Task>
       <Task id="audit" title="Read or download the audit trail">
-        <p>At the bottom of News &amp; RNS, open <strong>Audit trail</strong>. It lists every post, submission, approval, refusal, withdrawal, group change and adviser decision with who did it and when. <strong>Download as CSV</strong> gives the whole record. Nobody can edit or delete entries here.</p>
+        <p>Open <strong>News &amp; RNS</strong>, then the <strong>Audit trail</strong> tab. It lists every post, submission, approval, refusal, withdrawal, group change and adviser decision with who did it and when. <strong>Download as CSV</strong> gives the whole record. Nobody can edit or delete entries here.</p>
       </Task>
       <CompanyCommon senior />
     </div>
@@ -170,7 +170,7 @@ export function AdviserSeniorManual() {
         <p>Press <strong>Card and invoices</strong> on Your plan. It opens a secure page to change your card and see invoices. Quantities and cancellation follow the companies you cover, so they are not changed there.</p>
       </Task>
       <Task id="groups-adviser" title="Groups for a client">
-        <p>Open the company&apos;s headlines and use the <strong>Groups</strong> panel to add groups and get each group&apos;s link and QR code. Choose <em>Only these groups</em> when posting to send to them alone.</p>
+        <p>Open the company&apos;s headlines and use the <strong>Audiences</strong> tab to add groups and get each group&apos;s link and QR code. Choose <em>Only these groups</em> when posting to send to them alone.</p>
         <GroupsNote />
       </Task>
     </div>
@@ -195,7 +195,7 @@ export function AdviserGeneralManual() {
         <p>Ask a senior colleague. If the company has second approval switched on you can write one for approval: choose <em>Regulatory</em>, add the link, and press <strong>Submit for approval</strong>. It is not sent until someone senior approves it. You can withdraw your own draft.</p>
       </Task>
       <Task id="groups-adviser" title="Groups">
-        <p>Use the <strong>Groups</strong> panel on the company&apos;s headlines page. <a href="#groups-adviser">Groups need the next app update</a> before they affect followers.</p>
+        <p>Use the <strong>Audiences</strong> tab on the company&apos;s headlines page. <a href="#groups-adviser">Groups need the next app update</a> before they affect followers.</p>
       </Task>
     </div>
   );

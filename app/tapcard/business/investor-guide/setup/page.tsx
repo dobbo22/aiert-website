@@ -61,7 +61,7 @@ export default function InvestorSetupGuidePage() {
         <h3 className="mt-5 text-base font-bold">Who should be senior</h3>
         <ul>
           <li><strong>Senior means &ldquo;can release regulatory news&rdquo;.</strong> Choose the people who would be allowed to release an RNS anyway. Keep it to two or three.</li>
-          <li>The <strong>first admin</strong> (whoever signed up) is senior. <strong>Everyone added after that starts as general</strong>, and a senior admin makes them senior on <em>News &amp; RNS, Who can post what</em>.</li>
+          <li>The <strong>first admin</strong> (whoever signed up) is senior. <strong>Everyone added after that starts as general</strong>, and a senior admin makes them senior on the <em>People &amp; advisers</em> tab of News &amp; RNS.</li>
           <li>A company can have <strong>up to five admins</strong>.</li>
           <li>If you want <strong>second approval</strong>, you need at least <strong>two</strong> senior admins, because the person who writes a headline cannot approve it.</li>
           <li>Advisers are <strong>general by default</strong>. Allow regulatory news for an adviser only if it already posts announcements for you in practice, and then keep second approval on.</li>
@@ -75,12 +75,12 @@ export default function InvestorSetupGuidePage() {
           <li><strong>Sign in.</strong> Go to <a href="/business/admin">tapcard.aiert.co.uk/business/admin</a> and enter your email. We send a one-time link; it expires in 15 minutes.</li>
           <li><strong>Check your company card.</strong> On <em>Overview</em> press <em>Open the card</em>. This is what a shareholder sees: your logo, investor pages and the follow button. Tell us if anything is wrong.</li>
           <li><strong>Add your admins.</strong> <em>Settings, Admins</em>: type each person&apos;s email. They get a sign-in link. Everyone you add starts as a <em>general</em> admin.</li>
-          <li><strong>Choose who is senior.</strong> <em>News &amp; RNS, Who can post what</em>: press <em>Make senior</em> next to each person who can release regulatory news. At least one admin must always stay senior.</li>
-          <li><strong>Point TapCard at your announcements page.</strong> <em>News &amp; RNS, On your website</em>: paste the address and press <em>Start watching</em>. What is on the page now is marked <em>Earlier</em>; new items are marked <em>New</em>. This is also what regulatory headlines are checked against.</li>
+          <li><strong>Choose who is senior.</strong> <em>News &amp; RNS, People &amp; advisers tab</em>: press <em>Make senior</em> next to each person who can release regulatory news. At least one admin must always stay senior.</li>
+          <li><strong>Point TapCard at your announcements page.</strong> <em>News &amp; RNS, Post tab, On your website</em>: paste the address and press <em>Start watching</em>. What is on the page now is marked <em>Earlier</em>; new items are marked <em>New</em>. This is also what regulatory headlines are checked against.</li>
           <li><strong>Decide on second approval.</strong> Switch on <em>Second approval for regulatory headlines</em> if you want a second pair of eyes before anything goes out. Look at the <a href="#examples">examples</a>.</li>
           <li><strong>Add your team cards.</strong> <em>Cards &amp; QR, Team cards</em>: the chair, CEO, CFO and IR contact each get a card and QR code. A shareholder who follows through a person follows the company.</li>
           <li><strong>Set your privacy notice.</strong> <em>Settings, Privacy notice</em>: add the link to your own notice. The app shows it next to the form where a shareholder chooses to share their name and email.</li>
-          <li><strong>Optional: groups.</strong> <em>News &amp; RNS, Groups</em>: for example #Retail investors or #IPO clients, each with its own link and QR code, so you can send a headline to one audience. Groups take effect once the next app update is out.</li>
+          <li><strong>Optional: groups.</strong> <em>News &amp; RNS, Audiences tab</em>: for example #Retail investors or #IPO clients, each with its own link and QR code, so you can send a headline to one audience. Groups take effect once the next app update is out.</li>
           <li><strong>Optional: bring in an adviser.</strong> See <a href="#advisers">below</a>.</li>
           <li><strong>Test before you go public.</strong> Follow your own card from your own phone, post a harmless general headline, and check it arrives. Look at the audit trail to see it recorded.</li>
           <li><strong>Put the QR code where shareholders look.</strong> Download it from <em>Cards &amp; QR, Company card</em>. Use it on results slides, the annual report, the AGM notice and your website. For an AGM or roadshow make an <em>Event</em> code (see the <a href="/business/investor-guide#running-an-event">manual</a>).</li>
@@ -103,7 +103,7 @@ export default function InvestorSetupGuidePage() {
         <h2>If you work with an adviser</h2>
         <Steps>
           <li>Ask your adviser to <strong>ask for access</strong> from its portal at <a href="/business/adviser">tapcard.aiert.co.uk/business/adviser</a>. Your senior admins get an email.</li>
-          <li>Open <em>News &amp; RNS, Advisers</em>. <strong>Nothing is allowed until you approve.</strong> If you do not know the firm, decline.</li>
+          <li>Open <em>News &amp; RNS, People &amp; advisers tab</em>. <strong>Nothing is allowed until you approve.</strong> If you do not know the firm, decline.</li>
           <li>If the adviser offers to pay for your TapCard, choose <strong>Approve and accept their payment</strong> and you are not billed. Otherwise choose <strong>Approve, we pay ourselves</strong>.</li>
           <li>Decide on <strong>regulatory news</strong>. The default is no. If you tick it, it applies only to the adviser&apos;s senior staff.</li>
           <li>You can <strong>remove the adviser</strong> at any time, and access ends at once. Everything the adviser does is in your audit trail, named as &ldquo;person (firm)&rdquo;.</li>
@@ -139,9 +139,9 @@ export default function InvestorSetupGuidePage() {
       <section id="routine">
         <h2>Keeping it in order</h2>
         <ul>
-          <li><strong>Each month:</strong> open the audit trail and skim it. Download the CSV if you keep records.</li>
+          <li><strong>Each month:</strong> open <em>News &amp; RNS, Audit trail</em> and skim it. Download the CSV if you keep records.</li>
           <li><strong>When someone leaves:</strong> remove them under <em>Settings, Admins</em> the same day. If they were senior, make sure at least two seniors remain if you use second approval.</li>
-          <li><strong>When you change adviser:</strong> remove the old one on <em>News &amp; RNS, Advisers</em> and approve the new one. Followers and history stay with you.</li>
+          <li><strong>When you change adviser:</strong> remove the old one on <em>News &amp; RNS, People &amp; advisers</em> and approve the new one. Followers and history stay with you.</li>
           <li><strong>Each year:</strong> check who is senior, and whether second approval and any adviser&apos;s regulatory permission are still what you want.</li>
         </ul>
         <p className="mt-2">Questions: <a href="mailto:enquiries@aiert.co.uk">enquiries@aiert.co.uk</a>.</p>

@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   if (r.created) {
     await ensurePolicySchema();
     const seniors = (await sql`SELECT email FROM tapcard_biz_admins WHERE org_id = ${org.id} AND role <> 'manager' AND senior`) as { email: string }[];
-    for (const s of seniors) await sendAdviserRequestEmail(s.email, org.name, me.adviserName, me.email, body?.covers === true, "https://tapcard.aiert.co.uk/business/admin/news#advisers").catch((e) => console.error("adviser request email failed:", e));
+    for (const s of seniors) await sendAdviserRequestEmail(s.email, org.name, me.adviserName, me.email, body?.covers === true, "https://tapcard.aiert.co.uk/business/admin/news?tab=people#advisers").catch((e) => console.error("adviser request email failed:", e));
     const card = ((await sql`SELECT id FROM tapcard_cards WHERE org_id = ${org.id} ORDER BY created_at LIMIT 1`) as { id: string }[])[0];
     await audit({ orgId: org.id, cardId: card?.id ?? "", kind: "general", actor: `${me.email} (${me.adviserName})`, action: "adviser-requested" });
   }
