@@ -1,5 +1,6 @@
 // The rules for posting a headline, in one place so the route stays thin and the rules can be tested. See tapcardNewsPolicy.ts.
 import { adviserApproverEmails } from "@/lib/tapcardAdvisers";
+import { isThirdPartyRegulatoryUrl, THIRD_PARTY_MESSAGE } from "@/lib/tapcardRegulatoryHosts";
 import {
   approvalRequired, audit, checkAgainstWebsite, closeDraft, createDraft, getDraft, isSenior, lastPostedKind, reopenDraft, seniorCount,
   type NewsKind, type WebsiteCheck,
@@ -31,6 +32,11 @@ const siteMessage = (w: WebsiteCheck) =>
 export async function submitNews(i: { actor: Actor; cardId: string; kind: NewsKind; text: string; link: string; groups: string[]; override: boolean; post: PostFn }): Promise<FlowResult> {
   const { actor, cardId, kind, text, link, groups } = i;
   const base = { orgId: actor.orgId, cardId, kind, actor: who(actor), text, link, groups };
+  // A headline links only to the company's own website: never to RNS or a news site, whoever posts and whatever the override.
+  if (link.trim() && isThirdPartyRegulatoryUrl(link)) {
+    await audit({ ...base, action: "refused", detail: { reason: "third-party regulatory link" } });
+    return { ok: false, status: 400, code: "third_party_link", error: THIRD_PARTY_MESSAGE };
+  }
   if (kind === "general") {
     const r = await i.post({ text, link, groups });
     if (!r.ok) return { ok: false, status: 400, code: "rejected", error: r.error };
@@ -69,6 +75,7 @@ export async function approveDraftNews(i: { actor: Actor; draftId: number; overr
   const base = { orgId: actor.orgId, cardId: d.cardId, kind: d.kind, actor: who(actor), text: d.text, link: d.link, groups: d.groups };
   if (!(await isSeniorActor(actor))) return { ok: false, status: 403, code: "not_senior", error: "Only a senior admin can approve regulatory news." };
   if (d.createdBy === actor.email.toLowerCase()) return { ok: false, status: 403, code: "own_draft", error: "A different senior admin has to approve this. You wrote it." };
+  if (d.link.trim() && isThirdPartyRegulatoryUrl(d.link)) return { ok: false, status: 400, code: "third_party_link", error: THIRD_PARTY_MESSAGE };
   const website = await checkAgainstWebsite(d.cardId, d.link, d.text);
   if (notOnSite(website) && !i.override) return { ok: false, status: 409, code: "not_on_website", error: siteMessage(website), website };
   if (!(await closeDraft(actor.orgId, d.id, "approved", actor.email.toLowerCase()))) return { ok: false, status: 409, code: "gone", error: "Someone else has just dealt with this headline." };

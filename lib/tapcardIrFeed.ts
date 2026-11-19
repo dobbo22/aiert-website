@@ -1,6 +1,7 @@
 import sql from "@/lib/db";
 import { readLimited, safeFetch } from "@/lib/siteIcon";
 import { parseAnnouncements, type FeedItem } from "@/lib/tapcardIrParse";
+import { isThirdPartyRegulatoryUrl, THIRD_PARTY_MESSAGE } from "@/lib/tapcardRegulatoryHosts";
 
 // A listed company's own announcements page, read so the admin can offer each new announcement as a one-tap post. Only the company's
 // own page (or its RSS feed) is read: never Investegate or the London Stock Exchange.
@@ -70,12 +71,15 @@ export async function saveFeedPage(cardId: string, pageUrl: string): Promise<{ o
 }
 
 async function readPage(pageUrl: string): Promise<{ ok: true; items: FeedItem[] } | { ok: false; error: string }> {
+  if (isThirdPartyRegulatoryUrl(pageUrl)) return { ok: false, error: THIRD_PARTY_MESSAGE };
   try {
     const page = await safeFetch(pageUrl);
     if (!page || !page.res.ok) return { ok: false, error: "We couldn't open that page." };
     const buf = await readLimited(page.res, 2 * 1024 * 1024);
     if (!buf) return { ok: false, error: "That page is too large to read." };
-    return { ok: true, items: parseAnnouncements(buf.toString("utf8"), page.url.toString()) };
+    if (isThirdPartyRegulatoryUrl(page.url.toString())) return { ok: false, error: THIRD_PARTY_MESSAGE };
+    // Links on the company's own page that point out to RNS or a news service are never offered as posts.
+    return { ok: true, items: parseAnnouncements(buf.toString("utf8"), page.url.toString()).filter((i) => !isThirdPartyRegulatoryUrl(i.url)) };
   } catch {
     return { ok: false, error: "We couldn't read that page." };
   }

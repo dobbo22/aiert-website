@@ -3,6 +3,7 @@ import sql from "@/lib/db";
 import { requireBizSession } from "@/lib/tapcardBizSession";
 import { cleanPageUrl, saveFeedPage, setItemStatus, syncFeed } from "@/lib/tapcardIrFeed";
 import { isListedCard } from "@/lib/tapcardShare";
+import { isThirdPartyRegulatoryUrl, THIRD_PARTY_MESSAGE } from "@/lib/tapcardRegulatoryHosts";
 
 // A listed company's announcements page: save its address (and read it once), or ignore / restore one announcement. Admins only.
 export async function POST(req: Request) {
@@ -16,6 +17,7 @@ export async function POST(req: Request) {
   if (body?.action === "save") {
     const pageUrl = cleanPageUrl(body.pageUrl);
     if (!pageUrl) return NextResponse.json({ error: "Enter the web address of the page that lists your announcements." }, { status: 400 });
+    if (isThirdPartyRegulatoryUrl(pageUrl)) return NextResponse.json({ error: THIRD_PARTY_MESSAGE }, { status: 400 });
     const r = await saveFeedPage(cardId, pageUrl);
     return r.ok ? NextResponse.json({ ok: true, found: r.found }) : NextResponse.json({ error: r.error }, { status: 400 });
   }
