@@ -19,7 +19,7 @@ const MAX_PER_SEND = 5000;
 const BUNDLE_ID = "com.mailbroom.tapcard";
 
 let ready: Promise<unknown> | null = null;
-function ensureSchema(): Promise<unknown> {
+export function ensureSchema(): Promise<unknown> {
   if (!ready) {
     ready = sql`
       CREATE TABLE IF NOT EXISTS tapcard_push_devices (

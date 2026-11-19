@@ -63,6 +63,10 @@ test("a news send goes only to the chosen group; no groups means everyone; unfol
   await pushToFollowers(card, "news", { title: "t", body: "b", ref: "3" });
   assert.deepEqual(sentTo.sort(), ["tokA", "tokB", "tokC"], "no audience = every follower");
 
+  await db`INSERT INTO tapcard_followers (card_id, follower_hash) VALUES (${card}, 'hA'), (${card}, 'hB') ON CONFLICT DO NOTHING`.catch(async () => { await (await import("../lib/tapcardOffers")).setFollower(card, "x-seed-follower-1", true); });
+  const counts = await g.listGroupsWithCounts(card);
+  assert.ok(counts.every((c) => typeof c.members === "number" && typeof c.reachable === "number"), "the admin sees member and reachable counts");
+
   await g.leaveAllGroups(card, "hA");
   sentTo.length = 0;
   await db`DELETE FROM tapcard_push_log`; // the weekly cap is not what is being tested here

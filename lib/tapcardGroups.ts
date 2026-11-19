@@ -49,16 +49,23 @@ export async function listGroups(cardId: string): Promise<CardGroup[]> {
   return (await sql`SELECT slug, label FROM tapcard_card_groups WHERE card_id = ${cardId} ORDER BY created_at, slug`) as CardGroup[];
 }
 
-/// Same list with how many followers are in each (for the admin only).
-export async function listGroupsWithCounts(cardId: string): Promise<(CardGroup & { members: number })[]> {
+/// Same list with how many followers are in each, and how many of those a news notification can reach now (News on and a push token). Admin only.
+export async function listGroupsWithCounts(cardId: string): Promise<(CardGroup & { members: number; reachable: number })[]> {
   await ensureGroupSchema();
+  await (await import("@/lib/tapcardPush")).ensureSchema();
   const rows = (await sql`
-    SELECT g.slug, g.label, (SELECT COUNT(*)::int FROM tapcard_follower_groups f
-      JOIN tapcard_followers t ON t.card_id = f.card_id AND t.follower_hash = f.follower_hash
-      WHERE f.card_id = g.card_id AND f.slug = g.slug) AS members
+    SELECT g.slug, g.label,
+      (SELECT COUNT(*)::int FROM tapcard_follower_groups f
+        JOIN tapcard_followers t ON t.card_id = f.card_id AND t.follower_hash = f.follower_hash
+        WHERE f.card_id = g.card_id AND f.slug = g.slug) AS members,
+      (SELECT COUNT(*)::int FROM tapcard_follower_groups f
+        JOIN tapcard_followers t ON t.card_id = f.card_id AND t.follower_hash = f.follower_hash
+        JOIN tapcard_push_prefs p ON p.card_id = f.card_id AND p.follower_hash = f.follower_hash AND p.news
+        JOIN tapcard_push_devices d ON d.follower_hash = f.follower_hash
+        WHERE f.card_id = g.card_id AND f.slug = g.slug) AS reachable
     FROM tapcard_card_groups g WHERE g.card_id = ${cardId} ORDER BY g.created_at, g.slug
-  `) as (CardGroup & { members: number })[];
-  return rows.map((r) => ({ ...r, members: Number(r.members) }));
+  `) as (CardGroup & { members: number; reachable: number })[];
+  return rows.map((r) => ({ ...r, members: Number(r.members), reachable: Number(r.reachable) }));
 }
 
 export async function addGroup(cardId: string, input: unknown): Promise<{ ok: true; group: CardGroup } | { ok: false; error: string }> {

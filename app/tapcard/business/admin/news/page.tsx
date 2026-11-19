@@ -3,6 +3,7 @@ import { getOrg, isOrgActive } from "@/lib/tapcardBiz";
 import { listedSummary } from "@/lib/tapcardListedAdmin";
 import { listFeedRows, syncFeed } from "@/lib/tapcardIrFeed";
 import sql from "@/lib/db";
+import { listGroupsWithCounts } from "@/lib/tapcardGroups";
 import PostHeadline from "./PostHeadline";
 
 export const dynamic = "force-dynamic";
@@ -27,8 +28,10 @@ export default async function BizNewsPage() {
     suggested = links.find((l) => /announcement|rns|regulatory|news/i.test(l.label ?? "") && /^https:\/\//.test(l.value ?? ""))?.value ?? suggested;
   } catch { /* keep the website */ }
 
+  const groups = await listGroupsWithCounts(card.id).catch(() => []);
+
   return (
-    <PostHeadline cardId={card.id} cardName={card.company || card.name} active={isOrgActive(org)} latest={s.latestNews?.text ?? null} followers={s.canBeNotified}
+    <PostHeadline cardId={card.id} cardName={card.company || card.name} active={isOrgActive(org)} latest={s.latestNews?.text ?? null} followers={s.canBeNotified} groups={groups}
       feed={{ pageUrl: cfg?.pageUrl ?? null, lastCheckedAt: cfg?.lastCheckedAt ?? null, suggested, lastError: cfg?.lastError ?? "", rows }} />
   );
 }
