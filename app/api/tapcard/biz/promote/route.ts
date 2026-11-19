@@ -35,13 +35,27 @@ export async function POST(req: Request) {
     case "withdrawOffer":
       await clearOffers(cardId);
       return NextResponse.json({ ok: true });
+    case "addGroup": {
+      const { addGroup, listGroupsWithCounts } = await import("@/lib/tapcardGroups");
+      const g = await addGroup(cardId, body.name);
+      if (!g.ok) return NextResponse.json({ error: g.error }, { status: 400 });
+      return NextResponse.json({ ok: true, group: g.group, groups: await listGroupsWithCounts(cardId) });
+    }
+    case "removeGroup": {
+      const { removeGroup, listGroupsWithCounts } = await import("@/lib/tapcardGroups");
+      await removeGroup(cardId, String(body.slug ?? ""));
+      return NextResponse.json({ ok: true, groups: await listGroupsWithCounts(cardId) });
+    }
     case "news": {
+      const { validAudience } = await import("@/lib/tapcardGroups");
+      const aud = await validAudience(cardId, body.groups);
+      if (!aud.ok) return NextResponse.json({ error: aud.error }, { status: 400 });
       const r = await setAnnouncement(cardId, body.text, body.link);
       if (!r.ok) return NextResponse.json({ error: r.error }, { status: 400 });
       const card = ((await sql`SELECT name, company FROM tapcard_cards WHERE id = ${cardId}`) as { name: string; company: string }[])[0];
       const posted = await publicAnnouncement(cardId);
       after(() => pushToFollowers(cardId, "news", { title: card?.company || card?.name || "News", body: posted?.text ?? String(body.text ?? "").trim().slice(0, 140), ref: posted ? String(posted.id) : `a${Date.now()}`,
-        extra: posted ? { announcementId: posted.id, link: posted.link ?? "", postedAt: posted.postedAt } : undefined }));
+        extra: posted ? { announcementId: posted.id, link: posted.link ?? "", postedAt: posted.postedAt } : undefined, groups: aud.groups }));
       return NextResponse.json({ ok: true });
     }
     case "withdrawNews":

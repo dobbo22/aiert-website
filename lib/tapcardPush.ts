@@ -191,7 +191,8 @@ async function fcmSend(token: string, title: string, body: string, data: Record<
 // ---- sending
 
 /// `extra` rides along in the notification data (a news post carries its id, link and time so the apps can show it at once).
-export interface PushMessage { title: string; body: string; ref: string; extra?: Record<string, string | number> }
+/// `groups` (slugs of the card's groups) limits the send to followers in at least one of them; empty or missing means every follower.
+export interface PushMessage { title: string; body: string; ref: string; extra?: Record<string, string | number>; groups?: string[] }
 
 /// Pushes one message to everyone who follows `cardId`, wants this kind, hasn't had two from this business this week,
 /// and hasn't already had this one (same kind + ref). Never throws: a failed push must not fail the post that caused it.
@@ -217,10 +218,13 @@ export async function pushToFollowers(cardId: string, kind: PushKind, msg: PushM
     const listed = await (await import("@/lib/tapcardShare")).isListedCard(cardId).catch(() => false);
     const capDays = listed ? 1 : 7;
     const capMax = listed ? LISTED_DAILY_CAP : WEEKLY_CAP;
+    const groups = (msg.groups ?? []).filter((g) => typeof g === "string" && g);
+    if (groups.length) await (await import("@/lib/tapcardGroups")).ensureGroupSchema();
     const rows = (await sql`
       SELECT p.follower_hash, d.platform, d.token
       FROM tapcard_push_prefs p JOIN tapcard_push_devices d ON d.follower_hash = p.follower_hash
       WHERE p.card_id = ${cardId}
+        AND (${groups.length} = 0 OR EXISTS (SELECT 1 FROM tapcard_follower_groups fg WHERE fg.card_id = p.card_id AND fg.follower_hash = p.follower_hash AND fg.slug = ANY(${groups}::text[])))
         AND (CASE ${kind} WHEN 'offers' THEN p.offers WHEN 'ending' THEN p.ending WHEN 'changes' THEN p.changes ELSE p.news END)
         AND (SELECT COUNT(*) FROM tapcard_push_log l WHERE l.card_id = p.card_id AND l.follower_hash = p.follower_hash AND l.sent_at > now() - make_interval(days => ${capDays})) < ${capMax}
         AND NOT EXISTS (SELECT 1 FROM tapcard_push_log l WHERE l.card_id = p.card_id AND l.follower_hash = p.follower_hash AND l.kind = ${kind} AND l.ref = ${msg.ref})
