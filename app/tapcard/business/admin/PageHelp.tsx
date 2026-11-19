@@ -2,7 +2,7 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import { helpFor } from "@/lib/guideLinks";
-import type { GuideRole } from "@/lib/tapcardGuideRole";
+import type { GuideRole } from "@/lib/guideRoles";
 
 /// The "? Help with this page" button in the header of the investor-relations admin and adviser portal: it opens the part of the
 /// manual (for the reader's role) or the setup guide that explains the page they are on, including the News tab.

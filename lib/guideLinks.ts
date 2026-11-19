@@ -1,13 +1,14 @@
 // Which part of the investor-relations manual or setup guide explains the page someone is on (the "Help with this page" link).
 // Pure, so it can be tested. Anchors are the ids in app/tapcard/business/investor-guide/{RoleManuals.tsx,page.tsx,setup/page.tsx}.
-import type { GuideRole } from "@/lib/tapcardGuideRole";
+import type { GuideRole } from "@/lib/guideRoles";
 
 export interface HelpTarget { href: string; label: string }
 const GUIDE = "/business/investor-guide";
 
 // Tasks that exist only for senior roles: a general admin or adviser is pointed at the closest thing they can use.
 const GENERAL_FALLBACK: Record<string, string> = { "post-regulatory": "regulatory-general", approve: "not-allowed", seniors: "not-allowed", advisers: "not-allowed", withdraw: "not-allowed", audit: "not-allowed", "take-over-billing": "not-allowed" };
-const ADVISER_MAP: Record<string, string> = { "post-general": "post-adviser", "post-regulatory": "post-adviser", approve: "post-adviser", groups: "groups-adviser" };
+const ADVISER_SENIOR_MAP: Record<string, string> = { "post-general": "post-adviser", "post-regulatory": "post-adviser", approve: "post-adviser", groups: "groups-adviser" };
+const ADVISER_GENERAL_MAP: Record<string, string> = { "post-general": "post-general", "post-regulatory": "regulatory-adviser", approve: "regulatory-adviser", groups: "groups-adviser" };
 
 /// The address of one task in the manual, for the given role (falling back to the nearest task that role can use).
 export function manualHref(role: GuideRole, anchor: string): string { return manual(role, anchor, "").href; }
@@ -15,7 +16,8 @@ export function manualHref(role: GuideRole, anchor: string): string { return man
 function manual(role: GuideRole, anchor: string, label: string): HelpTarget {
   let a = anchor;
   if (role === "company-general" && GENERAL_FALLBACK[a]) a = GENERAL_FALLBACK[a];
-  if ((role === "adviser-senior" || role === "adviser-general") && ADVISER_MAP[a]) a = ADVISER_MAP[a];
+  if (role === "adviser-senior" && ADVISER_SENIOR_MAP[a]) a = ADVISER_SENIOR_MAP[a];
+  if (role === "adviser-general" && ADVISER_GENERAL_MAP[a]) a = ADVISER_GENERAL_MAP[a];
   if (role === "adviser-general" && a === "ask") a = "signin"; // only senior staff ask companies for access
   return { href: `${GUIDE}?as=${role}${a ? `#${a}` : "#manual"}`, label };
 }

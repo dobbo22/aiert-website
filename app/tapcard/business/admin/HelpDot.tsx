@@ -1,5 +1,5 @@
 import { manualHref } from "@/lib/guideLinks";
-import type { GuideRole } from "@/lib/tapcardGuideRole";
+import type { GuideRole } from "@/lib/guideRoles";
 
 /// A small "?" beside a heading that opens the part of the manual explaining it, for the reader's role. For the setup guide pass `setupAnchor`.
 export default function HelpDot({ anchor, setupAnchor, role = "company-senior", label }: { anchor?: string; setupAnchor?: string; role?: GuideRole; label: string }) {

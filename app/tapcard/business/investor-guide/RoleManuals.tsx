@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { GuideRole } from "@/lib/tapcardGuideRole";
+import type { GuideRole } from "@/lib/guideRoles";
 
 // The manual for each role. It describes the screens as they are (app/tapcard/business/admin/*, app/tapcard/business/adviser/*): update it with them.
 

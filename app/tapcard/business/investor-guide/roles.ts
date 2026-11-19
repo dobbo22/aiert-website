@@ -1,4 +1,4 @@
-import type { GuideRole } from "@/lib/tapcardGuideRole";
+import type { GuideRole } from "@/lib/guideRoles";
 
 export const ROLE_INFO: Record<GuideRole, { label: string; who: string; summary: string }> = {
   "company-senior": { label: "Company: senior admin", who: "For example the CEO, CFO or company secretary.", summary: "Posts regulatory and general headlines, approves others' drafts, and controls who can do what, including advisers." },

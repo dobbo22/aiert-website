@@ -3,9 +3,8 @@ import { requireBizUser } from "@/lib/tapcardBizSession";
 import { requireAdviser } from "@/lib/tapcardAdvisers";
 import { isSenior } from "@/lib/tapcardNewsPolicy";
 
-export const GUIDE_ROLES = ["company-senior", "company-general", "adviser-senior", "adviser-general", "shareholder"] as const;
-export type GuideRole = (typeof GUIDE_ROLES)[number];
-export const isGuideRole = (v: unknown): v is GuideRole => typeof v === "string" && (GUIDE_ROLES as readonly string[]).includes(v);
+export { GUIDE_ROLES, isGuideRole, type GuideRole } from "@/lib/guideRoles";
+import type { GuideRole } from "@/lib/guideRoles";
 
 /// The role of the signed-in reader, or null when nobody is signed in (or it is AIERT support, who read the general guide).
 export async function detectGuideRole(): Promise<GuideRole | null> {
