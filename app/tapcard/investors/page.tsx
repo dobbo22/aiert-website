@@ -320,11 +320,14 @@ export default function InvestorsPage() {
     <main className="pitch min-h-screen px-4 py-12">
       <JsonLd data={FAQ_JSON_LD} />
       <div className="mx-auto max-w-5xl">
-        <a href="/" className="inline-flex items-center gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="https://www.aiert.co.uk/tapcard-icon.png" alt="" className="h-10 w-10 rounded-xl" />
-          <span className="text-xl font-bold text-cloud">TapCard</span>
-        </a>
+        <div className="flex items-center justify-between gap-4">
+          <a href="/" className="inline-flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="https://www.aiert.co.uk/tapcard-icon.png" alt="" className="h-10 w-10 rounded-xl" />
+            <span className="text-xl font-bold text-cloud">TapCard</span>
+          </a>
+          <a href="/business/sign-in" className="rounded-xl px-4 py-2 text-sm font-semibold text-cloud ring-1 ring-white/30">Sign in</a>
+        </div>
 
         <section className="mt-10">
           <p className="text-sm font-semibold uppercase tracking-wider text-teal">TapCard for investor relations · for listed companies and their advisers</p>
