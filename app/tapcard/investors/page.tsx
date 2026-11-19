@@ -113,7 +113,10 @@ const ADMIN_CONTROLS = [
 ];
 
 const ADMIN_SHOTS = [
-  { file: "overview", title: "Overview", body: "Who follows you, your latest headline, who shared their details and your events, at a glance." },
+  { file: "overview", title: "Overview", body: "Who follows you, how many can be notified, and what needs you: headlines to approve, an adviser who has asked, and the next step to take. Your latest headline, who shared their details and your events are below.", height: 900 },
+  { file: "approvals", title: "Approvals", body: "A regulatory headline written by one person waits here for a different senior administrator. TapCard shows whether its link was found on your own announcements page.", height: 560 },
+  { file: "people", title: "People and advisers", body: "Choose who is senior, switch on second approval, and approve or remove an adviser. The agreement, who pays and who owns the data are kept on a record you can read.", height: 1250 },
+  { file: "audit", title: "Audit trail", body: "Every post, approval, refusal and withdrawal, with who did it and when. Download it as a spreadsheet.", height: 790 },
   { file: "insights", title: "Insights", body: "Followers over time with your events and announcements marked, how each headline performed, and what kind of investors follow." },
   { file: "followers", title: "Followers", body: "The people who chose to share their name and email, how they followed and the event they came through, ready to download." },
   { file: "events", title: "Events", body: "A QR code for each AGM or roadshow, with a time slot for each firm on a day of visits, and who registered." },
@@ -211,7 +214,7 @@ export default function InvestorsPage() {
               src={`https://www.aiert.co.uk/tapcard-ir-admin-${a.file}.jpg`}
               alt={`${a.title} screen of the TapCard investor relations admin, showing an example company`}
               width={1000}
-              height={900}
+              height={"height" in a && a.height ? a.height : 900}
               loading="lazy"
               className="w-full rounded-xl ring-1 ring-white/10"
             />
