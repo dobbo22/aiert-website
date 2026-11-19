@@ -14,8 +14,8 @@ export default function ClientSwitcher({ current, companies }: { current: string
       <a href="/business/adviser" className="text-gold underline">← All companies</a>
       <span className="flex-1" />
       <button type="button" className={btn} disabled={i <= 0} onClick={() => go(companies[i - 1].orgId)} aria-label="Previous company">‹</button>
-      <select aria-label="Company" value={current} onChange={(e) => go(e.target.value)} className="max-w-[16rem] rounded-lg bg-white px-3 py-2 text-[#111318]">
-        {companies.map((c) => <option key={c.orgId} value={c.orgId}>{c.name}{c.badge ? ` (${c.badge} to approve)` : ""}</option>)}
+      <select aria-label="Company" value={current} onChange={(e) => go(e.target.value)} className="max-w-[22rem] rounded-lg bg-white px-3 py-2 text-[#111318]">
+        {companies.map((c) => <option key={c.orgId} value={c.orgId}>{c.badge ? `${c.name} · ${c.badge} to approve` : c.name}</option>)}
       </select>
       <button type="button" className={btn} disabled={i < 0 || i >= companies.length - 1} onClick={() => go(companies[i + 1].orgId)} aria-label="Next company">›</button>
     </div>

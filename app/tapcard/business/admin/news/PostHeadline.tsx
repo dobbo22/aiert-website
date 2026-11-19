@@ -89,8 +89,8 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
     <div className="space-y-6">
       {part === "post" && <>
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
-        <h2 className="text-lg font-bold text-cloud">On your website</h2>
-        <p className="mt-2 text-cloud">All data is taken from your own website only.</p>
+        <h2 className="text-lg font-bold text-cloud">{ro ? "On the company's website" : "On your website"}</h2>
+        <p className="mt-2 text-cloud">{ro ? "All data is taken from the company's own website only." : "All data is taken from your own website only."}</p>
         {editingPage ? (
           <div className="mt-4">
             <label className="block text-cloud">Your announcements page
@@ -153,7 +153,7 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
       {part === "post" && <>
       <details id="headline-composer" open={composerOpen} onToggle={(e) => setComposerOpen((e.currentTarget as HTMLDetailsElement).open)} className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <summary className="cursor-pointer text-lg font-bold text-cloud">{hasFeed ? `Write your own headline for ${cardName}` : `Post a headline for ${cardName}`}</summary>
-        <p className="mt-3 text-cloud">Never post an RNS before it is public, and say nothing that is not in it. A headline and a link to the full RNS is enough. For a meeting invitation or an event that needs no disclosure, check with your adviser first.
+        <p className="mt-3 text-cloud">Never post an RNS before it is public, and say nothing that is not in it. A headline and a link to the full RNS is enough. For a meeting invitation or an event that needs no disclosure, check with {ro ? "the company" : "your adviser"} first.
           {reach > 0 ? ` About ${reach} ${reach === 1 ? "follower" : "followers"} can be notified${audience.length ? " in the chosen groups" : ""}.` : " Nobody can be notified yet."}</p>
         <fieldset className="mt-4 text-cloud">
           <legend className="font-semibold">Type of headline<HelpDot anchor="post-regulatory" role={ro ? (meSenior ? "adviser-senior" : "adviser-general") : meSenior ? "company-senior" : "company-general"} label="Regulatory or general: how to choose" /></legend>
