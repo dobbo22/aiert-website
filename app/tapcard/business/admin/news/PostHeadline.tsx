@@ -11,11 +11,12 @@ export interface FeedProps { pageUrl: string | null; lastCheckedAt: string | nul
 
 const headlineOf = (title: string) => { const x = title.replace(/\s+/g, " ").trim(); return x.length <= MAX ? x : x.slice(0, MAX - 3).trimEnd() + "..."; };
 
-export default function PostHeadline({ cardId, cardName, active, latest, followers, feed, groups }: { cardId: string; cardName: string; active: boolean; latest: string | null; followers: number; feed: FeedProps; groups: GroupRow[] }) {
+export default function PostHeadline({ cardId, cardName, active, latest, followers, feed, groups, meSenior, approval }: { cardId: string; cardName: string; active: boolean; latest: string | null; followers: number; feed: FeedProps; groups: GroupRow[]; meSenior: boolean; approval: boolean }) {
   const [text, setText] = useState("");
   const [link, setLink] = useState("");
   // Empty = every follower; otherwise only followers in the ticked groups.
   const [audience, setAudience] = useState<string[]>([]);
+  const [kind, setKind] = useState<"general" | "rns">("general");
   const picked = groups.filter((g) => audience.includes(g.slug));
   const reach = audience.length ? picked.reduce((n, g) => n + g.reachable, 0) : followers;
   const [busy, setBusy] = useState(false);
@@ -65,12 +66,17 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
   }
   const fillHeadline = (r: FeedRow) => { setText(headlineOf(r.title)); setLink(r.url); setComposerOpen(true); setTimeout(() => document.getElementById("headline-composer")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); };
 
-  async function send(body: Record<string, unknown>, done: string) {
+  async function send(body: Record<string, unknown>, done: string, override = false) {
     setBusy(true); setMsg(null);
-    const res = await fetch("/api/tapcard/biz/promote", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cardId, ...body }) }).catch(() => null);
-    const data = res ? await res.json().catch(() => ({})) : {};
+    const res = await fetch("/api/tapcard/biz/promote", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cardId, ...body, ...(override ? { override: true } : {}) }) }).catch(() => null);
+    const data = (res ? await res.json().catch(() => ({})) : {}) as { error?: string; code?: string; outcome?: string };
     setBusy(false);
-    if (res?.ok) { setMsg({ ok: true, text: done }); setText(""); setLink(""); setAudience([]); setTimeout(() => window.location.reload(), 900); return; }
+    if (res?.ok) {
+      setMsg({ ok: true, text: data.outcome === "pending" ? "Written. It will be sent when a different senior admin approves it (see Waiting for approval below)." : done });
+      setText(""); setLink(""); setAudience([]); setTimeout(() => window.location.reload(), 900); return;
+    }
+    // Regulatory news that is not on the company's own announcements page: a senior admin may go ahead, and it is recorded.
+    if (data.code === "not_on_website" && !override && meSenior && window.confirm(`${data.error}\n\nPost it anyway? This will be recorded in the audit trail.`)) { await send(body, done, true); return; }
     setMsg({ ok: false, text: data.error ?? "Couldn't do that. Try again." });
   }
 
@@ -139,6 +145,13 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
         <summary className="cursor-pointer text-lg font-bold text-cloud">{hasFeed ? `Write your own headline for ${cardName}` : `Post a headline for ${cardName}`}</summary>
         <p className="mt-3 text-cloud">Never post an RNS before it is public, and say nothing that is not in it. A headline and a link to the full RNS is enough. For a meeting invitation or an event that needs no disclosure, check with your adviser first.
           {reach > 0 ? ` About ${reach} ${reach === 1 ? "follower" : "followers"} can be notified${audience.length ? " in the chosen groups" : ""}.` : " Nobody can be notified yet."}</p>
+        <fieldset className="mt-4 text-cloud">
+          <legend className="font-semibold">Type of headline</legend>
+          <label className="mt-2 flex items-start gap-2"><input type="radio" name="kind" className="mt-1" checked={kind === "general"} onChange={() => setKind("general")} /> <span>General: an event, webcast or meeting invitation</span></label>
+          <label className="mt-1 flex items-start gap-2"><input type="radio" name="kind" className="mt-1" checked={kind === "rns"} onChange={() => setKind("rns")} /> <span>Regulatory (RNS): a link is required and it is checked against your announcements page</span></label>
+          {kind === "rns" && !meSenior && !approval && <p className="mt-2 rounded-lg bg-red-500/20 px-3 py-2 text-sm">Only a senior admin can post regulatory news. Ask one to post it, or turn on second approval below so you can write it for them to approve.</p>}
+          {kind === "rns" && approval && <p className="mt-2 text-sm">Second approval is on: this will wait for a different senior admin before it is sent.</p>}
+        </fieldset>
         {groups.length > 0 && (
           <fieldset className="mt-4 text-cloud">
             <legend className="font-semibold">Send to</legend>
@@ -163,8 +176,8 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
           <span className="mt-1 block text-sm text-cloud">If the page asks people to register, as many webcast platforms do, they register there. TapCard only passes on the link.</span>
         </label>
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <button type="button" disabled={busy || !active || text.trim().length < 3} onClick={() => send({ action: "news", text: text.trim(), link: link.trim() || undefined, groups: audience.length ? audience : undefined }, audience.length ? "Posted. The chosen groups are being notified." : "Posted. Followers are being notified.")}
-            className="btn-gold rounded-xl px-5 py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-60">{busy ? "Working…" : "Post to followers"}</button>
+          <button type="button" disabled={busy || !active || text.trim().length < 3 || (kind === "rns" && !link.trim())} onClick={() => send({ action: "news", kind, text: text.trim(), link: link.trim() || undefined, groups: audience.length ? audience : undefined }, audience.length ? "Posted. The chosen groups are being notified." : "Posted. Followers are being notified.")}
+            className="btn-gold rounded-xl px-5 py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-60">{busy ? "Working…" : kind === "rns" && approval ? "Submit for approval" : "Post to followers"}</button>
           {active && text.trim().length < 3 && <span className="text-sm text-cloud">Write a headline to post it.</span>}
           {!active && <span className="text-cloud">Billing isn&apos;t active, so posting is paused.</span>}
         </div>

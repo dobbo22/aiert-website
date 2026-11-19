@@ -4,7 +4,9 @@ import { listedSummary } from "@/lib/tapcardListedAdmin";
 import { listFeedRows, syncFeed } from "@/lib/tapcardIrFeed";
 import sql from "@/lib/db";
 import { listGroupsWithCounts } from "@/lib/tapcardGroups";
+import { approvalRequired, isSenior, listAudit, pendingDrafts, seniorAdmins } from "@/lib/tapcardNewsPolicy";
 import PostHeadline from "./PostHeadline";
+import NewsGovernance from "./NewsGovernance";
 
 export const dynamic = "force-dynamic";
 
@@ -30,8 +32,14 @@ export default async function BizNewsPage() {
 
   const groups = await listGroupsWithCounts(card.id).catch(() => []);
 
+  const meSenior = await isSenior(org.id, session.email, session.support === true).catch(() => false);
+  const [approval, admins, drafts, audit] = await Promise.all([approvalRequired(org.id), seniorAdmins(org.id), pendingDrafts(org.id), listAudit(org.id, 50)]).catch(() => [false, [], [], []] as const);
+
   return (
-    <PostHeadline cardId={card.id} cardName={card.company || card.name} active={isOrgActive(org)} latest={s.latestNews?.text ?? null} followers={s.canBeNotified} groups={groups}
+    <div className="space-y-6">
+    <PostHeadline cardId={card.id} cardName={card.company || card.name} active={isOrgActive(org)} latest={s.latestNews?.text ?? null} followers={s.canBeNotified} groups={groups} meSenior={meSenior} approval={approval as boolean}
       feed={{ pageUrl: cfg?.pageUrl ?? null, lastCheckedAt: cfg?.lastCheckedAt ?? null, suggested, lastError: cfg?.lastError ?? "", rows }} />
+    <NewsGovernance cardId={card.id} me={session.email} meSenior={meSenior} approval={approval as boolean} admins={admins as never} drafts={drafts as never} audit={audit as never} />
+    </div>
   );
 }
