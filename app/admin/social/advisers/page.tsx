@@ -1,6 +1,6 @@
 import { adviserOverview } from "@/lib/tapcardAdviserAdmin";
 import { ADVISER_TERMS_VERSION, poundsPerMonth } from "@/lib/tapcardAdviserPricing";
-import { CreateAdviser, ExtendTrial, StaffEditor, TierSet } from "./AdvisersAdmin";
+import { ContractForm, CreateAdviser, ExtendTrial, StaffEditor, TierSet } from "./AdvisersAdmin";
 
 export const metadata = { title: "Advisers — Admin", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -54,7 +54,7 @@ export default async function AdvisersPage() {
                     <strong>Companies</strong>
                     {a.links.length === 0 ? <p style={{ margin: "6px 0" }}>No company has been asked yet.</p> : (
                       <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 4 }}>
-                        <thead><tr style={{ borderBottom: "1px solid rgba(255,255,255,.25)" }}>{["Company", "Access", "Cover", "Stated market cap", "Price band", "Monthly", "Minimum term to"].map((h) => <th key={h} style={cell}>{h}</th>)}</tr></thead>
+                        <thead><tr style={{ borderBottom: "1px solid rgba(255,255,255,.25)" }}>{["Company", "Access", "Cover", "Stated market cap", "Price band", "Monthly", "Minimum term to", "Agreement"].map((h) => <th key={h} style={cell}>{h}</th>)}</tr></thead>
                         <tbody>
                           {a.links.map((l) => (
                             <tr key={l.linkId} style={{ borderBottom: "1px solid rgba(255,255,255,.12)" }}>
@@ -65,6 +65,7 @@ export default async function AdvisersPage() {
                               <td style={cell}><TierSet linkId={l.linkId} tier={l.tier} suggested={l.suggestedTier} confirmed={l.tierConfirmed} /></td>
                               <td style={cell}>{l.monthlyPence ? poundsPerMonth(l.monthlyPence) : "–"}</td>
                               <td style={cell}>{day(l.committedUntil)}</td>
+                              <td style={cell}><ContractForm linkId={l.linkId} current={{ ref: l.contractRef, signedAt: l.contractSignedAt, signedBy: l.contractSignedBy, url: l.contractUrl }} /></td>
                             </tr>
                           ))}
                         </tbody>

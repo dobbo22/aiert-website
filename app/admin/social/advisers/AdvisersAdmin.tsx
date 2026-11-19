@@ -108,3 +108,34 @@ export function ExtendTrial({ adviserId }: { adviserId: string }) {
     </span>
   );
 }
+
+export function ContractForm({ linkId, current }: { linkId: string; current: { ref: string | null; signedAt: string | null; signedBy: string | null; url: string | null } }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [ref, setRef] = useState(current.ref ?? ""); const [signedAt, setSignedAt] = useState(current.signedAt ? current.signedAt.slice(0, 10) : "");
+  const [signedBy, setSignedBy] = useState(current.signedBy ?? ""); const [url, setUrl] = useState(current.url ?? "");
+  const [busy, setBusy] = useState(false); const [error, setError] = useState("");
+  async function go() {
+    setBusy(true); setError("");
+    const r = await post({ action: "recordContract", linkId, ref, signedAt, signedBy, url });
+    setBusy(false);
+    if (!r.ok) { setError(r.error ?? "Something went wrong."); return; }
+    setOpen(false); router.refresh();
+  }
+  return (
+    <div>
+      <div style={{ fontSize: 14 }}>{current.ref ? <>Agreement <strong>{current.ref}</strong>{current.signedAt ? `, signed ${new Date(current.signedAt).toLocaleDateString("en-GB")}` : ""}{current.signedBy ? ` by ${current.signedBy}` : ""}</> : <span style={{ color: "#FBBF24" }}>No signed agreement recorded</span>}</div>
+      <button type="button" style={{ ...quiet, padding: "2px 8px", fontSize: 13, marginTop: 4 }} onClick={() => setOpen((v) => !v)}>{open ? "Close" : current.ref ? "Update record" : "Record agreement"}</button>
+      {open && (
+        <div style={{ display: "grid", gap: 6, marginTop: 6, maxWidth: 320 }}>
+          <input style={field} value={ref} onChange={(e) => setRef(e.target.value)} placeholder="Agreement reference" />
+          <input style={field} type="date" value={signedAt} onChange={(e) => setSignedAt(e.target.value)} aria-label="Date signed" />
+          <input style={field} value={signedBy} onChange={(e) => setSignedBy(e.target.value)} placeholder="Signed for the company by" />
+          <input style={field} value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Link to the signed document (https://…)" />
+          <button type="button" style={gold} disabled={busy} onClick={go}>Save to the agreement record</button>
+          {error && <span style={{ color: "#fca5a5" }}>{error}</span>}
+        </div>
+      )}
+    </div>
+  );
+}

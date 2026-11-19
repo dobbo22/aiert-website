@@ -8,8 +8,8 @@
 // of that term. A company a paying adviser covers is "covered" (see adviserCoverActive) and keeps working; when cover ends or lapses it
 // gets a 30-day grace period to take over its own billing. Nothing is ever deleted because of billing.
 import sql from "@/lib/db";
-import { ensureAdviserSchema, getLink, type LinkRow } from "@/lib/tapcardAdvisers";
-import { ADVISER_TERMS_VERSION, ADVISER_TRIAL_DAYS, COVER_GRACE_DAYS, MIN_TERM_MONTHS, TRIAL_REMINDER_DAYS_BEFORE, monthlyTotalPence, tierByNumber, tierPriceId, tierQuantities } from "@/lib/tapcardAdviserPricing";
+import { ensureAdviserSchema, getLink, recordAgreement, type LinkRow } from "@/lib/tapcardAdvisers";
+import { DATA_TERMS_VERSION, ADVISER_TERMS_VERSION, ADVISER_TRIAL_DAYS, COVER_GRACE_DAYS, MIN_TERM_MONTHS, TRIAL_REMINDER_DAYS_BEFORE, monthlyTotalPence, tierByNumber, tierPriceId, tierQuantities } from "@/lib/tapcardAdviserPricing";
 
 const DAY = 86_400_000;
 const addMonths = (d: Date, n: number) => { const x = new Date(d); x.setUTCMonth(x.getUTCMonth() + n); return x; };
@@ -255,4 +255,24 @@ export async function runAdviserDaily(now = new Date(), api?: StripeLike): Promi
 export async function markReminded(adviserId: string): Promise<void> {
   await ensureAdviserSchema();
   await sql`UPDATE tapcard_advisers SET trial_reminded_at = now() WHERE id = ${adviserId}`;
+}
+
+/// Writes one line of the agreement record for a company and adviser: what happened, who did it, who pays, who owns the data, which terms
+/// were in force and the contract reference. Never throws (a failed record must not undo what the person did, but it is logged loudly).
+export async function recordAgreementEvent(linkId: string, event: string, actor: string, detail: Record<string, unknown> = {}): Promise<void> {
+  try {
+    const link = await getLink(linkId);
+    if (!link) return;
+    const a = await getAdviserBilling(link.adviserId);
+    const org = ((await sql`SELECT name FROM tapcard_biz_orgs WHERE id = ${link.orgId}`) as { name: string }[])[0];
+    const t = link.tier == null ? undefined : tierByNumber(link.tier);
+    const covered = link.coverStatus === "active" || link.coverStatus === "ending";
+    await recordAgreement({
+      orgId: link.orgId, adviserId: link.adviserId, linkId, event, actor,
+      payer: covered ? "adviser" : "company", dataOwner: org?.name ?? link.orgName, dataTermsVersion: DATA_TERMS_VERSION,
+      adviserTermsVersion: a?.termsVersion ?? "", adviserTermsAcceptedAt: a?.termsAcceptedAt ?? null, adviserTermsAcceptedBy: a?.termsAcceptedBy ?? "",
+      tier: link.tier, monthlyPence: covered ? t?.monthlyPence ?? null : null, committedUntil: link.committedUntil, contractRef: link.contractRef ?? "",
+      detail: { regulatoryAllowed: link.canRegulatory, coverStatus: link.coverStatus, ...detail },
+    });
+  } catch (e) { console.error("AGREEMENT RECORD FAILED", event, linkId, e); }
 }

@@ -157,3 +157,52 @@ test("Stripe events for advisers update status; unknown subscriptions are ignore
   const orgs = (await db`SELECT column_name FROM information_schema.columns WHERE table_name = 'tapcard_biz_orgs'`) as { column_name: string }[];
   assert.ok(!orgs.some((c) => /adviser|covered/.test(c.column_name)), "the Business org table has no adviser billing columns");
 });
+
+test("one adviser at a time, the data-ownership confirmation, and an append-only agreement record", async () => {
+  await setup();
+  const a = await import("../lib/tapcardAdvisers");
+  const { runNewsAction } = await import("../lib/tapcardNewsActions");
+  const ad = await import("../lib/tapcardAdviserAdmin");
+  await (await import("../lib/tapcardNewsPolicy")).ensurePolicySchema();
+  const orgC = (await (await import("../lib/tapcardBiz")).createOrg("Epsilon plc", "epsilon.com")).id;
+  await db`INSERT INTO tapcard_cards (id, name, company, org_id, label, edit_token_hash) VALUES ('cardE', 'E', 'Epsilon plc', ${orgC}, 'Business', 'h') ON CONFLICT DO NOTHING`;
+  await db`INSERT INTO tapcard_listed_cards (card_id) VALUES ('cardE') ON CONFLICT DO NOTHING`.catch(() => {});
+  await db`INSERT INTO tapcard_biz_admins (id, org_id, email, role, senior) VALUES ('ie', ${orgC}, 'ceo@epsilon.com', 'admin', true) ON CONFLICT DO NOTHING`;
+  const second = await a.createAdviser("Other Brokers", [{ email: "x@other.com", senior: true }]);
+  const company = { orgId: orgC, email: "ceo@epsilon.com" };
+
+  const r1 = await a.requestLink(adviserId, orgC, "tim@ifc.com", { capM: 20, covers: true });
+  const l1 = (r1 as { linkId: string }).linkId;
+  const r2 = await a.requestLink(second, orgC, "x@other.com", { capM: 20, covers: true });
+  assert.ok(r1.ok && r2.ok, "both can ask while nobody is approved");
+  // approval needs the confirmation
+  const noAck = await runNewsAction(company, "cardE", { action: "adviserDecide", linkId: l1, approve: true });
+  assert.equal(noAck.status, 400); assert.equal((noAck.json as { code: string }).code, "ack_required");
+  const ok = await runNewsAction(company, "cardE", { action: "adviserDecide", linkId: l1, approve: true, ackData: true, acceptCover: false });
+  assert.equal(ok.status, 200);
+  // a second adviser can neither be approved nor ask now
+  const l2 = (r2 as { linkId: string }).linkId;
+  const blocked = await runNewsAction(company, "cardE", { action: "adviserDecide", linkId: l2, approve: true, ackData: true });
+  assert.equal(blocked.status, 409); assert.equal((blocked.json as { code: string }).code, "one_adviser");
+  const third = await a.createAdviser("Third Firm", [{ email: "z@third.com", senior: true }]);
+  const ask = await a.requestLink(third, orgC, "z@third.com");
+  assert.equal(ask.ok, false);
+  // after removing the first adviser the company can change
+  assert.equal((await runNewsAction(company, "cardE", { action: "adviserRevoke", linkId: l1 })).status, 200);
+  assert.equal((await runNewsAction(company, "cardE", { action: "adviserDecide", linkId: l2, approve: true, ackData: true })).status, 200);
+
+  // AIERT records the signed agreement
+  assert.equal((await ad.adminRecordContract(l2, "x", "2026-11-20", "A CEO", "")).ok, false, "a reference is needed");
+  assert.equal((await ad.adminRecordContract(l2, "OTH-2026-01", "2026-11-20", "A. CEO", "http://insecure")).ok, false);
+  assert.ok((await ad.adminRecordContract(l2, "OTH-2026-01", "2026-11-20", "A. CEO", "https://docs.example/oth.pdf")).ok);
+
+  const rows = await a.listAgreement(orgC);
+  const events = rows.map((r) => r.event).reverse();
+  assert.deepEqual(events, ["adviser-approved", "adviser-removed", "adviser-approved", "contract-recorded"], "every step is on the record, oldest first");
+  const approved = rows.find((r) => r.event === "adviser-approved")!;
+  assert.equal(approved.dataOwner, "Epsilon plc", "the company is recorded as the data owner");
+  assert.ok(String(approved.detail.companyConfirmed).includes("owner and controller of its followers' data"), "the statement the company confirmed is kept");
+  assert.equal(approved.actor, "ceo@epsilon.com");
+  assert.equal(rows[0].contractRef, "OTH-2026-01", "the contract reference rides on later entries");
+  assert.ok(rows.every((r) => r.dataTermsVersion), "the terms version is recorded");
+});

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getLink, requireAdviser } from "@/lib/tapcardAdvisers";
-import { endCover } from "@/lib/tapcardAdviserBilling";
+import { endCover, recordAgreementEvent } from "@/lib/tapcardAdviserBilling";
 import { audit } from "@/lib/tapcardNewsPolicy";
 
 // An adviser stops covering a company. It still pays until the company's 6-month term ends; the company then has a 30-day grace period.
@@ -15,5 +15,6 @@ export async function POST(req: Request) {
   const r = await endCover(link.id);
   if (!r.ok) return NextResponse.json({ error: r.error }, { status: 409 });
   await audit({ orgId: link.orgId, cardId: "", kind: "general", actor: `${me.email} (${me.adviserName})`, action: "adviser-cover-ended", detail: { endsAt: r.endsAt.toISOString(), by: "adviser" } });
+  await recordAgreementEvent(link.id, "cover-ended", `${me.email} (${me.adviserName})`, { by: "adviser", endsAt: r.endsAt.toISOString() });
   return NextResponse.json({ ok: true, endsAt: r.endsAt.toISOString() });
 }

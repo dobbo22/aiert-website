@@ -8,7 +8,9 @@ import { approveDraftNews, isSeniorActor, rejectDraftNews, submitNews, withdrawN
 import * as policy from "@/lib/tapcardNewsPolicy";
 import { addGroup, listGroupsWithCounts, removeGroup, validAudience } from "@/lib/tapcardGroups";
 import { decideLink, getLink, revokeLink, setLinkRegulatory } from "@/lib/tapcardAdvisers";
-import { activateCover, endCover } from "@/lib/tapcardAdviserBilling";
+import { activateCover, endCover, recordAgreementEvent } from "@/lib/tapcardAdviserBilling";
+import { approvedLinkForOrg } from "@/lib/tapcardAdvisers";
+import { DATA_TERMS_VERSION, dataOwnershipStatement } from "@/lib/tapcardAdviserPricing";
 
 export const NEWS_ACTIONS = ["news", "approveNews", "rejectNews", "withdrawNews", "addGroup", "removeGroup", "setApproval", "setSenior", "adviserDecide", "adviserSetRegulatory", "adviserRevoke", "adviserEndCover"] as const;
 export type Reply = { status: number; json: Record<string, unknown> };
@@ -82,13 +84,21 @@ export async function runNewsAction(actor: Actor, cardId: string, body: Record<s
   const detail = { adviser: link.adviserName, linkId: link.id };
   if (body.action === "adviserDecide") {
     const approve = body.approve === true;
+    if (approve) {
+      // One adviser at a time, and the company confirms it stays the owner of its data.
+      const current = await approvedLinkForOrg(actor.orgId);
+      if (current && current.id !== link.id) return { status: 409, json: { error: `${current.adviserName} is your adviser. A company can have only one at a time: remove it first if you want to change.`, code: "one_adviser" } };
+      if (body.ackData !== true) return { status: 400, json: { error: "Please confirm the data ownership statement before approving.", code: "ack_required" } };
+    }
     if (!(await decideLink(actor.orgId, link.id, approve, by))) return { status: 409, json: { error: "That request has already been answered." } };
     await policy.audit({ orgId: actor.orgId, cardId, kind: "general", actor: by, action: approve ? "adviser-approved" : "adviser-declined", detail });
+    await recordAgreementEvent(link.id, approve ? "adviser-approved" : "adviser-declined", by, approve ? { companyConfirmed: dataOwnershipStatement(link.orgName, link.adviserName), dataTermsVersion: DATA_TERMS_VERSION, adviserOffersToPay: link.coversRequested, companyAcceptsPayment: body.acceptCover === true } : {});
     // The adviser offered to pay for this company: the company's own senior admin accepts that separately and knowingly.
     if (approve && body.acceptCover === true && link.coversRequested) {
       const c = await activateCover(link.id);
       if (!c.ok) return ok({ coverError: c.error });
       await policy.audit({ orgId: actor.orgId, cardId, kind: "general", actor: by, action: "adviser-cover-accepted", detail });
+      await recordAgreementEvent(link.id, "cover-accepted", by);
     }
     return ok();
   }
@@ -96,6 +106,7 @@ export async function runNewsAction(actor: Actor, cardId: string, body: Record<s
     const on = body.on === true;
     if (!(await setLinkRegulatory(actor.orgId, link.id, on))) return { status: 409, json: { error: "That adviser isn't approved." } };
     await policy.audit({ orgId: actor.orgId, cardId, kind: "rns", actor: by, action: on ? "adviser-regulatory-on" : "adviser-regulatory-off", detail });
+    await recordAgreementEvent(link.id, on ? "regulatory-allowed" : "regulatory-removed", by);
     return ok();
   }
   if (body.action === "adviserEndCover") {
@@ -103,12 +114,14 @@ export async function runNewsAction(actor: Actor, cardId: string, body: Record<s
     const r = await endCover(link.id);
     if (!r.ok) return { status: 409, json: { error: r.error } };
     await policy.audit({ orgId: actor.orgId, cardId, kind: "general", actor: by, action: "adviser-cover-ended", detail: { ...detail, endsAt: r.endsAt.toISOString() } });
+    await recordAgreementEvent(link.id, "cover-ended", by, { by: "company", endsAt: r.endsAt.toISOString(), companyTakesOverBilling: true });
     return ok({ endsAt: r.endsAt.toISOString() });
   }
   if (body.action === "adviserRevoke") {
     if (!(await revokeLink(actor.orgId, link.id, by))) return { status: 409, json: { error: "That adviser has no access to remove." } };
     await endCover(link.id).catch(() => {}); // removing an adviser also ends its cover (at the end of the committed term)
     await policy.audit({ orgId: actor.orgId, cardId, kind: "general", actor: by, action: "adviser-revoked", detail });
+    await recordAgreementEvent(link.id, "adviser-removed", by);
     return ok();
   }
   return { status: 400, json: { error: "Unknown action" } };

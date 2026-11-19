@@ -60,6 +60,34 @@ export function ensureAdviserSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_adviser_links ADD COLUMN IF NOT EXISTS cover_started_at TIMESTAMPTZ`)
       .then(() => sql`ALTER TABLE tapcard_adviser_links ADD COLUMN IF NOT EXISTS committed_until TIMESTAMPTZ`)
       .then(() => sql`ALTER TABLE tapcard_adviser_links ADD COLUMN IF NOT EXISTS cover_ends_at TIMESTAMPTZ`)
+      .then(() => sql`ALTER TABLE tapcard_adviser_links ADD COLUMN IF NOT EXISTS contract_ref TEXT`)
+      .then(() => sql`ALTER TABLE tapcard_adviser_links ADD COLUMN IF NOT EXISTS contract_signed_at TIMESTAMPTZ`)
+      .then(() => sql`ALTER TABLE tapcard_adviser_links ADD COLUMN IF NOT EXISTS contract_signed_by TEXT`)
+      .then(() => sql`ALTER TABLE tapcard_adviser_links ADD COLUMN IF NOT EXISTS contract_url TEXT`)
+      // The agreement record: an append-only ledger of what was agreed, by whom, who pays and who owns the data. Nothing here is edited or deleted.
+      .then(() => sql`
+        CREATE TABLE IF NOT EXISTS tapcard_adviser_agreements (
+          id BIGSERIAL PRIMARY KEY,
+          at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          org_id TEXT NOT NULL,
+          adviser_id TEXT NOT NULL,
+          link_id TEXT NOT NULL,
+          event TEXT NOT NULL,
+          actor TEXT NOT NULL,
+          payer TEXT NOT NULL DEFAULT '',
+          data_owner TEXT NOT NULL DEFAULT '',
+          data_terms_version TEXT NOT NULL DEFAULT '',
+          adviser_terms_version TEXT NOT NULL DEFAULT '',
+          adviser_terms_accepted_at TIMESTAMPTZ,
+          adviser_terms_accepted_by TEXT NOT NULL DEFAULT '',
+          tier INT,
+          monthly_pence INT,
+          committed_until TIMESTAMPTZ,
+          contract_ref TEXT NOT NULL DEFAULT '',
+          detail JSONB NOT NULL DEFAULT '{}'::jsonb
+        )
+      `)
+      .then(() => sql`CREATE INDEX IF NOT EXISTS tapcard_adviser_agreements_org ON tapcard_adviser_agreements (org_id, at DESC)`)
       .then(() => sql`
         CREATE TABLE IF NOT EXISTS tapcard_adviser_login_tokens (
           token_hash TEXT PRIMARY KEY,
@@ -140,11 +168,12 @@ export async function requireAdviser(): Promise<AdviserSession | null> {
 
 // ---- companies approve advisers
 
-export interface LinkRow { id: string; adviserId: string; adviserName: string; orgId: string; orgName: string; status: string; canRegulatory: boolean; requestedBy: string; requestedAt: string; tier: number | null; capStatedM: number | null; tierConfirmed: boolean; coversRequested: boolean; coverStatus: string; coverStartedAt: string | null; committedUntil: string | null; coverEndsAt: string | null }
+export interface LinkRow { id: string; adviserId: string; adviserName: string; orgId: string; orgName: string; status: string; canRegulatory: boolean; requestedBy: string; requestedAt: string; tier: number | null; capStatedM: number | null; tierConfirmed: boolean; coversRequested: boolean; coverStatus: string; coverStartedAt: string | null; committedUntil: string | null; coverEndsAt: string | null; contractRef: string | null; contractSignedAt: string | null; contractSignedBy: string | null; contractUrl: string | null }
 const iso = (v: unknown): string | null => (v ? new Date(v as string).toISOString() : null);
 const toLink = (r: Record<string, unknown>): LinkRow => ({ id: String(r.id), adviserId: String(r.adviser_id), adviserName: String(r.adviser_name ?? ""), orgId: String(r.org_id), orgName: String(r.org_name ?? ""), status: String(r.status), canRegulatory: r.can_regulatory === true, requestedBy: String(r.requested_by), requestedAt: new Date(r.requested_at as string).toISOString(),
   tier: r.tier == null ? null : Number(r.tier), capStatedM: r.cap_stated_m == null ? null : Number(r.cap_stated_m), tierConfirmed: r.tier_confirmed === true, coversRequested: r.covers_requested === true,
-  coverStatus: String(r.cover_status ?? "none"), coverStartedAt: iso(r.cover_started_at), committedUntil: iso(r.committed_until), coverEndsAt: iso(r.cover_ends_at) });
+  coverStatus: String(r.cover_status ?? "none"), coverStartedAt: iso(r.cover_started_at), committedUntil: iso(r.committed_until), coverEndsAt: iso(r.cover_ends_at),
+  contractRef: (r.contract_ref as string) ?? null, contractSignedAt: iso(r.contract_signed_at), contractSignedBy: (r.contract_signed_by as string) ?? null, contractUrl: (r.contract_url as string) ?? null });
 
 /// Listed companies an adviser can ask to work with (name search only; nothing else about them is shown).
 export async function findListedOrgs(q: string, limit = 8): Promise<{ orgId: string; name: string }[]> {
@@ -162,6 +191,8 @@ export async function requestLink(adviserId: string, orgId: string, requestedBy:
   await ensureAdviserSchema();
   const listed = ((await sql`SELECT 1 FROM tapcard_cards c JOIN tapcard_listed_cards l ON l.card_id = c.id WHERE c.org_id = ${orgId} LIMIT 1`) as unknown[]).length > 0;
   if (!listed) return { ok: false, error: "That company isn't set up for investor relations on TapCard." };
+  const other = (await sql`SELECT 1 FROM tapcard_adviser_links WHERE org_id = ${orgId} AND status = 'approved' AND adviser_id <> ${adviserId} LIMIT 1`) as unknown[];
+  if (other.length) return { ok: false, error: "This company already works with an adviser. A company can have only one at a time, so it has to remove that adviser first." };
   const ex = (await sql`SELECT id, status FROM tapcard_adviser_links WHERE adviser_id = ${adviserId} AND org_id = ${orgId}`) as { id: string; status: string }[];
   if (ex[0]) {
     if (ex[0].status === "pending" || ex[0].status === "approved") return { ok: true, linkId: ex[0].id, created: false };
@@ -213,4 +244,27 @@ export async function revokeLink(orgId: string, linkId: string, by: string): Pro
 export async function adviserApproverEmails(orgId: string): Promise<string[]> {
   await ensureAdviserSchema();
   return ((await sql`SELECT u.email FROM tapcard_adviser_links l JOIN tapcard_adviser_users u ON u.adviser_id = l.adviser_id WHERE l.org_id = ${orgId} AND l.status = 'approved' AND l.can_regulatory AND u.senior`) as { email: string }[]).map((r) => r.email);
+}
+
+/// The adviser a company currently works with (a company can have only one at a time).
+export async function approvedLinkForOrg(orgId: string): Promise<LinkRow | null> {
+  await ensureAdviserSchema();
+  const r = (await sql`SELECT l.*, a.name AS adviser_name, o.name AS org_name FROM tapcard_adviser_links l JOIN tapcard_advisers a ON a.id = l.adviser_id JOIN tapcard_biz_orgs o ON o.id = l.org_id WHERE l.org_id = ${orgId} AND l.status = 'approved' LIMIT 1`) as Record<string, unknown>[];
+  return r[0] ? toLink(r[0]) : null;
+}
+
+// ---- the agreement record
+
+export interface AgreementEntry { orgId: string; adviserId: string; linkId: string; event: string; actor: string; payer?: string; dataOwner?: string; dataTermsVersion?: string; adviserTermsVersion?: string; adviserTermsAcceptedAt?: Date | null; adviserTermsAcceptedBy?: string; tier?: number | null; monthlyPence?: number | null; committedUntil?: Date | string | null; contractRef?: string; detail?: Record<string, unknown> }
+export async function recordAgreement(e: AgreementEntry): Promise<void> {
+  await ensureAdviserSchema();
+  await sql`INSERT INTO tapcard_adviser_agreements (org_id, adviser_id, link_id, event, actor, payer, data_owner, data_terms_version, adviser_terms_version, adviser_terms_accepted_at, adviser_terms_accepted_by, tier, monthly_pence, committed_until, contract_ref, detail)
+    VALUES (${e.orgId}, ${e.adviserId}, ${e.linkId}, ${e.event}, ${e.actor}, ${e.payer ?? ""}, ${e.dataOwner ?? ""}, ${e.dataTermsVersion ?? ""}, ${e.adviserTermsVersion ?? ""}, ${e.adviserTermsAcceptedAt ?? null}, ${e.adviserTermsAcceptedBy ?? ""}, ${e.tier ?? null}, ${e.monthlyPence ?? null}, ${e.committedUntil ? new Date(e.committedUntil) : null}, ${e.contractRef ?? ""}, ${JSON.stringify(e.detail ?? {})}::jsonb)`;
+}
+export interface AgreementRow { id: number; at: string; adviserName: string; event: string; actor: string; payer: string; dataOwner: string; dataTermsVersion: string; adviserTermsVersion: string; adviserTermsAcceptedAt: string | null; adviserTermsAcceptedBy: string; tier: number | null; monthlyPence: number | null; committedUntil: string | null; contractRef: string; detail: Record<string, unknown> }
+export async function listAgreement(orgId: string, limit = 100): Promise<AgreementRow[]> {
+  await ensureAdviserSchema();
+  const rows = (await sql`SELECT g.*, a.name AS adviser_name FROM tapcard_adviser_agreements g JOIN tapcard_advisers a ON a.id = g.adviser_id WHERE g.org_id = ${orgId} ORDER BY g.id DESC LIMIT ${limit}`) as Record<string, unknown>[];
+  return rows.map((r) => ({ id: Number(r.id), at: new Date(r.at as string).toISOString(), adviserName: String(r.adviser_name), event: String(r.event), actor: String(r.actor), payer: String(r.payer), dataOwner: String(r.data_owner), dataTermsVersion: String(r.data_terms_version), adviserTermsVersion: String(r.adviser_terms_version),
+    adviserTermsAcceptedAt: iso(r.adviser_terms_accepted_at), adviserTermsAcceptedBy: String(r.adviser_terms_accepted_by), tier: r.tier == null ? null : Number(r.tier), monthlyPence: r.monthly_pence == null ? null : Number(r.monthly_pence), committedUntil: iso(r.committed_until), contractRef: String(r.contract_ref), detail: (r.detail as Record<string, unknown>) ?? {} }));
 }

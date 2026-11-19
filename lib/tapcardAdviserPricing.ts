@@ -45,3 +45,9 @@ export function tierQuantities(tiers: number[]): Record<number, number> {
   for (const n of tiers) q[n] = (q[n] ?? 0) + 1;
   return q;
 }
+
+/// The statement a company confirms when it approves an adviser (and the version recorded with the approval). The company owns its data
+/// whoever pays, and the adviser has no ownership of it.
+export const DATA_TERMS_VERSION = "2026-11-draft-1";
+export const dataOwnershipStatement = (company: string, adviser: string) =>
+  `${company} is the owner and controller of its followers' data. AIERT stores and handles it for ${company} only, on its behalf. ${adviser} acts for ${company} with only the permissions ${company} gives, and does not own or control the data. Who pays does not change this, and ${company} can remove ${adviser} at any time.`;

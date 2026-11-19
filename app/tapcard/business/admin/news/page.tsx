@@ -8,7 +8,7 @@ import { approvalRequired, isSenior, listAudit, pendingDrafts, seniorAdmins } fr
 import PostHeadline from "./PostHeadline";
 import NewsGovernance from "./NewsGovernance";
 import NewsTabs from "./NewsTabs";
-import { linksForOrg } from "@/lib/tapcardAdvisers";
+import { linksForOrg, listAgreement } from "@/lib/tapcardAdvisers";
 import { adviserCoverActive, coverInfoForOrg } from "@/lib/tapcardAdviserBilling";
 
 export const dynamic = "force-dynamic";
@@ -45,10 +45,11 @@ export default async function BizNewsPage({ searchParams }: { searchParams: Prom
   const asked = (advisers as { status: string }[]).filter((a) => a.status === "pending").length;
   const base = "/business/admin/news";
   const governance = (section: "approvals" | "people" | "audit") => (
-    <NewsGovernance section={section} cardId={card.id} me={session.email} meSenior={meSenior} approval={approval as boolean} admins={admins as never} drafts={drafts as never} audit={audit as never} advisers={advisers as never} cover={coverInfo} />
+    <NewsGovernance section={section} cardId={card.id} me={session.email} meSenior={meSenior} approval={approval as boolean} admins={admins as never} drafts={drafts as never} audit={audit as never} advisers={advisers as never} cover={coverInfo} agreement={agreementRows as never} companyName={org.name} />
   );
   const coverInfo = await coverInfoForOrg(org.id).catch(() => []);
   const coveredNow = await adviserCoverActive(org.id);
+  const agreementRows = tab === "people" ? await listAgreement(org.id).catch(() => []) : [];
   const post = (part: "post" | "groups") => (
     <PostHeadline part={part} cardId={card.id} cardName={card.company || card.name} active={isOrgActive(org) || coveredNow} latest={s.latestNews?.text ?? null} followers={s.canBeNotified} groups={groups} meSenior={meSenior} approval={approval as boolean}
       feed={{ pageUrl: cfg?.pageUrl ?? null, lastCheckedAt: cfg?.lastCheckedAt ?? null, suggested, lastError: cfg?.lastError ?? "", rows }} />

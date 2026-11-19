@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { dataOwnershipStatement } from "@/lib/tapcardAdviserPricing";
 
 export interface DraftRow { id: number; kind: string; text: string; link: string; groups: string[]; createdBy: string; createdAt: string; websiteStatus: string }
 export interface AdminRow { email: string; senior: boolean }
-export interface AdviserLink { id: string; adviserName: string; status: string; canRegulatory: boolean; requestedBy: string; requestedAt: string; coversRequested?: boolean; coverStatus?: string; tier?: number | null; capStatedM?: number | null }
+export interface AdviserLink { id: string; adviserName: string; status: string; canRegulatory: boolean; requestedBy: string; requestedAt: string; coversRequested?: boolean; coverStatus?: string; tier?: number | null; capStatedM?: number | null; contractRef?: string | null; contractSignedAt?: string | null; contractSignedBy?: string | null; contractUrl?: string | null }
+export interface AgreementLine { id: number; at: string; adviserName: string; event: string; actor: string; payer: string; dataOwner: string; dataTermsVersion: string; adviserTermsVersion: string; adviserTermsAcceptedAt: string | null; adviserTermsAcceptedBy: string; tier: number | null; monthlyPence: number | null; committedUntil: string | null; contractRef: string; detail: Record<string, unknown> }
 export interface AuditRow { id: number; at: string; action: string; kind: string; actor: string; text: string; link: string; detail: Record<string, unknown> }
 
+const AGREEMENT_LABEL: Record<string, string> = { "adviser-requested": "Adviser asked for access", "adviser-approved": "Company approved the adviser", "adviser-declined": "Company declined", "cover-accepted": "Company accepted the adviser's payment", "regulatory-allowed": "Regulatory news allowed", "regulatory-removed": "Regulatory news switched off", "cover-ended": "Payment by the adviser ending", "adviser-removed": "Adviser removed", "tier-set": "Price band set by AIERT", "contract-recorded": "Signed agreement recorded" };
 const label: Record<string, string> = {
   posted: "Posted", submitted: "Written, waiting for approval", approved: "Approved", rejected: "Turned down", "draft-withdrawn": "Draft withdrawn",
   withdrawn: "Withdrawn", refused: "Refused", "approval-on": "Second approval switched on", "approval-off": "Second approval switched off",
@@ -17,7 +20,7 @@ const label: Record<string, string> = {
 const when = (iso: string) => new Date(iso).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
 
 /// Who may post regulatory news, the optional second approval, headlines waiting for approval, and the audit trail.
-export default function NewsGovernance({ cardId, me, meSenior, approval, admins, drafts, audit, advisers = [], adviserOrgId, cover = [], section = "approvals" }: { cardId: string; me: string; meSenior: boolean; approval: boolean; admins: AdminRow[]; drafts: DraftRow[]; audit: AuditRow[]; advisers?: AdviserLink[]; adviserOrgId?: string; cover?: { linkId: string; adviserName: string; until: string | null; ending: boolean }[]; section?: "approvals" | "people" | "audit" }) {
+export default function NewsGovernance({ cardId, me, meSenior, approval, admins, drafts, audit, advisers = [], adviserOrgId, cover = [], section = "approvals", agreement = [], companyName = "your company" }: { cardId: string; me: string; meSenior: boolean; approval: boolean; admins: AdminRow[]; drafts: DraftRow[]; audit: AuditRow[]; advisers?: AdviserLink[]; adviserOrgId?: string; cover?: { linkId: string; adviserName: string; until: string | null; ending: boolean }[]; section?: "approvals" | "people" | "audit"; agreement?: AgreementLine[]; companyName?: string }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -29,6 +32,12 @@ export default function NewsGovernance({ cardId, me, meSenior, approval, admins,
     if (res?.ok) { window.location.reload(); return; }
     if (data.code === "not_on_website" && !confirmMissing && window.confirm(`${data.error}\n\nApprove anyway? This will be recorded in the audit trail.`)) { await call({ ...body, override: true }, true); return; }
     setMsg({ ok: false, text: data.error ?? "Couldn't do that. Try again." });
+  }
+  // Approving an adviser: the company confirms the data ownership statement, and that confirmation is recorded with the approval.
+  function approveAdviser(a: AdviserLink, acceptCover: boolean) {
+    const text = dataOwnershipStatement(companyName, a.adviserName);
+    if (!window.confirm(`Before you approve ${a.adviserName}, please confirm:\n\n${text}\n\nYou are authorised to approve this for ${companyName}.${acceptCover ? `\n\nYou also accept that ${a.adviserName} pays for your TapCard (you are not billed).` : ""}`)) return;
+    void call({ action: "adviserDecide", linkId: a.id, approve: true, acceptCover, ackData: true });
   }
   const siteNote = (s: string) => s === "found" ? "✓ found on your announcements page" : s === "no-feed" ? "⚠ no announcements page is being watched" : "⚠ not found on your announcements page";
 
@@ -90,13 +99,14 @@ export default function NewsGovernance({ cardId, me, meSenior, approval, admins,
               {meSenior && a.status === "pending" && (
                 <div className="mt-2 flex flex-wrap gap-2">
                   {a.coversRequested && <p className="w-full text-sm text-cloud">{a.adviserName} also offers to <strong>pay for TapCard for your company</strong> (you would not be billed for it). You can take over billing yourselves at any time.</p>}
-                  <button type="button" disabled={busy} onClick={() => void call({ action: "adviserDecide", linkId: a.id, approve: true, acceptCover: false })} className="btn-gold rounded-xl px-4 py-2 font-semibold disabled:opacity-60">Approve{a.coversRequested ? ", we pay ourselves" : ""}</button>
-                  {a.coversRequested && <button type="button" disabled={busy} onClick={() => void call({ action: "adviserDecide", linkId: a.id, approve: true, acceptCover: true })} className="btn-gold rounded-xl px-4 py-2 font-semibold disabled:opacity-60">Approve and accept their payment</button>}
+                  <button type="button" disabled={busy} onClick={() => approveAdviser(a, false)} className="btn-gold rounded-xl px-4 py-2 font-semibold disabled:opacity-60">Approve{a.coversRequested ? ", we pay ourselves" : ""}</button>
+                  {a.coversRequested && <button type="button" disabled={busy} onClick={() => approveAdviser(a, true)} className="btn-gold rounded-xl px-4 py-2 font-semibold disabled:opacity-60">Approve and accept their payment</button>}
                   <button type="button" disabled={busy} onClick={() => void call({ action: "adviserDecide", linkId: a.id, approve: false })} className="rounded-xl px-4 py-2 font-semibold text-cloud ring-1 ring-slate disabled:opacity-60">Decline</button>
                 </div>
               )}
               {a.status === "approved" && (
                 <div className="mt-2 space-y-2">
+                  <p className="text-sm text-cloud">Data owner: <strong>{companyName}</strong> (you). {a.contractRef ? <>Agreement <strong>{a.contractRef}</strong>{a.contractSignedAt ? `, signed ${when(a.contractSignedAt)}` : ""}{a.contractSignedBy ? ` by ${a.contractSignedBy}` : ""}{a.contractUrl ? <> · <a className="text-gold underline" href={a.contractUrl} target="_blank" rel="noopener noreferrer">document</a></> : null}.</> : "No signed agreement has been recorded yet. AIERT records it once it is signed."}</p>
                   <label className="flex items-start gap-3 text-cloud">
                     <input type="checkbox" className="mt-1" checked={a.canRegulatory} disabled={busy || !meSenior} onChange={(e) => void call({ action: "adviserSetRegulatory", linkId: a.id, on: e.target.checked })} />
                     <span>May post regulatory news (only its senior staff)</span>
@@ -112,6 +122,22 @@ export default function NewsGovernance({ cardId, me, meSenior, approval, admins,
           ))}
         </ul>
       </div>
+
+      <details className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
+        <summary className="cursor-pointer text-lg font-bold text-cloud">Agreement record ({agreement.length})</summary>
+        <p className="mt-3 text-cloud">A permanent record of what was agreed with each adviser: who approved it, who pays, who owns the data, the terms in force and the agreement reference. Entries cannot be edited or deleted.</p>
+        <ul className="mt-3 divide-y divide-white/10">
+          {agreement.map((g) => (
+            <li key={g.id} className="py-2 text-sm text-cloud">
+              <span className="font-semibold">{AGREEMENT_LABEL[g.event] ?? g.event}</span> · {g.adviserName} · {g.actor} · {when(g.at)}
+              <span className="block">Paid by: {g.payer === "adviser" ? g.adviserName : "the company"} · Data owner: {g.dataOwner}{g.tier ? ` · band ${g.tier}${g.monthlyPence ? `, £${g.monthlyPence / 100} a month` : ""}` : ""}{g.committedUntil ? ` · minimum term to ${when(g.committedUntil)}` : ""}</span>
+              <span className="block">Data terms {g.dataTermsVersion || "n/a"}{g.adviserTermsVersion ? ` · adviser terms ${g.adviserTermsVersion}${g.adviserTermsAcceptedBy ? ` accepted by ${g.adviserTermsAcceptedBy}` : ""}` : ""}{g.contractRef ? ` · agreement ${g.contractRef}` : ""}</span>
+              {typeof g.detail?.companyConfirmed === "string" && <span className="block italic">Confirmed by the company: {g.detail.companyConfirmed}</span>}
+            </li>
+          ))}
+          {agreement.length === 0 && <li className="py-2 text-sm text-cloud">Nothing yet.</li>}
+        </ul>
+      </details>
       </>}
 
       {section === "audit" && <>

@@ -2,13 +2,13 @@
 // Admin screen: /admin/social/advisers. Changes here are AIERT's (set up advisers and staff, set a company's tier, extend a trial).
 import sql from "@/lib/db";
 import { ensureAdviserSchema, getLink } from "@/lib/tapcardAdvisers";
-import { coverDeadline, setLinkTier, type AdviserRow } from "@/lib/tapcardAdviserBilling";
+import { coverDeadline, recordAgreementEvent, setLinkTier, type AdviserRow } from "@/lib/tapcardAdviserBilling";
 import { monthlyTotalPence, poundsPerMonth, tierByNumber, tierForMarketCap } from "@/lib/tapcardAdviserPricing";
 import { audit } from "@/lib/tapcardNewsPolicy";
 
 const iso = (v: unknown): string | null => (v ? new Date(v as string).toISOString() : null);
 
-export interface AdminLink { linkId: string; orgId: string; orgName: string; status: string; canRegulatory: boolean; coverStatus: string; tier: number | null; tierLabel: string; capStatedM: number | null; suggestedTier: number | null; tierConfirmed: boolean; monthlyPence: number; committedUntil: string | null; coverEndsAt: string | null; requestedBy: string; requestedAt: string; covered: boolean }
+export interface AdminLink { linkId: string; orgId: string; orgName: string; status: string; canRegulatory: boolean; coverStatus: string; tier: number | null; tierLabel: string; capStatedM: number | null; suggestedTier: number | null; tierConfirmed: boolean; monthlyPence: number; committedUntil: string | null; coverEndsAt: string | null; requestedBy: string; requestedAt: string; covered: boolean; contractRef: string | null; contractSignedAt: string | null; contractSignedBy: string | null; contractUrl: string | null }
 export interface AdminAdviser {
   id: string; name: string; billingStatus: string; trialOrgName: string | null; trialEndsAt: string | null; paidThrough: string | null; stripeCustomer: boolean; stripeSubscription: string | null;
   termsAcceptedAt: string | null; termsAcceptedBy: string | null; termsVersion: string | null; createdAt: string;
@@ -39,6 +39,7 @@ export async function adviserOverview(now = Date.now()): Promise<AdviserOverview
         tier: l.tier == null ? null : Number(l.tier), tierLabel: t?.label ?? "Not set", capStatedM: cap, suggestedTier: cap && cap > 0 ? tierForMarketCap(cap).tier : null, tierConfirmed: l.tier_confirmed === true,
         monthlyPence: billed ? t?.monthlyPence ?? 0 : 0, committedUntil: iso(l.committed_until), coverEndsAt: iso(l.cover_ends_at), requestedBy: String(l.requested_by), requestedAt: iso(l.requested_at) ?? "",
         covered: until !== null && until > now,
+        contractRef: (l.contract_ref as string) ?? null, contractSignedAt: iso(l.contract_signed_at), contractSignedBy: (l.contract_signed_by as string) ?? null, contractUrl: (l.contract_url as string) ?? null,
       };
     });
     const billedLinks = mine.filter((l) => l.coverStatus === "active" || l.coverStatus === "ending");
@@ -100,6 +101,7 @@ export async function adminSetTier(linkId: string, tier: number): Promise<Res> {
   if (!link) return { ok: false, error: "No such link." };
   if (!(await setLinkTier(linkId, tier))) return { ok: false, error: "Not a real tier." };
   await audit({ orgId: link.orgId, cardId: "", kind: "general", actor: "AIERT", action: "adviser-tier-set", detail: { adviser: link.adviserName, tier, was: link.tier } });
+  await recordAgreementEvent(linkId, "tier-set", "AIERT", { tier, was: link.tier });
   // Companies already being billed: update the subscription so the new tier is charged (prorated).
   if (link.coverStatus === "active" || link.coverStatus === "ending") await (await import("@/lib/tapcardAdviserBilling")).syncAdviserSubscription(link.adviserId).catch((e) => console.error("adviser subscription sync failed:", e));
   return { ok: true };
@@ -110,4 +112,19 @@ export async function adminExtendTrial(adviserId: string, days: number): Promise
   await ensureAdviserSchema();
   const r = (await sql`UPDATE tapcard_advisers SET trial_ends_at = COALESCE(trial_ends_at, now()) + make_interval(days => ${days}), trial_reminded_at = NULL WHERE id = ${adviserId} AND billing_status = 'trial' AND trial_org_id IS NOT NULL RETURNING id`) as unknown[];
   return r.length ? { ok: true } : { ok: false, error: "Only an adviser on its free trial, with a trial company, can be extended." };
+}
+
+/// AIERT records the signed agreement for a company and adviser: its reference, when it was signed, who signed for the company, and where the document is kept.
+export async function adminRecordContract(linkId: string, ref: string, signedAt: string, signedBy: string, url: string): Promise<Res> {
+  const link = await getLink(linkId);
+  if (!link) return { ok: false, error: "No such link." };
+  if (ref.trim().length < 2) return { ok: false, error: "Give the agreement's reference." };
+  const when = new Date(signedAt);
+  if (Number.isNaN(when.getTime())) return { ok: false, error: "Give the date it was signed." };
+  if (url.trim() && !/^https:\/\//.test(url.trim())) return { ok: false, error: "The document link must be a secure https:// address." };
+  if (signedBy.trim().length < 2) return { ok: false, error: "Say who signed for the company." };
+  await sql`UPDATE tapcard_adviser_links SET contract_ref = ${ref.trim()}, contract_signed_at = ${when}, contract_signed_by = ${signedBy.trim()}, contract_url = ${url.trim() || null} WHERE id = ${linkId}`;
+  await audit({ orgId: link.orgId, cardId: "", kind: "general", actor: "AIERT", action: "adviser-contract-recorded", detail: { adviser: link.adviserName, ref: ref.trim() } });
+  await recordAgreementEvent(linkId, "contract-recorded", "AIERT", { signedAt: when.toISOString(), signedBy: signedBy.trim(), document: url.trim() || null });
+  return { ok: true };
 }
