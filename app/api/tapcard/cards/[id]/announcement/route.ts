@@ -21,6 +21,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!card) return NextResponse.json({ error: "not found" }, { status: 404 });
   const who = await authorizePoster(req, card);
   if (!who.ok) return who.response;
+  // A listed company's headlines go through its web admin, where post types, senior-only regulatory news, the website check,
+  // second approval and the audit trail apply. A phone's edit key must not be a way around them.
+  if (await (await import("@/lib/tapcardShare")).isListedCard(id).catch(() => false)) {
+    return NextResponse.json({ error: "This company posts its headlines from its web admin, where regulatory news is checked and recorded.", code: "web_admin_only" }, { status: 403 });
+  }
   if (!isBusinessLabel(card.label)) return NextResponse.json({ error: "announcements are for business cards" }, { status: 400 });
   if (!(await promoteAllowed(id))) return NextResponse.json({ error: "Posting news needs TapCard Promote on this card. One subscription covers one card; email enquiries@aiert.co.uk to add more locations." }, { status: 402 });
   const body = (await req.json().catch(() => null)) as { text?: unknown; link?: unknown; groups?: unknown } | null;
@@ -39,6 +44,11 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   if (!card) return NextResponse.json({ error: "not found" }, { status: 404 });
   const who = await authorizePoster(req, card);
   if (!who.ok) return who.response;
+  // A listed company's headlines go through its web admin, where post types, senior-only regulatory news, the website check,
+  // second approval and the audit trail apply. A phone's edit key must not be a way around them.
+  if (await (await import("@/lib/tapcardShare")).isListedCard(id).catch(() => false)) {
+    return NextResponse.json({ error: "This company posts its headlines from its web admin, where regulatory news is checked and recorded.", code: "web_admin_only" }, { status: 403 });
+  }
   await clearAnnouncement(id);
   return NextResponse.json({ ok: true });
 }
