@@ -27,7 +27,7 @@ export default function GroupsPanel({ cardId, initial, adviserOrgId }: { cardId:
   return (
     <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10" id="groups">
       <h2 className="text-lg font-bold text-cloud">Groups<HelpDot anchor="groups" role={adviserOrgId ? "adviser-senior" : "company-senior"} label="How groups work" /></h2>
-      <p className="mt-2 text-cloud">Give each audience its own group, for example #Kefi or #IPO Clients. Each group has its own link and QR code. Someone who follows through it is put in that group, and you can send a headline to chosen groups only. Followers are not asked for a name or email; a group is only a label.</p>
+      <p className="mt-2 text-cloud">Give each audience its own group, such as #group name. Each group has its own link and QR code. Someone who follows through it is put in that group, and you can send a headline to chosen groups only. Followers are not asked for a name or email; a group is only a label.</p>
       {groups.length > 0 && (
         <ul className="mt-4 divide-y divide-white/10">
           {groups.map((g) => (
@@ -50,7 +50,7 @@ export default function GroupsPanel({ cardId, initial, adviserOrgId }: { cardId:
       )}
       <div className="mt-4 flex flex-wrap items-end gap-3">
         <label className="block text-cloud">New group
-          <input className="mt-1 block rounded-lg bg-white px-3 py-2 text-[#111318] placeholder:text-[#4b5260]" value={name} maxLength={40} onChange={(e) => setName(e.target.value)} placeholder="#Kefi" />
+          <input className="mt-1 block rounded-lg bg-white px-3 py-2 text-[#111318] placeholder:text-[#4b5260]" value={name} maxLength={40} onChange={(e) => setName(e.target.value)} placeholder="#group name" />
         </label>
         <button type="button" disabled={busy || name.replace(/#/g, "").trim().length < 1} onClick={() => void call({ action: "addGroup", name }, "Group added.")} className="btn-gold rounded-xl px-5 py-2 font-semibold disabled:opacity-50">{busy ? "Working…" : "Add group"}</button>
       </div>

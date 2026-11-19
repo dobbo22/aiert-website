@@ -168,7 +168,7 @@ export default function SetupWizard(p: Props) {
       id: "audiences", title: "Do you want to message different shareholders separately?", done: wantsGroups === false || groups.length > 0,
       body: (
         <>
-          <p className="text-cloud">Groups let you send a headline to one audience, for example <em>#Retail investors</em> or <em>#IPO clients</em>. Each group has its own link and QR code. A group is only a label on someone who follows: we don&apos;t ask for or keep a name or email for it.</p>
+          <p className="text-cloud">Groups let you send a headline to one audience, such as <em>#group name</em>. Each group has its own link and QR code. A group is only a label on someone who follows: we don&apos;t ask for or keep a name or email for it.</p>
           <p className="mt-2 rounded-lg bg-gold/15 px-3 py-2 text-cloud ring-1 ring-gold/40"><strong>Groups take effect with the next TapCard app update.</strong> You can set them up now.</p>
           <div className="mt-3 flex flex-wrap gap-3">
             <button type="button" className={wantsGroups === true ? gold : quiet} onClick={() => setWantsGroups(true)}>Yes</button>
@@ -178,7 +178,7 @@ export default function SetupWizard(p: Props) {
             <div className="mt-3">
               {groups.length > 0 && <ul className="mb-2 text-cloud">{groups.map((g) => <li key={g.slug} className="ml-5 list-disc">#{g.label}</li>)}</ul>}
               <div className="flex flex-wrap items-end gap-3">
-                <label className="block text-cloud">New group<input className={input} value={newGroup} maxLength={40} onChange={(e) => setNewGroup(e.target.value)} placeholder="#Retail investors" /></label>
+                <label className="block text-cloud">New group<input className={input} value={newGroup} maxLength={40} onChange={(e) => setNewGroup(e.target.value)} placeholder="#group name" /></label>
                 <button type="button" disabled={busy || newGroup.replace(/#/g, "").trim().length < 1} className={gold} onClick={() => void addGroup()}>Add group</button>
               </div>
               <p className="mt-2 text-sm text-cloud">Links and QR codes for each group are on News &amp; RNS, Audiences.</p>
