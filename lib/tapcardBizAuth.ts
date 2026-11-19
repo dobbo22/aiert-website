@@ -21,7 +21,8 @@ function secret(): string {
   return s;
 }
 
-function hmac(input: string): string {
+/// Also used to sign the adviser session cookie (lib/tapcardAdvisers.ts) with the same secret.
+export function hmac(input: string): string {
   return crypto.createHmac("sha256", secret()).update(input).digest("hex");
 }
 

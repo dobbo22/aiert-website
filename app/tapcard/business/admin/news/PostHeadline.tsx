@@ -11,7 +11,10 @@ export interface FeedProps { pageUrl: string | null; lastCheckedAt: string | nul
 
 const headlineOf = (title: string) => { const x = title.replace(/\s+/g, " ").trim(); return x.length <= MAX ? x : x.slice(0, MAX - 3).trimEnd() + "..."; };
 
-export default function PostHeadline({ cardId, cardName, active, latest, followers, feed, groups, meSenior, approval }: { cardId: string; cardName: string; active: boolean; latest: string | null; followers: number; feed: FeedProps; groups: GroupRow[]; meSenior: boolean; approval: boolean }) {
+export default function PostHeadline({ cardId, cardName, active, latest, followers, feed, groups, meSenior, approval, adviserOrgId }: { cardId: string; cardName: string; active: boolean; latest: string | null; followers: number; feed: FeedProps; groups: GroupRow[]; meSenior: boolean; approval: boolean; adviserOrgId?: string }) {
+  // An adviser works through its own route, and only reads the company's announcements page (the company controls that watch).
+  const ro = !!adviserOrgId;
+  const endpoint = ro ? "/api/tapcard/adviser/news" : "/api/tapcard/biz/promote";
   const [text, setText] = useState("");
   const [link, setLink] = useState("");
   // Empty = every follower; otherwise only followers in the ticked groups.
@@ -24,7 +27,7 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
   const hasFeed = feed.rows.length > 0;
   const [composerOpen, setComposerOpen] = useState(!hasFeed);
   const [page, setPage] = useState(feed.pageUrl ?? feed.suggested);
-  const [editingPage, setEditingPage] = useState(!feed.pageUrl);
+  const [editingPage, setEditingPage] = useState(!ro && !feed.pageUrl);
   const [feedMsg, setFeedMsg] = useState<{ ok: boolean; text: string } | null>(null);
   // When the page was last read, and a refresh that happens by itself every 3 minutes while this page stays open.
   const router = useRouter();
@@ -32,7 +35,7 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
   const [now, setNow] = useState(() => Date.now());
   const [refreshing, setRefreshing] = useState(false);
   async function refreshNow() {
-    if (!feed.pageUrl || refreshing) return;
+    if (ro || !feed.pageUrl || refreshing) return;
     setRefreshing(true);
     const res = await fetch("/api/tapcard/biz/ir-feed", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cardId, action: "refresh" }) }).catch(() => null);
     const data = (await res?.json().catch(() => null)) as { checkedAt?: string | null } | null;
@@ -68,7 +71,7 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
 
   async function send(body: Record<string, unknown>, done: string, override = false) {
     setBusy(true); setMsg(null);
-    const res = await fetch("/api/tapcard/biz/promote", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cardId, ...body, ...(override ? { override: true } : {}) }) }).catch(() => null);
+    const res = await fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cardId, ...(ro ? { orgId: adviserOrgId } : {}), ...body, ...(override ? { override: true } : {}) }) }).catch(() => null);
     const data = (res ? await res.json().catch(() => ({})) : {}) as { error?: string; code?: string; outcome?: string };
     setBusy(false);
     if (res?.ok) {
@@ -97,13 +100,15 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
             </div>
             <p className="mt-2 text-sm text-cloud">What is on the page now is marked Earlier. Only announcements that appear after this are marked New.</p>
           </div>
+        ) : ro && !feed.pageUrl ? (
+          <p className="mt-3 text-cloud">The company hasn&apos;t set an announcements page to watch, so regulatory headlines can&apos;t be checked against its website yet.</p>
         ) : (
-          <p className="mt-3 text-cloud">Watching <a className="text-gold underline" href={feed.pageUrl ?? "#"} target="_blank" rel="noopener noreferrer">{feed.pageUrl}</a> · <button type="button" className="text-gold underline" onClick={() => setEditingPage(true)}>Change page</button></p>
+          <p className="mt-3 text-cloud">Watching <a className="text-gold underline" href={feed.pageUrl ?? "#"} target="_blank" rel="noopener noreferrer">{feed.pageUrl}</a> · {!ro && <button type="button" className="text-gold underline" onClick={() => setEditingPage(true)}>Change page</button>}</p>
         )}
         {feed.pageUrl && !editingPage && (
           <p className="mt-1 text-sm text-cloud">
-            Last checked {ago(checkedAt)} · <button type="button" disabled={refreshing} onClick={() => void refreshNow()} className="font-semibold text-gold underline disabled:opacity-60">{refreshing ? "Checking…" : "Refresh now"}</button>
-            <span className="block">It also checks by itself every few minutes while this page is open.</span>
+            Last checked {ago(checkedAt)}{!ro && <> · <button type="button" disabled={refreshing} onClick={() => void refreshNow()} className="font-semibold text-gold underline disabled:opacity-60">{refreshing ? "Checking…" : "Refresh now"}</button>
+            <span className="block">It also checks by itself every few minutes while this page is open.</span></>}
           </p>
         )}
         {feedMsg && <p className={`mt-3 rounded-lg px-3 py-2 ${feedMsg.ok ? "bg-teal/20" : "bg-red-500/20"} text-cloud`} role="status">{feedMsg.ok ? "✓ " : "✗ "}{feedMsg.text}</p>}
@@ -129,7 +134,7 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
                     : r.status === "ignored" ? <span className="rounded-full bg-white/15 px-3 py-1 text-sm font-semibold text-cloud">Ignored</span>
                     : <span title="Already on your page when we started watching it" className="rounded-full bg-white/15 px-3 py-1 text-sm font-semibold text-cloud">Earlier</span>}
                   {!r.posted && r.status !== "ignored" && <button type="button" onClick={() => fillHeadline(r)} className={`rounded-xl px-3 py-1.5 text-sm font-semibold ${r.status === "new" ? "btn-gold" : "text-cloud ring-1 ring-slate hover:text-gold"}`}>Use as headline</button>}
-                  {!r.posted && (r.status === "ignored"
+                  {!ro && !r.posted && (r.status === "ignored"
                     ? <button type="button" disabled={busy} onClick={() => feedCall({ action: "restore", url: r.url })} className="px-1 py-1.5 text-sm text-cloud underline">Restore</button>
                     : <button type="button" disabled={busy} onClick={() => feedCall({ action: "ignore", url: r.url })} className="px-1 py-1.5 text-sm text-cloud underline">Ignore</button>)}
                 </div>
@@ -139,7 +144,7 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
         )}
       </div>
 
-      <GroupsPanel cardId={cardId} initial={groups} />
+      <GroupsPanel cardId={cardId} initial={groups} adviserOrgId={adviserOrgId} />
 
       <details id="headline-composer" open={composerOpen} onToggle={(e) => setComposerOpen((e.currentTarget as HTMLDetailsElement).open)} className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <summary className="cursor-pointer text-lg font-bold text-cloud">{hasFeed ? `Write your own headline for ${cardName}` : `Post a headline for ${cardName}`}</summary>

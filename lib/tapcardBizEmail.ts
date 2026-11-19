@@ -302,3 +302,20 @@ export function buildListedWelcomeEmail(email: string, company: string, personNa
   ].join("\n");
   return { subject: `Welcome to TapCard for investor relations: ${plain}`, html, text };
 }
+
+
+export async function sendAdviserLoginEmail(email: string, adviser: string, link: string): Promise<void> {
+  const html = `<p>Tap the link below to sign in to the TapCard adviser portal for <strong>${esc(adviser)}</strong>:</p><p><a href="${link}">${link}</a></p><p>This link works once and expires in 15 minutes.</p>`;
+  await send(email, "Sign in to the TapCard adviser portal", html, `Sign in: ${link}\n\nThis link works once and expires in 15 minutes.`);
+}
+
+/// Tells a company's senior admins that an adviser has asked to post for it. Nothing is allowed until one of them approves.
+export async function sendAdviserRequestEmail(email: string, company: string, adviser: string, requestedBy: string, link: string): Promise<void> {
+  const html = `
+    <p><strong>${esc(adviser)}</strong> (${esc(requestedBy)}) has asked to manage headlines for <strong>${esc(company)}</strong> on TapCard.</p>
+    <p>Nothing is allowed until you approve. If you do, you choose whether they may post regulatory news (they can always write general headlines and manage groups), and you can remove them at any time. Everything they do is recorded in your audit trail.</p>
+    <p><a href="${link}">Review the request</a> (sign in as a senior admin, then open the Headlines page).</p>
+    <p>If you don't know this adviser, don't approve it. Ignoring this email gives them no access.</p>`;
+  await send(email, `${adviser} has asked to post for ${company} on TapCard`, html,
+    `${adviser} (${requestedBy}) has asked to manage headlines for ${company} on TapCard.\n\nNothing is allowed until you approve. Review it here (sign in as a senior admin): ${link}\n\nIf you don't know this adviser, don't approve it.`);
+}

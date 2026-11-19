@@ -7,7 +7,7 @@ export interface GroupRow { slug: string; label: string; members: number; reacha
 
 /// The audiences of a company card (#Kefi, #IPO Clients): add, remove, and a link + QR code for each. Someone who follows through a
 /// group's link is put in that group, and a headline can then be sent to chosen groups only.
-export default function GroupsPanel({ cardId, initial }: { cardId: string; initial: GroupRow[] }) {
+export default function GroupsPanel({ cardId, initial, adviserOrgId }: { cardId: string; initial: GroupRow[]; adviserOrgId?: string }) {
   const [groups, setGroups] = useState<GroupRow[]>(initial);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
@@ -15,7 +15,7 @@ export default function GroupsPanel({ cardId, initial }: { cardId: string; initi
 
   async function call(body: Record<string, unknown>, done: string) {
     setBusy(true); setMsg(null);
-    const res = await fetch("/api/tapcard/biz/promote", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cardId, ...body }) }).catch(() => null);
+    const res = await fetch(adviserOrgId ? "/api/tapcard/adviser/news" : "/api/tapcard/biz/promote", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cardId, ...(adviserOrgId ? { orgId: adviserOrgId } : {}), ...body }) }).catch(() => null);
     const data = (res ? await res.json().catch(() => ({})) : {}) as { groups?: GroupRow[]; error?: string };
     setBusy(false);
     if (res?.ok && data.groups) { setGroups(data.groups); setMsg({ ok: true, text: done }); setName(""); return; }

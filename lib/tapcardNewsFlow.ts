@@ -1,16 +1,28 @@
 // The rules for posting a headline, in one place so the route stays thin and the rules can be tested. See tapcardNewsPolicy.ts.
+import { adviserApproverEmails } from "@/lib/tapcardAdvisers";
 import {
   approvalRequired, audit, checkAgainstWebsite, closeDraft, createDraft, getDraft, isSenior, lastPostedKind, reopenDraft, seniorCount,
   type NewsKind, type WebsiteCheck,
 } from "@/lib/tapcardNewsPolicy";
 
-export interface Actor { orgId: string; email: string; support?: boolean }
+/// `adviser` is set when an IR firm acts for the company through its approved link: it may write headlines and manage groups, and may
+/// post or approve regulatory news only when the staff member is senior at the adviser AND the company allowed regulatory news for it.
+export interface Actor { orgId: string; email: string; support?: boolean; adviser?: { id: string; name: string; senior: boolean; canRegulatory: boolean } }
 export type PostFn = (p: { text: string; link: string; groups: string[] }) => Promise<{ ok: true } | { ok: false; error: string }>;
 export type FlowResult =
   | { ok: true; outcome: "posted" | "pending"; draftId?: number }
   | { ok: false; status: number; code: string; error: string; website?: WebsiteCheck };
 
-const who = (a: Actor) => (a.support ? `AIERT support (${a.email})` : a.email);
+const who = (a: Actor) => (a.support ? `AIERT support (${a.email})` : a.adviser ? `${a.email} (${a.adviser.name})` : a.email);
+export async function isSeniorActor(a: Actor): Promise<boolean> {
+  if (a.adviser) return a.adviser.senior && a.adviser.canRegulatory;
+  return isSenior(a.orgId, a.email, a.support);
+}
+/// People who could approve a regulatory headline: the company's senior admins plus its allowed advisers' senior staff.
+async function approverCount(orgId: string): Promise<number> {
+  const adv = await adviserApproverEmails(orgId).catch(() => [] as string[]);
+  return (await seniorCount(orgId)) + new Set(adv).size;
+}
 const notOnSite = (w: WebsiteCheck) => w.status === "not-found" || w.status === "no-feed";
 const siteMessage = (w: WebsiteCheck) =>
   w.status === "no-feed" ? "No announcements page is being watched yet, so this can't be checked against your website."
@@ -27,7 +39,7 @@ export async function submitNews(i: { actor: Actor; cardId: string; kind: NewsKi
   }
   // Regulatory
   if (!link.trim()) return { ok: false, status: 400, code: "link_required", error: "A regulatory headline needs a link to the announcement." };
-  const senior = await isSenior(actor.orgId, actor.email, actor.support);
+  const senior = await isSeniorActor(actor);
   const approval = await approvalRequired(actor.orgId);
   const website = await checkAgainstWebsite(cardId, link, text);
   if (!approval) {
@@ -42,7 +54,7 @@ export async function submitNews(i: { actor: Actor; cardId: string; kind: NewsKi
     return { ok: true, outcome: "posted" };
   }
   // Second approval is on: it is written now and goes out only when a different senior admin approves it.
-  const seniors = await seniorCount(actor.orgId);
+  const seniors = await approverCount(actor.orgId);
   const others = seniors - (senior ? 1 : 0);
   if (others < 1) return { ok: false, status: 409, code: "no_approver", error: "Second approval is on, but there is no other senior admin who could approve this. Add one, or turn approval off." };
   const draftId = await createDraft({ orgId: actor.orgId, cardId, kind, text, link, groups, createdBy: actor.email.toLowerCase(), websiteStatus: website.status });
@@ -55,7 +67,7 @@ export async function approveDraftNews(i: { actor: Actor; draftId: number; overr
   const d = await getDraft(actor.orgId, i.draftId);
   if (!d || d.status !== "pending") return { ok: false, status: 404, code: "gone", error: "That headline is no longer waiting for approval." };
   const base = { orgId: actor.orgId, cardId: d.cardId, kind: d.kind, actor: who(actor), text: d.text, link: d.link, groups: d.groups };
-  if (!(await isSenior(actor.orgId, actor.email, actor.support))) return { ok: false, status: 403, code: "not_senior", error: "Only a senior admin can approve regulatory news." };
+  if (!(await isSeniorActor(actor))) return { ok: false, status: 403, code: "not_senior", error: "Only a senior admin can approve regulatory news." };
   if (d.createdBy === actor.email.toLowerCase()) return { ok: false, status: 403, code: "own_draft", error: "A different senior admin has to approve this. You wrote it." };
   const website = await checkAgainstWebsite(d.cardId, d.link, d.text);
   if (notOnSite(website) && !i.override) return { ok: false, status: 409, code: "not_on_website", error: siteMessage(website), website };
@@ -75,7 +87,7 @@ export async function rejectDraftNews(i: { actor: Actor; draftId: number; note: 
   const d = await getDraft(actor.orgId, i.draftId);
   if (!d || d.status !== "pending") return { ok: false, status: 404, code: "gone", error: "That headline is no longer waiting for approval." };
   const mine = d.createdBy === actor.email.toLowerCase();
-  if (!mine && !(await isSenior(actor.orgId, actor.email, actor.support))) return { ok: false, status: 403, code: "not_senior", error: "Only a senior admin, or the person who wrote it, can turn this down." };
+  if (!mine && !(await isSeniorActor(actor))) return { ok: false, status: 403, code: "not_senior", error: "Only a senior admin, or the person who wrote it, can turn this down." };
   if (!(await closeDraft(actor.orgId, d.id, mine ? "withdrawn" : "rejected", actor.email.toLowerCase(), i.note.slice(0, 300)))) return { ok: false, status: 409, code: "gone", error: "Someone else has just dealt with this headline." };
   await audit({ orgId: actor.orgId, cardId: d.cardId, kind: d.kind, actor: who(actor), action: mine ? "draft-withdrawn" : "rejected", text: d.text, link: d.link, groups: d.groups, detail: { draftId: d.id, note: i.note.slice(0, 300) } });
   return { ok: true, outcome: "posted" };
@@ -84,7 +96,7 @@ export async function rejectDraftNews(i: { actor: Actor; draftId: number; note: 
 /// Taking a headline down: a regulatory one can only be withdrawn by a senior admin.
 export async function withdrawNewsChecked(i: { actor: Actor; cardId: string; clear: () => Promise<void> }): Promise<FlowResult> {
   const kind = await lastPostedKind(i.actor.orgId, i.cardId);
-  if (kind === "rns" && !(await isSenior(i.actor.orgId, i.actor.email, i.actor.support))) {
+  if (kind === "rns" && !(await isSeniorActor(i.actor))) {
     await audit({ orgId: i.actor.orgId, cardId: i.cardId, kind, actor: who(i.actor), action: "refused", detail: { reason: "withdraw needs senior" } });
     return { ok: false, status: 403, code: "not_senior", error: "Only a senior admin can withdraw a regulatory headline." };
   }
