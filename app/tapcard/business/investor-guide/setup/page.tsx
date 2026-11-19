@@ -24,7 +24,7 @@ export default function InvestorSetupGuidePage() {
   return (
     <DocPage title="Setting up TapCard for investor relations" updated="19 November 2026">
       <section>
-        <p>This is for the person setting up the company&apos;s account, and for advisers setting up a firm. It takes about half an hour. The role-by-role manual is in the <a href="/business/investor-guide">manual</a>.</p>
+        <p>This is for the person setting up the company&apos;s account, and for advisers setting up a firm. It takes about half an hour. The role-by-role manual is in the <a href="/business/investor-guide">manual</a>. If you would rather be asked the questions and have your answers applied, signed-in admins can open the <a href="/business/admin/setup">guided setup</a>.</p>
         <ul className="mt-2">
           <li><a href="#before">Before you start</a></li>
           <li><a href="#roles">The roles, and who should have each</a></li>

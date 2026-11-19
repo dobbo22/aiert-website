@@ -75,7 +75,10 @@ export function ListedOverviewView({ s, orgName, events = [], people = [], now, 
           <p className="text-sm font-semibold uppercase tracking-wider text-teal">Your next step</p>
           <h2 className="mt-1 text-lg font-bold text-cloud">{next.title}</h2>
           <p className="mt-1 text-cloud">{next.text}</p>
-          <a href={next.href} className="btn-gold mt-3 inline-block rounded-xl px-5 py-2 font-semibold">Go there</a>
+          <div className="mt-3 flex flex-wrap gap-3">
+            <a href={next.href} className="btn-gold inline-block rounded-xl px-5 py-2 font-semibold">Go there</a>
+            <a href="/business/admin/setup" className="inline-block rounded-xl px-5 py-2 font-semibold text-cloud ring-1 ring-slate">Open the guided setup</a>
+          </div>
         </div>
       )}
       <div className="grid gap-4 lg:grid-cols-3">
@@ -163,7 +166,7 @@ export function ListedOverviewView({ s, orgName, events = [], people = [], now, 
             </li>
           ))}
         </ol>
-        <p className="mt-4 text-sm text-cloud">Need more detail? The <a href="/business/investor-guide/setup" className="text-gold underline">setup guide</a> explains each step, and the <a href="/business/investor-guide" className="text-gold underline">manual</a> opens on your role.</p>
+        <p className="mt-4 text-sm text-cloud">Prefer to be asked the questions? <a href="/business/admin/setup" className="text-gold underline">Open the guided setup</a>. Need more detail? The <a href="/business/investor-guide/setup" className="text-gold underline">setup guide</a> explains each step, and the <a href="/business/investor-guide" className="text-gold underline">manual</a> opens on your role.</p>
       </details>
     </div>
   );

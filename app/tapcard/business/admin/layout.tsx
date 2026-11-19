@@ -48,7 +48,7 @@ export default async function BizAdminLayout({ children }: { children: React.Rea
         <AdminNav role={session.role} listed={listed} />
         <div className="mt-8">{children}</div>
         <footer className="mt-12 border-t border-slate pt-6 text-sm text-cloud print:hidden">
-          {listed && <><a href="/business/investor-guide" className="text-gold underline">Investor relations manual &amp; FAQs</a> ·{" "}<a href="/business/investor-guide/setup" className="text-gold underline">Setup guide</a> ·{" "}</>}
+          {listed && <><a href="/business/investor-guide" className="text-gold underline">Investor relations manual &amp; FAQs</a> ·{" "}<a href="/business/investor-guide/setup" className="text-gold underline">Setup guide</a> ·{" "}<a href="/business/admin/setup" className="text-gold underline">Guided setup</a> ·{" "}</>}
           <a href="/business/guide" className="text-gold underline">Admin guide</a> ·{" "}
           <a href="/business/security" className="text-gold underline">Security &amp; privacy</a>
         </footer>
