@@ -104,16 +104,6 @@ export default async function InvestorGuidePage({ searchParams }: { searchParams
       </section>
 
       <section>
-        <h2>How a shareholder registers</h2>
-        <ul>
-          <li>With the camera they scan your code. If they have TapCard, it opens the app on your card.</li>
-          <li>A new follower sees <strong>Register and follow</strong> (shares name and email) and, underneath, <strong>Follow only</strong> (shares nothing). Both record the event; only the first shares details.</li>
-          <li>Someone who already follows is registered straight away and sees a thank-you.</li>
-          <li>Without the app, the page says to use the app to register and follow. On Android the event carries through the install. On iPhone they come back to the page after installing and tap <strong>Open in TapCard</strong>.</li>
-        </ul>
-      </section>
-
-      <section>
         <h2>Posting rules</h2>
         <ul>
           <li>Never post an RNS, or anything that is inside information, before it is public: wait until it has been released through your regulatory news service and is on your website. Keep it to the headline and a link to the announcement.</li>
