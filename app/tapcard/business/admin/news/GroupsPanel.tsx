@@ -21,7 +21,7 @@ export default function GroupsPanel({ cardId, initial }: { cardId: string; initi
     if (res?.ok && data.groups) { setGroups(data.groups); setMsg({ ok: true, text: done }); setName(""); return; }
     setMsg({ ok: false, text: data.error ?? "Couldn't do that. Try again." });
   }
-  const link = (slug: string) => `https://tapcard.aiert.co.uk/c/${cardId}?g=${encodeURIComponent(slug)}`;
+  const link = (slug: string) => `https://tapcard.aiert.co.uk/c/${cardId}?via=qr&g=${encodeURIComponent(slug)}`;
 
   return (
     <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10" id="groups">

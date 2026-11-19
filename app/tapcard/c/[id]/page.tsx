@@ -71,16 +71,19 @@ export default async function CardPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ send?: string; via?: string; a?: string; preview?: string; e?: string }>;
+  searchParams: Promise<{ send?: string; via?: string; a?: string; preview?: string; e?: string; g?: string }>;
 }) {
   const { id } = await params;
   // The store links carry this business: on Android through the Play install referrer, on iPhone by copying its link when tapped.
   // ?preview=1 is for our own looking (the admin pages and checks): it never counts as a view or marks a sent card as opened.
-  const { send, via, a: acceptToken, preview, e: eventParam } = await searchParams;
+  const { send, via, a: acceptToken, preview, e: eventParam, g: groupParam } = await searchParams;
   // An event QR code of a listed company (?e=<code>): carried into the app links so the follow can be tagged with that event.
   const eventCode = typeof eventParam === "string" && /^[A-Za-z0-9_-]{4,12}$/.test(eventParam) ? eventParam : "";
-  const eventQuery = eventCode ? `?e=${eventCode}` : "";
-  const TAPCARD_APP_STORE_URL = `${TAPCARD_APP_STORE_PATH}?card=${encodeURIComponent(id)}${eventCode ? `&e=${eventCode}` : ""}`;
+  // A group link of an adviser or company (?g=<group>, e.g. kefi): carried the same way, so the follow can join that group and the saved card be tagged.
+  const groupCode = typeof groupParam === "string" && /^[a-z0-9-]{1,40}$/.test(groupParam) ? groupParam : "";
+  const eventQuery = eventCode || groupCode ? `?${[eventCode ? `e=${eventCode}` : "", groupCode ? `g=${groupCode}` : ""].filter(Boolean).join("&")}` : "";
+  const groupOnlyQuery = groupCode ? `?g=${groupCode}` : "";
+  const TAPCARD_APP_STORE_URL = `${TAPCARD_APP_STORE_PATH}?card=${encodeURIComponent(id)}${eventCode ? `&e=${eventCode}` : ""}${groupCode ? `&g=${groupCode}` : ""}`;
   const isPreview = preview === "1";
   const card = await getCard(id);
   if (!card) notFound();
@@ -261,7 +264,7 @@ export default async function CardPage({
                 </p>
               </div>
             )}
-            <CarryCardToInstall cardLink={`${TAPCARD_ORIGIN}/c/${id}`} />
+            <CarryCardToInstall cardLink={`${TAPCARD_ORIGIN}/c/${id}${groupOnlyQuery}`} />
             <SaveContactButton
               cardLink={`${TAPCARD_ORIGIN}/c/${id}${eventQuery}`}
               vcardHref={`${TAPCARD_ORIGIN}/c/${id}/vcard`}

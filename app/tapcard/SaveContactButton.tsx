@@ -40,7 +40,10 @@ export default function SaveContactButton({
     // An event QR code of a listed company (?e=<code> on the card link) rides through the install, so the follow can be tagged with the event.
     const eventParam = new URL(cardLink).searchParams.get("e") ?? "";
     const event = /^[A-Za-z0-9_-]{4,12}$/.test(eventParam) ? `&e=${eventParam}` : "";
-    const play = `https://play.google.com/store/apps/details?id=com.mailbroom.tapcard&referrer=${encodeURIComponent(`utm_source=tapcard-web&utm_medium=card-page${card}${event}`)}`;
+    // A group link (?g=<group>) rides through the install the same way.
+    const groupParam = new URL(cardLink).searchParams.get("g") ?? "";
+    const group = /^[a-z0-9-]{1,40}$/.test(groupParam) ? `&g=${groupParam}` : "";
+    const play = `https://play.google.com/store/apps/details?id=com.mailbroom.tapcard&referrer=${encodeURIComponent(`utm_source=tapcard-web&utm_medium=card-page${card}${event}${group}`)}`;
     const u = new URL(cardLink);
     getHref = `intent://${u.host}${u.pathname}#Intent;scheme=https;package=com.mailbroom.tapcard;S.browser_fallback_url=${encodeURIComponent(play)};end`;
   }
