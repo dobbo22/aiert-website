@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import HelpDot from "../HelpDot";
 
 interface Admin { email: string; senior: boolean }
 interface Props {
@@ -243,7 +244,7 @@ export default function SetupWizard(p: Props) {
       </ol>
       <div className={card}>
         <p className="text-sm text-cloud">Step {step + 1} of {steps.length}</p>
-        <h3 className="mt-1 text-xl font-bold text-cloud">{cur.title}</h3>
+        <h3 className="mt-1 text-xl font-bold text-cloud">{cur.title}<HelpDot setupAnchor={["roles", "roles", "steps", "advisers", "steps", "steps", "steps"][step]} label="More about this step in the setup guide" /></h3>
         <div className="mt-3">{cur.body}</div>
         {msg && <p className={`mt-4 rounded-lg px-3 py-2 text-cloud ${msg.ok ? "bg-teal/20" : "bg-red-500/20"}`} role="status">{msg.ok ? "✓ " : "✗ "}{msg.text}</p>}
         <div className="mt-6 flex flex-wrap justify-between gap-3 border-t border-white/10 pt-4">

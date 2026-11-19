@@ -3,6 +3,7 @@ import DocPage from "../../DocPage";
 import { detectGuideRole, GUIDE_ROLES, isGuideRole, type GuideRole } from "@/lib/tapcardGuideRole";
 import { RoleManual } from "./RoleManuals";
 import { ROLE_INFO } from "./roles";
+import OpenOnHash from "./OpenOnHash";
 
 export const metadata: Metadata = {
   title: "Investor Relations Guide – TapCard | AIERT Ltd",
@@ -45,6 +46,7 @@ export default async function InvestorGuidePage({ searchParams }: { searchParams
   const picked = isGuideRole(as);
   return (
     <DocPage title="TapCard for investor relations: manual and FAQs" updated="19 November 2026">
+      <OpenOnHash />
       <section>
         <h2>What it does</h2>
         <p>
@@ -71,7 +73,7 @@ export default async function InvestorGuidePage({ searchParams }: { searchParams
         <div className="mt-2"><RoleManual role={role} /></div>
       </section>
 
-      <section>
+      <section id="admin-tabs">
         <h2>The admin tabs</h2>
         <ul>
           <li><strong>Overview</strong>: following, how many can be notified, how many shared their details, card views and QR scans, your latest headline and a getting-started checklist.</li>

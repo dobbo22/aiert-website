@@ -7,6 +7,8 @@ import LiveRefresh from "./LiveRefresh";
 import DemoPresenter from "./DemoPresenter";
 import { isDemoOrg } from "@/lib/tapcardDemoSim";
 import { orgIsListed } from "@/lib/tapcardListedAdmin";
+import { detectGuideRole } from "@/lib/tapcardGuideRole";
+import PageHelp from "./PageHelp";
 
 export const metadata = {
   title: "TapCard for Business — Admin",
@@ -24,6 +26,7 @@ export default async function BizAdminLayout({ children }: { children: React.Rea
 
   const listed = await orgIsListed(org.id);
   const demo = listed && (await isDemoOrg(org.id));
+  const guideRole = listed ? (await detectGuideRole()) ?? "company-senior" : null;
   return (
     <main className="biz-admin min-h-screen px-4 py-10">
       {demo && <DemoPresenter />}
@@ -39,8 +42,10 @@ export default async function BizAdminLayout({ children }: { children: React.Rea
             <h1 className="mt-1 text-2xl font-black text-cloud">{org.name}</h1>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <a href={listed ? "/business/investor-guide" : "/business/guide"} target="_blank" rel="noopener noreferrer"
-              className="whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold text-cloud ring-1 ring-slate hover:ring-mist">Help</a>
+            {guideRole ? <PageHelp role={guideRole} /> : (
+              <a href="/business/guide" target="_blank" rel="noopener noreferrer"
+                className="whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold text-cloud ring-1 ring-slate hover:ring-mist">Help</a>
+            )}
             <LiveRefresh />
             <LogoutButton />
           </div>

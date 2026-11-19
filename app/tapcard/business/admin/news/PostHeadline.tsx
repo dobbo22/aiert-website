@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import GroupsPanel, { type GroupRow } from "./GroupsPanel";
+import HelpDot from "../HelpDot";
 
 const MAX = 140;
 
@@ -155,7 +156,7 @@ export default function PostHeadline({ cardId, cardName, active, latest, followe
         <p className="mt-3 text-cloud">Never post an RNS before it is public, and say nothing that is not in it. A headline and a link to the full RNS is enough. For a meeting invitation or an event that needs no disclosure, check with your adviser first.
           {reach > 0 ? ` About ${reach} ${reach === 1 ? "follower" : "followers"} can be notified${audience.length ? " in the chosen groups" : ""}.` : " Nobody can be notified yet."}</p>
         <fieldset className="mt-4 text-cloud">
-          <legend className="font-semibold">Type of headline</legend>
+          <legend className="font-semibold">Type of headline<HelpDot anchor="post-regulatory" role={ro ? (meSenior ? "adviser-senior" : "adviser-general") : meSenior ? "company-senior" : "company-general"} label="Regulatory or general: how to choose" /></legend>
           <label className="mt-2 flex items-start gap-2"><input type="radio" name="kind" className="mt-1" checked={kind === "general"} onChange={() => setKind("general")} /> <span>General: an event, webcast or meeting invitation</span></label>
           <label className="mt-1 flex items-start gap-2"><input type="radio" name="kind" className="mt-1" checked={kind === "rns"} onChange={() => setKind("rns")} /> <span>Regulatory (RNS): a link is required and it is checked against your announcements page</span></label>
           {kind === "rns" && !meSenior && !approval && <p className="mt-2 rounded-lg bg-red-500/20 px-3 py-2 text-sm">Only a senior admin can post regulatory news. Ask one to post it, or turn on second approval below so you can write it for them to approve.</p>}

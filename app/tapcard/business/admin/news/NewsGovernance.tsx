@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { dataOwnershipStatement } from "@/lib/tapcardAdviserPricing";
+import HelpDot from "../HelpDot";
 
 export interface DraftRow { id: number; kind: string; text: string; link: string; groups: string[]; createdBy: string; createdAt: string; websiteStatus: string }
 export interface AdminRow { email: string; senior: boolean }
@@ -21,6 +22,7 @@ const when = (iso: string) => new Date(iso).toLocaleString("en-GB", { day: "nume
 
 /// Who may post regulatory news, the optional second approval, headlines waiting for approval, and the audit trail.
 export default function NewsGovernance({ cardId, me, meSenior, approval, admins, drafts, audit, advisers = [], adviserOrgId, cover = [], section = "approvals", agreement = [], companyName = "your company" }: { cardId: string; me: string; meSenior: boolean; approval: boolean; admins: AdminRow[]; drafts: DraftRow[]; audit: AuditRow[]; advisers?: AdviserLink[]; adviserOrgId?: string; cover?: { linkId: string; adviserName: string; until: string | null; ending: boolean }[]; section?: "approvals" | "people" | "audit"; agreement?: AgreementLine[]; companyName?: string }) {
+  const role = adviserOrgId ? (meSenior ? "adviser-senior" : "adviser-general") : meSenior ? "company-senior" : "company-general";
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -43,10 +45,10 @@ export default function NewsGovernance({ cardId, me, meSenior, approval, admins,
 
   return (
     <div className="space-y-6">
-      {section === "approvals" && drafts.length === 0 && <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10"><h2 className="text-lg font-bold text-cloud">Waiting for approval</h2><p className="mt-2 text-cloud">Nothing is waiting. When second approval is on, regulatory headlines written by one person appear here for a different senior admin to approve.</p></div>}
+      {section === "approvals" && drafts.length === 0 && <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10"><h2 className="text-lg font-bold text-cloud">Waiting for approval<HelpDot anchor="approve" role={role} label="How approval works" /></h2><p className="mt-2 text-cloud">Nothing is waiting. When second approval is on, regulatory headlines written by one person appear here for a different senior admin to approve.</p></div>}
       {section === "approvals" && drafts.length > 0 && (
         <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-gold/40">
-          <h2 className="text-lg font-bold text-cloud">Waiting for approval</h2>
+          <h2 className="text-lg font-bold text-cloud">Waiting for approval<HelpDot anchor="approve" role={role} label="How approval works" /></h2>
           <ul className="mt-3 divide-y divide-white/10">
             {drafts.map((d) => {
               const own = d.createdBy === me.toLowerCase();
@@ -70,7 +72,7 @@ export default function NewsGovernance({ cardId, me, meSenior, approval, admins,
       {!adviserOrgId && <>
       {section === "people" && <>
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
-        <h2 className="text-lg font-bold text-cloud">Who can post what</h2>
+        <h2 className="text-lg font-bold text-cloud">Who can post what<HelpDot anchor="seniors" role={role} label="Who should be senior, and second approval" /></h2>
         <p className="mt-2 text-cloud">General headlines (events, webcasts, meeting invitations) can be posted by any admin. <strong>Regulatory</strong> headlines can only be posted by a senior admin, need a link, and are checked against your own announcements page. Withdrawing a regulatory headline is also senior only. <a className="text-gold underline" href="/business/investor-guide/setup#roles" target="_blank" rel="noopener noreferrer">Who should be senior?</a></p>
         <ul className="mt-3 divide-y divide-white/10">
           {admins.map((a) => (
@@ -89,7 +91,7 @@ export default function NewsGovernance({ cardId, me, meSenior, approval, admins,
       </div>
 
       <div id="advisers" className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
-        <h2 className="text-lg font-bold text-cloud">Advisers</h2>
+        <h2 className="text-lg font-bold text-cloud">Advisers<HelpDot anchor="advisers" role={role} label="How advisers work" /></h2>
         <p className="mt-2 text-cloud">An IR firm or broker can ask to manage your headlines. Nothing is allowed until a senior admin approves it here. An approved adviser can write general headlines and manage groups. It can post regulatory news only if you allow that for it and its own staff member is senior there. You can remove an adviser at any time, and everything it does is in your audit trail.</p>
         {advisers.length === 0 && <p className="mt-3 text-cloud">No adviser has asked yet.</p>}
         <ul className="mt-3 divide-y divide-white/10">
@@ -124,7 +126,7 @@ export default function NewsGovernance({ cardId, me, meSenior, approval, admins,
       </div>
 
       <details className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
-        <summary className="cursor-pointer text-lg font-bold text-cloud">Agreement record ({agreement.length})</summary>
+        <summary className="cursor-pointer text-lg font-bold text-cloud">Agreement record ({agreement.length})<HelpDot anchor="advisers" role={role} label="What the agreement record is" /></summary>
         <p className="mt-3 text-cloud">A permanent record of what was agreed with each adviser: who approved it, who pays, who owns the data, the terms in force and the agreement reference. Entries cannot be edited or deleted.</p>
         <ul className="mt-3 divide-y divide-white/10">
           {agreement.map((g) => (
@@ -142,7 +144,7 @@ export default function NewsGovernance({ cardId, me, meSenior, approval, admins,
 
       {section === "audit" && <>
       <details open className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
-        <summary className="cursor-pointer text-lg font-bold text-cloud">Audit trail ({audit.length} most recent)</summary>
+        <summary className="cursor-pointer text-lg font-bold text-cloud">Audit trail ({audit.length} most recent)<HelpDot anchor="audit" role={role} label="How the audit trail works" /></summary>
         <p className="mt-3 text-cloud">Every post, approval, refusal and withdrawal, with who did it. Entries cannot be edited or deleted here. <a className="text-gold underline" href="/api/tapcard/biz/news-audit">Download as CSV</a></p>
         <ul className="mt-3 divide-y divide-white/10">
           {audit.map((r) => (

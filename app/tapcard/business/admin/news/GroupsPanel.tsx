@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import LinkQr from "../LinkQr";
+import HelpDot from "../HelpDot";
 
 export interface GroupRow { slug: string; label: string; members: number; reachable: number }
 
@@ -25,7 +26,7 @@ export default function GroupsPanel({ cardId, initial, adviserOrgId }: { cardId:
 
   return (
     <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10" id="groups">
-      <h2 className="text-lg font-bold text-cloud">Groups</h2>
+      <h2 className="text-lg font-bold text-cloud">Groups<HelpDot anchor="groups" role={adviserOrgId ? "adviser-senior" : "company-senior"} label="How groups work" /></h2>
       <p className="mt-2 text-cloud">Give each audience its own group, for example #Kefi or #IPO Clients. Each group has its own link and QR code. Someone who follows through it is put in that group, and you can send a headline to chosen groups only. Followers are not asked for a name or email; a group is only a label.</p>
       {groups.length > 0 && (
         <ul className="mt-4 divide-y divide-white/10">

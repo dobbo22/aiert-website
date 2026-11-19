@@ -3,6 +3,7 @@ import { listEvents } from "@/lib/tapcardEvents";
 import { listSharedFollowers, type SharedFollower } from "@/lib/tapcardShare";
 import { isDemoOrg } from "@/lib/tapcardDemoSim";
 import DemoPanel from "./DemoPanel";
+import HelpDot from "./HelpDot";
 import { nowMs } from "@/lib/clock";
 import { approvalRequired, pendingDrafts, seniorAdmins } from "@/lib/tapcardNewsPolicy";
 import { linksForOrg } from "@/lib/tapcardAdvisers";
@@ -152,7 +153,7 @@ export function ListedOverviewView({ s, orgName, events = [], people = [], now, 
 
       <details className={card} open={doneCount < steps.length - 2}>
         <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-3 text-lg font-bold text-cloud">
-          <span>Getting started</span><span className="text-sm font-semibold text-cloud">{doneCount} of {steps.length} done</span>
+          <span>Getting started<HelpDot setupAnchor="steps" label="The setup guide, step by step" /></span><span className="text-sm font-semibold text-cloud">{doneCount} of {steps.length} done</span>
         </summary>
         <ol className="mt-3 space-y-3 text-cloud">
           {steps.map((st, i) => (

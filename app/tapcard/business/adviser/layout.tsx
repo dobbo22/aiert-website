@@ -1,6 +1,7 @@
 import { requireAdviser } from "@/lib/tapcardAdvisers";
 import AdviserLoginForm from "./AdviserLoginForm";
 import AdviserLogout from "./AdviserLogout";
+import PageHelp from "../admin/PageHelp";
 
 export const metadata = { title: "TapCard adviser portal", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -20,7 +21,7 @@ export default async function AdviserLayout({ children }: { children: React.Reac
             <p className="text-sm text-cloud">{me.email}{me.senior ? " · senior" : ""}</p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <a href={`/business/investor-guide?as=${me.senior ? "adviser-senior" : "adviser-general"}#manual`} target="_blank" rel="noopener noreferrer" className="whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold text-cloud ring-1 ring-slate hover:ring-mist">Help</a>
+            <PageHelp role={me.senior ? "adviser-senior" : "adviser-general"} />
             <AdviserLogout />
           </div>
         </header>
