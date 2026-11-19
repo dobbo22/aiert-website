@@ -86,14 +86,14 @@ const STEPS = [
   ["Put a QR code on what shareholders already read", "Your investor presentation, results slides, annual report, AGM notice or website. One code for the company, one for each event, and one for each person who speaks for it."],
   ["A shareholder scans it", "They land on your company's card: your latest headline, your contacts, and one-tap links to your investor pages (RNS, reports, shareholder information, share price) where your website has them. They can read it in their browser, with nothing to install."],
   ["They follow you in the TapCard app", "Following is their choice, it is free for them, and they can stop at any time. They need the app to receive notifications; without it they can still read the card."],
-  ["You post a headline when you announce", "A one-line headline with a link to the full announcement on your own website, posted from the web by your administrators. Followers with notifications on are told. You decide what goes out and when."],
+  ["You post a headline when you announce", "A one-line headline with a link to the full announcement on your own website, posted from the web by your administrators, with regulatory news limited to the senior ones you choose. Followers with notifications on are told. You decide what goes out and when."],
 ];
 
 const POINTS = [
   { title: "TapCard does not provide RNS", body: "TapCard is not a regulatory news service. Your announcements and your data stay yours: they are published and distributed only from your own website and your normal channels. TapCard never hosts, copies or sends the announcement itself. It tells followers that an announcement has happened and links them to it on your website. Never post an RNS before it is public, and say nothing that is not in it. A meeting invitation or an event that does not need disclosure is different: check with your adviser first. What you may and may not say, and when, is for you and your advisers." },
   { title: "Followers who choose to share", body: "You see how many people follow and how many can receive a notification. A shareholder can also choose to share their name and email with you when they follow; you see only those who do, and they can withdraw at any time. Followers who don't share stay anonymous." },
   { title: "Your investor pages, in one tap", body: "RNS announcements, reports and results, shareholder information, investor presentations and share price all sit on the card as one-tap links to your own website, found automatically where your site has them. Nothing is copied; change your website and the links still work." },
-  { title: "Several voices", body: "Cards for the chair, CEO, CFO and IR contact, all in the company's branding, on one account. Anyone who follows one of them follows the company. Only your administrators can post, and you choose who they are." },
+  { title: "Several voices", body: "Cards for the chair, CEO, CFO and IR contact, all in the company's branding, on one account. Anyone who follows one of them follows the company. Only your administrators can post, and you choose who they are and which of them are senior enough to post regulatory news." },
 ];
 
 const FEATURES = [
@@ -101,6 +101,15 @@ const FEATURES = [
   { title: "Insights for your IR team", body: "Followers over time, how many each headline was sent to and how many tapped through, when people read, how many go from scan to follow to sharing their details, and what kind of investor is following (organisations or private)." },
   { title: "Reports built for you", body: "A one-page summary of the last 30 days to print or save as a PDF, for your board or your adviser. We can adapt reports to suit your company and build them with you: tell us what you want to see." },
   { title: "The details people share", body: "Download the followers who chose to share their name and email as a spreadsheet, with how they followed and the event they came through." },
+];
+
+// What an administrator can do beyond the screens in the pictures: roles, approval, advisers and the record of what happened.
+const ADMIN_CONTROLS = [
+  { title: "Senior and general administrators", body: "You choose which administrators are senior. Only senior administrators can post or withdraw a regulatory (RNS) headline, approve other people's, and change these settings. General administrators can post events, webcasts and meeting invitations and look after cards, QR codes and the numbers. A new administrator starts as a general one." },
+  { title: "A second pair of eyes, if you want it", body: "Switch on second approval and a regulatory headline written by one person is sent only when a different senior administrator approves it. Every regulatory headline needs a link, and TapCard checks it against your own announcements page before it goes. If it isn't there yet, a senior administrator has to confirm, and that is recorded." },
+  { title: "A record of everything", body: "Every post, approval, refusal and withdrawal is kept in an audit trail naming who did it and when, and you can download it as a spreadsheet. Entries cannot be edited or deleted in the admin." },
+  { title: "Your adviser, on your terms", body: "An investor relations adviser or broker can ask to work with you, and nothing is allowed until your senior administrators approve it. You choose whether it may post regulatory news, whether it pays for TapCard on your behalf, and you can remove it at any time. You confirm that you stay the owner of your data, and the agreement is kept on a permanent record. A company has one adviser at a time." },
+  { title: "Told what needs you", body: "The Overview lists what is waiting for you, such as headlines to approve or an adviser who has asked, and suggests the next step. A guided setup asks the right questions, applies your answers and shows you where to go next, and every page has a help button that opens the part of the manual for your role." },
 ];
 
 const ADMIN_SHOTS = [
@@ -191,8 +200,8 @@ export default function InvestorsPage() {
     <>
       <h2 className="text-2xl font-black text-cloud">The admin your team uses</h2>
       <p className="mt-2 max-w-3xl leading-relaxed text-cloud">
-        A simple website for your investor relations team, with a tab for each job: Overview, Followers, Insights, News, Cards &amp; QR and Settings. These screens show an example company with made-up
-        figures. You choose who the administrators are, and they sign in by an emailed link, with no passwords.
+        A simple website for your investor relations team, with a tab for each job: Overview, Followers, Insights, News &amp; RNS, Cards &amp; QR and Settings. News &amp; RNS has its own sections for posting, approvals,
+        people and advisers, and the audit trail. These screens show an example company with made-up figures. You choose who the administrators are, and they sign in by an emailed link, with no passwords.
       </p>
       <div className="mt-6 grid gap-6 md:grid-cols-2">
         {ADMIN_SHOTS.map((a) => (
@@ -211,6 +220,18 @@ export default function InvestorsPage() {
               <p className="mt-1 leading-relaxed text-cloud">{a.body}</p>
             </figcaption>
           </figure>
+        ))}
+      </div>
+      <h2 className="mt-10 text-2xl font-black text-cloud">Control, approval and a record</h2>
+      <p className="mt-2 max-w-3xl leading-relaxed text-cloud">
+        Regulatory news needs care, so who can post it, who approves it and what happened are all under your control.
+      </p>
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        {ADMIN_CONTROLS.map((c) => (
+          <div key={c.title} className="card rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
+            <h3 className="text-lg font-bold text-cloud">{c.title}</h3>
+            <p className="mt-2 leading-relaxed text-cloud">{c.body}</p>
+          </div>
         ))}
       </div>
       <div className="card mt-8 rounded-2xl bg-charcoal p-6 ring-1 ring-gold/40">
