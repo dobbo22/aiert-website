@@ -22,6 +22,7 @@ const TABS = [
   { href: "/admin/social/verifications", label: "Verifications" },
   { href: "/admin/social/companies", label: "Companies" },
   { href: "/admin/social/ir-outreach", label: "IR outreach" },
+  { href: "/admin/social/advisers", label: "Advisers" },
 ];
 
 export default function TabNav() {

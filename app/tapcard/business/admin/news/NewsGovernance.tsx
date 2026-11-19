@@ -11,7 +11,7 @@ const label: Record<string, string> = {
   posted: "Posted", submitted: "Written, waiting for approval", approved: "Approved", rejected: "Turned down", "draft-withdrawn": "Draft withdrawn",
   withdrawn: "Withdrawn", refused: "Refused", "approval-on": "Second approval switched on", "approval-off": "Second approval switched off",
   "senior-on": "Made senior", "senior-off": "Senior removed", "group-added": "Group added", "group-removed": "Group removed",
-  "adviser-requested": "Adviser asked for access", "adviser-cover-accepted": "Adviser's payment accepted", "adviser-cover-ended": "Adviser's payment ending", "adviser-approved": "Adviser approved", "adviser-declined": "Adviser declined", "adviser-revoked": "Adviser removed",
+  "adviser-requested": "Adviser asked for access", "adviser-tier-set": "Adviser price band set by AIERT", "adviser-cover-accepted": "Adviser's payment accepted", "adviser-cover-ended": "Adviser's payment ending", "adviser-approved": "Adviser approved", "adviser-declined": "Adviser declined", "adviser-revoked": "Adviser removed",
   "adviser-regulatory-on": "Adviser allowed regulatory news", "adviser-regulatory-off": "Adviser regulatory news switched off",
 };
 const when = (iso: string) => new Date(iso).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
