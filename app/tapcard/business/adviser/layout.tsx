@@ -19,7 +19,10 @@ export default async function AdviserLayout({ children }: { children: React.Reac
             <h1 className="mt-1 text-2xl font-black text-cloud">{me.adviserName}</h1>
             <p className="text-sm text-cloud">{me.email}{me.senior ? " · senior" : ""}</p>
           </div>
-          <AdviserLogout />
+          <div className="flex shrink-0 items-center gap-2">
+            <a href={`/business/investor-guide?as=${me.senior ? "adviser-senior" : "adviser-general"}#manual`} target="_blank" rel="noopener noreferrer" className="whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold text-cloud ring-1 ring-slate hover:ring-mist">Help</a>
+            <AdviserLogout />
+          </div>
         </header>
         <div className="mt-8">{children}</div>
       </div>

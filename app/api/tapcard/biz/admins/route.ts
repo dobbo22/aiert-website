@@ -47,6 +47,8 @@ export async function POST(req: NextRequest) {
   // An address signs in to one company at a time, so it can't also run another company's account.
   if ((await findAdminOrgsByEmail(email)).length > 0) return NextResponse.json({ error: "That address already runs another TapCard for Business account. Use a different address." }, { status: 409 });
   await addAdmin(session.orgId, email, asManager ? "manager" : "admin", shops.map((x) => x.id));
+  // A new admin starts as a general admin for headlines: a senior admin makes them senior on the News page (lib/tapcardNewsPolicy.ts).
+  if (!asManager) await (await import("@/lib/tapcardNewsPolicy")).markNewAdminGeneral(session.orgId, email).catch(() => {});
   const token = await createLoginToken(email, session.orgId);
   const link = `https://tapcard.aiert.co.uk/api/biz/login/${token}`;
   if (asManager) await sendBizManagerInviteEmail(email, org.name, session.email, link, shops.map((x) => x.name), await shopCardLinks(org, shops.map((x) => x.id), email).catch(() => [])).catch((e) => console.error("tapcard biz manager email failed:", e));

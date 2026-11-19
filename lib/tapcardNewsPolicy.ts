@@ -193,3 +193,12 @@ export async function seniorCount(orgId: string): Promise<number> {
   await ensurePolicySchema();
   return Number(((await sql`SELECT COUNT(*)::int AS n FROM tapcard_biz_admins WHERE org_id = ${orgId} AND role <> 'manager' AND senior`) as { n: number }[])[0]?.n ?? 0);
 }
+
+/// A newly added admin starts as general (they can write headlines and manage groups, but not post regulatory news or change settings).
+/// A senior admin makes them senior afterwards. The company's first admin is always senior, so a new company is never left without one.
+export async function markNewAdminGeneral(orgId: string, email: string): Promise<void> {
+  await ensurePolicySchema();
+  await sql`UPDATE tapcard_biz_admins SET senior = false
+    WHERE org_id = ${orgId} AND email = ${email.toLowerCase()} AND role <> 'manager'
+      AND EXISTS (SELECT 1 FROM tapcard_biz_admins o WHERE o.org_id = ${orgId} AND o.role <> 'manager' AND o.senior AND o.email <> ${email.toLowerCase()})`;
+}

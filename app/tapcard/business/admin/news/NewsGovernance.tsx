@@ -60,7 +60,7 @@ export default function NewsGovernance({ cardId, me, meSenior, approval, admins,
       {!adviserOrgId && <>
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">Who can post what</h2>
-        <p className="mt-2 text-cloud">General headlines (events, webcasts, meeting invitations) can be posted by any admin. <strong>Regulatory</strong> headlines can only be posted by a senior admin, need a link, and are checked against your own announcements page. Withdrawing a regulatory headline is also senior only.</p>
+        <p className="mt-2 text-cloud">General headlines (events, webcasts, meeting invitations) can be posted by any admin. <strong>Regulatory</strong> headlines can only be posted by a senior admin, need a link, and are checked against your own announcements page. Withdrawing a regulatory headline is also senior only. <a className="text-gold underline" href="/business/investor-guide/setup#roles" target="_blank" rel="noopener noreferrer">Who should be senior?</a></p>
         <ul className="mt-3 divide-y divide-white/10">
           {admins.map((a) => (
             <li key={a.email} className="flex flex-wrap items-center justify-between gap-3 py-2">

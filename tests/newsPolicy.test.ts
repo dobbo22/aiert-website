@@ -114,3 +114,18 @@ test("second approval: written by one, approved by a different senior admin, onc
   // and the last senior cannot be removed
   assert.equal((await p.setSenior(org, "ceo@kefi.com", false)).ok, false);
 });
+
+test("a newly added admin starts general, but the company's first admin stays senior", async () => {
+  const { org } = await setup();
+  const biz = await import("../lib/tapcardBiz");
+  const p = await import("../lib/tapcardNewsPolicy");
+  const fresh = (await biz.createOrg("Fresh plc", "fresh.com")).id;
+  await p.ensurePolicySchema();
+  await biz.addAdmin(fresh, "owner@fresh.com"); await p.markNewAdminGeneral(fresh, "owner@fresh.com");
+  assert.equal(await p.isSenior(fresh, "owner@fresh.com"), true, "the first admin is senior");
+  await biz.addAdmin(fresh, "second@fresh.com"); await p.markNewAdminGeneral(fresh, "second@fresh.com");
+  assert.equal(await p.isSenior(fresh, "second@fresh.com"), false, "a later admin starts general");
+  assert.equal((await p.setSenior(fresh, "second@fresh.com", true)).ok, true);
+  assert.equal(await p.isSenior(fresh, "second@fresh.com"), true);
+  void org;
+});
