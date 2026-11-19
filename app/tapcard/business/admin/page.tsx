@@ -36,7 +36,10 @@ export default async function BizAdminOverview() {
   }
 
   // A listed company (investor relations) has its own overview: numbers, who shared, and posting a headline.
-  if (await orgIsListed(org.id)) return <ListedOverview orgId={org.id} orgName={org.name} />;
+  if (await orgIsListed(org.id)) {
+    const senior = await (await import("@/lib/tapcardNewsPolicy")).isSenior(org.id, session.email, session.support === true).catch(() => false);
+    return <ListedOverview orgId={org.id} orgName={org.name} viewer={{ email: session.email, senior }} />;
+  }
 
   const activeCards = await countOrgCards(org.id);
   const locations = await listLocations(org.id).catch(() => []);
