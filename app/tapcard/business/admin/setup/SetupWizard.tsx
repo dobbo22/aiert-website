@@ -169,7 +169,7 @@ export default function SetupWizard(p: Props) {
       body: (
         <>
           <p className="text-cloud">Groups let you send a headline to one audience, such as <em>#group name</em>. Each group has its own link and QR code. A group is only a label on someone who follows: we don&apos;t ask for or keep a name or email for it.</p>
-          <p className="mt-2 rounded-lg bg-gold/15 px-3 py-2 text-cloud ring-1 ring-gold/40"><strong>Groups take effect with the next TapCard app update.</strong> You can set them up now.</p>
+          <p className="mt-2 rounded-lg bg-gold/15 px-3 py-2 text-cloud ring-1 ring-gold/40"><strong>Groups need TapCard 4.3 or later.</strong> Someone on an older version just opens your card and joins no group.</p>
           <div className="mt-3 flex flex-wrap gap-3">
             <button type="button" className={wantsGroups === true ? gold : quiet} onClick={() => setWantsGroups(true)}>Yes</button>
             <button type="button" className={wantsGroups === false ? gold : quiet} onClick={() => setWantsGroups(false)}>Not now</button>

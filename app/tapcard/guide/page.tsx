@@ -73,6 +73,10 @@ const steps: { title: string; img?: string; alt?: string; text: string }[] = [
     text: "On a Business card, tap Edit and find Bookings & links. Add Book a table, Book a room, Book an appointment, View our menu, Order online, Shop online, Opening hours or Leave a review, or make your own with any label, like Price list. Not sure where to start? Tap Start from my type of business and pick restaurant, hotel, shop, salon or trades. If you enter your website, TapCard offers the booking, menu and review links it finds there, and your opening hours when your site publishes them (for a chain, the hours of the branch at your card's address). Each one shows as a tappable row on your card and on your web card. With no online booking, the phone row says Call to book. The Personal card does not have them.",
   },
   {
+    title: "If you scan a group QR code",
+    text: "A company can give different QR codes to different audiences, for example the people at one event. Scanning one follows the company as usual and puts you in that group, so the company can send some headlines to that group only. The group's name appears as a label on the company's card in your Contacts. The company sees how many followers are in each group, never who, and stopping following removes you from it. This needs TapCard 4.3 or later.",
+  },
+  {
     title: "Find details for a contact",
     text: "On a contact you added that has a company name or a website, My details has a Find details button. Tap it and TapCard looks the company up (Apple Maps on iPhone, public business listings and the company's own website) and offers its phone number, address, opening hours, links and social profiles. Change a detail if you like, then tap Add or Skip. The company's phone and email are added as extra ones, so the person's own number is never replaced. Only the company name or website is sent, never the person's name, and you choose when to look.",
   },

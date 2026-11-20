@@ -19,7 +19,7 @@ const Box = ({ title, items }: { title: string; items: ReactNode[] }) => (
 
 const GroupsNote = () => (
   <p className="rounded-lg bg-gold/15 px-3 py-2 ring-1 ring-gold/40">
-    <strong>Groups need the next TapCard app update.</strong> You can create groups and their links now. A group takes effect for followers once the apps read the group from the link, which is part of the next release. Until then a group link simply opens your card.
+    <strong>Groups need TapCard 4.3 or later</strong> (4.3.0 on Android). Someone who scans a group link on an older version just opens your card and joins no group. On 4.3 or later the follower joins the group, sees its name as a label on your card on their phone, and you see how many followers are in each group, never who.
   </p>
 );
 
@@ -37,6 +37,7 @@ function CompanyCommon({ senior }: { senior: boolean }) {
         <p>Posts are one per half minute. Followers get a notification, and the headline shows on your card for anyone who opens it.</p>
       </Task>
       <Task id="groups" title="Make a group and give out its QR code">
+        <p>Groups keep different audiences apart, for example the people at one event and your retail investors, so a headline reaches only those it is for. If you use an adviser, it works with groups on your behalf for each of its clients.</p>
         <Steps>
           <li>Open <strong>News &amp; RNS</strong>, then the <strong>Audiences</strong> tab. Type a name such as #Retail investors, then <strong>Add group</strong>.</li>
           <li>Each group has a link and a <strong>Show QR code</strong> button. Use that code on the slide or page meant for that audience.</li>
@@ -170,6 +171,7 @@ export function AdviserSeniorManual() {
         <p>Press <strong>Card and invoices</strong> on Your plan. It opens a secure page to change your card and see invoices. Quantities and cancellation follow the companies you cover, so they are not changed there.</p>
       </Task>
       <Task id="groups-adviser" title="Groups for a client">
+        <p>Groups are for advisers to keep a client&apos;s different audiences apart, for example the investors from one roadshow, one event or one investor list, so a headline reaches only the people it is for. A group belongs to one company; each client company has its own groups, and you reach them by switching company.</p>
         <p>Open the company&apos;s headlines and use the <strong>Audiences</strong> tab to add groups and get each group&apos;s link and QR code. Choose <em>Only these groups</em> when posting to send to them alone.</p>
         <GroupsNote />
       </Task>
@@ -195,7 +197,8 @@ export function AdviserGeneralManual() {
         <p>Ask a senior colleague. If the company has second approval switched on you can write one for approval: choose <em>Regulatory</em>, add the link, and press <strong>Submit for approval</strong>. It is not sent until someone senior approves it. You can withdraw your own draft.</p>
       </Task>
       <Task id="groups-adviser" title="Groups">
-        <p>Use the <strong>Audiences</strong> tab on the company&apos;s headlines page. <a href="#groups-adviser">Groups need the next app update</a> before they affect followers.</p>
+        <p>Groups are for advisers to keep a client&apos;s different audiences apart, for example the investors from one roadshow, one event or one investor list, so a headline reaches only the people it is for. A group belongs to one company; each client company has its own groups, and you reach them by switching company.</p>
+        <p>Use the <strong>Audiences</strong> tab on the company&apos;s headlines page. <a href="#groups-adviser">Groups need TapCard 4.3 or later</a> to affect followers.</p>
       </Task>
     </div>
   );
@@ -213,6 +216,9 @@ export function ShareholderManual() {
       </Task>
       <Task id="get-news" title="What you receive">
         <p>The company&apos;s headlines as notifications, each with a link to the announcement on the company&apos;s own website. TapCard is not a replacement for the regulatory news service.</p>
+      </Task>
+      <Task id="group-link" title="If you scan a group QR code">
+        <p>A company can give different QR codes to different audiences, such as the people at one event. Scanning one follows the company as usual and puts you in that group, so the company can send some headlines to that group only. The group name appears as a label on the company&apos;s card on your phone. The company sees how many followers are in each group, never who. Stopping following removes you from the group. Needs TapCard 4.3 or later.</p>
       </Task>
       <Task id="stop" title="Changing your mind">
         <p>You can stop following, or change to Follow only, at any time in the app. That removes your name and email from the company&apos;s list. Notification settings are on the card in the app.</p>
