@@ -8,12 +8,14 @@ import base from "@/lib/data/lse-equities.json";
 import extra from "@/lib/data/lse-seed-extra.json";
 import type { LseShare } from "@/lib/lseStockList";
 import { checkCompanyWebsite, type SiteResult, type Tried } from "@/lib/tapcardListedSite";
+import { checkInvestorPages, type InvestorResult } from "@/lib/tapcardListedInvestor";
 
 export interface UniverseRow {
   isin: string; name: string; ticker: string; market: string; country: string; sector: string; segment: string; currency: string;
   status: "listed" | "delisted"; firstSeen: string; lastSeenInList: string; delistedAt: string | null;
   marketCap: number | null; marketCapSource: string; marketCapAt: string | null;
   website: string; websiteSource: string; websiteStatus: string; websiteCheckedAt: string | null; websiteTitle: string; notes: string; hasCard: boolean;
+  irStatus: string; irUrl: string; rnsUrl: string; reportsUrl: string; priceUrl: string; rnsItems: number; publishesPrice: string; publishesCap: string; irCheckedAt: string | null;
 }
 
 let ready: Promise<void> | null = null;
@@ -49,6 +51,17 @@ export function ensureUniverse(): Promise<void> {
       .then(() => sql`ALTER TABLE tapcard_lse_universe ADD COLUMN IF NOT EXISTS website_checked_at TIMESTAMPTZ`)
       .then(() => sql`ALTER TABLE tapcard_lse_universe ADD COLUMN IF NOT EXISTS website_title TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_lse_universe ADD COLUMN IF NOT EXISTS website_evidence JSONB NOT NULL DEFAULT '[]'::jsonb`)
+      // Step 3: investor pages (ir_status: unchecked, found, partial, none; publishes_*: yes, widget, no, unknown).
+      .then(() => sql`ALTER TABLE tapcard_lse_universe ADD COLUMN IF NOT EXISTS ir_status TEXT NOT NULL DEFAULT 'unchecked'`)
+      .then(() => sql`ALTER TABLE tapcard_lse_universe ADD COLUMN IF NOT EXISTS ir_url TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_lse_universe ADD COLUMN IF NOT EXISTS rns_url TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_lse_universe ADD COLUMN IF NOT EXISTS reports_url TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_lse_universe ADD COLUMN IF NOT EXISTS price_url TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_lse_universe ADD COLUMN IF NOT EXISTS rns_items INT NOT NULL DEFAULT 0`)
+      .then(() => sql`ALTER TABLE tapcard_lse_universe ADD COLUMN IF NOT EXISTS publishes_price TEXT NOT NULL DEFAULT 'unknown'`)
+      .then(() => sql`ALTER TABLE tapcard_lse_universe ADD COLUMN IF NOT EXISTS publishes_cap TEXT NOT NULL DEFAULT 'unknown'`)
+      .then(() => sql`ALTER TABLE tapcard_lse_universe ADD COLUMN IF NOT EXISTS ir_checked_at TIMESTAMPTZ`)
+      .then(() => sql`ALTER TABLE tapcard_lse_universe ADD COLUMN IF NOT EXISTS ir_evidence JSONB NOT NULL DEFAULT '{}'::jsonb`)
       .then(() => sql`CREATE INDEX IF NOT EXISTS tapcard_lse_universe_cap ON tapcard_lse_universe (market_cap DESC NULLS LAST)`)
       .then(() => undefined)
       .catch((e) => { ready = null; throw e; });
@@ -70,6 +83,8 @@ export async function listUniverse(): Promise<UniverseRow[]> {
     firstSeen: iso(r.first_seen), lastSeenInList: iso(r.last_seen_in_list), delistedAt: r.delisted_at ? new Date(r.delisted_at as string).toISOString() : null,
     marketCap: r.market_cap === null ? null : Number(r.market_cap), marketCapSource: String(r.market_cap_source), marketCapAt: r.market_cap_at ? iso(r.market_cap_at) : null,
     website: String(r.website), websiteSource: String(r.website_source), websiteStatus: String(r.website_status ?? "unchecked"), websiteCheckedAt: r.website_checked_at ? new Date(r.website_checked_at as string).toISOString() : null, websiteTitle: String(r.website_title ?? ""), notes: String(r.notes), hasCard: hasCard.has(String(r.isin)),
+    irStatus: String(r.ir_status ?? "unchecked"), irUrl: String(r.ir_url ?? ""), rnsUrl: String(r.rns_url ?? ""), reportsUrl: String(r.reports_url ?? ""), priceUrl: String(r.price_url ?? ""), rnsItems: Number(r.rns_items ?? 0),
+    publishesPrice: String(r.publishes_price ?? "unknown"), publishesCap: String(r.publishes_cap ?? "unknown"), irCheckedAt: r.ir_checked_at ? new Date(r.ir_checked_at as string).toISOString() : null,
   }));
 }
 
@@ -237,4 +252,28 @@ export async function storedEvidence(isin: string): Promise<{ tried: Tried[]; ch
   if (!r.length) return { tried: [], checkedAt: null };
   const ev = typeof r[0].website_evidence === "string" ? JSON.parse(r[0].website_evidence as string) : r[0].website_evidence;
   return { tried: (ev as Tried[]) ?? [], checkedAt: r[0].website_checked_at ? new Date(r[0].website_checked_at as string).toISOString() : null };
+}
+
+/// Step 3: checks one company's investor pages now (up to about 45 seconds), saves the result and the evidence, and returns them.
+export async function runInvestorCheck(isin: string): Promise<{ ok: true; result: InvestorResult; name: string } | { ok: false; error: string }> {
+  await ensureUniverse();
+  const rows = await sql`SELECT isin, name, website, website_status FROM tapcard_lse_universe WHERE isin = ${isin.toUpperCase()}`;
+  if (!rows.length) return { ok: false, error: "No such company." };
+  const r = rows[0];
+  if (!String(r.website)) return { ok: false, error: "This company has no website yet. Check or set the website first." };
+  const result = await checkInvestorPages({ isin: String(r.isin), name: String(r.name), website: String(r.website) });
+  await sql`
+    UPDATE tapcard_lse_universe SET ir_status = ${result.status}, ir_url = ${result.urls.ir ?? ""}, rns_url = ${result.urls.rns ?? ""}, reports_url = ${result.urls.reports ?? ""},
+      price_url = ${result.urls.price ?? ""}, rns_items = ${result.rnsRead.count}, publishes_price = ${result.price.state}, publishes_cap = ${result.cap.state},
+      ir_checked_at = now(), ir_evidence = ${JSON.stringify(result)}::jsonb, updated_at = now()
+    WHERE isin = ${result.isin}`;
+  return { ok: true, result, name: String(r.name) };
+}
+
+export async function storedInvestorEvidence(isin: string): Promise<InvestorResult | null> {
+  await ensureUniverse();
+  const r = await sql`SELECT ir_evidence, ir_checked_at FROM tapcard_lse_universe WHERE isin = ${isin.toUpperCase()}`;
+  if (!r.length || !r[0].ir_checked_at) return null;
+  const ev = typeof r[0].ir_evidence === "string" ? JSON.parse(r[0].ir_evidence as string) : r[0].ir_evidence;
+  return ev && Object.keys(ev as object).length ? (ev as InvestorResult) : null;
 }

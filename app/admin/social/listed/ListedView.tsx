@@ -4,6 +4,7 @@ import { Fragment, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { UniverseRow, ImportDiff } from "@/lib/tapcardListedUniverse";
 import type { Tried } from "@/lib/tapcardListedSite";
+import type { InvestorResult } from "@/lib/tapcardListedInvestor";
 
 type Preview = { deleted?: number; kept?: number; perFile: { name: string; shares: number; asOf: string }[]; diff: ImportDiff; complete: boolean; applied: boolean; skippedNonShares?: number };
 
@@ -16,7 +17,11 @@ const STATUS_LABEL: Record<string, { text: string; bg: string }> = {
   unchecked: { text: "Not checked", bg: "#e2e8f0" }, ok: { text: "Confirmed", bg: "#86efac" }, unsure: { text: "Needs a look", bg: "#fde68a" },
   wrong: { text: "Wrong company", bg: "#fca5a5" }, parked: { text: "Parked or empty", bg: "#fca5a5" }, dead: { text: "Not working", bg: "#fca5a5" }, none: { text: "None found", bg: "#fca5a5" },
 };
-type Evidence = { name?: string; tried: Tried[]; checkedAt: string | null; status?: string; website?: string };
+type Evidence = { name?: string; tried: Tried[]; checkedAt: string | null; status?: string; website?: string; investor?: InvestorResult | null };
+const IR_LABEL: Record<string, { text: string; bg: string }> = {
+  unchecked: { text: "Not checked", bg: "#e2e8f0" }, found: { text: "TapCard can read it", bg: "#86efac" }, partial: { text: "Pages found, no feed", bg: "#fde68a" }, none: { text: "None found", bg: "#fca5a5" },
+};
+const SEEN: Record<string, string> = { yes: "shown", widget: "shown (widget)", no: "not seen", unknown: "unknown" };
 
 export function money(n: number | null): string {
   if (n === null) return "";
@@ -45,6 +50,7 @@ export default function ListedView({ rows, loadError }: { rows: UniverseRow[]; l
   const [preview, setPreview] = useState<Preview | null>(null);
   const [alsoDelete, setAlsoDelete] = useState(true);
   const [checking, setChecking] = useState<string>("");
+  const [checkingIr, setCheckingIr] = useState<string>("");
   const [evidence, setEvidence] = useState<Record<string, Evidence>>({});
   const [openEv, setOpenEv] = useState<string>("");
 
@@ -118,11 +124,20 @@ export default function ListedView({ rows, loadError }: { rows: UniverseRow[]; l
     setOpenEv(res.isin);
     router.refresh();
   }
+  async function checkInvestor(isin: string) {
+    setCheckingIr(isin); setMsg("");
+    const r = await json({ action: "check-investor", isin });
+    setCheckingIr("");
+    if (r.error) { setMsg(String(r.error)); return; }
+    setEvidence((e) => ({ ...e, [isin]: { ...(e[isin] ?? { tried: [], checkedAt: null }), investor: r.result as InvestorResult } }));
+    setOpenEv(isin);
+    router.refresh();
+  }
   async function showEvidence(isin: string) {
     if (openEv === isin) { setOpenEv(""); return; }
     if (!evidence[isin]) {
       const r = (await json({ action: "evidence", isin })) as unknown as Evidence;
-      setEvidence((e) => ({ ...e, [isin]: { tried: r.tried ?? [], checkedAt: r.checkedAt ?? null } }));
+      setEvidence((e) => ({ ...e, [isin]: { tried: r.tried ?? [], checkedAt: r.checkedAt ?? null, investor: r.investor ?? null } }));
     }
     setOpenEv(isin);
   }
@@ -235,7 +250,7 @@ export default function ListedView({ rows, loadError }: { rows: UniverseRow[]; l
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
             <thead>
               <tr style={{ textAlign: "left", borderBottom: "1px solid rgba(255,255,255,.35)" }}>
-                {["Company", "Ticker", "Market", "Sector", "Market cap", "Website", "Check", ""].map((h) => <th key={h} style={{ padding: "6px 8px" }}>{h}</th>)}
+                {["Company", "Ticker", "Market", "Sector", "Market cap", "Website", "Investor pages", "Check", ""].map((h) => <th key={h} style={{ padding: "6px 8px" }}>{h}</th>)}
               </tr>
             </thead>
             <tbody>
@@ -253,24 +268,44 @@ export default function ListedView({ rows, loadError }: { rows: UniverseRow[]; l
                       <td style={{ padding: "6px 8px" }}>{r.market}</td>
                       <td style={{ padding: "6px 8px" }}>{r.sector}</td>
                       <td style={{ padding: "6px 8px", whiteSpace: "nowrap" }}>{money(r.marketCap)}{r.marketCapAt && <div style={{ fontSize: 12 }}>as of {r.marketCapAt}</div>}</td>
-                      <td style={{ padding: "6px 8px", wordBreak: "break-all" }}>
+                      <td style={{ padding: "6px 8px", minWidth: 170 }}>
                         {r.website ? <a href={r.website} target="_blank" rel="noopener noreferrer" style={{ color: "#93c5fd" }}>{r.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}</a> : ""}
                         <div style={{ fontSize: 12 }}>
-                          <span style={{ display: "inline-block", background: st.bg, color: "#111", fontWeight: 700, borderRadius: 999, padding: "1px 8px", marginRight: 6 }}>{st.text}</span>
+                          <span style={{ display: "inline-block", background: st.bg, color: "#111", fontWeight: 700, borderRadius: 999, padding: "1px 8px", marginRight: 6, whiteSpace: "nowrap" }}>{st.text}</span>
                           {r.websiteSource}
                         </div>
                       </td>
+                      <td style={{ padding: "6px 8px" }}>
+                        {(() => {
+                          const ir = IR_LABEL[r.irStatus] ?? IR_LABEL.unchecked;
+                          return (
+                            <>
+                              <span style={{ display: "inline-block", background: ir.bg, color: "#111", fontWeight: 700, borderRadius: 999, padding: "1px 8px" }}>{ir.text}</span>
+                              {r.irStatus !== "unchecked" && (
+                                <div style={{ fontSize: 12, marginTop: 2 }}>
+                                  {[r.irUrl && ["Investors", r.irUrl], r.rnsUrl && ["Announcements", r.rnsUrl], r.reportsUrl && ["Reports", r.reportsUrl]].filter(Boolean).map((x) => {
+                                    const [label, url] = x as string[];
+                                    return <a key={label} href={url} target="_blank" rel="noopener noreferrer" style={{ color: "#93c5fd", marginRight: 8 }}>{label}</a>;
+                                  })}
+                                  <div>{r.rnsItems} announcements read · price {SEEN[r.publishesPrice]} · market cap {SEEN[r.publishesCap]}</div>
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </td>
                       <td style={{ padding: "6px 8px", whiteSpace: "nowrap" }}>
                         <button type="button" style={{ ...btn, padding: "3px 8px", marginRight: 6 }} disabled={!!checking} onClick={() => checkSite(r.isin)}>{checking === r.isin ? "Checking…" : r.websiteStatus === "unchecked" ? "Check" : "Check again"}</button>
-                        {r.websiteStatus !== "unchecked" && <button type="button" style={{ ...btn, padding: "3px 8px" }} onClick={() => showEvidence(r.isin)}>{openEv === r.isin ? "Hide" : "Evidence"}</button>}
+                        <button type="button" style={{ ...btn, padding: "3px 8px", marginRight: 6 }} disabled={!r.website || !!checkingIr} onClick={() => checkInvestor(r.isin)} title={r.website ? "" : "Check or set the website first"}>{checkingIr === r.isin ? "Reading…" : r.irStatus === "unchecked" ? "Investor pages" : "Recheck pages"}</button>
+                        {(r.websiteStatus !== "unchecked" || r.irStatus !== "unchecked") && <button type="button" style={{ ...btn, padding: "3px 8px" }} onClick={() => showEvidence(r.isin)}>{openEv === r.isin ? "Hide" : "Evidence"}</button>}
                       </td>
                       <td style={{ padding: "6px 8px" }}><button type="button" style={{ ...btn, padding: "3px 8px" }} onClick={() => editWebsite(r)}>Set website</button></td>
                     </tr>
                     {openEv === r.isin && (
                       <tr style={{ borderBottom: "1px solid rgba(255,255,255,.14)" }}>
-                        <td colSpan={8} style={{ padding: "8px 8px 14px 24px" }}>
+                        <td colSpan={9} style={{ padding: "8px 8px 14px 24px" }}>
                           <div style={{ fontWeight: 700, marginBottom: 6 }}>What the check found{ev?.checkedAt ? ` (${new Date(ev.checkedAt).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })})` : ""}</div>
-                          {!ev || ev.tried.length === 0 ? <div>No address was found to try. Use Set website to give one.</div> : (
+                          {!ev || ev.tried.length === 0 ? <div>{r.websiteStatus === "unchecked" ? "The website has not been checked yet: press Check." : "No address was found to try. Use Set website to give one."}</div> : (
                             <ul style={{ margin: 0, paddingLeft: 18 }}>
                               {ev.tried.map((t, i) => {
                                 const lab = STATUS_LABEL[t.verdict] ?? STATUS_LABEL.unchecked;
@@ -285,6 +320,28 @@ export default function ListedView({ rows, loadError }: { rows: UniverseRow[]; l
                                 );
                               })}
                             </ul>
+                          )}
+                          {ev?.investor && (
+                            <div style={{ marginTop: 14 }}>
+                              <div style={{ fontWeight: 700, marginBottom: 6 }}>Investor pages{ev.investor.checkedAt ? ` (${new Date(ev.investor.checkedAt).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })})` : ""}</div>
+                              {ev.investor.note && <div style={{ marginBottom: 6 }}>{ev.investor.note}</div>}
+                              <div style={{ marginBottom: 4 }}><b>What the TapCard app would offer today:</b> {ev.investor.tapcardSees.length ? ev.investor.tapcardSees.map((l) => `${l.label}`).join(", ") : "no investor links"}.</div>
+                              <div style={{ marginBottom: 4 }}>
+                                <b>What this check found:</b>{" "}
+                                {(["ir", "rns", "reports", "price"] as const).filter((k) => ev.investor!.urls[k]).map((k) => (
+                                  <a key={k} href={ev.investor!.urls[k]} target="_blank" rel="noopener noreferrer" style={{ color: "#93c5fd", marginRight: 10, wordBreak: "break-all" }}>{{ ir: "Investor relations", rns: "Announcements", reports: "Reports", price: "Share price" }[k]}</a>
+                                ))}
+                                {!ev.investor.urls.ir && !ev.investor.urls.rns && !ev.investor.urls.reports && !ev.investor.urls.price ? "nothing" : ""}
+                              </div>
+                              {ev.investor.tapcardSees.length < (["ir", "rns", "reports", "price"] as const).filter((k) => ev.investor!.urls[k]).length && <div style={{ marginBottom: 4 }}>The app&apos;s finder misses some of these: worth teaching it.</div>}
+                              <div style={{ marginBottom: 4 }}>
+                                <b>Announcements TapCard can read:</b> {ev.investor.rnsRead.count}{ev.investor.rnsRead.note ? ` (${ev.investor.rnsRead.note})` : ""}
+                                {ev.investor.rnsRead.sample.length > 0 && <ul style={{ margin: "4px 0 0", paddingLeft: 18 }}>{ev.investor.rnsRead.sample.map((i, n) => <li key={n}>{i.date ?? "no date"}: {i.title}</li>)}</ul>}
+                              </div>
+                              <div style={{ marginBottom: 4 }}><b>Share price on its own pages:</b> {SEEN[ev.investor.price.state]}{ev.investor.price.snippet ? ` — “${ev.investor.price.snippet}”` : ""}</div>
+                              <div style={{ marginBottom: 4 }}><b>Market cap on its own pages:</b> {SEEN[ev.investor.cap.state]}{ev.investor.cap.snippet ? ` — “${ev.investor.cap.snippet}”` : ""}</div>
+                              <div style={{ fontSize: 13 }}>Pages read: {ev.investor.pages.map((p) => `${p.role} (${p.status})`).join(", ")}. Static page text only: a figure that a script loads later is not seen.</div>
+                            </div>
                           )}
                         </td>
                       </tr>
