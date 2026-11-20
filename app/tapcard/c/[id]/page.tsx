@@ -72,24 +72,27 @@ export default async function CardPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ send?: string; via?: string; a?: string; preview?: string; e?: string; g?: string }>;
+  searchParams: Promise<{ send?: string; via?: string; a?: string; preview?: string; e?: string; g?: string; m?: string }>;
 }) {
   const { id } = await params;
   // The store links carry this business: on Android through the Play install referrer, on iPhone by copying its link when tapped.
   // ?preview=1 is for our own looking (the admin pages and checks): it never counts as a view or marks a sent card as opened.
-  const { send, via, a: acceptToken, preview, e: eventParam, g: groupParam } = await searchParams;
+  const { send, via, a: acceptToken, preview, e: eventParam, g: groupParam, m: memberParam } = await searchParams;
   // An event QR code of a listed company (?e=<code>): carried into the app links so the follow can be tagged with that event.
   const eventCode = typeof eventParam === "string" && /^[A-Za-z0-9_-]{4,12}$/.test(eventParam) ? eventParam : "";
   // A group link of an adviser or company (?g=<group>, e.g. kefi): carried the same way, so the follow can join that group and the saved card be tagged.
   const groupCode = typeof groupParam === "string" && /^[a-z0-9-]{1,40}$/i.test(groupParam) ? groupParam.toLowerCase() : "";
-  const eventQuery = eventCode || groupCode ? `?${[eventCode ? `e=${eventCode}` : "", groupCode ? `g=${groupCode}` : ""].filter(Boolean).join("&")}` : "";
-  const groupOnlyQuery = groupCode ? `?g=${groupCode}` : "";
+  // A personal member link (?m=<token>), made by a company for one of its members: carried through the install exactly like the group, so the
+  // follow in the app can tell the company which member it was. Never shown on the page. Only a safe-looking token is passed on.
+  const memberCode = typeof memberParam === "string" && /^[A-Za-z0-9_-]{16,64}$/.test(memberParam) ? memberParam : "";
+  const eventQuery = eventCode || groupCode || memberCode ? `?${[eventCode ? `e=${eventCode}` : "", groupCode ? `g=${groupCode}` : "", memberCode ? `m=${memberCode}` : ""].filter(Boolean).join("&")}` : "";
+  const groupOnlyQuery = groupCode || memberCode ? `?${[groupCode ? `g=${groupCode}` : "", memberCode ? `m=${memberCode}` : ""].filter(Boolean).join("&")}` : "";
   // The group's name, shown on the card when it was opened from that group's link or QR (a lounge, say). Only if this card really has the group.
   // Verified: marked by AIERT, proved by an emailed code, or belonging to a company whose admin proved its website. Shown as a tick by the name.
   const verified = await verifyStatus(id).catch(() => null);
   const verifiedDomain = verified?.verified ? verified.domain : "";
   const groupLabel = groupCode ? ((await (await import("@/lib/tapcardGroups")).listGroups(id).catch(() => [])).find((g) => g.slug === groupCode)?.label ?? "") : "";
-  const TAPCARD_APP_STORE_URL = `${TAPCARD_APP_STORE_PATH}?card=${encodeURIComponent(id)}${eventCode ? `&e=${eventCode}` : ""}${groupCode ? `&g=${groupCode}` : ""}`;
+  const TAPCARD_APP_STORE_URL = `${TAPCARD_APP_STORE_PATH}?card=${encodeURIComponent(id)}${eventCode ? `&e=${eventCode}` : ""}${groupCode ? `&g=${groupCode}` : ""}${memberCode ? `&m=${memberCode}` : ""}`;
   const isPreview = preview === "1";
   const card = await getCard(id);
   if (!card) notFound();

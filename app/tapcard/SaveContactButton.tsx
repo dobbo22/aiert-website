@@ -43,7 +43,10 @@ export default function SaveContactButton({
     // A group link (?g=<group>) rides through the install the same way.
     const groupParam = new URL(cardLink).searchParams.get("g") ?? "";
     const group = /^[a-z0-9-]{1,40}$/.test(groupParam) ? `&g=${groupParam}` : "";
-    const play = `https://play.google.com/store/apps/details?id=com.mailbroom.tapcard&referrer=${encodeURIComponent(`utm_source=tapcard-web&utm_medium=card-page${card}${event}${group}`)}`;
+    // A personal member link (?m=<token>) rides through the install too, so the follow can tell the company which member it was.
+    const memberParam = new URL(cardLink).searchParams.get("m") ?? "";
+    const member = /^[A-Za-z0-9_-]{16,64}$/.test(memberParam) ? `&m=${memberParam}` : "";
+    const play = `https://play.google.com/store/apps/details?id=com.mailbroom.tapcard&referrer=${encodeURIComponent(`utm_source=tapcard-web&utm_medium=card-page${card}${event}${group}${member}`)}`;
     const u = new URL(cardLink);
     getHref = `intent://${u.host}${u.pathname}#Intent;scheme=https;package=com.mailbroom.tapcard;S.browser_fallback_url=${encodeURIComponent(play)};end`;
   }
