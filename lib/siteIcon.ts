@@ -348,7 +348,7 @@ export async function safeFetch(start: string): Promise<{ res: Response; url: UR
       res = await fetch(url, {
         redirect: "manual",
         signal: AbortSignal.timeout(TIMEOUT_MS),
-        headers: { "user-agent": "TapCardIconFetcher/1.0 (+https://tapcard.aiert.co.uk)" },
+        headers: { "user-agent": "Mozilla/5.0 (compatible; TapCard/1.0; +https://tapcard.aiert.co.uk)" },
       });
     } catch {
       return null;

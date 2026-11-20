@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { UniverseRow, ImportDiff } from "@/lib/tapcardListedUniverse";
 import type { Tried } from "@/lib/tapcardListedSite";
 import type { InvestorResult } from "@/lib/tapcardListedInvestor";
+import type { BoardResult } from "@/lib/tapcardListedBoard";
 
 type Preview = { deleted?: number; kept?: number; perFile: { name: string; shares: number; asOf: string }[]; diff: ImportDiff; complete: boolean; applied: boolean; skippedNonShares?: number };
 
@@ -17,7 +18,10 @@ const STATUS_LABEL: Record<string, { text: string; bg: string }> = {
   unchecked: { text: "Not checked", bg: "#e2e8f0" }, ok: { text: "Confirmed", bg: "#86efac" }, unsure: { text: "Needs a look", bg: "#fde68a" },
   wrong: { text: "Wrong company", bg: "#fca5a5" }, parked: { text: "Parked or empty", bg: "#fca5a5" }, dead: { text: "Not working", bg: "#fca5a5" }, none: { text: "None found", bg: "#fca5a5" },
 };
-type Evidence = { name?: string; tried: Tried[]; checkedAt: string | null; status?: string; website?: string; investor?: InvestorResult | null };
+type Evidence = { name?: string; tried: Tried[]; checkedAt: string | null; status?: string; website?: string; investor?: InvestorResult | null; board?: BoardResult | null };
+const BOARD_LABEL: Record<string, { text: string; bg: string }> = {
+  unchecked: { text: "Not checked", bg: "#e2e8f0" }, confirmed: { text: "Confirmed", bg: "#86efac" }, ch_only: { text: "Companies House only", bg: "#fde68a" }, site_only: { text: "Website only", bg: "#fde68a" }, none: { text: "None found", bg: "#fca5a5" }, no_key: { text: "No Companies House key", bg: "#fca5a5" }, error: { text: "Error", bg: "#fca5a5" },
+};
 const IR_LABEL: Record<string, { text: string; bg: string }> = {
   unchecked: { text: "Not checked", bg: "#e2e8f0" }, found: { text: "TapCard can read it", bg: "#86efac" }, partial: { text: "Pages found, no feed", bg: "#fde68a" }, none: { text: "None found", bg: "#fca5a5" },
 };
@@ -51,6 +55,7 @@ export default function ListedView({ rows, loadError }: { rows: UniverseRow[]; l
   const [alsoDelete, setAlsoDelete] = useState(true);
   const [checking, setChecking] = useState<string>("");
   const [checkingIr, setCheckingIr] = useState<string>("");
+  const [checkingBoard, setCheckingBoard] = useState<string>("");
   const [evidence, setEvidence] = useState<Record<string, Evidence>>({});
   const [openEv, setOpenEv] = useState<string>("");
 
@@ -133,11 +138,36 @@ export default function ListedView({ rows, loadError }: { rows: UniverseRow[]; l
     setOpenEv(isin);
     router.refresh();
   }
+  async function checkBoard(isin: string) {
+    setCheckingBoard(isin); setMsg("");
+    const r = await json({ action: "check-board", isin });
+    setCheckingBoard("");
+    if (r.error) { setMsg(String(r.error)); return; }
+    setEvidence((e) => ({ ...e, [isin]: { ...(e[isin] ?? { tried: [], checkedAt: null }), board: r.result as BoardResult } }));
+    setOpenEv(isin);
+    router.refresh();
+  }
+  async function setInvestorLinks(row: UniverseRow) {
+    const h = (await json({ action: "investor-hand", isin: row.isin })) as unknown as { hand?: Record<string, string> };
+    const cur = h.hand ?? {};
+    const ask = (label: string, key: string, now: string) => window.prompt(`${label} for ${row.name} (full https:// address; leave empty to clear a hand-set one, Cancel to stop):`, cur[key] ?? now);
+    const ir = ask("Investor relations page", "ir", row.irUrl); if (ir === null) return;
+    const rns = ask("Announcements page", "rns", row.rnsUrl); if (rns === null) return;
+    const shareholder = ask("Shareholder information page", "shareholder", row.shareholderUrl); if (shareholder === null) return;
+    const urls: Record<string, string> = {};
+    if (ir !== (cur.ir ?? row.irUrl)) urls.ir = ir;
+    if (rns !== (cur.rns ?? row.rnsUrl)) urls.rns = rns;
+    if (shareholder !== (cur.shareholder ?? row.shareholderUrl)) urls.shareholder = shareholder;
+    if (!Object.keys(urls).length) return;
+    const r = await json({ action: "set-investor-urls", isin: row.isin, urls });
+    if (r.error) { setMsg(String(r.error)); return; }
+    await checkInvestor(row.isin);
+  }
   async function showEvidence(isin: string) {
     if (openEv === isin) { setOpenEv(""); return; }
     if (!evidence[isin]) {
       const r = (await json({ action: "evidence", isin })) as unknown as Evidence;
-      setEvidence((e) => ({ ...e, [isin]: { tried: r.tried ?? [], checkedAt: r.checkedAt ?? null, investor: r.investor ?? null } }));
+      setEvidence((e) => ({ ...e, [isin]: { tried: r.tried ?? [], checkedAt: r.checkedAt ?? null, investor: r.investor ?? null, board: r.board ?? null } }));
     }
     setOpenEv(isin);
   }
@@ -176,6 +206,7 @@ export default function ListedView({ rows, loadError }: { rows: UniverseRow[]; l
         {tile(listed.filter((r) => r.marketCap !== null).length, "with a market cap")}
         {tile(listed.filter((r) => r.website).length, "with a website")}
         {tile(listed.filter((r) => r.websiteStatus === "ok").length, "website confirmed")}
+        {tile(listed.filter((r) => r.irProvider).length, "announcements drawn by a vendor script")}
         {tile(delisted, "marked delisted")}
         {tile(listed.filter((r) => r.hasCard).length, "with a TapCard card")}
       </section>
@@ -250,7 +281,7 @@ export default function ListedView({ rows, loadError }: { rows: UniverseRow[]; l
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
             <thead>
               <tr style={{ textAlign: "left", borderBottom: "1px solid rgba(255,255,255,.35)" }}>
-                {["Company", "Ticker", "Market", "Sector", "Market cap", "Website", "Investor pages", "Check", ""].map((h) => <th key={h} style={{ padding: "6px 8px" }}>{h}</th>)}
+                {["Company", "Ticker", "Market", "Sector", "Market cap", "Website", "Investor pages", "Board", "Check", ""].map((h) => <th key={h} style={{ padding: "6px 8px" }}>{h}</th>)}
               </tr>
             </thead>
             <tbody>
@@ -283,13 +314,33 @@ export default function ListedView({ rows, loadError }: { rows: UniverseRow[]; l
                               <span style={{ display: "inline-block", background: ir.bg, color: "#111", fontWeight: 700, borderRadius: 999, padding: "1px 8px" }}>{ir.text}</span>
                               {r.irStatus !== "unchecked" && (
                                 <div style={{ fontSize: 12, marginTop: 2 }}>
-                                  {[r.irUrl && ["Investors", r.irUrl], r.rnsUrl && ["Announcements", r.rnsUrl], r.reportsUrl && ["Reports", r.reportsUrl]].filter(Boolean).map((x) => {
+                                  {[r.irUrl && ["Investors", r.irUrl], r.rnsUrl && ["Announcements", r.rnsUrl], r.reportsUrl && ["Reports", r.reportsUrl], r.shareholderUrl && ["Shareholders", r.shareholderUrl]].filter(Boolean).map((x) => {
                                     const [label, url] = x as string[];
                                     return <a key={label} href={url} target="_blank" rel="noopener noreferrer" style={{ color: "#93c5fd", marginRight: 8 }}>{label}</a>;
                                   })}
                                   <div>{r.rnsItems} announcements read · price {SEEN[r.publishesPrice]} · market cap {SEEN[r.publishesCap]}</div>
+                                  {r.irStatus === "partial" && (r.irProvider || r.irNote) && (
+                                    <details style={{ marginTop: 4 }}>
+                                      <summary style={{ cursor: "pointer", fontWeight: 700 }}>{r.irProvider ? `List drawn by ${r.irProvider}` : "No announcements read"} (click for why)</summary>
+                                      <div style={{ marginTop: 4, maxWidth: 340 }}>
+                                        {r.irNote}
+                                        {r.irProvider && <p style={{ margin: "6px 0 0" }}>TapCard reads the text of the page, and this page asks {r.irProvider}&apos;s server for the list after it opens, so the list is not in the page text. We have not called that supplier&apos;s server, because its access key belongs to the company&apos;s own website. For now this is left as it is and counted. A signed-up company can give TapCard its own announcements feed, or the supplier can be asked for an official one.</p>}
+                                      </div>
+                                    </details>
+                                  )}
                                 </div>
                               )}
+                            </>
+                          );
+                        })()}
+                      </td>
+                      <td style={{ padding: "6px 8px", minWidth: 120 }}>
+                        {(() => {
+                          const b = BOARD_LABEL[r.boardStatus] ?? BOARD_LABEL.unchecked;
+                          return (
+                            <>
+                              <span style={{ display: "inline-block", background: b.bg, color: "#111", fontWeight: 700, borderRadius: 999, padding: "1px 8px", whiteSpace: "nowrap" }}>{b.text}</span>
+                              {r.boardStatus !== "unchecked" && <div style={{ fontSize: 12, marginTop: 2 }}>{r.boardCount} names · {r.boardConfirmed} on both{r.chNumber ? <> · <a href={`https://find-and-update.company-information.service.gov.uk/company/${r.chNumber}/officers`} target="_blank" rel="noopener noreferrer" style={{ color: "#93c5fd" }}>{r.chNumber}</a></> : null}</div>}
                             </>
                           );
                         })()}
@@ -297,13 +348,15 @@ export default function ListedView({ rows, loadError }: { rows: UniverseRow[]; l
                       <td style={{ padding: "6px 8px", whiteSpace: "nowrap" }}>
                         <button type="button" style={{ ...btn, padding: "3px 8px", marginRight: 6 }} disabled={!!checking} onClick={() => checkSite(r.isin)}>{checking === r.isin ? "Checking…" : r.websiteStatus === "unchecked" ? "Check" : "Check again"}</button>
                         <button type="button" style={{ ...btn, padding: "3px 8px", marginRight: 6 }} disabled={!r.website || !!checkingIr} onClick={() => checkInvestor(r.isin)} title={r.website ? "" : "Check or set the website first"}>{checkingIr === r.isin ? "Reading…" : r.irStatus === "unchecked" ? "Investor pages" : "Recheck pages"}</button>
-                        {(r.websiteStatus !== "unchecked" || r.irStatus !== "unchecked") && <button type="button" style={{ ...btn, padding: "3px 8px" }} onClick={() => showEvidence(r.isin)}>{openEv === r.isin ? "Hide" : "Evidence"}</button>}
+                        <button type="button" style={{ ...btn, padding: "3px 8px", marginRight: 6 }} onClick={() => setInvestorLinks(r)}>Set links</button>
+                        <button type="button" style={{ ...btn, padding: "3px 8px", marginRight: 6 }} disabled={!!checkingBoard} onClick={() => checkBoard(r.isin)}>{checkingBoard === r.isin ? "Reading…" : r.boardStatus === "unchecked" ? "Board" : "Recheck board"}</button>
+                        {(r.websiteStatus !== "unchecked" || r.irStatus !== "unchecked" || r.boardStatus !== "unchecked") && <button type="button" style={{ ...btn, padding: "3px 8px" }} onClick={() => showEvidence(r.isin)}>{openEv === r.isin ? "Hide" : "Evidence"}</button>}
                       </td>
                       <td style={{ padding: "6px 8px" }}><button type="button" style={{ ...btn, padding: "3px 8px" }} onClick={() => editWebsite(r)}>Set website</button></td>
                     </tr>
                     {openEv === r.isin && (
                       <tr style={{ borderBottom: "1px solid rgba(255,255,255,.14)" }}>
-                        <td colSpan={9} style={{ padding: "8px 8px 14px 24px" }}>
+                        <td colSpan={10} style={{ padding: "8px 8px 14px 24px" }}>
                           <div style={{ fontWeight: 700, marginBottom: 6 }}>What the check found{ev?.checkedAt ? ` (${new Date(ev.checkedAt).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })})` : ""}</div>
                           {!ev || ev.tried.length === 0 ? <div>{r.websiteStatus === "unchecked" ? "The website has not been checked yet: press Check." : "No address was found to try. Use Set website to give one."}</div> : (
                             <ul style={{ margin: 0, paddingLeft: 18 }}>
@@ -328,12 +381,12 @@ export default function ListedView({ rows, loadError }: { rows: UniverseRow[]; l
                               <div style={{ marginBottom: 4 }}><b>What the TapCard app would offer today:</b> {ev.investor.tapcardSees.length ? ev.investor.tapcardSees.map((l) => `${l.label}`).join(", ") : "no investor links"}.</div>
                               <div style={{ marginBottom: 4 }}>
                                 <b>What this check found:</b>{" "}
-                                {(["ir", "rns", "reports", "price"] as const).filter((k) => ev.investor!.urls[k]).map((k) => (
-                                  <a key={k} href={ev.investor!.urls[k]} target="_blank" rel="noopener noreferrer" style={{ color: "#93c5fd", marginRight: 10, wordBreak: "break-all" }}>{{ ir: "Investor relations", rns: "Announcements", reports: "Reports", price: "Share price" }[k]}</a>
+                                {(["ir", "rns", "reports", "shareholder", "price"] as const).filter((k) => ev.investor!.urls[k]).map((k) => (
+                                  <a key={k} href={ev.investor!.urls[k]} target="_blank" rel="noopener noreferrer" style={{ color: "#93c5fd", marginRight: 10, wordBreak: "break-all" }}>{{ ir: "Investor relations", rns: "Announcements", reports: "Reports", shareholder: "Shareholder information", price: "Share price" }[k]}</a>
                                 ))}
-                                {!ev.investor.urls.ir && !ev.investor.urls.rns && !ev.investor.urls.reports && !ev.investor.urls.price ? "nothing" : ""}
+                                {!ev.investor.urls.ir && !ev.investor.urls.rns && !ev.investor.urls.reports && !ev.investor.urls.price && !ev.investor.urls.shareholder ? "nothing" : ""}
                               </div>
-                              {ev.investor.tapcardSees.length < (["ir", "rns", "reports", "price"] as const).filter((k) => ev.investor!.urls[k]).length && <div style={{ marginBottom: 4 }}>The app&apos;s finder misses some of these: worth teaching it.</div>}
+                              {ev.investor.tapcardSees.length < (["ir", "rns", "reports", "shareholder", "price"] as const).filter((k) => ev.investor!.urls[k]).length && <div style={{ marginBottom: 4 }}>The app&apos;s finder misses some of these: worth teaching it.</div>}
                               <div style={{ marginBottom: 4 }}>
                                 <b>Announcements TapCard can read:</b> {ev.investor.rnsRead.count}{ev.investor.rnsRead.note ? ` (${ev.investor.rnsRead.note})` : ""}
                                 {ev.investor.rnsRead.sample.length > 0 && <ul style={{ margin: "4px 0 0", paddingLeft: 18 }}>{ev.investor.rnsRead.sample.map((i, n) => <li key={n}>{i.date ?? "no date"}: {i.title}</li>)}</ul>}
@@ -341,6 +394,27 @@ export default function ListedView({ rows, loadError }: { rows: UniverseRow[]; l
                               <div style={{ marginBottom: 4 }}><b>Share price on its own pages:</b> {SEEN[ev.investor.price.state]}{ev.investor.price.snippet ? ` — “${ev.investor.price.snippet}”` : ""}</div>
                               <div style={{ marginBottom: 4 }}><b>Market cap on its own pages:</b> {SEEN[ev.investor.cap.state]}{ev.investor.cap.snippet ? ` — “${ev.investor.cap.snippet}”` : ""}</div>
                               <div style={{ fontSize: 13 }}>Pages read: {ev.investor.pages.map((p) => `${p.role} (${p.status})`).join(", ")}. Static page text only: a figure that a script loads later is not seen.</div>
+                            </div>
+                          )}
+                          {ev?.board && (
+                            <div style={{ marginTop: 14 }}>
+                              <div style={{ fontWeight: 700, marginBottom: 6 }}>Board{ev.board.checkedAt ? ` (${new Date(ev.board.checkedAt).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })})` : ""}</div>
+                              {ev.board.note && <div style={{ marginBottom: 6 }}>{ev.board.note}</div>}
+                              <div style={{ marginBottom: 4 }}>
+                                <b>Companies House:</b> {ev.board.company ? <a href={ev.board.company.url + "/officers"} target="_blank" rel="noopener noreferrer" style={{ color: "#93c5fd" }}>{ev.board.company.name} ({ev.board.company.number}, {ev.board.company.status})</a> : "no matching company"}
+                                {" · "}<b>Website board page:</b> {ev.board.boardPage ? <a href={ev.board.boardPage.url} target="_blank" rel="noopener noreferrer" style={{ color: "#93c5fd", wordBreak: "break-all" }}>{ev.board.boardPage.url}</a> : "none found"}
+                              </div>
+                              {ev.board.people.length > 0 && (
+                                <table style={{ borderCollapse: "collapse", fontSize: 13, marginTop: 4 }}>
+                                  <thead><tr style={{ textAlign: "left" }}><th style={{ padding: "2px 12px 2px 0" }}>Name</th><th style={{ padding: "2px 12px" }}>Role</th><th style={{ padding: "2px 12px" }}>Companies House</th><th style={{ padding: "2px 12px" }}>Website</th></tr></thead>
+                                  <tbody>
+                                    {ev.board.people.map((p, n) => (
+                                      <tr key={n}><td style={{ padding: "2px 12px 2px 0", fontWeight: 700 }}>{p.display}</td><td style={{ padding: "2px 12px" }}>{p.role}</td><td style={{ padding: "2px 12px" }}>{p.onCh ? "Yes" : "No"}</td><td style={{ padding: "2px 12px" }}>{p.onSite ? "Yes" : "No"}</td></tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              )}
+                              <div style={{ fontSize: 13, marginTop: 6 }}>Directors are public record. A name that is on the website but not on Companies House is a guess from the page layout (an adviser, a new appointment or a mis-read), so check it before relying on it.</div>
                             </div>
                           )}
                         </td>

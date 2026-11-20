@@ -18,6 +18,19 @@ const ORDER_HOSTS = /(^|\.)(deliveroo\.[a-z.]+|ubereats\.com|just-eat\.[a-z.]+|j
 
 interface Anchor { href: URL; text: string; /** Where the link is in the page, to tell which branch's section it belongs to. */ at: number }
 
+/// What a listed company's investor link is, from what it says and where it goes ("" when it is none of these). Page addresses may end in
+/// .html, .htm, .aspx or .php (AstraZeneca's do). Shared by the home page and the investor page, which is read one step further.
+const PAGE_END = "(?:\\.(?:html?|aspx?|php))?\\/?$";
+export function investorLabel(t: string, path: string): string {
+  const under = /^\/(investors?|investor-relations)(?:\/|\.html?$)/.test(path) || /^\/(investors?|investor-relations)\//.test(path);
+  if (/^(rns|rns announcements?|stock exchange announcements?)$/.test(t) || /^(uk |london |company |stock exchange )?regulatory (news|announcements?)( archive)?$/.test(t) || new RegExp(`^\\/investors?\\/(rns|regulatory|announcements)[^/]*${PAGE_END}`).test(path) || new RegExp(`\\/(rns|(?:[a-z]+-)?regulatory-news|(?:[a-z]+-)?regulatory-announcements?|stock-exchange-announcements?)${PAGE_END}`).test(path)) return "RNS announcements";
+  if (/^(investors?|investor relations|investor centre|for investors|investors? (&|and) shareholders)$/.test(t) || new RegExp(`^\\/(investors?|investor-relations)${PAGE_END}`).test(path)) return "Investor relations";
+  if (/^(reports?|reports (&|and) (results|presentations)|results (&|and) reports|financial (reports?|results)|annual reports?)$/.test(t) && under) return "Reports and results";
+  if (/^(shareholder (information|centre|services)|shareholding information)$/.test(t) && under) return "Shareholder information";
+  if (/^(share price|stock quote|share price (&|and) charts?)$/.test(t) && under) return "Share price";
+  return "";
+}
+
 function anchors(html: string, base: URL): Anchor[] {
   const out: Anchor[] = [];
   const re = /<a\b[^>]*?href\s*=\s*(?:"([^"]*)"|'([^']*)')[^>]*>([\s\S]*?)<\/a>/gi;
@@ -461,11 +474,7 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
       else if (/^(order( online| now)?|takeaway|click (&|and) collect)$/.test(t) || /\/(order|order-online)\/?$/.test(path)) pick(found, "order", href);
       else if (/^(news|latest news|news (&|and) events|blog|our blog|the blog|what'?s on|events|journal|updates)$/.test(t) || /^\/(news|blog|latest-news|whats-on|events|journal)\/?$/.test(path)) addExtra("Latest news", href);
       // A listed company's investor pages (RNS, reports, shareholder information, share price), found by what the link says or by its address.
-      else if (/^(rns|rns announcements?|regulatory (news|announcements?)|stock exchange announcements?)$/.test(t) || /^\/investors?\/(rns|regulatory|announcements)[^/]*\/?$/.test(path)) addExtra("RNS announcements", href);
-      else if (/^(investors?|investor relations|investor centre|for investors|investors? (&|and) shareholders)$/.test(t) || /^\/(investors?|investor-relations)\/?$/.test(path)) addExtra("Investor relations", href);
-      else if (/^(reports?|reports (&|and) (results|presentations)|results (&|and) reports|financial (reports?|results)|annual reports?)$/.test(t) && /^\/(investors?|investor-relations)\//.test(path)) addExtra("Reports and results", href);
-      else if (/^(shareholder (information|centre|services)|shareholding information)$/.test(t) && /^\/(investors?|investor-relations)\//.test(path)) addExtra("Shareholder information", href);
-      else if (/^(share price|stock quote|share price (&|and) charts?)$/.test(t) && /^\/(investors?|investor-relations)\//.test(path)) addExtra("Share price", href);
+      else if (investorLabel(t, path)) addExtra(investorLabel(t, path), href);
       else if (/^(prices?|pricing|price list|full price list|see (our )?prices|our prices)$/.test(t) || /^\/(pricing|prices|price-list)\/?$/.test(path)) addExtra("View prices", href);
       else if (/^(book|claim|get|request)( (your|a|my))?( free)? (trial|taster|intro(ductory)?|consultation|first)( session| class| lesson| visit)?[!.]?$|^(free )?(trial|taster) (session|class)[!.]?$|^try (a|us for a)( free)? (class|session|trial)[!.]?$/.test(t)) addExtra("Book a free trial", href);
       else if (/^(book( now| online)?|schedule( a)?( pick ?up| collection| delivery| visit)?|make a booking|book (an )?appointment|book a visit)$/.test(t) || /^\/(book|booking|bookings|book-?now|appointments?|schedule)\/?$/.test(path)) addExtra(t ? t.replace(/\b\w/g, (c) => c.toUpperCase()).slice(0, 40) : "Book now", href);
@@ -600,6 +609,23 @@ export async function findSiteLinks(websiteOrDomain: string, address?: string, n
     if (reviews.tripadvisor && !found.has("tripadvisor")) found.set("tripadvisor", reviews.tripadvisor);
   }
   // A restaurant's plain "Book now" page is its table booking (on other kinds of business it stays a general booking link).
+  // A listed company's home page rarely links straight to its announcements or shareholder pages: read its investor page too, once.
+  const irExtra = extras.find((e) => e.label === "Investor relations");
+  if (irExtra && !extras.some((e) => e.label === "RNS announcements")) {
+    try {
+      const next = await safeFetch(irExtra.value);
+      if (next && (next.res.headers.get("content-type") ?? "").includes("text/html")) {
+        const b2 = await readLimited(next.res, MAX_HTML);
+        if (b2) {
+          for (const a of anchors(b2.toString("utf8"), next.url)) {
+            if (a.href.hostname.replace(/^www\./, "") !== siteHost) continue;
+            const lab = investorLabel(a.text.toLowerCase(), a.href.pathname.toLowerCase());
+            if (lab && lab !== "Investor relations") addExtra(lab, a.href);
+          }
+        }
+      }
+    } catch { /* the home page's links still stand */ }
+  }
   const bookNow = extras.find((e) => /^book( now| online)?$/i.test(e.label.replace(/[!.]/g, "").trim()));
   const foodPlace = found.has("menu") || found.has("tripadvisor") || /restaurant|bistro|caf[eé]|trattoria|pizzeria|brasserie|grill|kitchen|tavern|osteria|bar\b|pub\b/i.test(name ?? "");
   if (bookNow && foodPlace && !found.has("book_table") && !found.has("book_room") && !found.has("appointment")) {

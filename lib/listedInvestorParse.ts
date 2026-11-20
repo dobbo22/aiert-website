@@ -2,7 +2,7 @@
 // Finds the links on a company's pages that lead to its investor relations area, regulatory announcements, reports and share price,
 // and says whether a page shows the company's share price or market cap itself.
 
-export type IrRole = "ir" | "rns" | "reports" | "price";
+export type IrRole = "ir" | "rns" | "reports" | "price" | "shareholder";
 export interface Anchor { href: string; text: string }
 export interface IrLink { role: IrRole; url: string; text: string }
 export interface Seen { state: "yes" | "widget" | "no"; snippet: string }
@@ -35,10 +35,13 @@ export function classifyLink(text: string, href: string): IrRole | "" {
   try { path = new URL(href).pathname.toLowerCase(); } catch { return ""; }
   const t = text.toLowerCase().replace(/[→»>]+/g, "").replace(/\s+/g, " ").trim();
   if (/\.(pdf|docx?|xlsx?|zip|jpe?g|png)$/.test(path)) return "";
-  if (/^(rns|rns announcements?|regulatory (news|announcements?)|regulatory|stock exchange announcements?|company announcements?|announcements|rns (&|and) news)$/.test(t) || /\/(rns|regulatory-news|regulatory-announcements?|stock-exchange-announcements?)\/?$/.test(path)) return "rns";
-  if (/^(share price|stock quote|share price (&|and) charts?|share information|share data|stock information)$/.test(t) || /\/(share-price|stock-quote|share-information)\/?$/.test(path)) return "price";
-  if (/^(reports?|reports (&|and) (results|presentations)|results (&|and) reports|financial (reports?|results)|annual reports?|results|reports and presentations)$/.test(t) || /\/(financial-reports?|reports-and-results|results-and-reports|annual-reports?)\/?$/.test(path)) return "reports";
-  if (/^(investors?|investor relations|investor centre|investor information|for investors|shareholders?|shareholder information|investors? (&|and) shareholders|investors? (&|and) media|ir)$/.test(t) || /^\/(investors?|investor-relations|investor-centre|shareholders?|ir)\/?$/.test(path)) return "ir";
+  const end = "(?:\\.(?:html?|aspx?|php))?\\/?$";
+  const at = (names: string) => new RegExp(`\\/(${names})${end}`).test(path);
+  if (/^(rns|rns announcements?|regulatory|stock exchange announcements?|company announcements?|announcements|rns (&|and) news)$/.test(t) || /^(uk |london |company |stock exchange )?regulatory (news|announcements?)( archive)?$/.test(t) || at("rns|(?:[a-z]+-)?regulatory-news|(?:[a-z]+-)?regulatory-announcements?|stock-exchange-announcements?")) return "rns";
+  if (/^(share price|stock quote|share price (&|and) charts?|share information|share data|stock information)$/.test(t) || at("share-price|stock-quote|share-information")) return "price";
+  if (/^(shareholder (information|centre|services)|shareholding information)$/.test(t) || at("shareholder-information|shareholder-centre|shareholder-services")) return "shareholder";
+  if (/^(reports?|reports (&|and) (results|presentations)|results (&|and) reports|financial (reports?|results)|annual reports?|results|reports and presentations)$/.test(t) || at("financial-reports?|reports-and-results|results-and-reports|annual-reports?")) return "reports";
+  if (/^(investors?|investor relations|investor centre|investor information|for investors|shareholders?|investors? (&|and) shareholders|investors? (&|and) media|ir)$/.test(t) || new RegExp(`^\\/(investors?|investor-relations|investor-centre|shareholders?|ir)${end}`).test(path)) return "ir";
   return "";
 }
 
@@ -76,4 +79,19 @@ export function detectFigures(html: string): { price: Seen; cap: Seen } {
 /// Fold several pages' answers into one: "yes" beats "widget" beats "no".
 export function bestSeen(list: Seen[]): Seen {
   return list.find((s) => s.state === "yes") ?? list.find((s) => s.state === "widget") ?? { state: "no", snippet: "" };
+}
+
+/// Which company's tool draws a page's list with a script (so the list is not in the page text). "" when none is recognised.
+const PROVIDERS: [RegExp, string][] = [
+  [/investisdigital\.com|nextgentools|investis\.com/i, "Investis Digital"],
+  [/euroland\.com|eurolandir/i, "Euroland"],
+  [/q4inc\.com|q4web\.com|q4cdn\.com/i, "Q4"],
+  [/equiniti/i, "Equiniti"],
+  [/irwebhub|tickerscope/i, "Tickerscope"],
+  [/wireless-?ir|wirelessir/i, "Wireless IR"],
+  [/notified\.com|globenewswire|businesswire/i, "a newswire feed"],
+];
+export function detectIrProvider(html: string): string {
+  const srcs = [...html.matchAll(/<(?:script|link|iframe)\b[^>]*\b(?:src|href)\s*=\s*["']([^"']+)["']/gi)].map((m) => m[1]).join(" ");
+  return PROVIDERS.find(([re]) => re.test(srcs))?.[1] ?? "";
 }

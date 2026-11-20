@@ -11,7 +11,7 @@ const attr = (html: string, re: RegExp) => (re.exec(html)?.[1] ?? "").replace(/&
 // The exchange's names are abbreviated and cut short ("HSBC Hldgs plc", "Jpmorgan Global Core Real Assets Li"): abbreviations of the
 // ordinary words, and stray one or two letter fragments, are not part of what a company calls itself, so they are not looked for.
 const ABBREVIATIONS = new Set(["hldgs", "hldg", "hlds", "hdgs", "grp", "grps", "intl", "int", "inv", "invs", "invt", "tst", "tr", "fin", "svcs", "svc", "cos", "ord", "cap", "mgmt", "prop", "props", "devs", "dev", "ent", "ldn", "uk", "ltd", "lp"]);
-const words = (name: string) => {
+export const words = (name: string) => {
   const w = coreWords(name).filter((x) => !ABBREVIATIONS.has(x));
   const long = w.filter((x) => x.length >= 3);
   return long.length ? long : w.filter((x) => x.length >= 2);
@@ -25,7 +25,7 @@ export function judgeWebsite(company: { n: string; t: string; i: string }, page:
   const title = attr(html, /<title[^>]*>([\s\S]*?)<\/title>/i).slice(0, 160);
   if (page.status === 0 || page.status >= 400) return { verdict: "dead", reasons: [page.status ? `the page answered ${page.status}` : "the site did not answer"], title };
   const body = textOf(html);
-  if (body.length < 250 || PARKED.test(body.slice(0, 3000)) || PARKED.test(title)) return { verdict: "parked", reasons: ["looks parked, for sale or empty"], title };
+  if (PARKED.test(body.slice(0, 3000)) || PARKED.test(title)) return { verdict: "parked", reasons: ["looks parked or for sale"], title };
   const want = words(company.n);
   if (!want.length) return { verdict: "unsure", reasons: ["the company's name has no distinctive words to match"], title };
   const host = (() => { try { return new URL(page.finalUrl).hostname.toLowerCase().replace(/^www\./, ""); } catch { return ""; } })();
@@ -36,6 +36,10 @@ export function judgeWebsite(company: { n: string; t: string; i: string }, page:
   const inBody = want.filter((w) => hasWord(body.toLowerCase(), w));
   const reasons: string[] = [];
   const need = want.length <= 2 ? want.length : Math.ceil(want.length * 0.75);
+  // A near-empty page is a parked or dead site, unless its title or web address is the company's own: many big sites draw their pages
+  // with a script, so the HTML holds little more than a title (shell.com is 14 characters of text).
+  const nearlyEmpty = body.length < 250;
+  if (nearlyEmpty && !(inHead.length >= need || (inHost.length >= Math.min(need, 1) && inHost.length >= Math.ceil(want.length / 2)))) return { verdict: "parked", reasons: ["looks parked, for sale or empty"], title };
   const headOk = inHead.length >= need;
   const hostOk = inHost.length >= Math.min(need, 1) && inHost.length >= Math.ceil(want.length / 2);
   const bodyOk = inBody.length >= need;
@@ -44,7 +48,8 @@ export function judgeWebsite(company: { n: string; t: string; i: string }, page:
   if (headOk) reasons.push(`the page title or site name holds "${inHead.join(" ")}"`);
   if (hostOk) reasons.push(`the web address holds "${inHost.join(" ")}"`);
   if (isinSeen) reasons.push("the page shows the company's ISIN");
-  if (headOk || (hostOk && bodyOk) || isinSeen) return { verdict: "ok", reasons, title };
+  if (headOk || (hostOk && bodyOk) || isinSeen) return { verdict: "ok", reasons: nearlyEmpty ? [...reasons, "the page is drawn by a script, so there is little text to read"] : reasons, title };
+  if (nearlyEmpty && hostOk) return { verdict: "ok", reasons: [...reasons, "the page is drawn by a script, so there is little text to read"], title };
   if (bodyOk && (listed || hostOk)) return { verdict: "unsure", reasons: [...reasons, `the page text names "${inBody.join(" ")}" but not in the title or web address`], title };
   return { verdict: "wrong", reasons: [`does not name "${want.join(" ")}" in its title, address or text`], title };
 }

@@ -6,7 +6,7 @@ import { probe } from "@/lib/tapcardListedSite";
 import { parseAnnouncements, type FeedItem } from "@/lib/tapcardIrParse";
 import { readLimited, safeFetch } from "@/lib/siteIcon";
 import { isThirdPartyRegulatoryUrl } from "@/lib/tapcardRegulatoryHosts";
-import { bestSeen, COMMON_IR_PATHS, detectFigures, extractAnchors, pickLinks, type IrRole, type Seen } from "@/lib/listedInvestorParse";
+import { bestSeen, COMMON_IR_PATHS, detectFigures, detectIrProvider, extractAnchors, pickLinks, type IrRole, type Seen } from "@/lib/listedInvestorParse";
 
 export interface PageRead { role: string; url: string; status: number; title: string }
 export interface InvestorResult {
@@ -14,7 +14,7 @@ export interface InvestorResult {
   status: "found" | "partial" | "none";
   urls: Partial<Record<IrRole, string>>;
   tapcardSees: { label: string; value: string }[];
-  rnsRead: { url: string; count: number; sample: FeedItem[]; note: string };
+  rnsRead: { url: string; count: number; sample: FeedItem[]; note: string; provider?: string };
   price: Seen & { url: string };
   cap: Seen & { url: string };
   pages: PageRead[];
@@ -25,39 +25,49 @@ export interface InvestorResult {
 const IR_LABELS = new Set(["RNS announcements", "Investor relations", "Reports and results", "Shareholder information", "Share price"]);
 const title = (html: string) => (/<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1] ?? "").replace(/\s+/g, " ").trim().slice(0, 120);
 
-async function readAnnouncements(url: string): Promise<{ items: FeedItem[]; note: string }> {
+async function readAnnouncements(url: string): Promise<{ items: FeedItem[]; note: string; provider?: string }> {
   if (!url) return { items: [], note: "no announcements page found" };
   if (isThirdPartyRegulatoryUrl(url)) return { items: [], note: "that page is a third-party news site, which TapCard never reads" };
   try {
     const page = await safeFetch(url);
-    if (!page) return { items: [], note: "TapCard could not open the page (it needs a working https page)" };
+    if (!page) {
+      // Say why: a site that answers "access denied" to automated readers is different from a page that is down.
+      const p = await probe(url);
+      if (p.status === 401 || p.status === 403 || p.status === 429) return { items: [], note: `the site refuses automated readers (it answered ${p.status}, "access denied"), so TapCard cannot read this page and does not try to get round that` };
+      return { items: [], note: "TapCard could not open the page (it needs a working https page)" };
+    }
     const buf = await readLimited(page.res, 2 * 1024 * 1024);
     if (!buf) return { items: [], note: "the page is too large to read" };
-    const items = parseAnnouncements(buf.toString("utf8"), page.url.toString()).filter((i) => !isThirdPartyRegulatoryUrl(i.url));
-    return { items, note: items.length ? "" : "no dated announcements were found on the page (it may load them with a script)" };
+    const html = buf.toString("utf8");
+    const items = parseAnnouncements(html, page.url.toString()).filter((i) => !isThirdPartyRegulatoryUrl(i.url));
+    const provider = items.length ? "" : detectIrProvider(html);
+    const plain = html.replace(/<(script|style|noscript|svg)\b[\s\S]*?<\/\1>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    if (!items.length && !provider && plain.length < 250) return { items, provider, note: "the whole page is drawn by a script (there is almost no text in it), so nothing can be read from it" };
+    return { items, provider, note: items.length ? "" : provider ? `the page draws its announcements list with a script from ${provider}, so it is not in the page text and TapCard cannot read it yet` : "no dated announcements were found on the page (it may load them with a script)" };
   } catch {
     return { items: [], note: "TapCard could not read the page" };
   }
 }
 
-export async function checkInvestorPages(c: { isin: string; name: string; website: string }): Promise<InvestorResult> {
+export async function checkInvestorPages(c: { isin: string; name: string; website: string; handSet?: Partial<Record<IrRole, string>> }): Promise<InvestorResult> {
   const started = Date.now();
   const left = () => Date.now() - started < 42_000;
   const pages: PageRead[] = [];
-  const urls: Partial<Record<IrRole, string>> = {};
+  const hand = c.handSet ?? {};
+  const urls: Partial<Record<IrRole, string>> = { ...hand };
   const noFig = { state: "no" as const, snippet: "", url: "" };
   const result: InvestorResult = { isin: c.isin, status: "none", urls, tapcardSees: [], rnsRead: { url: "", count: 0, sample: [], note: "" }, price: noFig, cap: noFig, pages, note: "", checkedAt: new Date().toISOString() };
   if (!c.website) { result.note = "No website to read. Check the website first."; return result; }
 
   const home = await probe(c.website);
   pages.push({ role: "home page", url: home.finalUrl, status: home.status, title: title(home.html) });
-  if (!home.html) { result.note = `The home page could not be read (${home.error || `status ${home.status}`}).`; return result; }
+  if (!home.html && !Object.keys(hand).length) { result.note = `The home page could not be read (${home.error || `status ${home.status}`}).`; return result; }
 
   // What the apps would offer for this website today.
   const sees = await findSiteLinks(c.website, "", c.name).catch(() => null);
   result.tapcardSees = (sees?.links ?? []).filter((l) => IR_LABELS.has(l.label ?? "") ).map((l) => ({ label: l.label ?? "", value: l.value }));
 
-  const take = (links: ReturnType<typeof pickLinks>) => { for (const l of links) if (!urls[l.role] && !isThirdPartyRegulatoryUrl(l.url)) urls[l.role] = l.url; };
+  const take = (links: ReturnType<typeof pickLinks>) => { for (const l of links) if (!urls[l.role] && !hand[l.role] && !isThirdPartyRegulatoryUrl(l.url)) urls[l.role] = l.url; };
   const figures: { page: string; price: Seen; cap: Seen }[] = [];
   const figs = (url: string, html: string) => { const f = detectFigures(html); figures.push({ page: url, ...f }); };
   figs(home.finalUrl, home.html);
@@ -100,7 +110,7 @@ export async function checkInvestorPages(c: { isin: string; name: string; websit
     const alt = await readAnnouncements(urls.ir);
     if (alt.items.length) { read = alt; urls.rns = urls.rns ?? urls.ir; }
   }
-  result.rnsRead = { url: urls.rns ?? "", count: read.items.length, sample: read.items.slice(0, 3), note: read.note };
+  result.rnsRead = { url: urls.rns ?? "", count: read.items.length, sample: read.items.slice(0, 3), note: read.note, provider: read.provider };
 
   const withPage = (pick: "price" | "cap") => {
     const best = bestSeen(figures.map((f) => f[pick]));
@@ -109,7 +119,7 @@ export async function checkInvestorPages(c: { isin: string; name: string; websit
   };
   result.price = withPage("price");
   result.cap = withPage("cap");
-  result.status = read.items.length > 0 ? "found" : urls.ir || urls.rns || urls.reports || urls.price ? "partial" : "none";
+  result.status = read.items.length > 0 ? "found" : urls.ir || urls.rns || urls.reports || urls.price || urls.shareholder ? "partial" : "none";
   result.note = result.status === "none" ? "No investor pages were found on the website." : result.status === "partial" ? "Investor pages were found, but TapCard could not read dated announcements from them." : "";
   return result;
 }

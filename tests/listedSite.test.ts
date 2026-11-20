@@ -41,3 +41,11 @@ test("abbreviated and cut-off list names still match (HSBC Hldgs plc)", () => {
   assert.equal(judgeWebsite(co("Jpmorgan Global Core Real Assets Li"), page("JPMorgan Global Core Real Assets Limited | Home", filler, "https://am.jpmorgan.com/")).verdict, "ok");
   assert.equal(judgeWebsite(co("HSBC Hldgs plc"), page("Lloyds Bank | Personal banking", filler, "https://www.lloydsbank.com/")).verdict, "wrong");
 });
+
+test("a site drawn by script (almost no text) is not called parked when its title is the company's (Shell)", () => {
+  const shell = { finalUrl: "https://www.shell.com/", status: 200, html: "<html><head><title>Shell Global</title></head><body><div id='app'></div><script>boot()</script></body></html>" };
+  const j = judgeWebsite(co("Shell plc", "SHEL", "GB00BP6MXD84"), shell);
+  assert.equal(j.verdict, "ok");
+  assert.equal(judgeWebsite(co("Zebra Mining plc"), { finalUrl: "https://zebramining.com/", status: 200, html: "<html><head><title>zebramining.com</title></head><body><p>hi</p></body></html>" }).verdict, "ok");
+  assert.equal(judgeWebsite(co("Shell plc"), { finalUrl: "https://example.org/", status: 200, html: "<html><head><title>Welcome</title></head><body><p>hi</p></body></html>" }).verdict, "parked");
+});
