@@ -54,7 +54,7 @@ test("an admin adds a manager for chosen shops, who is emailed what they can do"
   assert.match(ctx.outbox[0].html, /QR sign/);
   assert.match(ctx.outbox[0].html, /Offers &amp; numbers/);
   assert.match(ctx.outbox[0].html, /login\//);
-  assert.match(ctx.outbox[0].html, /Make your shop's card/, "the card link comes in the same email");
+  assert.match(ctx.outbox[0].html, /Make your location's card/, "the card link comes in the same email");
   assert.match(ctx.outbox[0].html, /business\/claim#/);
   assert.match(ctx.outbox[0].text, /Great Dunmow: https:\/\/tapcard\.aiert\.co\.uk\/business\/claim#/);
   const row = (await sql`SELECT role, location_ids FROM tapcard_biz_admins WHERE email = ${email}`)[0] as { role: string; location_ids: string[] };

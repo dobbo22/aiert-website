@@ -24,6 +24,7 @@ export default function LocationPromote({ cardId, hasOffer, hasNews, groups = []
   const [needApp, setNeedApp] = useState(false);
   // Who gets the news notification: everyone who follows, or only the chosen groups (a lounge, say).
   const [picked, setPicked] = useState<string[]>([]);
+  const [offerPicked, setOfferPicked] = useState<string[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -37,6 +38,26 @@ export default function LocationPromote({ cardId, hasOffer, hasNews, groups = []
   }
 
   const field = "mt-1 w-full rounded-lg bg-white px-3 py-2 text-[#111318]";
+  // Who an offer or a piece of news is for: everyone who follows, or only the chosen groups (a lounge, say).
+  const audience = (value: string[], set: (v: string[]) => void, name: string, title: string, note: string) => groups.length > 0 && (
+    <fieldset className="mt-3">
+      <legend className="font-semibold">{title}</legend>
+      <label className="mt-1 flex items-center gap-2"><input type="radio" name={name} checked={value.length === 0} onChange={() => set([])} /> Everyone who follows</label>
+      <label className="mt-1 flex items-center gap-2"><input type="radio" name={name} checked={value.length > 0} onChange={() => set(value.length ? value : [groups[0].slug])} /> Only chosen groups</label>
+      {value.length > 0 && (
+        <div className="mt-2 ml-6 grid gap-1">
+          {groups.map((g) => (
+            <label key={g.slug} className="flex items-center gap-2">
+              <input type="checkbox" checked={value.includes(g.slug)} onChange={(e) => set(e.target.checked ? [...value, g.slug] : value.filter((x) => x !== g.slug))} />
+              #{g.label} <span className="text-sm">({g.members} {g.members === 1 ? "follower" : "followers"}, {g.reachable} can be notified)</span>
+            </label>
+          ))}
+        </div>
+      )}
+      <p className="mt-2 text-sm">{note}</p>
+    </fieldset>
+  );
+
   return (
     <div>
       <div className="flex flex-wrap gap-2">
@@ -80,11 +101,12 @@ export default function LocationPromote({ cardId, hasOffer, hasNews, groups = []
             <label>Staff PIN<input className={field} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="4 to 6 digits" /></label>
           </div>
           {kind === "stamps" && <p className="mt-2 text-xs text-cloud">Posting a new offer later replaces this card, and customers&apos; stamps start again.</p>}
+          {audience(offerPicked, setOfferPicked, `o-${cardId}`, "Who can claim it", "Only the chosen groups are notified, and only people who joined one of them (through its QR code, in the app) can claim it. The offer line still shows on the card.")}
           <button type="button" disabled={busy || pin.length < 4 || (kind === "stamps" ? !reward.trim() || !Number(stamps) : !text.trim())} className="mt-3 rounded-lg bg-white px-4 py-2 font-semibold text-[#111318] disabled:opacity-50"
             onClick={() => send({
               action: "offer", kind,
               text: text.trim() || (kind === "stamps" ? `Buy ${stamps}, get ${reward.trim()}` : ""),
-              days: Number(days), maxClaims: limit ? Number(limit) : undefined, pin,
+              days: Number(days), maxClaims: limit ? Number(limit) : undefined, pin, groups: offerPicked,
               ...(kind === "stamps" ? { stampsRequired: Number(stamps), rewardText: reward.trim(), stampGapHours: Number(gap), requireAppAfterFirst: APP_GATE_READY && needApp } : {}),
             })}>{kind === "stamps" ? "Start the stamp card" : "Post offer"}</button>
         </div>
@@ -93,24 +115,7 @@ export default function LocationPromote({ cardId, hasOffer, hasNews, groups = []
         <div className="mt-3 rounded-xl bg-black/20 p-3 text-sm">
           <label className="block">The news (one short line)<input className={field} value={text} onChange={(e) => setText(e.target.value.slice(0, 140))} placeholder="New autumn menu from Friday" /></label>
           <label className="mt-2 block">Link to the full story (optional)<input className={field} value={link} onChange={(e) => setLink(e.target.value.trim())} placeholder="https://yoursite.com/news/autumn-menu" inputMode="url" /></label>
-          {groups.length > 0 && (
-            <fieldset className="mt-3">
-              <legend className="font-semibold">Send the notification to</legend>
-              <label className="mt-1 flex items-center gap-2"><input type="radio" name={`aud-${cardId}`} checked={picked.length === 0} onChange={() => setPicked([])} /> Everyone who follows</label>
-              <label className="mt-1 flex items-center gap-2"><input type="radio" name={`aud-${cardId}`} checked={picked.length > 0} onChange={() => setPicked(picked.length ? picked : [groups[0].slug])} /> Only chosen groups</label>
-              {picked.length > 0 && (
-                <div className="mt-2 ml-6 grid gap-1">
-                  {groups.map((g) => (
-                    <label key={g.slug} className="flex items-center gap-2">
-                      <input type="checkbox" checked={picked.includes(g.slug)} onChange={(e) => setPicked((p) => (e.target.checked ? [...p, g.slug] : p.filter((x) => x !== g.slug)))} />
-                      #{g.label} <span className="text-sm">({g.reachable} can be notified)</span>
-                    </label>
-                  ))}
-                </div>
-              )}
-              <p className="mt-2 text-sm">The news line also shows on the card for anyone who opens it. Only the notification goes to the groups you choose.</p>
-            </fieldset>
-          )}
+          {audience(picked, setPicked, `n-${cardId}`, "Send the notification to", "The news line also shows on the card for anyone who opens it. Only the notification goes to the groups you choose.")}
           <button type="button" disabled={busy || !text.trim()} className="mt-3 rounded-lg bg-white px-4 py-2 font-semibold text-[#111318] disabled:opacity-50" onClick={() => send({ action: "news", text, link, groups: picked })}>{picked.length > 0 ? `Post news to ${picked.length === 1 ? "this group" : "these groups"}` : "Post news"}</button>
         </div>
       )}

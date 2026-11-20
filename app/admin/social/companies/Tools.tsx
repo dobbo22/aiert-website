@@ -36,8 +36,8 @@ export function ChangeCompany({ orgId, locations, run, busy }: { orgId: string; 
       <div style={row}>
         <span style={fieldLabel}>Add a manager</span>
         <div style={wrap}>
-          <input style={{ ...input, width: 260 }} placeholder="Manager's email (all shops)" value={mgr} onChange={(e) => setMgr(e.target.value)} />
-          <Btn tone="primary" disabled={!!busy || !mgr.includes("@")} onClick={() => run("Add manager", { action: "manager", email: mgr }, () => `Added ${mgr} as a manager of every shop. They have been emailed what they can do and their shop card links.`, () => setMgr(""))}>{b("Add manager")}</Btn>
+          <input style={{ ...input, width: 260 }} placeholder="Manager's email (all locations)" value={mgr} onChange={(e) => setMgr(e.target.value)} />
+          <Btn tone="primary" disabled={!!busy || !mgr.includes("@")} onClick={() => run("Add manager", { action: "manager", email: mgr }, () => `Added ${mgr} as a manager of every location. They have been emailed what they can do and their location card links.`, () => setMgr(""))}>{b("Add manager")}</Btn>
         </div>
       </div>
     </div>

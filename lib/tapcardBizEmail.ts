@@ -53,11 +53,11 @@ export async function sendBizAdminInviteEmail(email: string, company: string, ad
     <p>This link works once and expires in 15 minutes. If you weren't expecting it, ignore this email and no access is given.</p>
     <p><strong>What an admin can do:</strong></p>
     <ul>
-      <li><strong>Card template:</strong> find the business to fill in the logo, colour and social links, and see each shop's card as a phone screen.</li>
-      <li><strong>Locations:</strong> add shops, edit their details, and create each manager's invite link.</li>
+      <li><strong>Card template:</strong> find the business to fill in the logo, colour and social links, and see each location's card as a phone screen.</li>
+      <li><strong>Locations:</strong> add locations, edit their details, and create each manager's invite link.</li>
       <li><strong>Employees:</strong> invite staff cards and choose who may post offers and news.</li>
-      <li><strong>Offers &amp; numbers:</strong> post offers and news for any shop, and see views, saves, followers and claims.</li>
-      <li><strong>QR sign:</strong> print a window or till sign with each shop's QR code.</li>
+      <li><strong>Offers &amp; numbers:</strong> post offers and news for any location, and see views, saves, followers and claims.</li>
+      <li><strong>QR sign:</strong> print a window or till sign with each location's QR code.</li>
     </ul>
     <p>The full <a href="https://tapcard.aiert.co.uk/business/guide">Admin guide</a> explains each step. Reply to this email if you need help.</p>
   `;
@@ -210,26 +210,26 @@ export function buildBizWelcomeEmail(email: string, company: string, opts: BizWe
   return { subject: `Welcome to TapCard for Business: how to get started with ${company || "your company"}`, html, text };
 }
 
-/// A shop manager's invitation: what they can do on the web (their shop's QR sign and staff), with the one-use sign-in link.
+/// A location manager's invitation: what they can do on the web (their location's QR sign and staff), with the one-use sign-in link.
 export async function sendBizManagerInviteEmail(email: string, company: string, addedBy: string, link: string, shops: string[], cardLinks: { shop: string; link: string }[] = []): Promise<void> {
-  const shopList = shops.length ? shops.join(", ") : "your shop";
+  const shopList = shops.length ? shops.join(", ") : "your location";
   const html = `
     <p><strong>${esc(addedBy)}</strong> has made you a manager at <strong>${esc(company)}</strong> on TapCard for Business, for <strong>${esc(shopList)}</strong>.</p>
     <p>Tap the link below to sign in. From then on you can sign in at tapcard.aiert.co.uk/business/admin with this email address (we email you a sign-in link each time, so there is no password).</p>
     <p><a href="${link}">${link}</a></p>
     <p>This link works once and expires in 15 minutes. If you weren't expecting it, ignore this email and no access is given.</p>
-    ${cardLinks.length ? `<p><strong>Make your shop's card in the TapCard app:</strong> install the TapCard app (iPhone or Android), then open ${cardLinks.length === 1 ? "this link" : "each link"} on your phone. The card arrives already built, with the address, phone, opening hours and links filled in. Each link works once and lasts 30 days.</p>
+    ${cardLinks.length ? `<p><strong>Make your location's card in the TapCard app:</strong> install the TapCard app (iPhone or Android), then open ${cardLinks.length === 1 ? "this link" : "each link"} on your phone. The card arrives already built, with the address, phone, opening hours and links filled in. Each link works once and lasts 30 days.</p>
     <ul>${cardLinks.map((c) => `<li><strong>${esc(c.shop)}:</strong> <a href="${c.link}">${c.link}</a></li>`).join("")}</ul>` : ""}
     <p><strong>What you can do as a manager on the web:</strong></p>
     <ul>
-      <li><strong>QR sign:</strong> print a window or till sign with your shop's QR code, and change its wording.</li>
-      <li><strong>Employees:</strong> create invite links for your shop's staff, and remove a staff card when someone leaves. Each person installs the TapCard app and opens their link.</li>
-      <li><strong>Offers &amp; numbers:</strong> post or withdraw your shop's offers and news, and see how many people followed and used them. Your company's admins can post for your shop too.</li>
+      <li><strong>QR sign:</strong> print a window or till sign with your location's QR code, and change its wording.</li>
+      <li><strong>Employees:</strong> create invite links for your location's staff, and remove a staff card when someone leaves. Each person installs the TapCard app and opens their link.</li>
+      <li><strong>Offers &amp; numbers:</strong> post or withdraw your location's offers and news, and see how many people followed and used them. Your company's admins can post for your location too.</li>
     </ul>
     <p>Reply to this email if you need help.</p>
   `;
   await send(email, `You are now a manager at ${company} on TapCard for Business`, html,
-    `${addedBy} has made you a manager at ${company} on TapCard for Business, for ${shopList}.\n\nSign in: ${link}\n\nThis link works once and expires in 15 minutes. If you weren't expecting it, ignore this email and no access is given.\n\n${cardLinks.length ? `\n\nMake your shop's card in the TapCard app (install the TapCard app, then open the link on your phone; each link works once and lasts 30 days):\n${cardLinks.map((c) => `${c.shop}: ${c.link}`).join("\n")}` : ""}\n\nWhat you can do as a manager on the web: QR sign (print your shop's sign and change its wording), Employees (create invite links for your shop's staff, remove a card when someone leaves) and Offers & numbers (post your shop's offers and news; your company's admins can post for your shop too).`);
+    `${addedBy} has made you a manager at ${company} on TapCard for Business, for ${shopList}.\n\nSign in: ${link}\n\nThis link works once and expires in 15 minutes. If you weren't expecting it, ignore this email and no access is given.\n\n${cardLinks.length ? `\n\nMake your location's card in the TapCard app (install the TapCard app, then open the link on your phone; each link works once and lasts 30 days):\n${cardLinks.map((c) => `${c.shop}: ${c.link}`).join("\n")}` : ""}\n\nWhat you can do as a manager on the web: QR sign (print your location's sign and change its wording), Employees (create invite links for your location's staff, remove a card when someone leaves) and Offers & numbers (post your location's offers and news; your company's admins can post for your location too).`);
 }
 
 /// All of a company's waiting shop card links in one email to an admin (to open on a phone, forward to a manager, or show as a QR code).

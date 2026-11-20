@@ -317,7 +317,14 @@ export default async function CardPage({
               </div>
             )}
 
-            {offer && (
+            {offer && "forGroups" in offer && offer.forGroups && offer.forGroups.length > 0 && (
+              <div className="mt-5 rounded-2xl bg-white/[0.09] px-4 py-3 text-left text-sm text-white">
+                <p className="text-xs font-semibold uppercase tracking-wide">Offer for {offer.forGroups.map((g: { label: string }) => `#${g.label}`).join(" and ")} followers</p>
+                <p className="mt-1 font-semibold">{offer.text}</p>
+                <p className="mt-1">This offer is for people who joined {offer.forGroups.map((g: { label: string }) => `#${g.label}`).join(" or ")} through its QR code in the TapCard app. Scan that QR code to follow, then claim it in the app.</p>
+              </div>
+            )}
+            {offer && !("forGroups" in offer && offer.forGroups && offer.forGroups.length > 0) && (
               <ClaimOfferWeb
                 cardId={id}
                 business={card.company || card.name}

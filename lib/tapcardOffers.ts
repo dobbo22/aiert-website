@@ -31,6 +31,8 @@ export interface OfferRow {
   stamp_gap_hours: number;
   /// A stamp card where the customer must hold the TapCard app from this many stamps on (null: no requirement).
   app_after: number | null;
+  /// Group slugs the offer is limited to (empty: everyone who follows).
+  audience: string[] | null;
 }
 
 let ready: Promise<unknown> | null = null;
@@ -55,6 +57,7 @@ function ensureOfferSchema(): Promise<unknown> {
       .then(() => sql`ALTER TABLE tapcard_offers ADD COLUMN IF NOT EXISTS reward_text TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_offers ADD COLUMN IF NOT EXISTS stamp_gap_hours INTEGER NOT NULL DEFAULT 0`)
       .then(() => sql`ALTER TABLE tapcard_offers ADD COLUMN IF NOT EXISTS app_after INTEGER`)
+      .then(() => sql`ALTER TABLE tapcard_offers ADD COLUMN IF NOT EXISTS audience TEXT[] NOT NULL DEFAULT '{}'`)
       .then(() => sql`ALTER TABLE tapcard_offers ADD COLUMN IF NOT EXISTS pin_locked_until TIMESTAMPTZ`)
       .then(() => sql`
         CREATE TABLE IF NOT EXISTS tapcard_offer_claims (
@@ -148,8 +151,12 @@ export async function publicOffer(cardId: string) {
   const o = await currentOffer(cardId);
   if (!o) return null;
   const { claimed } = await offerCounts(o.id);
+  // An offer limited to groups (a lounge, say): the apps and the web page say who it is for. The text itself is still on the card.
+  const slugs = o.audience ?? [];
+  const forGroups = slugs.length ? (await (await import("@/lib/tapcardGroups")).listGroups(cardId).catch(() => [])).filter((g) => slugs.includes(g.slug)) : [];
   return {
     id: Number(o.id),
+    ...(forGroups.length ? { forGroups } : {}),
     text: o.text,
     expiresAt: o.expires_at,
     claimsLeft: o.max_claims == null ? null : Math.max(0, o.max_claims - claimed),
@@ -179,7 +186,7 @@ export const MAX_REWARD_TEXT = 60;
 
 /// Replaces the card's offer. Old claims stay on the old offer row, so they stop
 /// working the moment a new offer is posted.
-export async function setOffer(cardId: string, input: OfferInput, postedBy: string | null = null): Promise<{ ok: true; id: number } | { ok: false; error: string }> {
+export async function setOffer(cardId: string, input: OfferInput, postedBy: string | null = null, audience: string[] = []): Promise<{ ok: true; id: number } | { ok: false; error: string }> {
   await ensureOfferSchema();
   // Offers and news need a verified business once the rule is on (TAPCARD_VERIFY_ENFORCE=1); company cards count as verified.
   const allowed = await postingAllowed(cardId);
@@ -220,11 +227,18 @@ export async function setOffer(cardId: string, input: OfferInput, postedBy: stri
     if (!Number.isInteger(g) || g < 0 || g > 72) return { ok: false, error: "the gap between stamps must be 0 to 72 hours" };
     gapHours = g;
   }
+  // Limited to groups: only slugs this card really has (a list of nothing valid must never turn into "everyone").
+  let groups: string[] = [];
+  if (audience.length) {
+    const aud = await (await import("@/lib/tapcardGroups")).validAudience(cardId, audience);
+    if (!aud.ok) return { ok: false, error: aud.error };
+    groups = aud.groups;
+  }
   const salt = crypto.randomBytes(8).toString("hex");
   const hash = `${salt}:${pinHash(salt, input.pin)}`;
   const row = ((await sql`
-    INSERT INTO tapcard_offers (card_id, text, expires_at, max_claims, pin_hash, posted_by, kind, stamps_required, reward_text, stamp_gap_hours, app_after)
-    VALUES (${cardId}, ${text}, ${expires}, ${max}, ${hash}, ${postedBy}, ${kind}, ${stampsRequired}, ${rewardText}, ${gapHours}, ${appAfter})
+    INSERT INTO tapcard_offers (card_id, text, expires_at, max_claims, pin_hash, posted_by, kind, stamps_required, reward_text, stamp_gap_hours, app_after, audience)
+    VALUES (${cardId}, ${text}, ${expires}, ${max}, ${hash}, ${postedBy}, ${kind}, ${stampsRequired}, ${rewardText}, ${gapHours}, ${appAfter}, ${groups})
     RETURNING id
   `) as { id: number }[])[0];
   return { ok: true, id: row.id };
@@ -238,7 +252,7 @@ export async function clearOffers(cardId: string): Promise<void> {
 
 export type ClaimResult =
   | { ok: true; code: string; redeemed: boolean }
-  | { ok: false; error: "no_offer" | "sold_out" };
+  | { ok: false; error: "no_offer" | "sold_out" | "not_in_audience"; groups?: string[] };
 
 /// Same claimant (a random id the app keeps) always gets the same code back.
 export async function claimOffer(cardId: string, claimant: string, viaRaw: unknown = "web"): Promise<ClaimResult> {
@@ -251,6 +265,17 @@ export async function claimOffer(cardId: string, claimant: string, viaRaw: unkno
     SELECT code, redeemed_at FROM tapcard_offer_claims WHERE offer_id = ${offer.id} AND claimant_hash = ${who}
   `) as { code: string; redeemed_at: string | null }[])[0];
   if (existing) return { ok: true, code: existing.code, redeemed: !!existing.redeemed_at };
+  // An offer limited to groups can only be claimed by someone who joined one of them. The apps use the same install id to follow and to
+  // claim, so this is the same person; a web visitor is never a member, so a limited offer is claimed in the app.
+  const audience = offer.audience ?? [];
+  if (audience.length) {
+    const follower = hashSecret(`tapcard-follower:${claimant}`);
+    const member = (await sql`SELECT 1 FROM tapcard_follower_groups WHERE card_id = ${cardId} AND follower_hash = ${follower} AND slug = ANY(${audience})`.catch(() => [])) as unknown[];
+    if (!member.length) {
+      const labels = (await (await import("@/lib/tapcardGroups")).listGroups(cardId).catch(() => [])).filter((g) => audience.includes(g.slug)).map((g) => g.label);
+      return { ok: false, error: "not_in_audience", groups: labels };
+    }
+  }
   if (offer.max_claims != null) {
     const { claimed } = await offerCounts(offer.id);
     if (claimed >= offer.max_claims) return { ok: false, error: "sold_out" };

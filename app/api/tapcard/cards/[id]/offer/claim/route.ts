@@ -17,6 +17,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (claimant.length < 16 || claimant.length > 200) return NextResponse.json({ error: "claimant is required" }, { status: 400 });
   if (!(await getCard(id))) return NextResponse.json({ error: "not found" }, { status: 404 });
   const result = await claimOffer(id, claimant, via);
+  if (!result.ok && result.error === "not_in_audience") {
+    const who = (result.groups ?? []).map((g) => `#${g}`).join(" or ");
+    return NextResponse.json({ error: "not_in_audience", groups: result.groups ?? [], message: `This offer is for followers who joined ${who || "a group"} through its QR code.` }, { status: 403 });
+  }
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.error === "sold_out" ? 409 : 404 });
   return NextResponse.json({ code: result.code, redeemed: result.redeemed, url: `https://tapcard.aiert.co.uk/o/${result.code}` });
 }

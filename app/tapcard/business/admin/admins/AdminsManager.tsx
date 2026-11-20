@@ -25,7 +25,7 @@ export default function AdminsManager({ admins, max, managers, maxManagers, shop
   }
 
   async function changeShops(m: ManagerRowData, ids: string[]) {
-    if (!ids.length) { window.alert("A manager needs at least one shop."); return; }
+    if (!ids.length) { window.alert("A manager needs at least one location."); return; }
     setBusy(true);
     await fetch("/api/tapcard/biz/admins", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: m.id, locationIds: ids }) }).catch(() => null);
     setBusy(false);
@@ -106,8 +106,9 @@ export default function AdminsManager({ admins, max, managers, maxManagers, shop
       <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">Managers</h2>
         <p className="mt-1 text-sm text-cloud">
-          A manager looks after one or more shops. They sign in with an emailed link and can print their shop&apos;s QR sign and create or remove
-          their shop&apos;s staff cards. They can post their shop&apos;s offers and news unless you switch that off for them below. They never see billing, the template, locations or other admins.
+          A manager looks after one or more locations (a shop, a lounge, a branch or an area). They sign in with an emailed link and can print their
+          location&apos;s QR sign and create or remove its staff cards. They can post their location&apos;s offers and news unless you switch that off for them below.
+          They never see billing, the card template, the list of locations or other admins.
         </p>
         {managers.length > 0 && (
           <ul className="mt-4 divide-y divide-slate/50">
@@ -122,7 +123,7 @@ export default function AdminsManager({ admins, max, managers, maxManagers, shop
                 </div>
                 <label className="mt-2 flex items-center gap-1.5 text-sm">
                   <input type="checkbox" checked={m.canPost} disabled={busy} onChange={(e) => void togglePost(m, e.target.checked)} />
-                  May post offers and news for their shops
+                  May post offers and news for their locations
                 </label>
                 <div className="mt-2 flex flex-wrap gap-3 text-sm">
                   {shops.map((sh) => (
@@ -144,7 +145,7 @@ export default function AdminsManager({ admins, max, managers, maxManagers, shop
             <button type="submit" disabled={busy || !mEmail.trim() || mShops.length === 0 || managers.length >= maxManagers} className="btn-gold rounded-xl px-4 py-2 font-semibold disabled:opacity-50">Add manager</button>
           </div>
           {shops.length === 0 ? (
-            <p className="mt-3 text-sm text-gold">Add your shops first (Card template or Locations tab), then choose which ones this manager looks after.</p>
+            <p className="mt-3 text-sm text-gold">Add your locations first (Card template or Locations tab), then choose which ones this manager looks after.</p>
           ) : (
             <div className="mt-3 flex flex-wrap gap-3 text-sm text-cloud">
               <span className="text-cloud">Looks after:</span>
@@ -163,7 +164,7 @@ export default function AdminsManager({ admins, max, managers, maxManagers, shop
       <form onSubmit={add} className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10">
         <h2 className="text-lg font-bold text-cloud">Add an admin</h2>
         <p className="mt-1 text-sm text-cloud">
-          An admin can design the card template, invite and remove cards, choose who posts for which shop, see the numbers and manage billing.
+          An admin can design the card template, invite and remove cards, choose who posts for which location, see the numbers and manage billing.
           We email them a sign-in link. Use their work email: a card counts as verified when an admin has signed in with an email on the card&apos;s own website domain.
         </p>
         <div className="mt-4 flex flex-col gap-2 sm:flex-row">
