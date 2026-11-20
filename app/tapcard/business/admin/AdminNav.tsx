@@ -14,6 +14,7 @@ const TABS = [
   { href: "/business/admin/audiences", label: "Audiences" },
   { href: "/business/admin/followers", label: "Followers" },
   { href: "/business/admin/usage", label: "Usage" },
+  { href: "/business/admin/integration", label: "Integration" },
   { href: "/business/admin/admins", label: "Admins" },
   { href: "/business/admin/billing", label: "Billing" },
 ];

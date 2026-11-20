@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { getCard } from "@/lib/tapcardDb";
 import { claimOffer } from "@/lib/tapcardOffers";
 import { rateLimited } from "@/lib/rateLimit";
@@ -24,5 +24,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "not_in_audience", groups: result.groups ?? [], message: `This offer is for followers who joined ${who || "a group"} through its QR code.` }, { status: 403 });
   }
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.error === "sold_out" ? 409 : 404 });
+  // Member links: tell the company this linked member claimed (nothing happens unless the company is switched on and the phone is linked).
+  try {
+    const { cardOrgId } = await import("@/lib/tapcardBiz");
+    const { recordClaimEvent, deliverNow } = await import("@/lib/tapcardMemberLinks");
+    const { hashSecret } = await import("@/lib/tapcardAuth");
+    const eid = await recordClaimEvent({ orgId: await cardOrgId(id), cardId: id, claimantHash: hashSecret(`tapcard-follower:${claimant}`) });
+    if (eid) after(() => deliverNow([eid]).catch(() => {}));
+  } catch { /* a claim never fails because of member links */ }
   return NextResponse.json({ code: result.code, redeemed: result.redeemed, url: `https://tapcard.aiert.co.uk/o/${result.code}` });
 }

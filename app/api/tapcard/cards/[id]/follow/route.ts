@@ -8,7 +8,7 @@ import { followTargetFor, isListedCard, removeOwnerCopy, saveFollowerDetails, sa
 // number. `follower` is a random id the app keeps on the device; it is hashed, never listed or linked to a person.
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const body = (await req.json().catch(() => null)) as { follower?: unknown; follow?: unknown; prefs?: { offers?: unknown; ending?: unknown; changes?: unknown; news?: unknown }; share?: unknown; event?: unknown; eventAt?: unknown; group?: unknown } | null;
+  const body = (await req.json().catch(() => null)) as { follower?: unknown; follow?: unknown; prefs?: { offers?: unknown; ending?: unknown; changes?: unknown; news?: unknown }; share?: unknown; event?: unknown; eventAt?: unknown; group?: unknown; memberToken?: unknown } | null;
   const follower = typeof body?.follower === "string" ? body.follower : "";
   if (follower.length < 16 || follower.length > 200) return NextResponse.json({ error: "follower is required" }, { status: 400 });
   const card = await getCard(id);
@@ -39,6 +39,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (body?.follow === true) group = await joinGroup(target, who, body?.group).catch(() => null);
     else await leaveAllGroups(target, who).catch(() => {});
   }
+  // Member links (enterprise, off unless the company is switched on): a personal token from the company's own link ties this phone to one
+  // member the company can recognise. Wrapped so that nothing here can ever stop a follow.
+  let memberLink: string | undefined;
+  {
+    const { recordFollowEvent, deliverNow } = await import("@/lib/tapcardMemberLinks");
+    const { hashSecret } = await import("@/lib/tapcardAuth");
+    const r = await recordFollowEvent({ orgId: orgForEvent, cardId: target, followerHash: hashSecret(`tapcard-follower:${follower}`), follow: body?.follow === true, token: body?.memberToken, group: group?.slug ?? "" }).catch(() => null);
+    if (r && r.outcome !== "off") memberLink = r.outcome;
+    if (r?.eventIds.length) after(() => deliverNow(r.eventIds).catch(() => {}));
+  }
   const p = body?.prefs;
   await setPushPrefs(target, follower, body?.follow === true, p ? { offers: p.offers !== false, ending: p.ending !== false, changes: p.changes !== false, news: p.news !== false } : undefined).catch(() => {});
   // Listed-company cards only: the follower may choose, by tapping "Follow and share my details", to give the company a name and
@@ -60,5 +70,5 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       }
     }
   }
-  return NextResponse.json({ ok: true, listedCompany: listed, shared, followedCardId: target, group });
+  return NextResponse.json({ ok: true, listedCompany: listed, shared, followedCardId: target, group, ...(memberLink ? { memberLink } : {}) });
 }
