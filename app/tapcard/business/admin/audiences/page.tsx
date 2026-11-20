@@ -2,7 +2,7 @@ import { requireBizSession } from "@/lib/tapcardBizSession";
 import { getOrg, isOrgActive, listOrgCards } from "@/lib/tapcardBiz";
 import { listGroupsWithCounts } from "@/lib/tapcardGroups";
 import { adviserCoverActive } from "@/lib/tapcardAdviserBilling";
-import GroupsPanel from "../news/GroupsPanel";
+import AudienceList from "./AudienceList";
 
 export const dynamic = "force-dynamic";
 
@@ -31,22 +31,11 @@ export default async function BizAudiencesPage() {
         <p className="rounded-xl bg-white/10 px-4 py-3 text-cloud">Your company&apos;s billing isn&apos;t active, so groups can&apos;t be changed right now. <a className="text-gold underline" href="/business/admin/billing">Billing</a></p>
       )}
       {cards.length === 0 && <p className="rounded-2xl bg-charcoal p-6 text-cloud ring-1 ring-white/10">There are no cards in this company yet. Groups belong to a card, so add a card first (Locations or Employees).</p>}
-      {shops.map(({ c, groups }) => (
-        <GroupsPanel key={c.id} cardId={c.id} initial={groups} business={{ cardName: nameOf(c), captionName: org.name }} />
-      ))}
-      {people.length > 0 && shops.length === 0 && (
-        // No shop cards: the people's own cards are the only ones, so show them straight away.
-        people.map(({ c, groups }) => <GroupsPanel key={c.id} cardId={c.id} initial={groups} business={{ cardName: nameOf(c), captionName: org.name }} />)
-      )}
-      {people.length > 0 && shops.length > 0 && (
-        <details className="rounded-2xl bg-charcoal p-4 ring-1 ring-white/10">
-          <summary className="cursor-pointer font-semibold text-cloud">Staff cards ({people.length}): groups on a person&apos;s own card</summary>
-          <div className="mt-4 space-y-6">
-            {people.map(({ c, groups }) => (
-              <GroupsPanel key={c.id} cardId={c.id} initial={groups} business={{ cardName: nameOf(c), captionName: org.name }} />
-            ))}
-          </div>
-        </details>
+      {cards.length > 0 && (
+        <AudienceList captionName={org.name} cards={[
+          ...shops.map(({ c, groups }) => ({ id: c.id, name: nameOf(c), subtitle: c.title || "", kind: "location" as const, groups })),
+          ...people.map(({ c, groups }) => ({ id: c.id, name: nameOf(c), subtitle: c.title || "", kind: "staff" as const, groups })),
+        ]} />
       )}
     </div>
   );

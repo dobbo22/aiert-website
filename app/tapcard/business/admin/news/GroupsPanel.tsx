@@ -9,7 +9,7 @@ export interface GroupRow { slug: string; label: string; members: number; reacha
 
 /// The audiences of a company card (#Kefi, #IPO Clients): add, remove, and a link + QR code for each. Someone who follows through a
 /// group's link is put in that group, and a headline can then be sent to chosen groups only.
-export default function GroupsPanel({ cardId, initial, adviserOrgId, business }: { cardId: string; initial: GroupRow[]; adviserOrgId?: string; business?: { cardName: string; captionName?: string } }) {
+export default function GroupsPanel({ cardId, initial, adviserOrgId, business }: { cardId: string; initial: GroupRow[]; adviserOrgId?: string; business?: { cardName: string; captionName?: string; hideTitle?: boolean } }) {
   const [groups, setGroups] = useState<GroupRow[]>(initial);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
@@ -27,7 +27,7 @@ export default function GroupsPanel({ cardId, initial, adviserOrgId, business }:
 
   return (
     <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10" id="groups">
-      <h2 className="text-lg font-bold text-cloud">{business ? business.cardName : "Groups"}{!business && <HelpDot anchor="groups" role={adviserOrgId ? "adviser-senior" : "company-senior"} label="How groups work" />}</h2>
+      {!business?.hideTitle && <h2 className="text-lg font-bold text-cloud">{business ? business.cardName : "Groups"}{!business && <HelpDot anchor="groups" role={adviserOrgId ? "adviser-senior" : "company-senior"} label="How groups work" />}</h2>}
       {business ? (
         <p className="mt-2 text-cloud">Each group has its own QR code. Someone who follows through it joins that group, and you can see how many are in each. Followers are not asked for a name or email; a group is only a label.</p>
       ) : (
