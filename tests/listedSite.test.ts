@@ -49,3 +49,9 @@ test("a site drawn by script (almost no text) is not called parked when its titl
   assert.equal(judgeWebsite(co("Zebra Mining plc"), { finalUrl: "https://zebramining.com/", status: 200, html: "<html><head><title>zebramining.com</title></head><body><p>hi</p></body></html>" }).verdict, "ok");
   assert.equal(judgeWebsite(co("Shell plc"), { finalUrl: "https://example.org/", status: 200, html: "<html><head><title>Welcome</title></head><body><p>hi</p></body></html>" }).verdict, "parked");
 });
+
+test("a Cloudflare challenge page is 'needs a look', not dead or parked (1947 plc)", () => {
+  const j = judgeWebsite(co("1947 Oil & Gas plc"), { finalUrl: "https://1947plc.com/", status: 403, html: "<html><head><title>Just a moment...</title></head><body>Enable JavaScript and cookies to continue</body></html>" });
+  assert.equal(j.verdict, "unsure");
+  assert.match(j.reasons[0], /refuses automated readers/);
+});

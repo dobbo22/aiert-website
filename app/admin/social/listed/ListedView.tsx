@@ -56,6 +56,10 @@ export default function ListedView({ rows, loadError }: { rows: UniverseRow[]; l
   const [checking, setChecking] = useState<string>("");
   const [checkingIr, setCheckingIr] = useState<string>("");
   const [checkingBoard, setCheckingBoard] = useState<string>("");
+  const [verify, setVerify] = useState("all");
+  const [editIsin, setEditIsin] = useState("");
+  const [form, setForm] = useState<{ website: string; urls: Record<string, string>; notes: string; verified: boolean }>({ website: "", urls: {}, notes: "", verified: false });
+  const [saving, setSaving] = useState(false);
   const [evidence, setEvidence] = useState<Record<string, Evidence>>({});
   const [openEv, setOpenEv] = useState<string>("");
 
@@ -70,6 +74,8 @@ export default function ListedView({ rows, loadError }: { rows: UniverseRow[]; l
       if (web === "no" && r.website) return false;
       if (cap === "yes" && r.marketCap === null) return false;
       if (cap === "no" && r.marketCap !== null) return false;
+      if (verify === "verified" && !r.manualAt) return false;
+      if (verify === "needs" && (r.manualAt || (r.websiteStatus === "ok" && r.irStatus === "found"))) return false;
       if (cap === "100m" && !((r.marketCap ?? 0) >= 1e8)) return false;
       if (cap === "10m" && !((r.marketCap ?? 0) >= 1e7)) return false;
       const hay = `${r.name} ${r.ticker} ${r.isin} ${r.sector}`.toLowerCase();
@@ -78,7 +84,7 @@ export default function ListedView({ rows, loadError }: { rows: UniverseRow[]; l
     out.sort((a, b) =>
       sortBy === "cap" ? (b.marketCap ?? -1) - (a.marketCap ?? -1) || a.name.localeCompare(b.name) : sortBy === "ticker" ? a.ticker.localeCompare(b.ticker) : a.name.localeCompare(b.name));
     return out;
-  }, [rows, q, market, status, web, cap, sortBy]);
+  }, [rows, q, market, status, web, cap, sortBy, verify]);
   const pages = Math.max(1, Math.ceil(shown.length / PAGE));
   const visible = shown.slice(page * PAGE, page * PAGE + PAGE);
 
@@ -113,12 +119,6 @@ export default function ListedView({ rows, loadError }: { rows: UniverseRow[]; l
     setMsg(`Deleted ${r.deleted}. Kept ${r.kept} that have a card.`);
     router.refresh();
   }
-  async function editWebsite(row: UniverseRow) {
-    const v = window.prompt(`Website for ${row.name} (leave empty to clear):`, row.website);
-    if (v === null) return;
-    const r = await json({ action: "set-website", isin: row.isin, website: v });
-    if (r.error) setMsg(r.error); else router.refresh();
-  }
   async function checkSite(isin: string) {
     setChecking(isin || "next"); setMsg("");
     const r = await json({ action: "check-website", isin });
@@ -147,21 +147,19 @@ export default function ListedView({ rows, loadError }: { rows: UniverseRow[]; l
     setOpenEv(isin);
     router.refresh();
   }
-  async function setInvestorLinks(row: UniverseRow) {
-    const h = (await json({ action: "investor-hand", isin: row.isin })) as unknown as { hand?: Record<string, string> };
-    const cur = h.hand ?? {};
-    const ask = (label: string, key: string, now: string) => window.prompt(`${label} for ${row.name} (full https:// address; leave empty to clear a hand-set one, Cancel to stop):`, cur[key] ?? now);
-    const ir = ask("Investor relations page", "ir", row.irUrl); if (ir === null) return;
-    const rns = ask("Announcements page", "rns", row.rnsUrl); if (rns === null) return;
-    const shareholder = ask("Shareholder information page", "shareholder", row.shareholderUrl); if (shareholder === null) return;
-    const urls: Record<string, string> = {};
-    if (ir !== (cur.ir ?? row.irUrl)) urls.ir = ir;
-    if (rns !== (cur.rns ?? row.rnsUrl)) urls.rns = rns;
-    if (shareholder !== (cur.shareholder ?? row.shareholderUrl)) urls.shareholder = shareholder;
-    if (!Object.keys(urls).length) return;
-    const r = await json({ action: "set-investor-urls", isin: row.isin, urls });
+  async function openEdit(row: UniverseRow) {
+    if (editIsin === row.isin) { setEditIsin(""); return; }
+    const r = (await json({ action: "manual-get", isin: row.isin })) as unknown as { manual?: { website: string; urls: Record<string, string>; notes: string; verified: boolean } };
+    if (!r.manual) { setMsg("Could not load this company."); return; }
+    setForm({ website: r.manual.website, urls: r.manual.urls, notes: r.manual.notes, verified: r.manual.verified });
+    setEditIsin(row.isin);
+  }
+  async function saveEdit() {
+    setSaving(true); setMsg("");
+    const r = await json({ action: "manual-save", isin: editIsin, website: form.website, urls: form.urls, notes: form.notes, verified: form.verified });
+    setSaving(false);
     if (r.error) { setMsg(String(r.error)); return; }
-    await checkInvestor(row.isin);
+    setEditIsin(""); setMsg("Saved."); router.refresh();
   }
   async function showEvidence(isin: string) {
     if (openEv === isin) { setOpenEv(""); return; }
@@ -266,6 +264,9 @@ export default function ListedView({ rows, loadError }: { rows: UniverseRow[]; l
           <select style={field} value={cap} onChange={(e) => { setCap(e.target.value); setPage(0); }} aria-label="Market cap">
             <option value="all">Any market cap</option><option value="100m">£100m or more</option><option value="10m">£10m or more</option><option value="yes">Has a market cap</option><option value="no">No market cap</option>
           </select>
+          <select style={field} value={verify} onChange={(e) => { setVerify(e.target.value); setPage(0); }} aria-label="Verification">
+            <option value="all">All</option><option value="needs">Needs work</option><option value="verified">Verified by hand</option>
+          </select>
           <select style={field} value={web} onChange={(e) => { setWeb(e.target.value); setPage(0); }} aria-label="Website">
             <option value="all">Any website</option><option value="yes">Has a website</option><option value="no">No website</option>
           </select>
@@ -286,7 +287,7 @@ export default function ListedView({ rows, loadError }: { rows: UniverseRow[]; l
             </thead>
             <tbody>
               {visible.map((r) => {
-                const st = STATUS_LABEL[r.websiteStatus] ?? STATUS_LABEL.unchecked;
+                const st = r.manualAt ? { text: "Verified by hand", bg: "#93c5fd" } : (STATUS_LABEL[r.websiteStatus] ?? STATUS_LABEL.unchecked);
                 const ev = evidence[r.isin];
                 return (
                   <Fragment key={r.isin}>
@@ -348,12 +349,37 @@ export default function ListedView({ rows, loadError }: { rows: UniverseRow[]; l
                       <td style={{ padding: "6px 8px", whiteSpace: "nowrap" }}>
                         <button type="button" style={{ ...btn, padding: "3px 8px", marginRight: 6 }} disabled={!!checking} onClick={() => checkSite(r.isin)}>{checking === r.isin ? "Checking…" : r.websiteStatus === "unchecked" ? "Check" : "Check again"}</button>
                         <button type="button" style={{ ...btn, padding: "3px 8px", marginRight: 6 }} disabled={!r.website || !!checkingIr} onClick={() => checkInvestor(r.isin)} title={r.website ? "" : "Check or set the website first"}>{checkingIr === r.isin ? "Reading…" : r.irStatus === "unchecked" ? "Investor pages" : "Recheck pages"}</button>
-                        <button type="button" style={{ ...btn, padding: "3px 8px", marginRight: 6 }} onClick={() => setInvestorLinks(r)}>Set links</button>
+
                         <button type="button" style={{ ...btn, padding: "3px 8px", marginRight: 6 }} disabled={!!checkingBoard} onClick={() => checkBoard(r.isin)}>{checkingBoard === r.isin ? "Reading…" : r.boardStatus === "unchecked" ? "Board" : "Recheck board"}</button>
                         {(r.websiteStatus !== "unchecked" || r.irStatus !== "unchecked" || r.boardStatus !== "unchecked") && <button type="button" style={{ ...btn, padding: "3px 8px" }} onClick={() => showEvidence(r.isin)}>{openEv === r.isin ? "Hide" : "Evidence"}</button>}
                       </td>
-                      <td style={{ padding: "6px 8px" }}><button type="button" style={{ ...btn, padding: "3px 8px" }} onClick={() => editWebsite(r)}>Set website</button></td>
+                      <td style={{ padding: "6px 8px" }}><button type="button" style={{ ...btn, padding: "3px 8px", ...(editIsin === r.isin ? { background: "#FBBF24", color: "#111", border: "none", fontWeight: 700 } : {}) }} onClick={() => openEdit(r)}>{editIsin === r.isin ? "Close" : "Edit by hand"}</button></td>
                     </tr>
+                    {editIsin === r.isin && (
+                      <tr style={{ borderBottom: "1px solid rgba(255,255,255,.14)" }}>
+                        <td colSpan={10} style={{ padding: "10px 8px 16px 24px" }}>
+                          <div style={{ fontWeight: 700, marginBottom: 8 }}>Edit {r.name} by hand</div>
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 8, maxWidth: 1100 }}>
+                            {([["website", "Website"], ["ir", "Investor relations page"], ["rns", "Announcements page"], ["reports", "Reports and results page"], ["shareholder", "Shareholder information page"], ["price", "Share price page"], ["board", "Board or directors page"]] as const).map(([k, label]) => (
+                              <label key={k} style={{ display: "grid", gap: 3, fontSize: 13 }}>
+                                {label}
+                                <input style={field} placeholder="https://" value={k === "website" ? form.website : (form.urls[k] ?? "")} onChange={(e) => setForm((f) => (k === "website" ? { ...f, website: e.target.value } : { ...f, urls: { ...f.urls, [k]: e.target.value } }))} />
+                              </label>
+                            ))}
+                          </div>
+                          <label style={{ display: "grid", gap: 3, fontSize: 13, marginTop: 8, maxWidth: 1100 }}>
+                            Notes
+                            <textarea style={{ ...field, minHeight: 56 }} value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} />
+                          </label>
+                          <label style={{ display: "block", marginTop: 8 }}><input type="checkbox" checked={form.verified} onChange={(e) => setForm((f) => ({ ...f, verified: e.target.checked }))} /> I have checked these myself (marks the company Verified by hand)</label>
+                          <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                            <button type="button" style={primary} disabled={saving} onClick={saveEdit}>{saving ? "Saving…" : "Save"}</button>
+                            <button type="button" style={btn} onClick={() => setEditIsin("")}>Cancel</button>
+                          </div>
+                          <div style={{ fontSize: 13, marginTop: 6 }}>Links you give win over anything the checks find, and the checks read them. Leave one empty to leave it out. After saving you can still press Investor pages or Board to read the pages you gave.</div>
+                        </td>
+                      </tr>
+                    )}
                     {openEv === r.isin && (
                       <tr style={{ borderBottom: "1px solid rgba(255,255,255,.14)" }}>
                         <td colSpan={10} style={{ padding: "8px 8px 14px 24px" }}>

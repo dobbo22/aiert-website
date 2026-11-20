@@ -23,6 +23,9 @@ const hasWord = (hay: string, w: string) => new RegExp(`(^|[^a-z0-9])${w.replace
 export function judgeWebsite(company: { n: string; t: string; i: string }, page: Pick<Probe, "finalUrl" | "status" | "html">): Judged {
   const html = page.html;
   const title = attr(html, /<title[^>]*>([\s\S]*?)<\/title>/i).slice(0, 160);
+  if ((page.status === 403 || page.status === 503 || page.status === 429) && /just a moment|attention required|cf-chl|challenge-platform|cf-browser-verification|access denied|errors\.edgesuite\.net|incapsula|px-captcha|datadome/i.test(`${title} ${html}`)) {
+    return { verdict: "unsure", reasons: ["the site is behind an automatic check (such as Cloudflare) that refuses automated readers, so its pages cannot be read; the address may well be right"], title };
+  }
   if (page.status === 0 || page.status >= 400) return { verdict: "dead", reasons: [page.status ? `the page answered ${page.status}` : "the site did not answer"], title };
   const body = textOf(html);
   if (PARKED.test(body.slice(0, 3000)) || PARKED.test(title)) return { verdict: "parked", reasons: ["looks parked or for sale"], title };

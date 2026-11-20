@@ -16,7 +16,7 @@ export interface UniverseRow {
   status: "listed" | "delisted"; firstSeen: string; lastSeenInList: string; delistedAt: string | null;
   marketCap: number | null; marketCapSource: string; marketCapAt: string | null;
   website: string; websiteSource: string; websiteStatus: string; websiteCheckedAt: string | null; websiteTitle: string; notes: string; hasCard: boolean;
-  irStatus: string; irUrl: string; rnsUrl: string; reportsUrl: string; priceUrl: string; shareholderUrl: string; irProvider: string; irNote: string; rnsItems: number; publishesPrice: string; publishesCap: string; irCheckedAt: string | null;
+  irStatus: string; irUrl: string; rnsUrl: string; reportsUrl: string; priceUrl: string; shareholderUrl: string; irProvider: string; irNote: string; manualAt: string | null; rnsItems: number; publishesPrice: string; publishesCap: string; irCheckedAt: string | null;
   chNumber: string; boardStatus: string; boardUrl: string; boardCount: number; boardConfirmed: number; boardCheckedAt: string | null;
 }
 
@@ -63,6 +63,7 @@ export function ensureUniverse(): Promise<void> {
       .then(() => sql`ALTER TABLE tapcard_lse_universe ADD COLUMN IF NOT EXISTS ir_provider TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_lse_universe ADD COLUMN IF NOT EXISTS ir_note TEXT NOT NULL DEFAULT ''`)
       .then(() => sql`ALTER TABLE tapcard_lse_universe ADD COLUMN IF NOT EXISTS ir_hand JSONB NOT NULL DEFAULT '{}'::jsonb`)
+      .then(() => sql`ALTER TABLE tapcard_lse_universe ADD COLUMN IF NOT EXISTS manual_at TIMESTAMPTZ`)
       .then(() => sql`ALTER TABLE tapcard_lse_universe ADD COLUMN IF NOT EXISTS rns_items INT NOT NULL DEFAULT 0`)
       .then(() => sql`ALTER TABLE tapcard_lse_universe ADD COLUMN IF NOT EXISTS publishes_price TEXT NOT NULL DEFAULT 'unknown'`)
       .then(() => sql`ALTER TABLE tapcard_lse_universe ADD COLUMN IF NOT EXISTS publishes_cap TEXT NOT NULL DEFAULT 'unknown'`)
@@ -108,7 +109,7 @@ export async function listUniverse(): Promise<UniverseRow[]> {
     firstSeen: iso(r.first_seen), lastSeenInList: iso(r.last_seen_in_list), delistedAt: r.delisted_at ? new Date(r.delisted_at as string).toISOString() : null,
     marketCap: r.market_cap === null ? null : Number(r.market_cap), marketCapSource: String(r.market_cap_source), marketCapAt: r.market_cap_at ? iso(r.market_cap_at) : null,
     website: String(r.website), websiteSource: String(r.website_source), websiteStatus: String(r.website_status ?? "unchecked"), websiteCheckedAt: r.website_checked_at ? new Date(r.website_checked_at as string).toISOString() : null, websiteTitle: String(r.website_title ?? ""), notes: String(r.notes), hasCard: hasCard.has(String(r.isin)),
-    irStatus: String(r.ir_status ?? "unchecked"), irUrl: String(r.ir_url ?? ""), rnsUrl: String(r.rns_url ?? ""), reportsUrl: String(r.reports_url ?? ""), priceUrl: String(r.price_url ?? ""), shareholderUrl: String(r.shareholder_url ?? ""), irProvider: String(r.ir_provider ?? ""), irNote: String(r.ir_note ?? ""), rnsItems: Number(r.rns_items ?? 0),
+    irStatus: String(r.ir_status ?? "unchecked"), irUrl: String(r.ir_url ?? ""), rnsUrl: String(r.rns_url ?? ""), reportsUrl: String(r.reports_url ?? ""), priceUrl: String(r.price_url ?? ""), shareholderUrl: String(r.shareholder_url ?? ""), irProvider: String(r.ir_provider ?? ""), irNote: String(r.ir_note ?? ""), manualAt: r.manual_at ? new Date(r.manual_at as string).toISOString() : null, rnsItems: Number(r.rns_items ?? 0),
     publishesPrice: String(r.publishes_price ?? "unknown"), publishesCap: String(r.publishes_cap ?? "unknown"), irCheckedAt: r.ir_checked_at ? new Date(r.ir_checked_at as string).toISOString() : null,
     chNumber: String(r.ch_number ?? ""), boardStatus: String(r.board_status ?? "unchecked"), boardUrl: String(r.board_url ?? ""), boardCount: board.get(String(r.isin))?.n ?? 0, boardConfirmed: board.get(String(r.isin))?.both ?? 0,
     boardCheckedAt: r.board_checked_at ? new Date(r.board_checked_at as string).toISOString() : null,
@@ -288,6 +289,7 @@ export async function runInvestorCheck(isin: string): Promise<{ ok: true; result
   if (!rows.length) return { ok: false, error: "No such company." };
   const r = rows[0];
   const handSet = (typeof r.ir_hand === "string" ? JSON.parse(r.ir_hand as string) : r.ir_hand ?? {}) as Partial<Record<"ir" | "rns" | "reports" | "price" | "shareholder", string>>;
+  delete (handSet as Record<string, string>).board;
   if (!String(r.website) && !Object.keys(handSet).length) return { ok: false, error: "This company has no website yet. Check or set the website first." };
   const result = await checkInvestorPages({ isin: String(r.isin), name: String(r.name), website: String(r.website), handSet });
   await sql`
@@ -310,10 +312,11 @@ export async function storedInvestorEvidence(isin: string): Promise<InvestorResu
 /// names (public record: name, role, where each was seen) and returns them.
 export async function runBoardCheck(isin: string): Promise<{ ok: true; result: BoardResult; name: string } | { ok: false; error: string }> {
   await ensureUniverse();
-  const rows = await sql`SELECT isin, name, website, ir_url FROM tapcard_lse_universe WHERE isin = ${isin.toUpperCase()}`;
+  const rows = await sql`SELECT isin, name, website, ir_url, ir_hand FROM tapcard_lse_universe WHERE isin = ${isin.toUpperCase()}`;
   if (!rows.length) return { ok: false, error: "No such company." };
   const r = rows[0];
-  const result = await checkBoard({ isin: String(r.isin), name: String(r.name), website: String(r.website), irUrl: String(r.ir_url ?? "") });
+  const hand = (typeof r.ir_hand === "string" ? JSON.parse(r.ir_hand as string) : r.ir_hand ?? {}) as Record<string, string>;
+  const result = await checkBoard({ isin: String(r.isin), name: String(r.name), website: String(r.website), irUrl: String(r.ir_url ?? ""), boardUrl: hand.board ?? "" });
   await sql`DELETE FROM tapcard_lse_board WHERE isin = ${result.isin}`;
   for (const p of result.people) {
     await sql`INSERT INTO tapcard_lse_board (isin, name, role, appointed_on, on_ch, on_site) VALUES (${result.isin}, ${p.display}, ${p.role}, ${p.appointedOn}, ${p.onCh}, ${p.onSite}) ON CONFLICT (isin, name) DO NOTHING`;
@@ -337,7 +340,7 @@ export async function storedBoardEvidence(isin: string): Promise<BoardResult | n
 /// An empty address clears that link. The investor check is then run again by the page.
 export async function setInvestorUrls(isin: string, urls: Record<string, string>): Promise<boolean> {
   await ensureUniverse();
-  const roles = ["ir", "rns", "reports", "shareholder", "price"];
+  const roles = ["ir", "rns", "reports", "shareholder", "price", "board"];
   const clean: Record<string, string> = {};
   const clear: string[] = [];
   for (const [k, v] of Object.entries(urls)) {
@@ -361,4 +364,46 @@ export async function storedInvestorHand(isin: string): Promise<Record<string, s
   const rows = await sql`SELECT ir_hand FROM tapcard_lse_universe WHERE isin = ${isin.toUpperCase()}`;
   if (!rows.length) return {};
   return (typeof rows[0].ir_hand === "string" ? JSON.parse(rows[0].ir_hand as string) : rows[0].ir_hand ?? {}) as Record<string, string>;
+}
+
+export interface ManualRecord { website: string; urls: Record<string, string>; notes: string; verified: boolean; verifiedAt: string | null }
+
+export async function getManual(isin: string): Promise<ManualRecord | null> {
+  await ensureUniverse();
+  const rows = await sql`SELECT website, ir_hand, notes, manual_at, ir_url, rns_url, reports_url, shareholder_url, price_url FROM tapcard_lse_universe WHERE isin = ${isin.toUpperCase()}`;
+  if (!rows.length) return null;
+  const r = rows[0];
+  const hand = (typeof r.ir_hand === "string" ? JSON.parse(r.ir_hand as string) : r.ir_hand ?? {}) as Record<string, string>;
+  // The form shows what is stored now: a hand-set link, else the one the check found.
+  const urls = { ir: hand.ir ?? String(r.ir_url ?? ""), rns: hand.rns ?? String(r.rns_url ?? ""), reports: hand.reports ?? String(r.reports_url ?? ""), shareholder: hand.shareholder ?? String(r.shareholder_url ?? ""), price: hand.price ?? String(r.price_url ?? ""), board: hand.board ?? "" };
+  return { website: String(r.website), urls, notes: String(r.notes), verified: !!r.manual_at, verifiedAt: r.manual_at ? new Date(r.manual_at as string).toISOString() : null };
+}
+
+/// The Edit panel: everything for one company set by hand in one go. Links given are stored as hand-set (they win over anything the checks
+/// find, and the investor check reads them); the website is stored as "set by hand"; "verified" stamps the date. Empty clears.
+export async function saveManual(isin: string, m: { website: string; urls: Record<string, string>; notes: string; verified: boolean }): Promise<{ ok: true } | { ok: false; error: string }> {
+  await ensureUniverse();
+  const web = m.website.trim();
+  if (web && !/^https?:\/\/[^\s]+\.[^\s]+$/i.test(web)) return { ok: false, error: "The website must start with https:// (or http://)." };
+  const roles = ["ir", "rns", "reports", "shareholder", "price", "board"];
+  const hand: Record<string, string> = {};
+  for (const k of roles) {
+    const u = String(m.urls[k] ?? "").trim();
+    if (!u) continue;
+    if (!/^https?:\/\/[^\s]+\.[^\s]+$/i.test(u)) return { ok: false, error: `The ${k === "ir" ? "investor relations" : k} link must be a full web address.` };
+    hand[k] = u;
+  }
+  const id = isin.toUpperCase();
+  const own = await sql`SELECT 1 FROM tapcard_lse_universe WHERE isin = ${id}`;
+  if (!own.length) return { ok: false, error: "No such company." };
+  await sql`
+    UPDATE tapcard_lse_universe SET website = ${web}, website_source = ${web ? "set by hand" : ""}, website_status = CASE WHEN ${web} = '' THEN 'unchecked' ELSE website_status END,
+      ir_hand = ${JSON.stringify(hand)}::jsonb, notes = ${m.notes.slice(0, 2000)},
+      ir_url = CASE WHEN ${hand.ir ?? ""} <> '' THEN ${hand.ir ?? ""} ELSE ir_url END, rns_url = CASE WHEN ${hand.rns ?? ""} <> '' THEN ${hand.rns ?? ""} ELSE rns_url END,
+      reports_url = CASE WHEN ${hand.reports ?? ""} <> '' THEN ${hand.reports ?? ""} ELSE reports_url END, shareholder_url = CASE WHEN ${hand.shareholder ?? ""} <> '' THEN ${hand.shareholder ?? ""} ELSE shareholder_url END,
+      price_url = CASE WHEN ${hand.price ?? ""} <> '' THEN ${hand.price ?? ""} ELSE price_url END,
+      board_url = CASE WHEN ${hand.board ?? ""} <> '' THEN ${hand.board ?? ""} ELSE board_url END,
+      manual_at = ${m.verified ? new Date().toISOString() : null}, updated_at = now()
+    WHERE isin = ${id}`;
+  return { ok: true };
 }

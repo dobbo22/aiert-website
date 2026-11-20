@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAdminRequest } from "@/lib/adminRequest";
 import { parseStockListFiles } from "@/lib/lseStockList";
-import { applyImport, diffImport, loadStartingList, nextUnchecked, removeDelisted, runBoardCheck, runInvestorCheck, setInvestorUrls, storedInvestorHand, runWebsiteCheck, setWebsite, storedBoardEvidence, storedEvidence, storedInvestorEvidence, MIN_FULL_LIST } from "@/lib/tapcardListedUniverse";
+import { applyImport, diffImport, loadStartingList, nextUnchecked, removeDelisted, getManual, saveManual, runBoardCheck, runInvestorCheck, setInvestorUrls, storedInvestorHand, runWebsiteCheck, setWebsite, storedBoardEvidence, storedEvidence, storedInvestorEvidence, MIN_FULL_LIST } from "@/lib/tapcardListedUniverse";
 
 // AIERT admin only. JSON actions: load (starting list into an empty table), remove-delisted, set-website.
 // Form upload (multipart, field "files" = the LSE stock-list .xlsx files, field "action" = preview or apply).
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
       const diff = await diffImport(parsed.items, parsed.asOf);
       return NextResponse.json({ ok: true, applied: false, perFile: parsed.perFile, diff, complete: parsed.items.length >= MIN_FULL_LIST, skippedNonShares: parsed.skipped });
     }
-    const b = (await req.json().catch(() => null)) as { action?: string; isin?: string; website?: string; urls?: Record<string, string> } | null;
+    const b = (await req.json().catch(() => null)) as { action?: string; isin?: string; website?: string; urls?: Record<string, string>; notes?: string; verified?: boolean } | null;
     if (!b) return NextResponse.json({ error: "bad request" }, { status: 400 });
     if (b.action === "load") {
       const r = await loadStartingList();
@@ -45,6 +45,14 @@ export async function POST(req: NextRequest) {
     if (b.action === "set-investor-urls" && typeof b.isin === "string" && b.urls && typeof b.urls === "object") {
       const ok = await setInvestorUrls(b.isin, b.urls);
       return ok ? NextResponse.json({ ok: true }) : NextResponse.json({ error: "Each link must be a full https:// address." }, { status: 400 });
+    }
+    if (b.action === "manual-get" && typeof b.isin === "string") {
+      const m = await getManual(b.isin);
+      return m ? NextResponse.json({ ok: true, manual: m }) : NextResponse.json({ error: "No such company." }, { status: 404 });
+    }
+    if (b.action === "manual-save" && typeof b.isin === "string") {
+      const r = await saveManual(b.isin, { website: String(b.website ?? ""), urls: (b.urls ?? {}) as Record<string, string>, notes: String(b.notes ?? ""), verified: !!b.verified });
+      return r.ok ? NextResponse.json({ ok: true }) : NextResponse.json({ error: r.error }, { status: 400 });
     }
     if (b.action === "investor-hand" && typeof b.isin === "string") return NextResponse.json({ ok: true, hand: await storedInvestorHand(b.isin) });
     if (b.action === "check-investor" && typeof b.isin === "string") {

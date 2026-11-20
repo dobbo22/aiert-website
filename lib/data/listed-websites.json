@@ -2,6 +2,7 @@
   "note": "Websites set by hand for listed companies that Wikidata and the map lookup do not know, keyed by ISIN. Checked against the company's own RNS or pages.",
   "websites": {
     "GB00BD8GP619": "https://www.kefi-goldandcopper.com/",
-    "VGG3036T1012": "https://www.empiremetals.com/"
+    "VGG3036T1012": "https://www.empiremetals.com/",
+    "GB00BRQMRP25": "https://1947plc.com/"
   }
 }

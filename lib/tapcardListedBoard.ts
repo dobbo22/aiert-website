@@ -35,7 +35,7 @@ async function chGet(path: string): Promise<{ ok: true; json: Record<string, unk
 const title = (html: string) => (/<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1] ?? "").replace(/\s+/g, " ").trim().slice(0, 120);
 const plainText = (html: string) => html.replace(/<(script|style|noscript|svg)\b[\s\S]*?<\/\1>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&nbsp;|&#160;/g, " ").replace(/&amp;/g, "&").replace(/&#8217;|&rsquo;/g, "’").replace(/\s+/g, " ");
 
-export async function checkBoard(c: { isin: string; name: string; website: string; irUrl: string }): Promise<BoardResult> {
+export async function checkBoard(c: { isin: string; name: string; website: string; irUrl: string; boardUrl?: string }): Promise<BoardResult> {
   const started = Date.now();
   const left = () => Date.now() - started < 40_000;
   const result: BoardResult = { isin: c.isin, status: "none", company: null, note: "", people: [], boardPage: null, pagesTried: [], checkedAt: new Date().toISOString() };
@@ -74,11 +74,12 @@ export async function checkBoard(c: { isin: string; name: string; website: strin
 
   // 2. The company's own website: find its board page, read it.
   let site: { url: string; status: number; title: string; text: string; html: string } | null = null;
-  if (c.website) {
+  if (c.website || c.boardUrl) {
     const cands: string[] = [];
     const add = (u: string) => { if (u && !cands.includes(u)) cands.push(u); };
-    const home = await probe(c.website);
-    const base = home.finalUrl || c.website;
+    if (c.boardUrl) add(c.boardUrl);
+    const home = c.website ? await probe(c.website) : { html: "", finalUrl: "", status: 0, url: "", error: "" };
+    const base = home.finalUrl || c.website || c.boardUrl || "";
     const origin = (() => { try { return new URL(base).origin; } catch { return ""; } })();
     const anchorsOf = (html: string, url: string) => extractAnchors(html, url).filter((a) => { try { return new URL(a.href).hostname.replace(/^www\./, "") === new URL(url).hostname.replace(/^www\./, ""); } catch { return false; } });
     const fromAnchors = (html: string, url: string) => { for (const a of anchorsOf(html, url)) { let p = ""; try { p = new URL(a.href).pathname; } catch { continue; } if (BOARD_LINK_TEXT.test(a.text.trim()) || BOARD_PATH.test(p)) add(a.href); } };

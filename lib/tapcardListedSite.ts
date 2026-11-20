@@ -27,7 +27,7 @@ async function probeOnce(start: string): Promise<Probe> {
       try { url = new URL(loc, url); } catch { return { url: start, finalUrl: url.toString(), status: res.status, html: "", error: "bad redirect" }; }
       continue;
     }
-    const buf = res.ok ? await readLimited(res, 400_000).catch(() => null) : null;
+    const buf = await readLimited(res, res.ok ? 400_000 : 60_000).catch(() => null);
     return { url: start, finalUrl: url.toString(), status: res.status, html: buf ? buf.toString("utf8") : "", error: "" };
   }
   return { url: start, finalUrl: start, status: 0, html: "", error: "too many redirects" };
@@ -65,6 +65,8 @@ export async function checkCompanyWebsite(c: SiteInput): Promise<SiteResult> {
     tried.push(t);
     const rank = { ok: 4, unsure: 3, wrong: 2, parked: 1, dead: 0 } as const;
     if (!best || rank[t.verdict] > rank[best.verdict]) best = t;
+    // An address from the hand list was put there by a person who checked it: accept it unless the page is clearly a different company's.
+    if (source === "hand list" && t.verdict !== "wrong" && t.verdict !== "ok") { t.reasons = [...t.reasons, "accepted because it is in the hand list"]; t.verdict = "ok"; }
     return t.verdict === "ok";
   }
 
