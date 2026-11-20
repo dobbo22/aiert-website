@@ -34,3 +34,10 @@ test("domain guesses come from the distinctive words only", () => {
   assert.deepEqual(guessDomains("Zebra Mining plc").slice(0, 2), ["https://www.zebramining.com", "https://www.zebramining.co.uk"]);
   assert.deepEqual(guessDomains("plc"), []);
 });
+
+test("abbreviated and cut-off list names still match (HSBC Hldgs plc)", () => {
+  const j = judgeWebsite(co("HSBC Hldgs plc", "HSBA", "GB0005405286"), page("HSBC Group corporate website | HSBC Holdings plc", filler, "https://www.hsbc.com/"));
+  assert.equal(j.verdict, "ok");
+  assert.equal(judgeWebsite(co("Jpmorgan Global Core Real Assets Li"), page("JPMorgan Global Core Real Assets Limited | Home", filler, "https://am.jpmorgan.com/")).verdict, "ok");
+  assert.equal(judgeWebsite(co("HSBC Hldgs plc"), page("Lloyds Bank | Personal banking", filler, "https://www.lloydsbank.com/")).verdict, "wrong");
+});

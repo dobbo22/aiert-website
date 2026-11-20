@@ -8,7 +8,14 @@ export interface Judged { verdict: SiteVerdict; reasons: string[]; title: string
 const PARKED = /(domain (name )?(is )?for sale|buy this domain|this domain (may be|is) (for sale|available)|domain (is )?parked|parked (free|domain)|sedoparking|hugedomains|dan\.com\/buy|afternic|register\.com|this site can.t be reached|coming soon|under construction|default web page|welcome to nginx|apache2 (ubuntu )?default|index of \/)/i;
 const textOf = (html: string) => html.replace(/<(script|style|noscript|svg)\b[\s\S]*?<\/\1>/gi, " ").replace(/<[^>]+>/g, " ").replace(/&nbsp;|&#160;/g, " ").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
 const attr = (html: string, re: RegExp) => (re.exec(html)?.[1] ?? "").replace(/&amp;/g, "&").trim();
-const words = (name: string) => coreWords(name).filter((w) => w.length >= 2);
+// The exchange's names are abbreviated and cut short ("HSBC Hldgs plc", "Jpmorgan Global Core Real Assets Li"): abbreviations of the
+// ordinary words, and stray one or two letter fragments, are not part of what a company calls itself, so they are not looked for.
+const ABBREVIATIONS = new Set(["hldgs", "hldg", "hlds", "hdgs", "grp", "grps", "intl", "int", "inv", "invs", "invt", "tst", "tr", "fin", "svcs", "svc", "cos", "ord", "cap", "mgmt", "prop", "props", "devs", "dev", "ent", "ldn", "uk", "ltd", "lp"]);
+const words = (name: string) => {
+  const w = coreWords(name).filter((x) => !ABBREVIATIONS.has(x));
+  const long = w.filter((x) => x.length >= 3);
+  return long.length ? long : w.filter((x) => x.length >= 2);
+};
 const hasWord = (hay: string, w: string) => new RegExp(`(^|[^a-z0-9])${w.replace(/[^a-z0-9]/g, "")}([^a-z0-9]|$)`, "i").test(hay);
 
 /// Pure: does this page look like the website of this listed company? Needs the company's own words in the page title, the site name or
