@@ -3,6 +3,7 @@ import { del, put } from "@vercel/blob";
 import { getOrg, setOrgLogo } from "@/lib/tapcardBiz";
 import { requireBizSession } from "@/lib/tapcardBizSession";
 import { findSiteLogo, normalizeDomain } from "@/lib/siteIcon";
+import { domainLogoImage } from "@/lib/tapcardDomainLogos";
 
 const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 const LOGO_TYPES = ["image/png", "image/jpeg", "image/webp"];
@@ -39,8 +40,11 @@ export async function POST(req: NextRequest) {
     // The wide logo the site declares (the same one the card and the Wallet pass show), never its small favicon: a shopping basket
     // icon is not a company logo. Tried on the domain given, then with www. added or removed.
     const alternate = domain.startsWith("www.") ? domain.slice(4) : `www.${domain}`;
-    let logo = await findSiteLogo(domain, { iconFallback: false }).catch(() => null);
+    // The company's own logo, read from its website, comes first: a business wants its official one. Only when the site gives us none
+    // (it blocks our reader, or declares no logo) is a logo set by hand for that website used instead.
+    let logo: { bytes: Buffer; contentType: string } | null = await findSiteLogo(domain, { iconFallback: false }).catch(() => null);
     if (!logo) logo = await findSiteLogo(alternate, { iconFallback: false }).catch(() => null);
+    if (!logo) logo = await domainLogoImage(domain).catch(() => null);
     if (!logo) {
       return NextResponse.json({ error: `Couldn't find a logo on ${domain} — upload one instead.` }, { status: 404 });
     }

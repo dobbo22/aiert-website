@@ -30,3 +30,18 @@ export async function domainLogoUrl(domain: string): Promise<string | null> {
     return null;
   }
 }
+
+/// The hand-set logo for a website domain (tried with www. added or removed), read as an image: for the company logo button, so a site
+/// that blocks our reader or has no logo it declares still gets the logo that was set for it. null when none is set or it cannot be read.
+export async function domainLogoImage(domain: string, fetcher: typeof fetch = fetch): Promise<{ bytes: Buffer; contentType: string } | null> {
+  const d = domain.trim().toLowerCase();
+  const alt = d.startsWith("www.") ? d.slice(4) : `www.${d}`;
+  const url = (await domainLogoUrl(d)) ?? (await domainLogoUrl(alt));
+  if (!url) return null;
+  const res = await fetcher(url, { signal: AbortSignal.timeout(6000) }).catch(() => null);
+  if (!res?.ok) return null;
+  const contentType = (res.headers.get("content-type") ?? "image/png").split(";")[0].trim().toLowerCase();
+  if (!["image/png", "image/jpeg", "image/webp"].includes(contentType)) return null;
+  const bytes = Buffer.from(await res.arrayBuffer());
+  return bytes.length > 0 && bytes.length <= 2 * 1024 * 1024 ? { bytes, contentType } : null;
+}
