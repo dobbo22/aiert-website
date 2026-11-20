@@ -80,7 +80,7 @@ export default async function CardPage({
   // An event QR code of a listed company (?e=<code>): carried into the app links so the follow can be tagged with that event.
   const eventCode = typeof eventParam === "string" && /^[A-Za-z0-9_-]{4,12}$/.test(eventParam) ? eventParam : "";
   // A group link of an adviser or company (?g=<group>, e.g. kefi): carried the same way, so the follow can join that group and the saved card be tagged.
-  const groupCode = typeof groupParam === "string" && /^[a-z0-9-]{1,40}$/.test(groupParam) ? groupParam : "";
+  const groupCode = typeof groupParam === "string" && /^[a-z0-9-]{1,40}$/i.test(groupParam) ? groupParam.toLowerCase() : "";
   const eventQuery = eventCode || groupCode ? `?${[eventCode ? `e=${eventCode}` : "", groupCode ? `g=${groupCode}` : ""].filter(Boolean).join("&")}` : "";
   const groupOnlyQuery = groupCode ? `?g=${groupCode}` : "";
   // The group's name, shown on the card when it was opened from that group's link or QR (a lounge, say). Only if this card really has the group.
@@ -245,13 +245,9 @@ export default async function CardPage({
             </div>
 
             <h1 className="mt-4 text-2xl font-bold text-white">{card.name}</h1>
-            {(card.title || card.company) && (
-              <p className="mt-1 text-sm text-white">{[card.title, card.company].filter(Boolean).join(" · ")}</p>
-            )}
-            {groupLabel && (
-              <div className="mt-3 flex justify-center">
-                <p className="rounded-full bg-white/[0.14] px-4 py-1.5 text-sm font-semibold text-white" aria-label={`Group: ${groupLabel}`}>#{groupLabel}</p>
-              </div>
+            {/* Opened from a group's link or QR code (a lounge, say): the group's name takes the place of the job title. */}
+            {(groupLabel || card.title || card.company) && (
+              <p className="mt-1 text-sm text-white">{[groupLabel || card.title, card.company].filter(Boolean).join(" · ")}</p>
             )}
             {googleRating && (
               <p className="mt-1.5 flex items-center justify-center gap-1.5 text-sm text-white" aria-label={`Rated ${googleRating.rating} out of 5 on Google`}>

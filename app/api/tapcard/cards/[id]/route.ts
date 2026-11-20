@@ -51,7 +51,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
   }
   // A group link (?g=<slug>) the app opened from: the group's name, if this card (or the company card it follows through) really has it.
-  const g = new URL(req.url).searchParams.get("g");
+  const g = new URL(req.url).searchParams.get("g")?.toLowerCase();
   if (g && /^[a-z0-9-]{1,40}$/.test(g)) {
     const target = typeof listed.followCardId === "string" ? listed.followCardId : id;
     const found = (await (await import("@/lib/tapcardGroups")).listGroups(target).catch(() => [])).find((x) => x.slug === g);
