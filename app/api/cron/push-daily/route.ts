@@ -9,11 +9,11 @@ export async function GET(req: Request) {
   if (!process.env.CRON_SECRET || auth !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
+  // Each card can run one offer per audience: the latest of each, and only if it ends within the next 30 hours.
   const offers = (await sql`
-    SELECT DISTINCT ON (o.card_id) o.id, o.card_id, o.text, o.audience, c.name, c.company
-    FROM tapcard_offers o JOIN tapcard_cards c ON c.id = o.card_id
+    SELECT o.id, o.card_id, o.text, o.audience, c.name, c.company
+    FROM (SELECT DISTINCT ON (card_id, audience) * FROM tapcard_offers ORDER BY card_id, audience, id DESC) o JOIN tapcard_cards c ON c.id = o.card_id
     WHERE o.expires_at > now() AND o.expires_at < now() + interval '30 hours'
-    ORDER BY o.card_id, o.id DESC
   `) as { id: number; card_id: string; text: string; audience: string[] | null; name: string; company: string }[];
   let sent = 0;
   for (const o of offers) {

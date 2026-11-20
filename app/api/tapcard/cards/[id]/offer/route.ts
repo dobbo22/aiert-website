@@ -58,6 +58,6 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   if (lock.locked) {
     return NextResponse.json({ error: `This offer was posted by ${await posterName(lock.postedBy)} today, so only they can withdraw it today.`, code: "offer_locked" }, { status: 409 });
   }
-  await clearOffers(id);
+  await clearOffers(id, []); // the public offer only: offers for groups keep running
   return NextResponse.json({ ok: true });
 }

@@ -2,14 +2,15 @@
 
 import { useState } from "react";
 
-interface Props { cardId: string; hasOffer: boolean; hasNews: boolean; groups?: { slug: string; label: string; members: number; reachable: number }[] }
+interface Props { cardId: string; offers?: { id: number; text: string; audience: string[] }[]; hasNews: boolean; groups?: { slug: string; label: string; members: number; reachable: number }[] }
 
 // Switched on once the TapCard apps show stamp cards and take over a web claim (iPhone 3.2 / Android 1.7). Until then a customer who
 // installed the app would find nothing, so owners are not offered "needs the app".
 const APP_GATE_READY = true;
 
 // Post or withdraw one location's offer and news.
-export default function LocationPromote({ cardId, hasOffer, hasNews, groups = [] }: Props) {
+export default function LocationPromote({ cardId, offers = [], hasNews, groups = [] }: Props) {
+  const hasOffer = offers.length > 0;
   const [open, setOpen] = useState<"offer" | "news" | null>(null);
   const [text, setText] = useState("");
   const [link, setLink] = useState("");
@@ -61,8 +62,16 @@ export default function LocationPromote({ cardId, hasOffer, hasNews, groups = []
   return (
     <div>
       <div className="flex flex-wrap gap-2">
-        <button type="button" className="rounded-lg bg-white/10 px-3 py-1.5 text-sm font-semibold" onClick={() => setOpen(open === "offer" ? null : "offer")}>{hasOffer ? "New offer" : "Post an offer"}</button>
-        {hasOffer ? <button type="button" disabled={busy} className="rounded-lg bg-white/10 px-3 py-1.5 text-sm" onClick={() => send({ action: "withdrawOffer" })}>Withdraw offer</button> : null}
+        <button type="button" className="rounded-lg bg-white/10 px-3 py-1.5 text-sm font-semibold" onClick={() => setOpen(open === "offer" ? null : "offer")}>{hasOffer ? "Post another offer" : "Post an offer"}</button>
+        {offers.map((o) => {
+          const labels = o.audience.map((slug) => groups.find((g) => g.slug === slug)?.label).filter(Boolean).map((l) => `#${l}`);
+          const who = o.audience.length ? labels.join(" and ") || "group" : "everyone";
+          return (
+            <button key={o.id} type="button" disabled={busy} className="rounded-lg bg-white/10 px-3 py-1.5 text-sm" onClick={() => send({ action: "withdrawOffer", offerId: o.id })}>
+              {offers.length > 1 || o.audience.length ? `Withdraw offer for ${who}` : "Withdraw offer"}
+            </button>
+          );
+        })}
         <button type="button" className="rounded-lg bg-white/10 px-3 py-1.5 text-sm font-semibold" onClick={() => setOpen(open === "news" ? null : "news")}>Post news</button>
         {hasNews ? <button type="button" disabled={busy} className="rounded-lg bg-white/10 px-3 py-1.5 text-sm" onClick={() => send({ action: "withdrawNews" })}>Withdraw news</button> : null}
       </div>
@@ -100,8 +109,8 @@ export default function LocationPromote({ cardId, hasOffer, hasNews, groups = []
             <label>{kind === "stamps" ? "Max cards (optional)" : "Limit (optional)"}<input className={field} value={limit} onChange={(e) => setLimit(e.target.value.replace(/\D/g, ""))} /></label>
             <label>Staff PIN<input className={field} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="4 to 6 digits" /></label>
           </div>
-          {kind === "stamps" && <p className="mt-2 text-xs text-cloud">Posting a new offer later replaces this card, and customers&apos; stamps start again.</p>}
-          {audience(offerPicked, setOfferPicked, `o-${cardId}`, "Who can claim it", "Only the chosen groups are notified, and only people who joined one of them (through its QR code, in the app) can claim it. The offer line still shows on the card.")}
+          {kind === "stamps" && <p className="mt-2 text-xs text-cloud">Posting a new offer for the same audience later replaces this card, and customers&apos; stamps start again.</p>}
+          {audience(offerPicked, setOfferPicked, `o-${cardId}`, "Who can claim it", "Only the chosen groups are notified. Only people who joined one of them (through its QR code, in the app) can see or claim it. A card can run one offer for everyone and one for each group (or set of groups) at the same time; posting to the same audience again replaces that audience's offer.")}
           <button type="button" disabled={busy || pin.length < 4 || (kind === "stamps" ? !reward.trim() || !Number(stamps) : !text.trim())} className="mt-3 rounded-lg bg-white px-4 py-2 font-semibold text-[#111318] disabled:opacity-50"
             onClick={() => send({
               action: "offer", kind,

@@ -127,15 +127,26 @@ export function isValidPin(pin: unknown): pin is string {
   return typeof pin === "string" && /^\d{4,6}$/.test(pin);
 }
 
-/// The card's offer, or null if none / expired.
-export async function currentOffer(cardId: string, includeExpired = false): Promise<OfferRow | null> {
+/// The card's offer for one audience (default: the public one, for everyone who follows), or null if none / expired. A card can have several
+/// live offers at once, at most one per audience: "everyone", or a group, or a set of groups (a lounge, say).
+export async function currentOffer(cardId: string, includeExpired = false, audience: string[] = []): Promise<OfferRow | null> {
   await ensureOfferSchema();
+  const key = [...audience].sort();
   const row = ((await sql`
-    SELECT * FROM tapcard_offers WHERE card_id = ${cardId} ORDER BY id DESC LIMIT 1
+    SELECT * FROM tapcard_offers WHERE card_id = ${cardId} AND audience = ${key}::text[] ORDER BY id DESC LIMIT 1
   `) as OfferRow[])[0];
   if (!row) return null;
   if (!includeExpired && row.expires_at && new Date(row.expires_at).getTime() < Date.now()) return null;
   return row;
+}
+
+/// Every live offer on the card, newest first: the latest one for each audience that is not expired or withdrawn.
+export async function liveOffers(cardId: string): Promise<OfferRow[]> {
+  await ensureOfferSchema();
+  const rows = (await sql`
+    SELECT * FROM (SELECT DISTINCT ON (audience) * FROM tapcard_offers WHERE card_id = ${cardId} ORDER BY audience, id DESC) o ORDER BY id DESC
+  `) as OfferRow[];
+  return rows.filter((r) => !(r.expires_at && new Date(r.expires_at).getTime() < Date.now()));
 }
 
 export async function offerCounts(offerId: number): Promise<{ claimed: number; redeemed: number }> {
@@ -159,10 +170,10 @@ export function installFrom(req: Request): string | undefined {
   return v.length >= 16 && v.length <= 200 ? v : undefined;
 }
 
-/// true when the current offer is limited to groups (so a response carrying it must never be shared between viewers).
+/// true when the card has any live offer limited to groups (so a response carrying offers must never be shared between viewers).
 export async function offerIsLimited(cardId: string): Promise<boolean> {
-  const o = await currentOffer(cardId).catch(() => null);
-  return !!o && (o.audience ?? []).length > 0;
+  const live = await liveOffers(cardId).catch(() => [] as OfferRow[]);
+  return live.some((o) => (o.audience ?? []).length > 0);
 }
 
 async function mayViewOffer(o: OfferRow, cardId: string, viewer?: OfferViewer): Promise<boolean> {
@@ -174,12 +185,19 @@ async function mayViewOffer(o: OfferRow, cardId: string, viewer?: OfferViewer): 
   return member.length > 0;
 }
 
-export async function publicOffer(cardId: string, viewer?: OfferViewer) {
-  const o = await currentOffer(cardId);
-  if (!o) return null;
-  if (!(await mayViewOffer(o, cardId, viewer))) return null;
+/// The live offers this viewer may see, best first. Anyone unrecognised gets only the public one. A recognised member gets the offers for
+/// their group(s) first (the most specific), then the public one; the owner or an admin gets the public one first, then the group offers.
+async function offersFor(cardId: string, viewer?: OfferViewer): Promise<OfferRow[]> {
+  const seen: OfferRow[] = [];
+  for (const o of await liveOffers(cardId)) if (await mayViewOffer(o, cardId, viewer)) seen.push(o);
+  const everyone = seen.filter((o) => !(o.audience ?? []).length);
+  const grouped = seen.filter((o) => (o.audience ?? []).length);
+  return viewer?.owner ? [...everyone, ...grouped] : [...grouped, ...everyone];
+}
+
+async function shapeOffer(o: OfferRow, cardId: string) {
   const { claimed } = await offerCounts(o.id);
-  // An offer limited to groups (a lounge, say): the apps and the web page say who it is for. The text itself is still on the card.
+  // An offer limited to groups (a lounge, say): the apps say who it is for.
   const slugs = o.audience ?? [];
   const forGroups = slugs.length ? (await (await import("@/lib/tapcardGroups")).listGroups(cardId).catch(() => [])).filter((g) => slugs.includes(g.slug)) : [];
   return {
@@ -192,6 +210,17 @@ export async function publicOffer(cardId: string, viewer?: OfferViewer) {
     kind: o.kind === "stamps" ? "stamps" : "once",
     ...(o.kind === "stamps" ? { stampsRequired: o.stamps_required ?? 0, rewardText: o.reward_text, stampGapHours: o.stamp_gap_hours, appRequiredAfter: o.app_after } : {}),
   };
+}
+
+/// The one offer an app shows for a card: the best one for this viewer (see offersFor). Null when there is none this viewer may see.
+export async function publicOffer(cardId: string, viewer?: OfferViewer) {
+  const first = (await offersFor(cardId, viewer))[0];
+  return first ? shapeOffer(first, cardId) : null;
+}
+
+/// All the offers this viewer may see (for apps that show several at once).
+export async function publicOffers(cardId: string, viewer?: OfferViewer) {
+  return Promise.all((await offersFor(cardId, viewer)).map((o) => shapeOffer(o, cardId)));
 }
 
 export interface OfferInput {
@@ -260,7 +289,7 @@ export async function setOffer(cardId: string, input: OfferInput, postedBy: stri
   if (audience.length) {
     const aud = await (await import("@/lib/tapcardGroups")).validAudience(cardId, audience);
     if (!aud.ok) return { ok: false, error: aud.error };
-    groups = aud.groups;
+    groups = [...aud.groups].sort();
   }
   const salt = crypto.randomBytes(8).toString("hex");
   const hash = `${salt}:${pinHash(salt, input.pin)}`;
@@ -272,38 +301,55 @@ export async function setOffer(cardId: string, input: OfferInput, postedBy: stri
   return { ok: true, id: row.id };
 }
 
-export async function clearOffers(cardId: string): Promise<void> {
+/// Withdraws offers. With no audience: every offer on the card. With an audience (`[]` = the public one, or a set of group slugs): only
+/// that audience's offer, so withdrawing the public offer leaves a group's offer running.
+export async function clearOffers(cardId: string, audience?: string[]): Promise<void> {
   await ensureOfferSchema();
   // Offer rows are kept (so old codes read "no longer valid"); a cleared state is an expired marker.
-  await sql`UPDATE tapcard_offers SET expires_at = now() - interval '1 second' WHERE card_id = ${cardId}`;
+  if (audience === undefined) {
+    await sql`UPDATE tapcard_offers SET expires_at = now() - interval '1 second' WHERE card_id = ${cardId}`;
+    return;
+  }
+  const key = [...audience].sort();
+  await sql`UPDATE tapcard_offers SET expires_at = now() - interval '1 second' WHERE card_id = ${cardId} AND audience = ${key}::text[]`;
+}
+
+/// Withdraws one offer by its id (it must belong to this card); the card's other offers keep running.
+export async function withdrawOfferById(cardId: string, offerId: number): Promise<boolean> {
+  await ensureOfferSchema();
+  const r = (await sql`UPDATE tapcard_offers SET expires_at = now() - interval '1 second' WHERE id = ${offerId} AND card_id = ${cardId} RETURNING id`) as unknown[];
+  return r.length > 0;
 }
 
 export type ClaimResult =
   | { ok: true; code: string; redeemed: boolean }
   | { ok: false; error: "no_offer" | "sold_out" | "not_in_audience"; groups?: string[] };
 
-/// Same claimant (a random id the app keeps) always gets the same code back.
-export async function claimOffer(cardId: string, claimant: string, viaRaw: unknown = "web"): Promise<ClaimResult> {
+/// Same claimant (a random id the app keeps) always gets the same code back. `offerId` says which of the card's offers (a newer app sends it);
+/// without it, the best offer for this claimant: their group's offer if they are in a group with one, else the public one. An offer limited to
+/// groups can only be claimed by someone who joined one of them (the apps use the same install id to follow and to claim, so it is the same
+/// person; a web visitor is never a member, so a limited offer is claimed in the app).
+export async function claimOffer(cardId: string, claimant: string, viaRaw: unknown = "web", offerId?: number): Promise<ClaimResult> {
   const via = viaRaw === "app" || viaRaw === "clip" ? viaRaw : "web";
   await ensureOfferSchema();
-  const offer = await currentOffer(cardId);
-  if (!offer) return { ok: false, error: "no_offer" };
+  const mine = await offersFor(cardId, { install: claimant });
+  const wanted = Number.isInteger(offerId) ? offerId : undefined;
+  const offer = wanted !== undefined ? mine.find((o) => Number(o.id) === wanted) : mine[0];
+  if (!offer) {
+    const live = (await liveOffers(cardId)).filter((o) => wanted === undefined || Number(o.id) === wanted);
+    const limited = live.filter((o) => (o.audience ?? []).length > 0);
+    if (live.length && limited.length === live.length) {
+      const slugs = new Set(limited.flatMap((o) => o.audience ?? []));
+      const labels = (await (await import("@/lib/tapcardGroups")).listGroups(cardId).catch(() => [])).filter((g) => slugs.has(g.slug)).map((g) => g.label);
+      return { ok: false, error: "not_in_audience", groups: labels };
+    }
+    return { ok: false, error: "no_offer" };
+  }
   const who = hashSecret(`tapcard-claimant:${claimant}`);
   const existing = ((await sql`
     SELECT code, redeemed_at FROM tapcard_offer_claims WHERE offer_id = ${offer.id} AND claimant_hash = ${who}
   `) as { code: string; redeemed_at: string | null }[])[0];
   if (existing) return { ok: true, code: existing.code, redeemed: !!existing.redeemed_at };
-  // An offer limited to groups can only be claimed by someone who joined one of them. The apps use the same install id to follow and to
-  // claim, so this is the same person; a web visitor is never a member, so a limited offer is claimed in the app.
-  const audience = offer.audience ?? [];
-  if (audience.length) {
-    const follower = hashSecret(`tapcard-follower:${claimant}`);
-    const member = (await sql`SELECT 1 FROM tapcard_follower_groups WHERE card_id = ${cardId} AND follower_hash = ${follower} AND slug = ANY(${audience})`.catch(() => [])) as unknown[];
-    if (!member.length) {
-      const labels = (await (await import("@/lib/tapcardGroups")).listGroups(cardId).catch(() => [])).filter((g) => audience.includes(g.slug)).map((g) => g.label);
-      return { ok: false, error: "not_in_audience", groups: labels };
-    }
-  }
   if (offer.max_claims != null) {
     const { claimed } = await offerCounts(offer.id);
     if (claimed >= offer.max_claims) return { ok: false, error: "sold_out" };
@@ -410,7 +456,7 @@ export async function codeStatus(code: string): Promise<CodeStatus> {
   const row = ((await sql`
     SELECT c.redeemed_at, c.stamps, c.last_stamp_at, c.rewards_given, c.via, o.app_after, o.kind, o.stamps_required, o.reward_text, o.stamp_gap_hours,
            o.id AS offer_id, o.card_id, o.text, o.expires_at,
-           (SELECT MAX(id) FROM tapcard_offers WHERE card_id = o.card_id) AS latest_id,
+           (SELECT MAX(id) FROM tapcard_offers WHERE card_id = o.card_id AND audience = o.audience) AS latest_id,
            (SELECT COALESCE(NULLIF(company, ''), name) FROM tapcard_cards WHERE id = o.card_id) AS card_name
     FROM tapcard_offer_claims c JOIN tapcard_offers o ON o.id = c.offer_id
     WHERE c.code = ${code}
@@ -663,6 +709,8 @@ export interface OrgPromoteRow {
   offerExpires: string | null;
   offerClaimed: number;
   offerRedeemed: number;
+  /// Every live offer on the card (one per audience), for the admin screen.
+  offers: { id: number; text: string; kind: string; expires: string | null; audience: string[]; claimed: number; redeemed: number }[];
   claimedTotal: number;
   redeemedTotal: number;
   news: string | null;
@@ -682,13 +730,25 @@ export async function orgPromoteRows(orgId: string): Promise<OrgPromoteRow[]> {
       (SELECT COUNT(*)::int FROM tapcard_card_installs i WHERE i.card_id = c.id) AS installs,
       a.text AS news, a.created_at AS news_at
     FROM tapcard_cards c
-    LEFT JOIN LATERAL (SELECT id, text, expires_at FROM tapcard_offers WHERE card_id = c.id ORDER BY id DESC LIMIT 1) o ON true
+    LEFT JOIN LATERAL (SELECT id, text, expires_at FROM tapcard_offers WHERE card_id = c.id AND audience = '{}'::text[] ORDER BY id DESC LIMIT 1) o ON true
     LEFT JOIN LATERAL (SELECT text, created_at FROM tapcard_announcements WHERE card_id = c.id AND NOT withdrawn ORDER BY id DESC LIMIT 1) a ON true
     WHERE c.org_id = ${orgId}
     ORDER BY c.company, c.name
   `) as Record<string, unknown>[];
   const live = (iso: string | null) => (iso && new Date(iso).getTime() < Date.now() ? null : iso);
+  const offerRows = (await sql`
+    SELECT o.id, o.card_id, o.text, o.kind, o.expires_at, o.audience,
+      (SELECT COUNT(*)::int FROM tapcard_offer_claims cl WHERE cl.offer_id = o.id) AS claimed,
+      (SELECT (COUNT(cl.redeemed_at) + COALESCE(SUM(cl.rewards_given), 0))::int FROM tapcard_offer_claims cl WHERE cl.offer_id = o.id) AS redeemed
+    FROM (SELECT DISTINCT ON (card_id, audience) * FROM tapcard_offers
+          WHERE card_id IN (SELECT id FROM tapcard_cards WHERE org_id = ${orgId}) ORDER BY card_id, audience, id DESC) o
+    ORDER BY o.id DESC
+  `) as { id: number; card_id: string; text: string; kind: string; expires_at: string | null; audience: string[] | null; claimed: number; redeemed: number }[];
+  const offersOf = (cardId: string) => offerRows
+    .filter((o) => o.card_id === cardId && !(o.expires_at && new Date(o.expires_at).getTime() < Date.now()))
+    .map((o) => ({ id: Number(o.id), text: o.text, kind: o.kind, expires: o.expires_at ? new Date(o.expires_at).toISOString() : null, audience: o.audience ?? [], claimed: Number(o.claimed), redeemed: Number(o.redeemed) }));
   return rows.map((r) => ({
+    offers: offersOf(String(r.id)),
     id: String(r.id), name: String(r.name ?? ""), label: String(r.label ?? ""), company: String(r.company ?? ""),
     views: Number(r.view_count ?? 0), qrViews: Number(r.qr_view_count ?? 0), saves: Number(r.save_count ?? 0), followers: Number(r.followers ?? 0), installs: Number(r.installs ?? 0),
     offerText: r.offer_text && !(r.offer_expires && new Date(String(r.offer_expires)).getTime() < Date.now()) ? String(r.offer_text) : null,
@@ -703,8 +763,8 @@ export async function orgPromoteRows(orgId: string): Promise<OrgPromoteRow[]> {
 // post for the card has to wait until the next day, or until it ends or is withdrawn. The company admin (web) can always.
 const londonDay = (d: Date) => d.toLocaleDateString("en-CA", { timeZone: "Europe/London" });
 
-export async function offerLock(cardId: string, posterId: string): Promise<{ locked: false } | { locked: true; postedBy: string }> {
-  const live = await currentOffer(cardId);
+export async function offerLock(cardId: string, posterId: string, audience: string[] = []): Promise<{ locked: false } | { locked: true; postedBy: string }> {
+  const live = await currentOffer(cardId, false, audience);
   if (!live || !live.posted_by || live.posted_by === posterId) return { locked: false };
   if (londonDay(new Date(live.created_at)) !== londonDay(new Date())) return { locked: false };
   return { locked: true, postedBy: live.posted_by };

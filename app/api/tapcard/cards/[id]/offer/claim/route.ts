@@ -9,14 +9,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   // Generous: a busy café's customers share one wifi address. This only stops a script claiming every place on an offer.
   if (rateLimited(req, "offer-claim", 200, 60 * 60_000)) return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
   const { id } = await params;
-  const body = (await req.json().catch(() => null)) as { claimant?: unknown; via?: unknown } | null;
+  const body = (await req.json().catch(() => null)) as { claimant?: unknown; via?: unknown; offerId?: unknown } | null;
   // Newer apps say where the claim is from. Older app versions say nothing: anything that isn't a web browser is the app, so
   // an older app is never held back by an owner's "needs the app" setting.
   const via = body?.via ?? (/^Mozilla\//.test(req.headers.get("user-agent") ?? "") ? "web" : "app");
   const claimant = typeof body?.claimant === "string" ? body.claimant : "";
   if (claimant.length < 16 || claimant.length > 200) return NextResponse.json({ error: "claimant is required" }, { status: 400 });
   if (!(await getCard(id))) return NextResponse.json({ error: "not found" }, { status: 404 });
-  const result = await claimOffer(id, claimant, via);
+  // A newer app says which of the card's offers it is claiming; an older one says nothing and gets the best offer for that phone.
+  const offerId = Number.isInteger(body?.offerId) ? Number(body?.offerId) : undefined;
+  const result = await claimOffer(id, claimant, via, offerId);
   if (!result.ok && result.error === "not_in_audience") {
     const who = (result.groups ?? []).map((g) => `#${g}`).join(" or ");
     return NextResponse.json({ error: "not_in_audience", groups: result.groups ?? [], message: `This offer is for followers who joined ${who || "a group"} through its QR code.` }, { status: 403 });

@@ -3,7 +3,7 @@ import { pushToFollowers } from "@/lib/tapcardPush";
 import sql from "@/lib/db";
 import { requireBizUser } from "@/lib/tapcardBizSession";
 import { getOrg, isOrgActive } from "@/lib/tapcardBiz";
-import { clearOffers, setOffer } from "@/lib/tapcardOffers";
+import { clearOffers, setOffer, withdrawOfferById } from "@/lib/tapcardOffers";
 
 // An admin posts or withdraws any shop's offer or news from the web; a manager only for their own shops. Only for the company's own
 // cards, and only while the company's billing is active.
@@ -39,7 +39,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true });
     }
     case "withdrawOffer":
-      await clearOffers(cardId);
+      // One offer by its id (a card can run one per audience), or, with no id, all of them.
+      if (body.offerId !== undefined) {
+        if (!(await withdrawOfferById(cardId, Number(body.offerId)))) return NextResponse.json({ error: "That offer isn't on this card." }, { status: 404 });
+      } else await clearOffers(cardId);
       return NextResponse.json({ ok: true });
     case "addGroup":
     case "removeGroup":

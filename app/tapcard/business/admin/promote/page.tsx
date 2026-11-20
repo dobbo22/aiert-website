@@ -69,11 +69,26 @@ export default async function BizPromotePage() {
               <p className="text-sm">{r.views} views · {r.qrViews} QR scans · {r.installs} installs · {r.saves} saves · {r.followers} following</p>
             </div>
             <div className="mt-2 grid gap-1 text-sm sm:grid-cols-2">
-              <p><strong>Offer:</strong> {r.offerText ? `${r.offerText} (${r.offerClaimed} claimed, ${r.offerRedeemed} used${r.offerExpires ? `, ends ${new Date(r.offerExpires).toLocaleDateString("en-GB")}` : ""})` : "none live"}</p>
+              <div>
+                <strong>{r.offers.length > 1 ? "Offers running now:" : "Offer:"}</strong>
+                {r.offers.length === 0 ? " none live" : (
+                  <ul className="mt-1 grid gap-1">
+                    {r.offers.map((o) => {
+                      const labels = (groupsByCard.get(r.id) ?? []).filter((g) => o.audience.includes(g.slug)).map((g) => `#${g.label}`);
+                      return (
+                        <li key={o.id}>
+                          <span className="rounded-full bg-white/15 px-2 py-0.5 text-xs font-semibold">{o.audience.length ? `For ${labels.join(" and ") || "a group"}` : "For everyone"}</span>{" "}
+                          {o.text} ({o.claimed} claimed, {o.redeemed} used{o.expires ? `, ends ${new Date(o.expires).toLocaleDateString("en-GB")}` : ""})
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
               <p><strong>News:</strong> {r.news ?? "none"}</p>
               <p className="sm:col-span-2"><strong>All time:</strong> {r.claimedTotal} claimed, {r.redeemedTotal} used</p>
             </div>
-            {active && !blocked && <div className="mt-3"><LocationPromote cardId={r.id} hasOffer={!!r.offerText} hasNews={!!r.news} groups={groupsByCard.get(r.id) ?? []} /></div>}
+            {active && !blocked && <div className="mt-3"><LocationPromote cardId={r.id} offers={r.offers.map((o) => ({ id: o.id, text: o.text, audience: o.audience }))} hasNews={!!r.news} groups={groupsByCard.get(r.id) ?? []} /></div>}
           </section>
         ))}
       </div>
