@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { UniverseRow, ImportDiff } from "@/lib/tapcardListedUniverse";
+import type { Tried } from "@/lib/tapcardListedSite";
 
 type Preview = { deleted?: number; kept?: number; perFile: { name: string; shares: number; asOf: string }[]; diff: ImportDiff; complete: boolean; applied: boolean; skippedNonShares?: number };
 
@@ -11,6 +12,11 @@ const field = { padding: "8px 10px", borderRadius: 8, border: "1px solid rgba(25
 const btn = { padding: "8px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,.45)", background: "transparent", color: "inherit", cursor: "pointer" } as const;
 const primary = { ...btn, background: "#FBBF24", color: "#111", fontWeight: 700, border: "none" } as const;
 const PAGE = 100;
+const STATUS_LABEL: Record<string, { text: string; bg: string }> = {
+  unchecked: { text: "Not checked", bg: "#e2e8f0" }, ok: { text: "Confirmed", bg: "#86efac" }, unsure: { text: "Needs a look", bg: "#fde68a" },
+  wrong: { text: "Wrong company", bg: "#fca5a5" }, parked: { text: "Parked or empty", bg: "#fca5a5" }, dead: { text: "Not working", bg: "#fca5a5" }, none: { text: "None found", bg: "#fca5a5" },
+};
+type Evidence = { name?: string; tried: Tried[]; checkedAt: string | null; status?: string; website?: string };
 
 export function money(n: number | null): string {
   if (n === null) return "";
@@ -38,6 +44,9 @@ export default function ListedView({ rows, loadError }: { rows: UniverseRow[]; l
   const [files, setFiles] = useState<File[]>([]);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [alsoDelete, setAlsoDelete] = useState(true);
+  const [checking, setChecking] = useState<string>("");
+  const [evidence, setEvidence] = useState<Record<string, Evidence>>({});
+  const [openEv, setOpenEv] = useState<string>("");
 
   const listed = rows.filter((r) => r.status === "listed");
   const delisted = rows.length - listed.length;
@@ -99,9 +108,32 @@ export default function ListedView({ rows, loadError }: { rows: UniverseRow[]; l
     const r = await json({ action: "set-website", isin: row.isin, website: v });
     if (r.error) setMsg(r.error); else router.refresh();
   }
+  async function checkSite(isin: string) {
+    setChecking(isin || "next"); setMsg("");
+    const r = await json({ action: "check-website", isin });
+    setChecking("");
+    if (r.error) { setMsg(String(r.error)); return; }
+    const res = r.result as { isin: string; status: string; website: string; tried: Tried[]; checkedAt: string };
+    setEvidence((e) => ({ ...e, [res.isin]: { name: String(r.name), tried: res.tried, checkedAt: res.checkedAt, status: res.status, website: res.website } }));
+    setOpenEv(res.isin);
+    router.refresh();
+  }
+  async function showEvidence(isin: string) {
+    if (openEv === isin) { setOpenEv(""); return; }
+    if (!evidence[isin]) {
+      const r = (await json({ action: "evidence", isin })) as unknown as Evidence;
+      setEvidence((e) => ({ ...e, [isin]: { tried: r.tried ?? [], checkedAt: r.checkedAt ?? null } }));
+    }
+    setOpenEv(isin);
+  }
+  async function useAddress(row: { isin: string }, url: string) {
+    const r = await json({ action: "set-website", isin: row.isin, website: url });
+    if (r.error) { setMsg(String(r.error)); return; }
+    await checkSite(row.isin);
+  }
   function exportCsv() {
-    const head = ["Name", "Ticker", "ISIN", "Market", "Country", "Sector", "Status", "Market cap (GBP)", "Market cap as of", "Website", "Website source"];
-    const lines = [head.join(",")].concat(shown.map((r) => [r.name, r.ticker, r.isin, r.market, r.country, r.sector, r.status, r.marketCap, r.marketCapAt, r.website, r.websiteSource].map(csvCell).join(",")));
+    const head = ["Name", "Ticker", "ISIN", "Market", "Country", "Sector", "Status", "Market cap (GBP)", "Market cap as of", "Website", "Website source", "Website check"];
+    const lines = [head.join(",")].concat(shown.map((r) => [r.name, r.ticker, r.isin, r.market, r.country, r.sector, r.status, r.marketCap, r.marketCapAt, r.website, r.websiteSource, r.websiteStatus].map(csvCell).join(",")));
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/csv" }));
     a.download = "listed-universe.csv";
@@ -127,7 +159,8 @@ export default function ListedView({ rows, loadError }: { rows: UniverseRow[]; l
         {tile(listed.filter((r) => r.market === "Main").length, "Main Market")}
         {tile(listed.filter((r) => r.market === "AIM").length, "AIM")}
         {tile(listed.filter((r) => r.marketCap !== null).length, "with a market cap")}
-        {tile(listed.filter((r) => r.website).length, "with a website (not yet checked)")}
+        {tile(listed.filter((r) => r.website).length, "with a website")}
+        {tile(listed.filter((r) => r.websiteStatus === "ok").length, "website confirmed")}
         {tile(delisted, "marked delisted")}
         {tile(listed.filter((r) => r.hasCard).length, "with a TapCard card")}
       </section>
@@ -193,6 +226,7 @@ export default function ListedView({ rows, loadError }: { rows: UniverseRow[]; l
           <select style={field} value={sortBy} onChange={(e) => setSortBy(e.target.value as "cap" | "name" | "ticker")} aria-label="Sort by">
             <option value="cap">Biggest first</option><option value="name">Name A to Z</option><option value="ticker">Ticker A to Z</option>
           </select>
+          <button type="button" style={primary} onClick={() => checkSite("")} disabled={!!checking}>{checking === "next" ? "Checking…" : "Check the next company"}</button>
           <button type="button" style={btn} onClick={exportCsv} disabled={shown.length === 0}>Download CSV</button>
           {delisted > 0 && <button type="button" style={btn} onClick={removeDelisted} disabled={busy}>Remove delisted ({delisted})</button>}
         </div>
@@ -201,27 +235,63 @@ export default function ListedView({ rows, loadError }: { rows: UniverseRow[]; l
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
             <thead>
               <tr style={{ textAlign: "left", borderBottom: "1px solid rgba(255,255,255,.35)" }}>
-                {["Company", "Ticker", "Market", "Sector", "Market cap", "Website", ""].map((h) => <th key={h} style={{ padding: "6px 8px" }}>{h}</th>)}
+                {["Company", "Ticker", "Market", "Sector", "Market cap", "Website", "Check", ""].map((h) => <th key={h} style={{ padding: "6px 8px" }}>{h}</th>)}
               </tr>
             </thead>
             <tbody>
-              {visible.map((r) => (
-                <tr key={r.isin} style={{ borderBottom: "1px solid rgba(255,255,255,.14)", verticalAlign: "top" }}>
-                  <td style={{ padding: "6px 8px" }}>
-                    <div style={{ fontWeight: 700 }}>{r.name}{r.status === "delisted" && <span style={{ marginLeft: 6, color: "#fca5a5" }}>delisted</span>}{r.hasCard && <span style={{ marginLeft: 6, color: "#86efac" }}>TapCard</span>}</div>
-                    <div style={{ fontSize: 12 }}>{r.isin} · {r.country}</div>
-                  </td>
-                  <td style={{ padding: "6px 8px" }}>{r.ticker}</td>
-                  <td style={{ padding: "6px 8px" }}>{r.market}</td>
-                  <td style={{ padding: "6px 8px" }}>{r.sector}</td>
-                  <td style={{ padding: "6px 8px", whiteSpace: "nowrap" }}>{money(r.marketCap)}{r.marketCapAt && <div style={{ fontSize: 12 }}>as of {r.marketCapAt}</div>}</td>
-                  <td style={{ padding: "6px 8px", wordBreak: "break-all" }}>
-                    {r.website ? <a href={r.website} target="_blank" rel="noopener noreferrer" style={{ color: "#93c5fd" }}>{r.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}</a> : ""}
-                    {r.website && <div style={{ fontSize: 12 }}>{r.websiteSource}</div>}
-                  </td>
-                  <td style={{ padding: "6px 8px" }}><button type="button" style={{ ...btn, padding: "3px 8px" }} onClick={() => editWebsite(r)}>Set website</button></td>
-                </tr>
-              ))}
+              {visible.map((r) => {
+                const st = STATUS_LABEL[r.websiteStatus] ?? STATUS_LABEL.unchecked;
+                const ev = evidence[r.isin];
+                return (
+                  <Fragment key={r.isin}>
+                    <tr style={{ borderBottom: "1px solid rgba(255,255,255,.14)", verticalAlign: "top" }}>
+                      <td style={{ padding: "6px 8px" }}>
+                        <div style={{ fontWeight: 700 }}>{r.name}{r.status === "delisted" && <span style={{ marginLeft: 6, color: "#fca5a5" }}>delisted</span>}{r.hasCard && <span style={{ marginLeft: 6, color: "#86efac" }}>TapCard</span>}</div>
+                        <div style={{ fontSize: 12 }}>{r.isin} · {r.country}</div>
+                      </td>
+                      <td style={{ padding: "6px 8px" }}>{r.ticker}</td>
+                      <td style={{ padding: "6px 8px" }}>{r.market}</td>
+                      <td style={{ padding: "6px 8px" }}>{r.sector}</td>
+                      <td style={{ padding: "6px 8px", whiteSpace: "nowrap" }}>{money(r.marketCap)}{r.marketCapAt && <div style={{ fontSize: 12 }}>as of {r.marketCapAt}</div>}</td>
+                      <td style={{ padding: "6px 8px", wordBreak: "break-all" }}>
+                        {r.website ? <a href={r.website} target="_blank" rel="noopener noreferrer" style={{ color: "#93c5fd" }}>{r.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}</a> : ""}
+                        <div style={{ fontSize: 12 }}>
+                          <span style={{ display: "inline-block", background: st.bg, color: "#111", fontWeight: 700, borderRadius: 999, padding: "1px 8px", marginRight: 6 }}>{st.text}</span>
+                          {r.websiteSource}
+                        </div>
+                      </td>
+                      <td style={{ padding: "6px 8px", whiteSpace: "nowrap" }}>
+                        <button type="button" style={{ ...btn, padding: "3px 8px", marginRight: 6 }} disabled={!!checking} onClick={() => checkSite(r.isin)}>{checking === r.isin ? "Checking…" : r.websiteStatus === "unchecked" ? "Check" : "Check again"}</button>
+                        {r.websiteStatus !== "unchecked" && <button type="button" style={{ ...btn, padding: "3px 8px" }} onClick={() => showEvidence(r.isin)}>{openEv === r.isin ? "Hide" : "Evidence"}</button>}
+                      </td>
+                      <td style={{ padding: "6px 8px" }}><button type="button" style={{ ...btn, padding: "3px 8px" }} onClick={() => editWebsite(r)}>Set website</button></td>
+                    </tr>
+                    {openEv === r.isin && (
+                      <tr style={{ borderBottom: "1px solid rgba(255,255,255,.14)" }}>
+                        <td colSpan={8} style={{ padding: "8px 8px 14px 24px" }}>
+                          <div style={{ fontWeight: 700, marginBottom: 6 }}>What the check found{ev?.checkedAt ? ` (${new Date(ev.checkedAt).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })})` : ""}</div>
+                          {!ev || ev.tried.length === 0 ? <div>No address was found to try. Use Set website to give one.</div> : (
+                            <ul style={{ margin: 0, paddingLeft: 18 }}>
+                              {ev.tried.map((t, i) => {
+                                const lab = STATUS_LABEL[t.verdict] ?? STATUS_LABEL.unchecked;
+                                return (
+                                  <li key={i} style={{ marginBottom: 6 }}>
+                                    <span style={{ display: "inline-block", background: lab.bg, color: "#111", fontWeight: 700, borderRadius: 999, padding: "1px 8px", marginRight: 6 }}>{lab.text}</span>
+                                    <a href={t.finalUrl || t.url} target="_blank" rel="noopener noreferrer" style={{ color: "#93c5fd", wordBreak: "break-all" }}>{t.url}</a> from {t.source}
+                                    {t.finalUrl && t.finalUrl !== t.url ? <> (went to {t.finalUrl})</> : null}
+                                    <div style={{ fontSize: 13 }}>{t.title ? `Page title: “${t.title}”. ` : ""}{t.reasons.join("; ")}.</div>
+                                    {t.verdict === "unsure" && <button type="button" style={{ ...btn, padding: "2px 8px", marginTop: 4 }} onClick={() => useAddress(r, t.url)}>This is the right one: use it</button>}
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>

@@ -368,7 +368,7 @@ export async function safeFetch(start: string): Promise<{ res: Response; url: UR
   return null;
 }
 
-async function isPublicHost(hostname: string): Promise<boolean> {
+export async function isPublicHost(hostname: string): Promise<boolean> {
   if (net.isIP(hostname) || !normalizeDomain(hostname)) return false;
   try {
     const addresses = await lookup(hostname, { all: true });

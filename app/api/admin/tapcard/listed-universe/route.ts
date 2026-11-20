@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAdminRequest } from "@/lib/adminRequest";
 import { parseStockListFiles } from "@/lib/lseStockList";
-import { applyImport, diffImport, loadStartingList, removeDelisted, setWebsite, MIN_FULL_LIST } from "@/lib/tapcardListedUniverse";
+import { applyImport, diffImport, loadStartingList, nextUnchecked, removeDelisted, runWebsiteCheck, setWebsite, storedEvidence, MIN_FULL_LIST } from "@/lib/tapcardListedUniverse";
 
 // AIERT admin only. JSON actions: load (starting list into an empty table), remove-delisted, set-website.
 // Form upload (multipart, field "files" = the LSE stock-list .xlsx files, field "action" = preview or apply).
@@ -36,6 +36,13 @@ export async function POST(req: NextRequest) {
       const ok = await setWebsite(b.isin, b.website ?? "");
       return ok ? NextResponse.json({ ok: true }) : NextResponse.json({ error: "That does not look like a web address (start with https://)." }, { status: 400 });
     }
+    if (b.action === "check-website") {
+      const isin = typeof b.isin === "string" && b.isin ? b.isin : await nextUnchecked();
+      if (!isin) return NextResponse.json({ error: "Every listed company has been checked." }, { status: 404 });
+      const r = await runWebsiteCheck(isin);
+      return r.ok ? NextResponse.json({ ok: true, name: r.name, result: r.result }) : NextResponse.json({ error: r.error }, { status: 404 });
+    }
+    if (b.action === "evidence" && typeof b.isin === "string") return NextResponse.json({ ok: true, ...(await storedEvidence(b.isin)) });
     return NextResponse.json({ error: "bad request" }, { status: 400 });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Something went wrong." }, { status: 400 });

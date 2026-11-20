@@ -7,12 +7,13 @@ import sql from "@/lib/db";
 import base from "@/lib/data/lse-equities.json";
 import extra from "@/lib/data/lse-seed-extra.json";
 import type { LseShare } from "@/lib/lseStockList";
+import { checkCompanyWebsite, type SiteResult, type Tried } from "@/lib/tapcardListedSite";
 
 export interface UniverseRow {
   isin: string; name: string; ticker: string; market: string; country: string; sector: string; segment: string; currency: string;
   status: "listed" | "delisted"; firstSeen: string; lastSeenInList: string; delistedAt: string | null;
   marketCap: number | null; marketCapSource: string; marketCapAt: string | null;
-  website: string; websiteSource: string; notes: string; hasCard: boolean;
+  website: string; websiteSource: string; websiteStatus: string; websiteCheckedAt: string | null; websiteTitle: string; notes: string; hasCard: boolean;
 }
 
 let ready: Promise<void> | null = null;
@@ -43,6 +44,11 @@ export function ensureUniverse(): Promise<void> {
           updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
         )`,
       )
+      // Step 2: website check results (status: unchecked, ok, unsure, wrong, parked, dead, none).
+      .then(() => sql`ALTER TABLE tapcard_lse_universe ADD COLUMN IF NOT EXISTS website_status TEXT NOT NULL DEFAULT 'unchecked'`)
+      .then(() => sql`ALTER TABLE tapcard_lse_universe ADD COLUMN IF NOT EXISTS website_checked_at TIMESTAMPTZ`)
+      .then(() => sql`ALTER TABLE tapcard_lse_universe ADD COLUMN IF NOT EXISTS website_title TEXT NOT NULL DEFAULT ''`)
+      .then(() => sql`ALTER TABLE tapcard_lse_universe ADD COLUMN IF NOT EXISTS website_evidence JSONB NOT NULL DEFAULT '[]'::jsonb`)
       .then(() => sql`CREATE INDEX IF NOT EXISTS tapcard_lse_universe_cap ON tapcard_lse_universe (market_cap DESC NULLS LAST)`)
       .then(() => undefined)
       .catch((e) => { ready = null; throw e; });
@@ -63,7 +69,7 @@ export async function listUniverse(): Promise<UniverseRow[]> {
     segment: String(r.segment), currency: String(r.currency), status: r.status === "delisted" ? "delisted" : "listed",
     firstSeen: iso(r.first_seen), lastSeenInList: iso(r.last_seen_in_list), delistedAt: r.delisted_at ? new Date(r.delisted_at as string).toISOString() : null,
     marketCap: r.market_cap === null ? null : Number(r.market_cap), marketCapSource: String(r.market_cap_source), marketCapAt: r.market_cap_at ? iso(r.market_cap_at) : null,
-    website: String(r.website), websiteSource: String(r.website_source), notes: String(r.notes), hasCard: hasCard.has(String(r.isin)),
+    website: String(r.website), websiteSource: String(r.website_source), websiteStatus: String(r.website_status ?? "unchecked"), websiteCheckedAt: r.website_checked_at ? new Date(r.website_checked_at as string).toISOString() : null, websiteTitle: String(r.website_title ?? ""), notes: String(r.notes), hasCard: hasCard.has(String(r.isin)),
   }));
 }
 
@@ -193,4 +199,42 @@ export async function setWebsite(isin: string, website: string): Promise<boolean
   if (w && !/^https?:\/\/[^\s]+\.[^\s]+$/i.test(w)) return false;
   await sql`UPDATE tapcard_lse_universe SET website = ${w}, website_source = ${w ? "set by hand" : ""}, updated_at = now() WHERE isin = ${isin.toUpperCase()}`;
   return true;
+}
+
+/// Step 2: checks one company's website now (about 5 to 40 seconds), saves the result and the evidence, and returns them.
+export async function runWebsiteCheck(isin: string): Promise<{ ok: true; result: SiteResult; name: string } | { ok: false; error: string }> {
+  await ensureUniverse();
+  const rows = await sql`SELECT isin, name, ticker, website, website_source FROM tapcard_lse_universe WHERE isin = ${isin.toUpperCase()}`;
+  if (!rows.length) return { ok: false, error: "No such company." };
+  const r = rows[0];
+  const result = await checkCompanyWebsite({ isin: String(r.isin), name: String(r.name), ticker: String(r.ticker), website: String(r.website), websiteSource: String(r.website_source) });
+  const passing = result.tried.find((t) => t.verdict === "ok");
+  if (result.status === "ok" && !result.kept) {
+    await sql`
+      UPDATE tapcard_lse_universe SET website = ${result.website}, website_source = ${`checked (${passing?.source ?? "found"})`}, website_status = 'ok',
+        website_checked_at = now(), website_title = ${result.title}, website_evidence = ${JSON.stringify(result.tried)}::jsonb, updated_at = now()
+      WHERE isin = ${result.isin}`;
+  } else {
+    // Not confirmed (or set by hand): keep the address as it is, record what was found.
+    await sql`
+      UPDATE tapcard_lse_universe SET website_status = ${result.status}, website_checked_at = now(), website_title = ${result.title},
+        website_evidence = ${JSON.stringify(result.tried)}::jsonb, updated_at = now()
+      WHERE isin = ${result.isin}`;
+  }
+  return { ok: true, result, name: String(r.name) };
+}
+
+/// The biggest listed company that has not been checked yet.
+export async function nextUnchecked(): Promise<string | null> {
+  await ensureUniverse();
+  const r = await sql`SELECT isin FROM tapcard_lse_universe WHERE status = 'listed' AND website_status = 'unchecked' ORDER BY market_cap DESC NULLS LAST, name LIMIT 1`;
+  return r.length ? String(r[0].isin) : null;
+}
+
+export async function storedEvidence(isin: string): Promise<{ tried: Tried[]; checkedAt: string | null }> {
+  await ensureUniverse();
+  const r = await sql`SELECT website_evidence, website_checked_at FROM tapcard_lse_universe WHERE isin = ${isin.toUpperCase()}`;
+  if (!r.length) return { tried: [], checkedAt: null };
+  const ev = typeof r[0].website_evidence === "string" ? JSON.parse(r[0].website_evidence as string) : r[0].website_evidence;
+  return { tried: (ev as Tried[]) ?? [], checkedAt: r[0].website_checked_at ? new Date(r[0].website_checked_at as string).toISOString() : null };
 }

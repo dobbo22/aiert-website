@@ -38,7 +38,7 @@ export function listedByIsin(isin: string): ListedCompany | undefined {
 
 /// Words that say what kind of company it is, not which one: ignored when matching a listing to the company.
 const COMMON = new Set(["plc", "ltd", "limited", "group", "holdings", "holding", "the", "and", "of", "company", "co", "inc", "corp", "corporation", "trust", "investment", "investments", "fund", "capital", "uk", "international", "global", "resources", "energy"]);
-const coreWords = (name: string) => norm(name).split(" ").filter((w) => w && !COMMON.has(w));
+export const coreWords = (name: string) => norm(name).split(" ").filter((w) => w && !COMMON.has(w));
 
 /// Chooses the map listing that is this company: its name must hold the company's own words (all of them for a one- or two-word name, most
 /// for a longer one), and it must have a website. A wrong website would put a stranger's pages on the company's page, so no match is better.
