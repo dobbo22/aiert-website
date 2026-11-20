@@ -83,6 +83,8 @@ export default async function CardPage({
   const groupCode = typeof groupParam === "string" && /^[a-z0-9-]{1,40}$/.test(groupParam) ? groupParam : "";
   const eventQuery = eventCode || groupCode ? `?${[eventCode ? `e=${eventCode}` : "", groupCode ? `g=${groupCode}` : ""].filter(Boolean).join("&")}` : "";
   const groupOnlyQuery = groupCode ? `?g=${groupCode}` : "";
+  // The group's name, shown on the card when it was opened from that group's link or QR (a lounge, say). Only if this card really has the group.
+  const groupLabel = groupCode ? ((await (await import("@/lib/tapcardGroups")).listGroups(id).catch(() => [])).find((g) => g.slug === groupCode)?.label ?? "") : "";
   const TAPCARD_APP_STORE_URL = `${TAPCARD_APP_STORE_PATH}?card=${encodeURIComponent(id)}${eventCode ? `&e=${eventCode}` : ""}${groupCode ? `&g=${groupCode}` : ""}`;
   const isPreview = preview === "1";
   const card = await getCard(id);
@@ -245,6 +247,11 @@ export default async function CardPage({
             <h1 className="mt-4 text-2xl font-bold text-white">{card.name}</h1>
             {(card.title || card.company) && (
               <p className="mt-1 text-sm text-white">{[card.title, card.company].filter(Boolean).join(" · ")}</p>
+            )}
+            {groupLabel && (
+              <div className="mt-3 flex justify-center">
+                <p className="rounded-full bg-white/[0.14] px-4 py-1.5 text-sm font-semibold text-white" aria-label={`Group: ${groupLabel}`}>#{groupLabel}</p>
+              </div>
             )}
             {googleRating && (
               <p className="mt-1.5 flex items-center justify-center gap-1.5 text-sm text-white" aria-label={`Rated ${googleRating.rating} out of 5 on Google`}>
