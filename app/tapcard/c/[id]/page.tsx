@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { after } from "next/server";
 import { getCard, incrementViewCount, markRecipientOpened } from "@/lib/tapcardDb";
+import { verifyStatus } from "@/lib/tapcardVerify";
 import { firstNameOf, initialsOf } from "@/lib/tapcardName";
 import { paletteFor } from "@/lib/brandPalette";
 import { cardOrgId, orgLogoUrlForCard } from "@/lib/tapcardBiz";
@@ -84,6 +85,9 @@ export default async function CardPage({
   const eventQuery = eventCode || groupCode ? `?${[eventCode ? `e=${eventCode}` : "", groupCode ? `g=${groupCode}` : ""].filter(Boolean).join("&")}` : "";
   const groupOnlyQuery = groupCode ? `?g=${groupCode}` : "";
   // The group's name, shown on the card when it was opened from that group's link or QR (a lounge, say). Only if this card really has the group.
+  // Verified: marked by AIERT, proved by an emailed code, or belonging to a company whose admin proved its website. Shown as a tick by the name.
+  const verified = await verifyStatus(id).catch(() => null);
+  const verifiedDomain = verified?.verified ? verified.domain : "";
   const groupLabel = groupCode ? ((await (await import("@/lib/tapcardGroups")).listGroups(id).catch(() => [])).find((g) => g.slug === groupCode)?.label ?? "") : "";
   const TAPCARD_APP_STORE_URL = `${TAPCARD_APP_STORE_PATH}?card=${encodeURIComponent(id)}${eventCode ? `&e=${eventCode}` : ""}${groupCode ? `&g=${groupCode}` : ""}`;
   const isPreview = preview === "1";
@@ -244,11 +248,21 @@ export default async function CardPage({
               {companyDomain && !orgLogo && <FaviconBadge domain={companyDomain} />}
             </div>
 
-            <h1 className="mt-4 text-2xl font-bold text-white">{card.name}</h1>
+            <h1 className="mt-4 flex items-center justify-center gap-2 text-2xl font-bold text-white">
+              <span>{card.name}</span>
+              {verified?.verified && (
+                <svg viewBox="0 0 24 24" width="24" height="24" role="img" aria-label={`Verified business${verifiedDomain ? `: ${verifiedDomain}` : ""}`} className="shrink-0">
+                  <title>{`Verified business${verifiedDomain ? `: ${verifiedDomain}` : ""}`}</title>
+                  <circle cx="12" cy="12" r="12" fill="#1d9bf0" />
+                  <path d="M7 12.5l3.2 3.2L17 8.8" fill="none" stroke="#ffffff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </h1>
             {/* Opened from a group's link or QR code (a lounge, say): the group's name takes the place of the job title. */}
             {(groupLabel || card.title || card.company) && (
               <p className="mt-1 text-sm text-white">{[groupLabel || card.title, card.company].filter(Boolean).join(" · ")}</p>
             )}
+            {verified?.verified && <p className="mt-1.5 text-sm font-semibold text-white">Verified business{verifiedDomain ? ` · ${verifiedDomain}` : ""}</p>}
             {googleRating && (
               <p className="mt-1.5 flex items-center justify-center gap-1.5 text-sm text-white" aria-label={`Rated ${googleRating.rating} out of 5 on Google`}>
                 <span className="text-base text-[#FBBC04]" aria-hidden="true">★</span>
