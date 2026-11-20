@@ -34,7 +34,11 @@ export default async function BizAudiencesPage() {
       {shops.map(({ c, groups }) => (
         <GroupsPanel key={c.id} cardId={c.id} initial={groups} business={{ cardName: nameOf(c), captionName: org.name }} />
       ))}
-      {people.length > 0 && (
+      {people.length > 0 && shops.length === 0 && (
+        // No shop cards: the people's own cards are the only ones, so show them straight away.
+        people.map(({ c, groups }) => <GroupsPanel key={c.id} cardId={c.id} initial={groups} business={{ cardName: nameOf(c), captionName: org.name }} />)
+      )}
+      {people.length > 0 && shops.length > 0 && (
         <details className="rounded-2xl bg-charcoal p-4 ring-1 ring-white/10">
           <summary className="cursor-pointer font-semibold text-cloud">Staff cards ({people.length}): groups on a person&apos;s own card</summary>
           <div className="mt-4 space-y-6">

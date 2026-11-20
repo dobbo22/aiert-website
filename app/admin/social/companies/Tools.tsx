@@ -2,97 +2,44 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Btn, call, fieldLabel, input } from "./ui";
 
-const input = { background: "#fff", color: "#111", border: "1px solid #9ca3af", borderRadius: 8, padding: "9px 12px", fontSize: 14, minWidth: 0 } as const;
-const fieldLabel = { fontSize: 13, fontWeight: 600, color: "#e2e8f0", marginBottom: 4, display: "block" } as const;
-
-async function call(body: Record<string, unknown>) {
-  try {
-    const res = await fetch("/api/admin/tapcard/companies", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    const data = await res.json().catch(() => ({})) as { error?: string; url?: string; orgId?: string };
-    return { ok: res.ok, data: res.ok || data.error ? data : { ...data, error: `The server answered ${res.status}. Sign in to the admin again, then retry.` } };
-  } catch {
-    return { ok: false, data: { error: "Couldn't reach the server. Check your connection and retry." } as { error?: string; url?: string; orgId?: string } };
-  }
-}
-
-// The gold button used across the admin.
-const GOLD = "linear-gradient(90deg, #f5c451, #eaa43a)";
-function Pill({ children, disabled, onClick, small }: { children: React.ReactNode; disabled?: boolean; onClick: () => void; small?: boolean }) {
-  return (
-    <button type="button" disabled={disabled} onClick={onClick}
-      style={{ background: GOLD, color: "#111", fontWeight: 700, border: "none", borderRadius: 10, cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.45 : 1,
-        padding: small ? "3px 12px" : "9px 18px", fontSize: small ? 12 : 14, whiteSpace: "nowrap" }}>
-      {children}
-    </button>
-  );
-}
-
-export function CompanyTools({ orgId, open, locations }: { orgId: string; open: boolean; locations: number }) {
-  const router = useRouter();
-  const [busy, setBusy] = useState<string | null>(null);
-  const [note, setNote] = useState<{ text: string; ok: boolean; link?: string } | null>(null);
+/// "Change this company": locations, add an admin, add a manager. Shown inside an opened company, only while support access is open.
+export function ChangeCompany({ orgId, locations, run, busy }: { orgId: string; locations: number; busy: string | null; run: (label: string, body: Record<string, unknown>, done: (r: { url?: string }) => string, after?: () => void) => void }) {
   const [n, setN] = useState(String(locations));
   const [mgr, setMgr] = useState("");
   const [adm, setAdm] = useState(""), [admName, setAdmName] = useState(""), [owner, setOwner] = useState(true), [welcome, setWelcome] = useState(true);
-
-  // Every button says what it is doing, and afterwards says what happened (or why it did not).
-  async function run(label: string, body: Record<string, unknown>, done: (r: { url?: string }) => string, after?: () => void) {
-    setBusy(label); setNote({ text: `${label}…`, ok: true });
-    const r = await call({ ...body, orgId });
-    setBusy(null);
-    if (!r.ok) { setNote({ text: r.data.error ?? "That didn't work. Try again.", ok: false }); return; }
-    if (r.data.url) window.open(r.data.url, "_blank", "noopener");
-    setNote({ text: done(r.data), ok: true, link: r.data.url });
-    after?.();
-    router.refresh();
-  }
-
-  if (!open) return <p style={{ fontSize: 14 }}>The company must allow support access before you can open or change it.</p>;
+  void orgId;
   const b = (label: string) => (busy === label ? "Working…" : label);
-  const group = { display: "grid", gridTemplateColumns: "120px 1fr", gap: 10, alignItems: "center", padding: "12px 0", borderTop: "1px solid rgba(255,255,255,.15)" } as const;
+  const row = { display: "grid", gridTemplateColumns: "120px 1fr", gap: 10, alignItems: "center", padding: "12px 0", borderTop: "1px solid rgba(255,255,255,.15)" } as const;
   const wrap = { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" } as const;
   const check = { fontSize: 14, display: "flex", alignItems: "center", gap: 6 } as const;
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-        <Pill disabled={!!busy} onClick={() => run("Open admin (support)", { action: "open" }, () => "Sign-in link ready (it works once and lasts 15 minutes).")}>{b("Open admin (support)")}</Pill>
-      </div>
-      <details style={{ marginTop: 14 }}>
-        <summary style={{ cursor: "pointer", fontWeight: 700, fontSize: 14 }}>Change this company</summary>
-        <div style={{ marginTop: 8 }}>
-          <div style={group}>
-            <span style={fieldLabel}>Locations</span>
-            <div style={wrap}>
-              <input style={{ ...input, width: 80 }} value={n} onChange={(e) => setN(e.target.value)} inputMode="numeric" aria-label="Number of locations" />
-              <Pill disabled={!!busy} onClick={() => confirm(`Set this company to ${n} locations (free)? It is ${locations} now.`) && run("Set locations", { action: "free", locations: Number(n) }, () => `Done: free for ${n} locations.`)}>{b("Set locations")}</Pill>
-            </div>
-          </div>
-          <div style={group}>
-            <span style={fieldLabel}>Add an admin</span>
-            <div style={wrap}>
-              <input style={{ ...input, width: 160 }} placeholder="Their name" value={admName} onChange={(e) => setAdmName(e.target.value)} />
-              <input style={{ ...input, width: 220 }} placeholder="Their email" value={adm} onChange={(e) => setAdm(e.target.value)} />
-              <label style={check}><input type="checkbox" checked={owner} onChange={(e) => setOwner(e.target.checked)} /> Make owner</label>
-              <label style={check}><input type="checkbox" checked={welcome} onChange={(e) => setWelcome(e.target.checked)} /> Send full welcome</label>
-              <Pill disabled={!!busy || !adm.includes("@")} onClick={() => run("Add admin", { action: "addAdmin", email: adm, personName: admName, makeOwner: owner, sendEmail: welcome }, () => `Added ${adm}${owner ? " as the owner" : " as an admin"}. They have been emailed a sign-in link${welcome ? " and the welcome" : ""}.`, () => { setAdm(""); setAdmName(""); })}>{b("Add admin")}</Pill>
-            </div>
-          </div>
-          <div style={group}>
-            <span style={fieldLabel}>Add a manager</span>
-            <div style={wrap}>
-              <input style={{ ...input, width: 260 }} placeholder="Manager's email (all shops)" value={mgr} onChange={(e) => setMgr(e.target.value)} />
-              <Pill disabled={!!busy || !mgr.includes("@")} onClick={() => run("Add manager", { action: "manager", email: mgr }, () => `Added ${mgr} as a manager of every shop. They have been emailed what they can do and their shop card links.`, () => setMgr(""))}>{b("Add manager")}</Pill>
-            </div>
-          </div>
+      <div style={row}>
+        <span style={fieldLabel}>Locations</span>
+        <div style={wrap}>
+          <input style={{ ...input, width: 80 }} value={n} onChange={(e) => setN(e.target.value)} inputMode="numeric" aria-label="Number of locations" />
+          <Btn tone="primary" disabled={!!busy} onClick={() => confirm(`Set this company to ${n} locations (free)? It is ${locations} now.`) && run("Set locations", { action: "free", locations: Number(n) }, () => `Done: free for ${n} locations.`)}>{b("Set locations")}</Btn>
         </div>
-      </details>
-      {note && (
-        <p style={{ marginTop: 10, padding: "8px 12px", borderRadius: 8, fontSize: 14, background: note.ok ? "rgba(34,197,94,.18)" : "rgba(248,113,113,.2)", border: `1px solid ${note.ok ? "rgba(34,197,94,.5)" : "rgba(248,113,113,.6)"}` }} role="status">
-          {note.ok && !busy ? "✓ " : note.ok ? "" : "✗ "}{note.text}
-          {note.link && <> <a href={note.link} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "underline", fontWeight: 700 }}>Open the company admin</a></>}
-        </p>
-      )}
+      </div>
+      <div style={row}>
+        <span style={fieldLabel}>Add an admin</span>
+        <div style={wrap}>
+          <input style={{ ...input, width: 160 }} placeholder="Their name" value={admName} onChange={(e) => setAdmName(e.target.value)} />
+          <input style={{ ...input, width: 220 }} placeholder="Their email" value={adm} onChange={(e) => setAdm(e.target.value)} />
+          <label style={check}><input type="checkbox" checked={owner} onChange={(e) => setOwner(e.target.checked)} /> Make owner</label>
+          <label style={check}><input type="checkbox" checked={welcome} onChange={(e) => setWelcome(e.target.checked)} /> Send full welcome</label>
+          <Btn tone="primary" disabled={!!busy || !adm.includes("@")} onClick={() => run("Add admin", { action: "addAdmin", email: adm, personName: admName, makeOwner: owner, sendEmail: welcome }, () => `Added ${adm}${owner ? " as the owner" : " as an admin"}. They have been emailed a sign-in link${welcome ? " and the full welcome" : ""}.`, () => { setAdm(""); setAdmName(""); })}>{b("Add admin")}</Btn>
+        </div>
+      </div>
+      <div style={row}>
+        <span style={fieldLabel}>Add a manager</span>
+        <div style={wrap}>
+          <input style={{ ...input, width: 260 }} placeholder="Manager's email (all shops)" value={mgr} onChange={(e) => setMgr(e.target.value)} />
+          <Btn tone="primary" disabled={!!busy || !mgr.includes("@")} onClick={() => run("Add manager", { action: "manager", email: mgr }, () => `Added ${mgr} as a manager of every shop. They have been emailed what they can do and their shop card links.`, () => setMgr(""))}>{b("Add manager")}</Btn>
+        </div>
+      </div>
     </div>
   );
 }
@@ -106,7 +53,7 @@ export function CreateCompany() {
     setBusy(true); setNote(sendEmail ? "Creating and sending the emails…" : "Creating…");
     const r = await call({ action: "create", name, adminEmail: email, locations: listed ? 1 : Number(locations), sendEmail, listed });
     setBusy(false);
-    setNote(r.ok ? `Created. ${sendEmail ? "Sign-in and welcome emails sent." : "No email sent; open it below as support, or sign in from their admin page."}` : r.data.error ?? "Failed");
+    setNote(r.ok ? `Created. ${sendEmail ? "Sign-in and welcome emails sent." : "No email sent; open it in the list, or sign in from their admin page."}` : r.data.error ?? "Failed");
     if (r.ok) { setName(""); setEmail(""); router.refresh(); }
   }
   return (
@@ -120,11 +67,9 @@ export function CreateCompany() {
       <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 14, flexWrap: "wrap" }}>
         <label style={{ fontSize: 14, display: "flex", alignItems: "center", gap: 6 }}><input type="checkbox" checked={listed} onChange={(e) => setListed(e.target.checked)} /> Listed company (investor relations admin)</label>
         <label style={{ fontSize: 14, display: "flex", alignItems: "center", gap: 6 }}><input type="checkbox" checked={sendEmail} onChange={(e) => setSendEmail(e.target.checked)} /> Email them the sign-in link and welcome</label>
-        <Pill disabled={busy || !name.trim() || !email.trim()} onClick={create}>{busy ? "Working…" : "Create company"}</Pill>
+        <Btn tone="primary" disabled={busy || !name.trim() || !email.trim()} onClick={create}>{busy ? "Working…" : "Create company"}</Btn>
       </div>
-      {note && (
-        <p style={{ marginTop: 10, padding: "8px 12px", borderRadius: 8, fontSize: 14, background: /^Created/.test(note) || /^Creating/.test(note) ? "rgba(34,197,94,.18)" : "rgba(248,113,113,.2)" }} role="status">{note}</p>
-      )}
+      {note && <p style={{ marginTop: 10, padding: "8px 12px", borderRadius: 8, fontSize: 14, background: /^Created/.test(note) || /^Creating/.test(note) ? "rgba(34,197,94,.18)" : "rgba(248,113,113,.2)" }} role="status">{note}</p>}
     </div>
   );
 }
@@ -144,7 +89,7 @@ export function RemoveManager({ orgId, email }: { orgId: string; email: string }
   }
   return (
     <>
-      <span style={{ marginLeft: 8 }}><Pill small disabled={busy} onClick={remove}>{busy ? "Removing…" : "Remove"}</Pill></span>
+      <span style={{ marginLeft: 8 }}><Btn small tone="danger" disabled={busy} onClick={remove}>{busy ? "Removing…" : "Remove"}</Btn></span>
       {error && <span style={{ color: "#fca5a5", marginLeft: 8 }}>{error}</span>}
     </>
   );
@@ -164,8 +109,8 @@ export function LifeToggle({ orgId, on }: { orgId: string; on: boolean }) {
     router.refresh();
   }
   return (
-    <div style={{ marginTop: 6 }}>
-      <Pill small disabled={busy} onClick={toggle}>{busy ? "Working…" : on ? "✓ Free for life (remove)" : "Mark free for life"}</Pill>
+    <div>
+      <Btn small disabled={busy} onClick={toggle}>{busy ? "Working…" : on ? "Remove free for life" : "Mark free for life"}</Btn>
       {error && <div style={{ color: "#fca5a5", fontSize: 12 }}>{error}</div>}
     </div>
   );
@@ -185,8 +130,8 @@ export function ListedToggle({ orgId, on }: { orgId: string; on: boolean }) {
     router.refresh();
   }
   return (
-    <div style={{ marginTop: 6 }}>
-      <Pill small disabled={busy} onClick={toggle}>{busy ? "Working…" : on ? "✓ Listed company admin (switch off)" : "Use listed company admin"}</Pill>
+    <div>
+      <Btn small disabled={busy} onClick={toggle}>{busy ? "Working…" : on ? "Switch to ordinary admin" : "Use listed company admin"}</Btn>
       {error && <div style={{ color: "#fca5a5", fontSize: 12 }}>{error}</div>}
     </div>
   );
