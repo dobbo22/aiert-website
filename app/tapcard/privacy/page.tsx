@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 // all three need updating.
 export default function TapCardPrivacyPage() {
   return (
-    <DocPage title="Privacy Policy" updated="1 October 2026">
+    <DocPage title="Privacy Policy" updated="20 November 2026">
       <section>
         <h2>Summary</h2>
         <p>
@@ -182,6 +182,22 @@ export default function TapCardPrivacyPage() {
           An offer that is only for a group is not shown to anyone else. To know which offers to show you, the app sends your random id (the
           one it already uses to follow and to claim) in a header when it opens a card. It is not put in the web address and it is not linked to
           your name.
+        </p>
+      </section>
+
+      <section>
+        <h2>Personal links from a business</h2>
+        <p>
+          A business that has asked us to switch this on can give you a personal link, for example in an email or a membership message. The link carries
+          a code the business made up. If you follow the business through that link, the app remembers the code for 60 days and sends it to our server
+          with your follow. The code lets the business recognise you as one of its members. We do not know who the code stands for: it holds no name,
+          email address or ticket details, and only the business can tell whose it is. We store the code next to your random id and tell the
+          business when you follow or unfollow, join one of its groups through the link, or claim one of its offers, using only the code, the time and what
+          you did. We keep these records for 90 days. If you follow without using the link, nothing changes and no code is sent.
+        </p>
+        <p>
+          The business, not us, decides what it does with the code and is responsible for telling you how it uses it. When you stop following the business,
+          the code is released and no further events are sent.
         </p>
       </section>
 
