@@ -3,12 +3,13 @@
 import { useState } from "react";
 import LinkQr from "../LinkQr";
 import HelpDot from "../HelpDot";
+import CardQr from "../cards/CardQr";
 
 export interface GroupRow { slug: string; label: string; members: number; reachable: number }
 
 /// The audiences of a company card (#Kefi, #IPO Clients): add, remove, and a link + QR code for each. Someone who follows through a
 /// group's link is put in that group, and a headline can then be sent to chosen groups only.
-export default function GroupsPanel({ cardId, initial, adviserOrgId }: { cardId: string; initial: GroupRow[]; adviserOrgId?: string }) {
+export default function GroupsPanel({ cardId, initial, adviserOrgId, business }: { cardId: string; initial: GroupRow[]; adviserOrgId?: string; business?: { cardName: string; captionName?: string } }) {
   const [groups, setGroups] = useState<GroupRow[]>(initial);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
@@ -26,8 +27,12 @@ export default function GroupsPanel({ cardId, initial, adviserOrgId }: { cardId:
 
   return (
     <div className="rounded-2xl bg-charcoal p-6 ring-1 ring-white/10" id="groups">
-      <h2 className="text-lg font-bold text-cloud">Groups<HelpDot anchor="groups" role={adviserOrgId ? "adviser-senior" : "company-senior"} label="How groups work" /></h2>
-      <p className="mt-2 text-cloud">Give each audience its own group, such as #group name. Each group has its own link and QR code. Someone who follows through it is put in that group, and you can send a headline to chosen groups only. Followers are not asked for a name or email; a group is only a label.</p>
+      <h2 className="text-lg font-bold text-cloud">{business ? business.cardName : "Groups"}{!business && <HelpDot anchor="groups" role={adviserOrgId ? "adviser-senior" : "company-senior"} label="How groups work" />}</h2>
+      {business ? (
+        <p className="mt-2 text-cloud">Each group has its own QR code. Someone who follows through it joins that group, and you can see how many are in each. Followers are not asked for a name or email; a group is only a label.</p>
+      ) : (
+        <p className="mt-2 text-cloud">Give each audience its own group, such as #group name. Each group has its own link and QR code. Someone who follows through it is put in that group, and you can send a headline to chosen groups only. Followers are not asked for a name or email; a group is only a label.</p>
+      )}
       {groups.length > 0 && (
         <ul className="mt-4 divide-y divide-white/10">
           {groups.map((g) => (
@@ -40,10 +45,14 @@ export default function GroupsPanel({ cardId, initial, adviserOrgId }: { cardId:
                 <button type="button" disabled={busy} onClick={() => { if (window.confirm(`Remove #${g.label}? Its followers keep following; only the group goes.`)) void call({ action: "removeGroup", slug: g.slug }, "Group removed."); }} className="rounded-xl px-4 py-2 font-semibold text-cloud ring-1 ring-slate disabled:opacity-60">Remove</button>
               </div>
               <p className="mt-2 break-all text-sm text-cloud">{link(g.slug)}</p>
-              <div className="mt-2 flex flex-wrap items-start gap-3">
-                <button type="button" onClick={() => void navigator.clipboard?.writeText(link(g.slug))} className="rounded-xl px-4 py-2 font-semibold text-cloud ring-1 ring-slate">Copy link</button>
-                <LinkQr link={link(g.slug)} />
-              </div>
+              {business ? (
+                <div className="mt-3 max-w-lg"><CardQr id={cardId} group={g.slug} title={`#${g.label}`} subtitle="Group QR code" caption={`Scan to follow ${business.captionName || business.cardName} · #${g.label}`} /></div>
+              ) : (
+                <div className="mt-2 flex flex-wrap items-start gap-3">
+                  <button type="button" onClick={() => void navigator.clipboard?.writeText(link(g.slug))} className="rounded-xl px-4 py-2 font-semibold text-cloud ring-1 ring-slate">Copy link</button>
+                  <LinkQr link={link(g.slug)} />
+                </div>
+              )}
             </li>
           ))}
         </ul>
