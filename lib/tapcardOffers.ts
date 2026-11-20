@@ -147,9 +147,37 @@ export async function offerCounts(offerId: number): Promise<{ claimed: number; r
 }
 
 /// What the public card JSON carries: no PIN, nothing about who claimed.
-export async function publicOffer(cardId: string) {
+/// Who is looking at a card's offer. A group-limited offer is shown only to the card's owner/admin, or to someone the server can recognise as
+/// a member of one of its groups: the app sends its random install id (the same id it follows and claims with). Anyone else, and every
+/// older app that sends nothing, gets no offer at all (not even a hint that one exists).
+export interface OfferViewer { install?: string; owner?: boolean }
+
+/// The install id header the apps send when they open a card.
+export const INSTALL_HEADER = "x-tapcard-install";
+export function installFrom(req: Request): string | undefined {
+  const v = req.headers.get(INSTALL_HEADER) ?? "";
+  return v.length >= 16 && v.length <= 200 ? v : undefined;
+}
+
+/// true when the current offer is limited to groups (so a response carrying it must never be shared between viewers).
+export async function offerIsLimited(cardId: string): Promise<boolean> {
+  const o = await currentOffer(cardId).catch(() => null);
+  return !!o && (o.audience ?? []).length > 0;
+}
+
+async function mayViewOffer(o: OfferRow, cardId: string, viewer?: OfferViewer): Promise<boolean> {
+  const audience = o.audience ?? [];
+  if (!audience.length || viewer?.owner) return true;
+  if (!viewer?.install) return false;
+  const follower = hashSecret(`tapcard-follower:${viewer.install}`);
+  const member = (await sql`SELECT 1 FROM tapcard_follower_groups WHERE card_id = ${cardId} AND follower_hash = ${follower} AND slug = ANY(${audience})`.catch(() => [])) as unknown[];
+  return member.length > 0;
+}
+
+export async function publicOffer(cardId: string, viewer?: OfferViewer) {
   const o = await currentOffer(cardId);
   if (!o) return null;
+  if (!(await mayViewOffer(o, cardId, viewer))) return null;
   const { claimed } = await offerCounts(o.id);
   // An offer limited to groups (a lounge, say): the apps and the web page say who it is for. The text itself is still on the card.
   const slugs = o.audience ?? [];

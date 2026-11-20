@@ -10,7 +10,7 @@ async function listedFields(id: string): Promise<Record<string, unknown>> {
 }
 import { deleteCard, getCard, publicCardJSON, updateCard } from "@/lib/tapcardDb";
 import { canEdit, readEditToken } from "@/lib/tapcardAuth";
-import { publicAnnouncement, publicOffer } from "@/lib/tapcardOffers";
+import { installFrom, offerIsLimited, publicAnnouncement, publicOffer } from "@/lib/tapcardOffers";
 import { wasRemovedByCompany } from "@/lib/tapcardBiz";
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
@@ -26,7 +26,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
   // The special offer (if any) rides along so a saved card's next refresh shows it in the app's updates.
-  const offer = await publicOffer(id).catch(() => null);
+  // A group-only offer is shown only to a recognised member (the app's install id header); everyone else gets no offer.
+  const offer = await publicOffer(id, { install: installFrom(req) }).catch(() => null);
+  const limited = await offerIsLimited(id).catch(() => false);
   const announcement = await publicAnnouncement(id).catch(() => null);
   const listed = await listedFields(id);
   // A listed company's card: its own privacy notice, and (when the app passes ?e=<event code> from a scanned QR) the event's name and slot.
@@ -53,7 +55,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const found = (await (await import("@/lib/tapcardGroups")).listGroups(target).catch(() => [])).find((x) => x.slug === g);
     if (found) extra.group = found;
   }
-  return NextResponse.json({ ...publicCardJSON(card), ...listed, ...extra, ...(offer ? { offer } : {}), ...(announcement ? { announcement } : {}) });
+  return NextResponse.json({ ...publicCardJSON(card), ...listed, ...extra, ...(offer ? { offer } : {}), ...(announcement ? { announcement } : {}) }, limited ? { headers: { "cache-control": "private, no-store" } } : undefined);
 }
 
 // "Stop sharing" — the delete/revoke control called for in the plan's

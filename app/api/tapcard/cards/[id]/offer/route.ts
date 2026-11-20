@@ -3,7 +3,7 @@ import { pushToFollowers } from "@/lib/tapcardPush";
 import { getCard } from "@/lib/tapcardDb";
 import { canEdit, readEditToken } from "@/lib/tapcardAuth";
 import { authorizePoster, posterName } from "@/lib/tapcardPost";
-import { clearOffers, currentOffer, offerCounts, offerLock, publicOffer, setOffer } from "@/lib/tapcardOffers";
+import { clearOffers, currentOffer, installFrom, offerCounts, offerLock, publicOffer, setOffer } from "@/lib/tapcardOffers";
 import { isBusinessLabel } from "@/lib/tapcardLinks";
 import { promoteAllowed } from "@/lib/tapcardPromote";
 
@@ -14,14 +14,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const { id } = await params;
   const card = await getCard(id);
   if (!card) return NextResponse.json({ error: "not found" }, { status: 404 });
-  const offer = await publicOffer(id);
+  // The owner (edit key) or an admin allowed to post sees any offer; a recognised group member sees a group-only one; nobody else does.
+  const poster = await authorizePoster(req, card).catch(() => null);
+  const owner = !!poster?.ok || (await canEdit(card, readEditToken(req)));
+  const offer = await publicOffer(id, { install: installFrom(req), owner });
   let stats: { claimed: number; redeemed: number } | undefined;
-  const viewer = offer ? await authorizePoster(req, card) : null;
-  if (offer && (viewer?.ok || (await canEdit(card, readEditToken(req))))) {
+  if (offer && owner) {
     const o = await currentOffer(id);
     if (o) stats = await offerCounts(o.id);
   }
-  return NextResponse.json({ offer, ...(stats ? { stats } : {}) });
+  return NextResponse.json({ offer, ...(stats ? { stats } : {}) }, { headers: { "cache-control": "private, no-store" } });
 }
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -43,7 +45,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 400 });
   const offerText = String((body as { text?: unknown }).text ?? "").trim().slice(0, 140);
   after(() => pushToFollowers(id, "offers", { title: card.company || card.name, body: offerText, ref: String(result.id) }));
-  return NextResponse.json({ ok: true, offer: await publicOffer(id) });
+  return NextResponse.json({ ok: true, offer: await publicOffer(id, { owner: true }) });
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

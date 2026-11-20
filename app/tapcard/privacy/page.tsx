@@ -173,10 +173,15 @@ export default function TapCardPrivacyPage() {
       <section>
         <h2>Audience groups</h2>
         <p>
-          A listed company can give you a link or QR code that adds you to an audience group, for example the people at one meeting, so it
-          can send a headline to that group only. The app remembers the group for 60 days, shows its name as a label on that company&apos;s card
+          A company can give you a link or QR code that adds you to an audience group, for example the people at one meeting or one lounge, so it
+          can send a headline or an offer to that group only. The app remembers the group for 60 days, shows its name as a label on that company&apos;s card
           on your phone, and tells our server which group, which we store next to your random id. The company sees how many followers are
           in each group, never who. The group is removed when you stop following the company.
+        </p>
+        <p>
+          An offer that is only for a group is not shown to anyone else. To know which offers to show you, the app sends your random id (the
+          one it already uses to follow and to claim) in a header when it opens a card. It is not put in the web address and it is not linked to
+          your name.
         </p>
       </section>
 
