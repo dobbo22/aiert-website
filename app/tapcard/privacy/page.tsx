@@ -69,8 +69,8 @@ export default function TapCardPrivacyPage() {
       <section>
         <h2>Who we are</h2>
         <p>
-          TapCard is provided by AIERT Ltd, registered in England &amp; Wales (No. 16587000), which is the data
-          controller for the information described here. The one exception is the name and email address you choose to share with a
+          TapCard is provided by AIERT Ltd, registered in England &amp; Wales (No. 16587000) and registered with the Information Commissioner&apos;s Office (data protection
+          registration number ZC307719), which is the data controller for the information described here. The one exception is the name and email address you choose to share with a
           listed company: that company is the controller and we store them on its behalf (see{" "}
           <em>When you share your details with a listed company</em>). Contact:{" "}
           <a href="mailto:enquiries@aiert.co.uk">enquiries@aiert.co.uk</a>.
