@@ -77,6 +77,12 @@ export async function listCompaniesForSupport(): Promise<SupportCompanyRow[]> {
   `) as SupportCompanyRow[];
 }
 
+/// What AIERT support did inside one company's admin (opening it, adding an admin, changing locations...): shown to the company itself.
+export async function supportLogForOrg(orgId: string, limit = 25): Promise<{ actor: string; action: string; detail: string; at: string }[]> {
+  await ensureSupportSchema();
+  return (await sql`SELECT actor, action, detail, at FROM tapcard_biz_support_log WHERE org_id = ${orgId} ORDER BY at DESC LIMIT ${limit}`) as never;
+}
+
 export async function recentSupportLog(limit = 30): Promise<{ org_id: string; actor: string; action: string; detail: string; at: string }[]> {
   await ensureSupportSchema();
   return (await sql`SELECT org_id, actor, action, detail, at FROM tapcard_biz_support_log ORDER BY at DESC LIMIT ${limit}`) as never;
