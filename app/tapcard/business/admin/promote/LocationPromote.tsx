@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 
-interface Props { cardId: string; hasOffer: boolean; hasNews: boolean }
+interface Props { cardId: string; hasOffer: boolean; hasNews: boolean; groups?: { slug: string; label: string; members: number; reachable: number }[] }
 
 // Switched on once the TapCard apps show stamp cards and take over a web claim (iPhone 3.2 / Android 1.7). Until then a customer who
 // installed the app would find nothing, so owners are not offered "needs the app".
 const APP_GATE_READY = true;
 
 // Post or withdraw one location's offer and news.
-export default function LocationPromote({ cardId, hasOffer, hasNews }: Props) {
+export default function LocationPromote({ cardId, hasOffer, hasNews, groups = [] }: Props) {
   const [open, setOpen] = useState<"offer" | "news" | null>(null);
   const [text, setText] = useState("");
   const [link, setLink] = useState("");
@@ -22,6 +22,8 @@ export default function LocationPromote({ cardId, hasOffer, hasNews }: Props) {
   const [reward, setReward] = useState("");
   const [gap, setGap] = useState("4");
   const [needApp, setNeedApp] = useState(false);
+  // Who gets the news notification: everyone who follows, or only the chosen groups (a lounge, say).
+  const [picked, setPicked] = useState<string[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -91,7 +93,25 @@ export default function LocationPromote({ cardId, hasOffer, hasNews }: Props) {
         <div className="mt-3 rounded-xl bg-black/20 p-3 text-sm">
           <label className="block">The news (one short line)<input className={field} value={text} onChange={(e) => setText(e.target.value.slice(0, 140))} placeholder="New autumn menu from Friday" /></label>
           <label className="mt-2 block">Link to the full story (optional)<input className={field} value={link} onChange={(e) => setLink(e.target.value.trim())} placeholder="https://yoursite.com/news/autumn-menu" inputMode="url" /></label>
-          <button type="button" disabled={busy || !text.trim()} className="mt-3 rounded-lg bg-white px-4 py-2 font-semibold text-[#111318] disabled:opacity-50" onClick={() => send({ action: "news", text, link })}>Post news</button>
+          {groups.length > 0 && (
+            <fieldset className="mt-3">
+              <legend className="font-semibold">Send the notification to</legend>
+              <label className="mt-1 flex items-center gap-2"><input type="radio" name={`aud-${cardId}`} checked={picked.length === 0} onChange={() => setPicked([])} /> Everyone who follows</label>
+              <label className="mt-1 flex items-center gap-2"><input type="radio" name={`aud-${cardId}`} checked={picked.length > 0} onChange={() => setPicked(picked.length ? picked : [groups[0].slug])} /> Only chosen groups</label>
+              {picked.length > 0 && (
+                <div className="mt-2 ml-6 grid gap-1">
+                  {groups.map((g) => (
+                    <label key={g.slug} className="flex items-center gap-2">
+                      <input type="checkbox" checked={picked.includes(g.slug)} onChange={(e) => setPicked((p) => (e.target.checked ? [...p, g.slug] : p.filter((x) => x !== g.slug)))} />
+                      #{g.label} <span className="text-sm">({g.reachable} can be notified)</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+              <p className="mt-2 text-sm">The news line also shows on the card for anyone who opens it. Only the notification goes to the groups you choose.</p>
+            </fieldset>
+          )}
+          <button type="button" disabled={busy || !text.trim()} className="mt-3 rounded-lg bg-white px-4 py-2 font-semibold text-[#111318] disabled:opacity-50" onClick={() => send({ action: "news", text, link, groups: picked })}>{picked.length > 0 ? `Post news to ${picked.length === 1 ? "this group" : "these groups"}` : "Post news"}</button>
         </div>
       )}
       {msg ? <p className="mt-2 text-sm font-semibold">{msg}</p> : null}

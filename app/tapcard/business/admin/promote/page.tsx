@@ -2,6 +2,7 @@ import { requireBizUser } from "@/lib/tapcardBizSession";
 import { getOrg, isOrgActive, listOrgCards } from "@/lib/tapcardBiz";
 import { listLocations } from "@/lib/tapcardBizLocations";
 import { orgPromoteRows } from "@/lib/tapcardOffers";
+import { listGroupsWithCounts } from "@/lib/tapcardGroups";
 import LocationPromote from "./LocationPromote";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +17,15 @@ export default async function BizPromotePage() {
   const shopCardIds = new Set(shops.map((l) => l.claimed_card_id).filter(Boolean) as string[]);
   // Shop cards only: the shops' own cards, and (for an admin) any card marked as a business, not each member of staff.
   const businessIds = session.role === "admin" ? new Set((await listOrgCards(org.id)).filter((c) => c.card_kind === "business").map((c) => c.id)) : new Set<string>();
-  const rows = (await orgPromoteRows(org.id)).filter((r) => shopCardIds.has(r.id) || businessIds.has(r.id));
+  const all = await orgPromoteRows(org.id);
+  // Audiences (groups) per card. An admin also sees any card that has groups, even a person's own card (a manager who runs several lounges),
+  // so news can be sent to just one group from there.
+  const groupsByCard = new Map<string, Awaited<ReturnType<typeof listGroupsWithCounts>>>();
+  await Promise.all(all.filter((r) => session.role === "admin" || shopCardIds.has(r.id)).map(async (r) => {
+    const g = await listGroupsWithCounts(r.id).catch(() => []);
+    if (g.length) groupsByCard.set(r.id, g);
+  }));
+  const rows = all.filter((r) => shopCardIds.has(r.id) || businessIds.has(r.id) || (session.role === "admin" && groupsByCard.has(r.id)));
   const blocked = session.role === "manager" && !session.canPost;
   const waiting = shops.filter((l) => !l.claimed_card_id);
   const sum = (f: (r: (typeof rows)[number]) => number) => rows.reduce((n, r) => n + f(r), 0);
@@ -64,7 +73,7 @@ export default async function BizPromotePage() {
               <p><strong>News:</strong> {r.news ?? "none"}</p>
               <p className="sm:col-span-2"><strong>All time:</strong> {r.claimedTotal} claimed, {r.redeemedTotal} used</p>
             </div>
-            {active && !blocked && <div className="mt-3"><LocationPromote cardId={r.id} hasOffer={!!r.offerText} hasNews={!!r.news} /></div>}
+            {active && !blocked && <div className="mt-3"><LocationPromote cardId={r.id} hasOffer={!!r.offerText} hasNews={!!r.news} groups={groupsByCard.get(r.id) ?? []} /></div>}
           </section>
         ))}
       </div>
