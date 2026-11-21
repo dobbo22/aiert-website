@@ -57,6 +57,7 @@ import { DEFAULT_LOCKED_FIELDS, LOCKABLE_FIELDS } from "@/lib/tapcardBizFields";
 import { TRIAL_DAYS } from "@/lib/tapcardBizBilling";
 import { emailOnDomain } from "@/lib/tapcardDomain";
 import { domainAliases } from "@/lib/tapcardDomainAliases";
+import { unitOwnerMayPostFor, unitTargetsFor } from "@/lib/tapcardUnits";
 export { DEFAULT_LOCKED_FIELDS, LOCKABLE_FIELDS };
 
 let schemaReady: Promise<unknown> | null = null;
@@ -711,7 +712,10 @@ export async function posterMayPostFor(posterId: string, targetId: string): Prom
   const target = rows.find((r) => r.id === targetId);
   if (!poster || !target) return false;
   if (posterId === targetId) return !target.org_id || target.org_can_post === true || (poster.org_posts_for ?? []).includes(targetId);
-  return !!poster.org_id && poster.org_id === target.org_id && (poster.org_posts_for ?? []).includes(targetId);
+  if (!poster.org_id || poster.org_id !== target.org_id) return false;
+  if ((poster.org_posts_for ?? []).includes(targetId)) return true;
+  // The owner of a group at or above the target's group (the company tree) may post for it.
+  return unitOwnerMayPostFor(posterId, targetId);
 }
 
 /// The locations a card may post for, with names (for the app's "post for" choice).
@@ -721,8 +725,12 @@ export async function postTargetsFor(cardId: string): Promise<{ id: string; name
   if (!me[0]) return [];
   if (!me[0].org_id) return [{ id: cardId, name: "" }];
   const ids = [...new Set([...(me[0].org_posts_for ?? []), ...(me[0].org_can_post ? [cardId] : [])])];
-  if (!ids.length) return [];
-  return (await sql`SELECT id, COALESCE(NULLIF(company, ''), name) AS name FROM tapcard_cards WHERE id = ANY(${ids}) AND org_id = ${me[0].org_id}`) as { id: string; name: string }[];
+  const direct = ids.length
+    ? ((await sql`SELECT id, COALESCE(NULLIF(company, ''), name) AS name FROM tapcard_cards WHERE id = ANY(${ids}) AND org_id = ${me[0].org_id}`) as { id: string; name: string }[])
+    : [];
+  const viaGroups = await unitTargetsFor(cardId);
+  const seen = new Set(direct.map((d) => d.id));
+  return [...direct, ...viaGroups.filter((g) => !seen.has(g.id))];
 }
 
 /// The admin marks a company card as a shop / location (offers belong to it), or as a person's card.

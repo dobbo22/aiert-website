@@ -36,7 +36,7 @@ export interface OfferRow {
 }
 
 let ready: Promise<unknown> | null = null;
-function ensureOfferSchema(): Promise<unknown> {
+export function ensureOfferSchema(): Promise<unknown> {
   if (!ready) {
     ready = sql`
       CREATE TABLE IF NOT EXISTS tapcard_offers (
